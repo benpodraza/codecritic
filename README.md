@@ -24,4 +24,4 @@ It supports:
 
 ---
 
-Built with ❤️ as a research extension to [ConceptBuilder](https://github.com/your-link-here).
+Built with ❤️ as a research extension to [ConceptBuilder](https://github.com/benpodraza/conceptbuilder).

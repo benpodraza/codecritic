@@ -1,0 +1,15 @@
+{
+  "experiment_id": "single_pass_no_iteration",
+  "description": "Baseline with no feedback loop or iteration",
+  "mode": "ai_first",
+  "variant": "zero_shot",
+  "rounds": 1,
+  "max_lines_per_function": 25,
+  "iteration_type": "none",
+  "context_type": "preprocessing",
+  "eval_protocol": "hit@k",
+  "snapshot_policy": "none",
+
+  "base_prompt_path": "prompts/chain_of_thought.txt",
+  "discriminator_prompt_path": "prompts/discriminator.txt"
+}

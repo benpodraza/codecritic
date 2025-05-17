@@ -1,0 +1,12 @@
+# SYSTEM PROMPT
+
+Think step-by-step before editing. You must reason about:
+- Structure: Is the function too long or doing too much?
+- Documentation: Are assumptions clear?
+- Traceability: Would this run cleanly in production?
+
+Once you reason through it, refactor and annotate the code in the AI-First style.
+
+# CONTEXT TYPE: {{ variant }}
+
+{{ code }}

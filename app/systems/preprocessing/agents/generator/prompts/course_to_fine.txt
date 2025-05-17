@@ -1,0 +1,11 @@
+# SYSTEM PROMPT
+
+This is a coarse-to-fine pass:
+1. First, clean up formatting and split any long functions
+2. Then do a second pass adding docstrings, type hints, breadcrumbs, and error handling
+
+Each transformation must follow AI-First standards.
+
+# CONTEXT TYPE: {{ variant }}
+
+{{ code }}

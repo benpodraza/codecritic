@@ -1,8 +1,0 @@
-{
-  "experiment_id": "single_pass_no_iteration",
-  "start_time": "2025-05-14T15:32:11.821441",
-  "end_time": "2025-05-14T15:32:56.086324",
-  "files_processed": 2,
-  "variant": "zero_shot",
-  "run_id": "77868b8e-9c34-4dac-b8a0-f594be00d800"
-}

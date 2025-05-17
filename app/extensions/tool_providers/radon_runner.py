@@ -1,23 +1,18 @@
 from __future__ import annotations
-
-import subprocess
-import sys
 from pathlib import Path
-
 from ...abstract_classes.tool_provider_base import ToolProviderBase
-
+from radon.complexity import cc_visit
 
 class RadonToolProvider(ToolProviderBase):
-    """Run cyclomatic complexity analysis using the bundled runner."""
-
     def _run(self, target: str):
-        script = Path(__file__).resolve().parents[3] / "tools" / "radon_runner.py"
-        cmd = [sys.executable, str(script), target]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        if proc.stdout:
-            self.logger.debug(proc.stdout)
-        if proc.stderr:
-            self.logger.error(proc.stderr)
-        if proc.returncode != 0:
-            raise RuntimeError("radon failed")
-        return proc
+        file_path = Path(target)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {target}")
+
+        code = file_path.read_text(encoding='utf-8', errors='ignore')
+        complexity_blocks = cc_visit(code)
+        result = [
+            {"name": blk.name, "complexity": blk.complexity, "lineno": blk.lineno}
+            for blk in complexity_blocks
+        ]
+        return result

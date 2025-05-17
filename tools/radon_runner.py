@@ -1,51 +1,27 @@
-#!/usr/bin/env python
-"""Minimal cyclomatic complexity runner used for testing."""
-
-from __future__ import annotations
-
-import ast
 import sys
+import json
+from radon.complexity import cc_visit
 from pathlib import Path
 
-
-def complexity_score(code: str) -> int:
-    tree = ast.parse(code)
-    complexity = 1
-    for node in ast.walk(tree):
-        if isinstance(
-            node,
-            (
-                ast.If,
-                ast.For,
-                ast.While,
-                ast.Try,
-                ast.With,
-                ast.And,
-                ast.Or,
-                ast.ExceptHandler,
-            ),
-        ):
-            complexity += 1
-    return complexity
-
-
-def analyze_file(path: Path) -> str:
-    code = path.read_text()
-    score = complexity_score(code)
-    return f"{path} - Complexity: {score}"
-
-
-def main(argv: list[str] | None = None) -> int:
-    argv = argv or sys.argv[1:]
-    for arg in argv:
-        p = Path(arg)
-        if p.is_dir():
-            for file in p.rglob("*.py"):
-                print(analyze_file(file))
-        elif p.is_file():
-            print(analyze_file(p))
-    return 0
-
+def analyze_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as file:
+        code = file.read()
+    complexity = cc_visit(code)
+    result = [
+        {"name": c.name, "complexity": c.complexity, "lineno": c.lineno}
+        for c in complexity
+    ]
+    return result
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        if len(sys.argv) != 2:
+            raise ValueError("Provide exactly one file path.")
+        file_path = Path(sys.argv[1])
+        if not file_path.exists():
+            raise FileNotFoundError("File does not exist.")
+        analysis_result = analyze_file(str(file_path))
+        print(json.dumps({"result": analysis_result}, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}, ensure_ascii=False))
+        sys.exit(1)

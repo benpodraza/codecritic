@@ -17,4 +17,3 @@ class RuffToolProvider(ToolProviderBase):
         if proc.returncode != 0:
             raise RuntimeError(f"ruff failed: {proc.stderr}")
         return proc
-

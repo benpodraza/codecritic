@@ -3,8 +3,9 @@ import json
 from radon.complexity import cc_visit
 from pathlib import Path
 
+
 def analyze_file(filepath):
-    with open(filepath, 'r', encoding='utf-8') as file:
+    with open(filepath, "r", encoding="utf-8") as file:
         code = file.read()
     complexity = cc_visit(code)
     result = [
@@ -12,6 +13,7 @@ def analyze_file(filepath):
         for c in complexity
     ]
     return result
+
 
 if __name__ == "__main__":
     try:

@@ -1,5 +1,6 @@
 from __future__ import annotations
-import subprocess, sys
+import subprocess
+import sys
 from ...abstract_classes.tool_provider_base import ToolProviderBase
 
 

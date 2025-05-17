@@ -1,0 +1,39 @@
+---
+
+# DOCSTRING FORMAT
+
+"""
+Summary line (1 sentence)
+
+Input constraints:
+    - ...
+Output contract:
+    - ...
+Known edge cases:
+    - ... → ...
+"""
+
+---
+
+# COMMENT FORMAT
+
+# AI_LOG: logic rationale or intention  
+# AI_HINT: info for downstream agent  
+# AI_DEBUG: uncertainty or warning
+
+---
+
+# LOGGING FORMAT
+
+logger.info("BREADCRUMB:<module>:<step>", { "input": ..., "state": ... })
+
+---
+
+# FUNCTION REFACTORING RULES
+
+- Split any function > {{ max_lines_per_function }} lines into logical helpers
+- Name helpers meaningfully and keep private unless reused
+- Never rename public interfaces or change argument types
+- Raise appropriate exceptions when logic fails
+
+---

@@ -2,6 +2,7 @@ from __future__ import annotations
 import subprocess, sys
 from ...abstract_classes.tool_provider_base import ToolProviderBase
 
+
 class RadonToolProvider(ToolProviderBase):
     def _run(self, target: str):
         # Call radon via -m so it returns a CompletedProcess

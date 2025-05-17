@@ -4,6 +4,7 @@ from ...abstract_classes.agent_base import AgentBase
 from ...factories.tool_provider import ToolProviderFactory
 from ...utilities.metadata.logging import CodeQualityLog, ErrorLog
 
+
 class EvaluatorAgent(AgentBase):
     def __init__(self, target: str) -> None:
         super().__init__()

@@ -1,8 +1,5 @@
 from enum import Enum, auto
 
-
-
-
 class TransitionReason(str, Enum):
     FIRST_ROUND = "first_round"
     SCORE_STAGNATION = "score_stagnation"

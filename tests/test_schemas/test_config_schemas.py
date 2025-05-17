@@ -1,3 +1,4 @@
+import builtins
 import types
 import sys
 
@@ -7,17 +8,18 @@ import pytest
 # Patch a minimal `openai` module so schemas importing from openai work
 @pytest.fixture(autouse=True)
 def dummy_openai(monkeypatch):
-    module = types.ModuleType("openai")
-    module.BaseModel = pydantic.BaseModel
-    monkeypatch.sys_modules["openai"] = module
-
-    # Patch missing AgentRole into state_transition_enums for import
-    import app.enums.state_transition_enums as ste
-    from app.enums.agent_management_enums import AgentRole as AMRole
-    monkeypatch.setattr(ste, "AgentRole", AMRole, raising=False)
-    yield
-    monkeypatch.undo()
-
+    # Create a fake OpenAI module
+    module = types.SimpleNamespace(OpenAIClient=object)
+    # Inject it into sys.modules so import openai returns our fake
+    monkeypatch.setitem(sys.modules, "openai", module)
+    # Override __import__ so that any import openai returns the fake module
+    monkeypatch.setattr(
+        builtins,
+        "__import__",
+        lambda name, globals=None, locals=None, fromlist=(), level=0:
+            module if name == "openai" else __import__(name, globals, locals, fromlist, level)
+    )
+    return module
 
 from app.schemas.shared_config_schemas import ModelEngine, PromptVariant
 from app.schemas.agent_config_schema import AgentConfig

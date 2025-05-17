@@ -1,7 +1,8 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from app.enums.state_transition_enums import AgentRole, TransitionReason, TransitionTarget
+from app.enums.agent_management_enums import AgentRole
+from app.enums.state_transition_enums import TransitionReason, TransitionTarget
 
 
 class StateTransitionLog(BaseModel):

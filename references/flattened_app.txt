@@ -1,0 +1,1101 @@
+
+# === PYTHON FILES ===
+
+# __init__.py
+
+
+
+# abstract_classes\__init__.py
+
+
+
+# abstract_classes\agent_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class AgentBase(ABC):
+# 8     """Base class for executing agent logic."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def run(self, *args, **kwargs) -> None:
+# 14         self.logger.debug("Agent run start")
+# 15         self._run_agent_logic(*args, **kwargs)
+# 16         self.logger.debug("Agent run end")
+# 17 
+# 18     @abstractmethod
+# 19     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 20         """Execute agent specific logic."""
+# 21         raise NotImplementedError
+
+
+# abstract_classes\context_provider_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class ContextProviderBase(ABC):
+# 8     """Base class for providing context from symbol graphs."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def get_context(self, *args, **kwargs):
+# 14         self.logger.debug("Context retrieval start")
+# 15         context = self._get_context(*args, **kwargs)
+# 16         self.logger.debug("Context retrieval end")
+# 17         return context
+# 18 
+# 19     @abstractmethod
+# 20     def _get_context(self, *args, **kwargs):
+# 21         """Return context information."""
+# 22         raise NotImplementedError
+
+
+# abstract_classes\prompt_generator_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class PromptGeneratorBase(ABC):
+# 8     """Base class for generating prompts."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def generate_prompt(self, *args, **kwargs) -> str:
+# 14         self.logger.debug("Prompt generation start")
+# 15         prompt = self._generate_prompt(*args, **kwargs)
+# 16         self.logger.debug("Prompt generation end")
+# 17         return prompt
+# 18 
+# 19     @abstractmethod
+# 20     def _generate_prompt(self, *args, **kwargs) -> str:
+# 21         """Return a generated prompt."""
+# 22         raise NotImplementedError
+
+
+# abstract_classes\scoring_provider_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class ScoringProviderBase(ABC):
+# 8     """Base class for computing evaluation metrics."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def score(self, *args, **kwargs):
+# 14         self.logger.debug("Scoring start")
+# 15         result = self._score(*args, **kwargs)
+# 16         self.logger.debug("Scoring end")
+# 17         return result
+# 18 
+# 19     @abstractmethod
+# 20     def _score(self, *args, **kwargs):
+# 21         """Compute evaluation metrics."""
+# 22         raise NotImplementedError
+
+
+# abstract_classes\state_manager_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class StateManagerBase(ABC):
+# 8     """Base class for managing state-level execution."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def run(self, *args, **kwargs) -> None:
+# 14         self.logger.debug("StateManager run start")
+# 15         self._run_state_logic(*args, **kwargs)
+# 16         self.logger.debug("StateManager run end")
+# 17 
+# 18     @abstractmethod
+# 19     def _run_state_logic(self, *args, **kwargs) -> None:
+# 20         """Execute state specific logic."""
+# 21         raise NotImplementedError
+
+
+# abstract_classes\system_manager_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class SystemManagerBase(ABC):
+# 8     """Base class for coordinating high level system logic."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def run(self, *args, **kwargs) -> None:
+# 14         self.logger.debug("SystemManager run start")
+# 15         self._run_system_logic(*args, **kwargs)
+# 16         self.logger.debug("SystemManager run end")
+# 17 
+# 18     @abstractmethod
+# 19     def _run_system_logic(self, *args, **kwargs) -> None:
+# 20         """Execute system-specific logic and state transitions."""
+# 21         raise NotImplementedError
+
+
+# abstract_classes\tool_provider_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import logging
+# 4 from abc import ABC, abstractmethod
+# 5 
+# 6 
+# 7 class ToolProviderBase(ABC):
+# 8     """Base class for running external tools."""
+# 9 
+# 10     def __init__(self) -> None:
+# 11         self.logger = logging.getLogger(self.__class__.__name__)
+# 12 
+# 13     def run(self, *args, **kwargs):
+# 14         self.logger.debug("Tool run start")
+# 15         result = self._run(*args, **kwargs)
+# 16         self.logger.debug("Tool run end")
+# 17         return result
+# 18 
+# 19     @abstractmethod
+# 20     def _run(self, *args, **kwargs):
+# 21         """Run tool-specific logic."""
+# 22         raise NotImplementedError
+
+
+# enums\__init__.py
+
+
+
+# enums\agent_enums.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from enum import Enum
+# 4 
+# 5 
+# 6 class AgentRole(Enum):
+# 7     CRITIC = "critic"
+# 8     TESTER = "tester"
+# 9     FIXER = "fixer"
+
+
+# enums\system_enums.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from enum import Enum
+# 4 
+# 5 
+# 6 class SystemState(Enum):
+# 7     INIT = "init"
+# 8     RUNNING = "running"
+# 9     COMPLETE = "complete"
+# 10 
+# 11 
+# 12 class FSMState(Enum):
+# 13     """Finite state machine states for the CodeCritic system."""
+# 14 
+# 15     START = "start"
+# 16     GENERATE = "generate"
+# 17     DISCRIMINATE = "discriminate"
+# 18     MEDIATE = "mediate"
+# 19     PATCHOR = "patchor"
+# 20     RECOMMENDER = "recommender"
+# 21     END = "end"
+
+
+# extensions\__init__.py
+
+
+
+# extensions\agent_prompts\__init__.py
+
+# 1 
+
+
+# extensions\agents\__init__.py
+
+# 1 from .dummy_agent import DummyAgent
+# 2 from .generator_agent import GeneratorAgent
+# 3 from .evaluator_agent import EvaluatorAgent
+# 4 from ...registries.agents import AGENT_REGISTRY
+# 5 
+# 6 AGENT_REGISTRY.register("dummy", DummyAgent)
+# 7 AGENT_REGISTRY.register("generator", GeneratorAgent)
+# 8 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
+# 9 
+# 10 __all__ = ["DummyAgent", "GeneratorAgent", "EvaluatorAgent"]
+
+
+# extensions\agents\dummy_agent.py
+
+# 1 from ...abstract_classes.agent_base import AgentBase
+# 2 
+# 3 
+# 4 class DummyAgent(AgentBase):
+# 5     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 6         self.logger.info("Dummy agent logic executed")
+
+
+# extensions\agents\evaluator_agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import List
+# 4 
+# 5 from ...abstract_classes.agent_base import AgentBase
+# 6 from ...factories.tool_provider import ToolProviderFactory
+# 7 from ...utilities.metadata.logging import CodeQualityLog, ErrorLog
+# 8 
+# 9 
+# 10 class EvaluatorAgent(AgentBase):
+# 11     """Agent running static analysis and linting tools."""
+# 12 
+# 13     def __init__(self, target: str) -> None:
+# 14         super().__init__()
+# 15         self.target = target
+# 16         self.mypy = ToolProviderFactory.create("mypy")
+# 17         self.ruff = ToolProviderFactory.create("ruff")
+# 18         self.radon = ToolProviderFactory.create("radon")
+# 19         self.quality_logs: List[CodeQualityLog] = []
+# 20         self.error_logs: List[ErrorLog] = []
+# 21 
+# 22     def _run_agent_logic(
+# 23         self, *args, **kwargs
+# 24     ) -> None:  #  pragma: no cover - simple logging
+# 25         try:
+# 26             self.mypy.run(self.target)
+# 27             ruff_proc = self.ruff.run(self.target)
+# 28             complexity = 0.0
+# 29             try:
+# 30                 radon_proc = self.radon.run(self.target)
+# 31                 if radon_proc.stdout:
+# 32                     for line in radon_proc.stdout.splitlines():
+# 33                         if "Complexity:" in line:
+# 34                             part = line.split("Complexity:")[-1].strip()
+# 35                             try:
+# 36                                 complexity = float(part)
+# 37                             except ValueError:
+# 38                                 pass
+# 39                             break
+# 40             except Exception as exc:  #  pragma: no cover - optional
+# 41                 self.logger.warning("Radon unavailable: %s", exc)
+# 42             lines = sum(1 for _ in open(self.target, "r"))
+# 43             log = CodeQualityLog(
+# 44                 experiment_id="exp",
+# 45                 round=0,
+# 46                 symbol=self.target,
+# 47                 lines_of_code=lines,
+# 48                 cyclomatic_complexity=complexity,
+# 49                 maintainability_index=0.0,
+# 50                 lint_errors=0 if ruff_proc.returncode == 0 else 1,
+# 51             )
+# 52             self.quality_logs.append(log)
+# 53         except Exception as exc:  #  pragma: no cover - safety
+# 54             err = ErrorLog(
+# 55                 experiment_id="exp",
+# 56                 round=0,
+# 57                 error_type=type(exc).__name__,
+# 58                 message=str(exc),
+# 59                 file_path=self.target,
+# 60             )
+# 61             self.error_logs.append(err)
+# 62             self.logger.exception("Evaluation failed for %s", self.target)
+
+
+# extensions\agents\generator_agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import List
+# 4 from datetime import datetime
+# 5 
+# 6 from ...abstract_classes.agent_base import AgentBase
+# 7 from ...enums.agent_enums import AgentRole
+# 8 from ...factories.tool_provider import ToolProviderFactory
+# 9 from ...utilities.metadata.logging import ErrorLog, PromptLog
+# 10 
+# 11 
+# 12 class GeneratorAgent(AgentBase):
+# 13     """Agent responsible for formatting code using black."""
+# 14 
+# 15     def __init__(self, target: str) -> None:
+# 16         super().__init__()
+# 17         self.target = target
+# 18         self.formatter = ToolProviderFactory.create("black")
+# 19         self.prompt_logs: List[PromptLog] = []
+# 20         self.error_logs: List[ErrorLog] = []
+# 21 
+# 22     def _run_agent_logic(
+# 23         self, *args, **kwargs
+# 24     ) -> None:  #  pragma: no cover - simple logging
+# 25         log = PromptLog(
+# 26             experiment_id="exp",
+# 27             round=0,
+# 28             system="system",
+# 29             agent_id="generator",
+# 30             agent_role=AgentRole.FIXER.value,
+# 31             symbol=self.target,
+# 32             prompt="format code",
+# 33             response=None,
+# 34             attempt_number=0,
+# 35             agent_action_outcome="started",
+# 36         )
+# 37         self.prompt_logs.append(log)
+# 38         try:
+# 39             self.formatter.run(self.target)
+# 40             log.agent_action_outcome = "success"
+# 41             self.logger.info("Formatted %s", self.target)
+# 42         except Exception as exc:  #  pragma: no cover - safety
+# 43             log.agent_action_outcome = "error"
+# 44             err = ErrorLog(
+# 45                 experiment_id="exp",
+# 46                 round=0,
+# 47                 error_type=type(exc).__name__,
+# 48                 message=str(exc),
+# 49                 file_path=self.target,
+# 50             )
+# 51             self.error_logs.append(err)
+# 52             self.logger.exception("Formatting failed for %s", self.target)
+# 53         finally:
+# 54             log.stop = datetime.utcnow()
+
+
+# extensions\context_providers\__init__.py
+
+# 1 from .dummy_context_provider import DummyContextProvider
+# 2 from ...registries.context_providers import CONTEXT_PROVIDER_REGISTRY
+# 3 
+# 4 CONTEXT_PROVIDER_REGISTRY.register("dummy", DummyContextProvider)
+# 5 
+# 6 __all__ = ["DummyContextProvider"]
+
+
+# extensions\context_providers\dummy_context_provider.py
+
+# 1 from ...abstract_classes.context_provider_base import ContextProviderBase
+# 2 
+# 3 
+# 4 class DummyContextProvider(ContextProviderBase):
+# 5     def _get_context(self, *args, **kwargs):
+# 6         self.logger.info("Dummy context provided")
+# 7         return {}
+
+
+# extensions\prompt_generators\__init__.py
+
+# 1 from .dummy_prompt_generator import DummyPromptGenerator
+# 2 from ...registries.prompt_generators import PROMPT_GENERATOR_REGISTRY
+# 3 
+# 4 PROMPT_GENERATOR_REGISTRY.register("dummy", DummyPromptGenerator)
+# 5 
+# 6 __all__ = ["DummyPromptGenerator"]
+
+
+# extensions\prompt_generators\dummy_prompt_generator.py
+
+# 1 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
+# 2 
+# 3 
+# 4 class DummyPromptGenerator(PromptGeneratorBase):
+# 5     def _generate_prompt(self, *args, **kwargs) -> str:
+# 6         self.logger.info("Dummy prompt generated")
+# 7         return "dummy prompt"
+
+
+# extensions\scoring_models\__init__.py
+
+# 1 from .dummy_scoring_provider import DummyScoringProvider
+# 2 from ...registries.scoring_models import SCORING_MODEL_REGISTRY
+# 3 
+# 4 SCORING_MODEL_REGISTRY.register("dummy", DummyScoringProvider)
+# 5 
+# 6 __all__ = ["DummyScoringProvider"]
+
+
+# extensions\scoring_models\dummy_scoring_provider.py
+
+# 1 from ...abstract_classes.scoring_provider_base import ScoringProviderBase
+# 2 
+# 3 
+# 4 class DummyScoringProvider(ScoringProviderBase):
+# 5     def _score(self, *args, **kwargs):
+# 6         self.logger.info("Dummy scoring")
+# 7         return 0
+
+
+# extensions\state_managers\__init__.py
+
+# 1 from .dummy_state_manager import DummyStateManager
+# 2 from .state_manager import StateManager
+# 3 from ...registries.state_managers import STATE_MANAGER_REGISTRY
+# 4 
+# 5 STATE_MANAGER_REGISTRY.register("dummy", DummyStateManager)
+# 6 STATE_MANAGER_REGISTRY.register("state", StateManager)
+# 7 
+# 8 __all__ = ["DummyStateManager", "StateManager"]
+
+
+# extensions\state_managers\dummy_state_manager.py
+
+# 1 from ...abstract_classes.state_manager_base import StateManagerBase
+# 2 
+# 3 
+# 4 class DummyStateManager(StateManagerBase):
+# 5     def _run_state_logic(self, *args, **kwargs) -> None:
+# 6         self.logger.info("Dummy state logic executed")
+
+
+# extensions\state_managers\state_manager.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ...abstract_classes.state_manager_base import StateManagerBase
+# 4 
+# 5 
+# 6 class StateManager(StateManagerBase):
+# 7     """Concrete manager executing actions within each FSM state."""
+# 8 
+# 9     def _run_state_logic(self, *args, **kwargs) -> None:
+# 10         state = kwargs.get("state")
+# 11         self.logger.info("Running state logic for %s", state)
+
+
+# extensions\system_managers\__init__.py
+
+# 1 from .dummy_system_manager import DummySystemManager
+# 2 from .system_manager import SystemManager
+# 3 from ...registries.system_managers import SYSTEM_MANAGER_REGISTRY
+# 4 
+# 5 SYSTEM_MANAGER_REGISTRY.register("dummy", DummySystemManager)
+# 6 SYSTEM_MANAGER_REGISTRY.register("system", SystemManager)
+# 7 
+# 8 __all__ = ["DummySystemManager", "SystemManager"]
+
+
+# extensions\system_managers\dummy_system_manager.py
+
+# 1 from ...abstract_classes.system_manager_base import SystemManagerBase
+# 2 
+# 3 
+# 4 class DummySystemManager(SystemManagerBase):
+# 5     def _run_system_logic(self, *args, **kwargs) -> None:
+# 6         self.logger.info("Dummy system logic executed")
+
+
+# extensions\system_managers\system_manager.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import List
+# 4 
+# 5 from ...abstract_classes.system_manager_base import SystemManagerBase
+# 6 from ...enums.system_enums import FSMState
+# 7 from ...utilities.metadata.logging import StateTransitionLog
+# 8 from ..state_managers.state_manager import StateManager
+# 9 
+# 10 
+# 11 class SystemManager(SystemManagerBase):
+# 12     """Concrete system manager implementing FSM transitions."""
+# 13 
+# 14     def __init__(self) -> None:
+# 15         super().__init__()
+# 16         self.state_manager = StateManager()
+# 17         self.current_state = FSMState.START
+# 18         self.transition_logs: List[StateTransitionLog] = []
+# 19 
+# 20     def _transition_to(self, next_state: FSMState, reason: str | None = None) -> None:
+# 21         log = StateTransitionLog(
+# 22             experiment_id="exp",
+# 23             round=0,
+# 24             from_state=self.current_state.value,
+# 25             to_state=next_state.value,
+# 26             reason=reason,
+# 27         )
+# 28         self.transition_logs.append(log)
+# 29         self.logger.info("%s -> %s", self.current_state.value, next_state.value)
+# 30         self.current_state = next_state
+# 31 
+# 32     def _run_system_logic(self, *args, **kwargs) -> None:
+# 33         sequence = [
+# 34             FSMState.GENERATE,
+# 35             FSMState.DISCRIMINATE,
+# 36             FSMState.MEDIATE,
+# 37             FSMState.PATCHOR,
+# 38             FSMState.RECOMMENDER,
+# 39             FSMState.END,
+# 40         ]
+# 41         for state in sequence:
+# 42             self._transition_to(state)
+# 43             if state is not FSMState.END:
+# 44                 self.state_manager.run(state=state.value)
+
+
+# extensions\system_prompts\__init__.py
+
+# 1 
+
+
+# extensions\tool_providers\__init__.py
+
+# 1 from .dummy_tool_provider import DummyToolProvider
+# 2 from .black_runner import BlackToolProvider
+# 3 from .mypy_runner import MypyToolProvider
+# 4 from .radon_runner import RadonToolProvider
+# 5 from .ruff_runner import RuffToolProvider
+# 6 from ...registries.tool_providers import TOOL_PROVIDER_REGISTRY
+# 7 
+# 8 TOOL_PROVIDER_REGISTRY.register("dummy", DummyToolProvider)
+# 9 TOOL_PROVIDER_REGISTRY.register("black", BlackToolProvider)
+# 10 TOOL_PROVIDER_REGISTRY.register("mypy", MypyToolProvider)
+# 11 TOOL_PROVIDER_REGISTRY.register("radon", RadonToolProvider)
+# 12 TOOL_PROVIDER_REGISTRY.register("ruff", RuffToolProvider)
+# 13 
+# 14 __all__ = [
+# 15     "DummyToolProvider",
+# 16     "BlackToolProvider",
+# 17     "MypyToolProvider",
+# 18     "RadonToolProvider",
+# 19     "RuffToolProvider",
+# 20 ]
+
+
+# extensions\tool_providers\black_runner.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import subprocess
+# 4 import sys
+# 5 
+# 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
+# 7 
+# 8 
+# 9 class BlackToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str, check: bool = False):
+# 11         cmd = [sys.executable, "-m", "black", target]
+# 12         if check:
+# 13             cmd.append("--check")
+# 14         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 15         if proc.stdout:
+# 16             self.logger.debug(proc.stdout)
+# 17         if proc.stderr:
+# 18             self.logger.error(proc.stderr)
+# 19         if proc.returncode != 0:
+# 20             raise RuntimeError(f"black failed: {proc.stderr}")
+# 21         return proc
+
+
+# extensions\tool_providers\docformetter_runner.py
+
+# 1 import subprocess
+# 2 import sys
+# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 4 
+# 5 
+# 6 class DocFormatterToolProvider(ToolProviderBase):
+# 7     def _run(self, target: str, check: bool = False):
+# 8         cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
+# 9         if check:
+# 10             cmd.append("--check")
+# 11         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 12         if proc.stdout:
+# 13             self.logger.debug(proc.stdout)
+# 14         if proc.stderr:
+# 15             self.logger.error(proc.stderr)
+# 16         if proc.returncode != 0:
+# 17             raise RuntimeError(f"docformatter failed: {proc.stderr}")
+# 18         return proc
+
+
+# extensions\tool_providers\dummy_tool_provider.py
+
+# 1 from ...abstract_classes.tool_provider_base import ToolProviderBase
+# 2 
+# 3 
+# 4 class DummyToolProvider(ToolProviderBase):
+# 5     def _run(self, *args, **kwargs):
+# 6         self.logger.info("Dummy tool run")
+# 7         return True
+
+
+# extensions\tool_providers\mypy_runner.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import subprocess
+# 4 import sys
+# 5 
+# 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
+# 7 
+# 8 
+# 9 class MypyToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str):
+# 11         cmd = [sys.executable, "-m", "mypy", target]
+# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 13         if proc.stdout:
+# 14             self.logger.debug(proc.stdout)
+# 15         if proc.stderr:
+# 16             self.logger.error(proc.stderr)
+# 17         if proc.returncode not in (0, 1):  #  mypy returns 1 if it finds issues
+# 18             raise RuntimeError(f"mypy execution error: {proc.stderr}")
+# 19         return proc
+
+
+# extensions\tool_providers\radon_runner.py
+
+# 1 from __future__ import annotations
+# 2 import subprocess
+# 3 import sys
+# 4 import json
+# 5 import os
+# 6 from pathlib import Path
+# 7 from ...abstract_classes.tool_provider_base import ToolProviderBase
+# 8 
+# 9 class RadonToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str):
+# 11         script = Path(__file__).resolve().parents[3] / "tools" / "radon_runner.py"
+# 12         cmd = [sys.executable, str(script), target]
+# 13 
+# 14         env = os.environ.copy()
+# 15         env["PYTHONUTF8"] = "1"  #  Force Python subprocess to use UTF-8 encoding
+# 16 
+# 17         proc = subprocess.run(
+# 18             cmd,
+# 19             capture_output=True,
+# 20             text=True,
+# 21             encoding='utf-8',
+# 22             errors='replace',
+# 23             env=env  #  explicitly pass the updated environment
+# 24         )
+# 25 
+# 26         if proc.stderr:
+# 27             self.logger.error(f"Radon stderr: {proc.stderr}")
+# 28 
+# 29         if proc.returncode != 0:
+# 30             raise RuntimeError(f"radon subprocess failed: {proc.stderr.strip()}")
+# 31 
+# 32         try:
+# 33             data = json.loads(proc.stdout)
+# 34         except json.JSONDecodeError as e:
+# 35             self.logger.error(f"Radon JSON decode error. Raw output: {proc.stdout}")
+# 36             raise RuntimeError(f"Invalid JSON from radon: {e}")
+# 37 
+# 38         if 'error' in data:
+# 39             raise RuntimeError(f"Radon script error: {data['error']}")
+# 40 
+# 41         return data['result']
+
+
+# extensions\tool_providers\ruff_runner.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import subprocess
+# 4 import sys
+# 5 
+# 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
+# 7 
+# 8 
+# 9 class RuffToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str):
+# 11         cmd = [sys.executable, "-m", "ruff", "check", target]
+# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 13         if proc.stdout:
+# 14             self.logger.debug(proc.stdout)
+# 15         if proc.stderr:
+# 16             self.logger.error(proc.stderr)
+# 17         if proc.returncode != 0:
+# 18             raise RuntimeError(f"ruff failed: {proc.stderr}")
+# 19         return proc
+# 20 
+
+
+# extensions\tool_providers\sonarcloud_runner.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 4 
+# 5 class SonarCloudToolProvider(ToolProviderBase):
+# 6     def _run(self, project_key: str, organization: str, token: str):
+# 7         self.logger.info(
+# 8             "SonarCloud stub executed for project '%s' in organization '%s'.",
+# 9             project_key, organization
+# 10         )
+# 11         return {
+# 12             "status": "success",
+# 13             "project_key": project_key,
+# 14             "organization": organization,
+# 15             "analysis_url": "https://sonarcloud.io/dashboard?id=" + project_key
+# 16         }
+
+
+# extensions\tools\__init__.py
+
+
+
+# factories\__init__.py
+
+
+
+# factories\agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.agents import AGENT_REGISTRY
+# 4 
+# 5 
+# 6 class AgentFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = AGENT_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"Agent {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# factories\experiment_config_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 
+# 4 class ExperimentConfigProvider:
+# 5     @staticmethod
+# 6     def create(config: dict):
+# 7         return config
+
+
+# factories\prompt_manager.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.prompt_generators import PROMPT_GENERATOR_REGISTRY
+# 4 
+# 5 
+# 6 class PromptGeneratorFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = PROMPT_GENERATOR_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"Prompt generator {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# factories\scoring_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.scoring_models import SCORING_MODEL_REGISTRY
+# 4 
+# 5 
+# 6 class ScoringProviderFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = SCORING_MODEL_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"Scoring provider {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# factories\state_manager.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.state_managers import STATE_MANAGER_REGISTRY
+# 4 
+# 5 
+# 6 class StateManagerFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = STATE_MANAGER_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"State manager {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# factories\system_config_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 
+# 4 class SystemConfigProvider:
+# 5     @staticmethod
+# 6     def create(config: dict):
+# 7         return config
+
+
+# factories\system_manager.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.system_managers import SYSTEM_MANAGER_REGISTRY
+# 4 
+# 5 
+# 6 class SystemManagerFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = SYSTEM_MANAGER_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"System manager {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# factories\tool_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from ..registries.tool_providers import TOOL_PROVIDER_REGISTRY
+# 4 
+# 5 
+# 6 class ToolProviderFactory:
+# 7     @staticmethod
+# 8     def create(name: str, **kwargs):
+# 9         cls = TOOL_PROVIDER_REGISTRY.get(name)
+# 10         if cls is None:
+# 11             raise KeyError(f"Tool provider {name} not registered")
+# 12         return cls(**kwargs)
+
+
+# registries\__init__.py
+
+# 1 class Registry:
+# 2     def __init__(self):
+# 3         self._registry = {}
+# 4 
+# 5     def register(self, name: str, item):
+# 6         existing = self._registry.get(name)
+# 7         if existing is not None:
+# 8             if existing is item:
+# 9                 return
+# 10             raise KeyError(f"{name} already registered")
+# 11         self._registry[name] = item
+# 12 
+# 13     def get(self, name: str):
+# 14         return self._registry.get(name)
+# 15 
+# 16     def all(self):
+# 17         return dict(self._registry)
+
+
+# registries\agent_engines\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 AGENT_ENGINE_REGISTRY = Registry()
+
+
+# registries\agent_prompts\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 AGENT_PROMPT_REGISTRY = Registry()
+
+
+# registries\agents\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 AGENT_REGISTRY = Registry()
+
+
+# registries\context_providers\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 CONTEXT_PROVIDER_REGISTRY = Registry()
+
+
+# registries\prompt_generators\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 PROMPT_GENERATOR_REGISTRY = Registry()
+
+
+# registries\scoring_models\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 SCORING_MODEL_REGISTRY = Registry()
+
+
+# registries\state_managers\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 STATE_MANAGER_REGISTRY = Registry()
+
+
+# registries\system_managers\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 SYSTEM_MANAGER_REGISTRY = Registry()
+
+
+# registries\system_prompts\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 SYSTEM_PROMPT_REGISTRY = Registry()
+
+
+# registries\tool_providers\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 TOOL_PROVIDER_REGISTRY = Registry()
+
+
+# registries\tools\__init__.py
+
+# 1 from .. import Registry
+# 2 
+# 3 TOOL_REGISTRY = Registry()
+
+
+# utilities\__init__.py
+
+
+
+# utilities\file_management\__init__.py
+
+
+
+# utilities\metadata\__init__.py
+
+
+
+# utilities\metadata\footer\__init__.py
+
+
+
+# utilities\metadata\logging\__init__.py
+
+# 1 """Logging schemas for structured experiment data."""
+# 2 
+# 3 from .log_schemas import (
+# 4     StateLog,
+# 5     StateTransitionLog,
+# 6     PromptLog,
+# 7     CodeQualityLog,
+# 8     ErrorLog,
+# 9 )
+# 10 
+# 11 __all__ = [
+# 12     "StateLog",
+# 13     "StateTransitionLog",
+# 14     "PromptLog",
+# 15     "CodeQualityLog",
+# 16     "ErrorLog",
+# 17 ]
+
+
+# utilities\metadata\logging\log_schemas.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from dataclasses import dataclass, field
+# 4 from datetime import datetime
+# 5 
+# 6 
+# 7 @dataclass
+# 8 class StateLog:
+# 9     experiment_id: str
+# 10     system: str
+# 11     round: int
+# 12     state: str
+# 13     action: str
+# 14     score: float | None = None
+# 15     details: str | None = None
+# 16     timestamp: datetime = field(default_factory=datetime.utcnow)
+# 17 
+# 18 
+# 19 @dataclass
+# 20 class StateTransitionLog:
+# 21     experiment_id: str
+# 22     round: int
+# 23     from_state: str
+# 24     to_state: str
+# 25     reason: str | None = None
+# 26     timestamp: datetime = field(default_factory=datetime.utcnow)
+# 27 
+# 28 
+# 29 @dataclass
+# 30 class PromptLog:
+# 31     """Log entry for prompts generated and executed by agents."""
+# 32 
+# 33     experiment_id: str
+# 34     round: int
+# 35     system: str
+# 36     agent_id: str
+# 37     agent_role: str
+# 38     agent_engine: str | None = None
+# 39     symbol: str | None = None
+# 40     prompt: str | None = None
+# 41     response: str | None = None
+# 42     attempt_number: int = 0
+# 43     agent_action_outcome: str | None = None
+# 44     start: datetime = field(default_factory=datetime.utcnow)
+# 45     stop: datetime | None = None
+# 46 
+# 47 
+# 48 @dataclass
+# 49 class CodeQualityLog:
+# 50     """Log entry for static analysis and linting results."""
+# 51 
+# 52     experiment_id: str
+# 53     round: int
+# 54     symbol: str
+# 55     lines_of_code: int
+# 56     cyclomatic_complexity: float
+# 57     maintainability_index: float
+# 58     lint_errors: int
+# 59     timestamp: datetime = field(default_factory=datetime.utcnow)
+# 60 
+# 61 
+# 62 @dataclass
+# 63 class ErrorLog:
+# 64     """Log entry for errors encountered during execution."""
+# 65 
+# 66     experiment_id: str
+# 67     round: int
+# 68     error_type: str
+# 69     message: str
+# 70     file_path: str | None = None
+# 71     timestamp: datetime = field(default_factory=datetime.utcnow)
+
+
+# utilities\snapshots\__init__.py
+
+
+
+
+# === NON-PYTHON FILES ===
+

@@ -12,7 +12,7 @@ from app.utils.logging.log_writers import ConversationLogger
 
 class RecommenderAgent(BaseAgent):
     """
-    RecommenderAgentStub: Placeholder agent that emits fixed guidance or ranking logic
+    RecommenderAgent: Placeholder agent that emits fixed guidance or ranking logic
     to steer future refinement passes. Will later evolve into a learning agent.
     """
 
@@ -25,7 +25,7 @@ class RecommenderAgent(BaseAgent):
         prompt_template: str
     ):
         super().__init__(
-            name="RecommenderAgentStub",
+            name="RecommenderAgent",
             prompt_template=prompt_template,
             context_provider=context_provider,
             tool_provider=tool_provider,
@@ -38,7 +38,7 @@ class RecommenderAgent(BaseAgent):
         symbol = inputs["symbol"]
 
         context = self.context_provider.get_context(inputs)
-        prompt = self.prompt_template.format(**context)
+        prompt = self.prompt_template.render(**context)
         response = self.engine.call_engine(prompt, self.model_payload)
 
         ConversationLogger(inputs["log_path"]).log(

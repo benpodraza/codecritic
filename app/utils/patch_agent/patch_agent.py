@@ -42,7 +42,7 @@ class PatchAgent(BaseAgent):
             context = self.context_provider.get_context(inputs)
             symbol = inputs["symbol"]
             file_path = Path(inputs["file"])
-            prompt = self.prompt_template.format(**context)
+            prompt = self.prompt_template.render(**context)
 
             raw_code = self.engine.call_engine(prompt, self.model_payload)
             stripped_code, previous_footer = strip_metadata_footer(raw_code)

@@ -15,7 +15,7 @@ sys.modules.setdefault("openai", openai_mod)
 
 from app.enums.agent_management_enums import AgentRole
 from app.schemas.agent_config_schema import AgentConfig
-from app.utils.agent_factory.agent_factory import build_agent
+from app.utils.agents.agent_factory.agent_factory import build_agent
 
 
 class DummyRunner:

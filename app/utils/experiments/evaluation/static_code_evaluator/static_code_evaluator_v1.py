@@ -1,9 +1,9 @@
 # app/utils/evaluation/tooling_system_evaluator.py
 
 from typing import Optional
-from app.utils.evaluation.system_evaluator import SystemEvaluator
+from app.utils.experiments.evaluation.system_evaluator import SystemEvaluator
 from app.utils.tools.tool_result import ToolResult
-from app.utils.base_agent.tool_provider import ToolProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
 
 
 class StaticCodeEvaluator(SystemEvaluator):

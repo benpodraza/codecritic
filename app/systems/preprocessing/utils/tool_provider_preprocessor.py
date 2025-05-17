@@ -1,4 +1,4 @@
-from app.utils.base_agent.tool_provider import ToolProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
 from app.utils.tools.tool_registry import ToolRegistry
 from app.utils.tools.builtin_tool_loader import load_builtin_tools
 from app.utils.tools.tool_result import ToolResult

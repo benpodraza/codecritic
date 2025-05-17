@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Dict
 from jinja2 import Template as JinjaTemplate
 
-from app.utils.base_agent.base_agent import BaseAgent
-from app.utils.base_agent.context_provider import ContextProvider
-from app.utils.base_agent.tool_provider import ToolProvider
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.base_agent import BaseAgent
+from app.utils.agents.base_agent.context_provider import ContextProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 from app.utils.tools.tool_result import ToolResult
 from app.enums.agent_management_enums import AgentState
 

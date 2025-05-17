@@ -1,4 +1,4 @@
-from app.utils.base_agent.context_filter import ContextFilter
+from app.utils.agents.base_agent.context_filter import ContextFilter
 
 sample_context = {
     "symbol": "foo",

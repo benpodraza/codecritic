@@ -9,7 +9,7 @@ from typing import Any
 import re
 import json
 
-from app.utils.base_agent.context_provider import ContextProvider
+from app.utils.agents.base_agent.context_provider import ContextProvider
 from app.utils.symbol_graph.symbol_service import SymbolService
 
 # === CONSTANTS ===

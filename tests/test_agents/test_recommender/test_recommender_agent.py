@@ -3,7 +3,7 @@ import textwrap
 from pathlib import Path
 from jinja2 import Template as JinjaTemplate
 
-from app.utils.recommender_agent.recommender_agent import RecommenderAgent
+from app.utils.agents.recommender_agent.recommender_agent import RecommenderAgent
 from app.utils.symbol_graph.symbol_service import SymbolService
 from app.systems.preprocessing.utils.context_provider_preprocessor import ContextProviderPreprocessor
 from app.systems.preprocessing.utils.tool_provider_preprocessor import ToolProviderPreprocessor
@@ -27,7 +27,7 @@ def test_recommender_agent_run_basic(tmp_path):
     input_file.write_text(example_code, encoding="utf-8")
 
     # Load prompt template
-    prompt_path = Path("app/utils/recommender_agent/recommender_agent.txt")
+    prompt_path = Path("app/utils/agents/recommender_agent/recommender_agent.txt")
     prompt_text = prompt_path.read_text(encoding="utf-8")
     prompt_template = JinjaTemplate(prompt_text)
 

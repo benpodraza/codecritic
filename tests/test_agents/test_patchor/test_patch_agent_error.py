@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from jinja2 import Template as JinjaTemplate
 
-from app.utils.patch_agent.patch_agent import PatchAgent
+from app.utils.agents.patch_agent.patch_agent import PatchAgent
 from app.utils.symbol_graph.symbol_service import SymbolService
 from app.systems.preprocessing.utils.context_provider_preprocessor import ContextProviderPreprocessor
 from app.systems.preprocessing.utils.tool_provider_preprocessor import ToolProviderPreprocessor

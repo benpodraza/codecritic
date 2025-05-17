@@ -4,7 +4,6 @@ from ...abstract_classes.agent_base import AgentBase
 from ...factories.tool_provider import ToolProviderFactory
 from ...utilities.metadata.logging import CodeQualityLog, ErrorLog
 
-
 class EvaluatorAgent(AgentBase):
     def __init__(self, target: str) -> None:
         super().__init__()
@@ -20,14 +19,16 @@ class EvaluatorAgent(AgentBase):
         try:
             self.mypy.run(self.target)
             ruff_proc = self.ruff.run(self.target)
+            radon_proc = self.radon.run(self.target)
 
-            # Handle radon as parsed JSON output
-            radon_result = self.radon.run(self.target)
-            complexity = (
-                sum(item["complexity"] for item in radon_result) / len(radon_result)
-                if radon_result
-                else 0.0
-            )
+            # Parse "Complexity: X.Y" from radon output
+            for line in radon_proc.stdout.splitlines():
+                if "Complexity:" in line:
+                    try:
+                        complexity = float(line.split("Complexity:")[1].strip())
+                    except ValueError:
+                        pass
+                    break
 
         except Exception as exc:
             self.logger.warning("Radon unavailable: %s", exc)

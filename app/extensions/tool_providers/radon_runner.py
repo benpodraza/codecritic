@@ -1,19 +1,19 @@
 from __future__ import annotations
-from pathlib import Path
+import subprocess, sys
 from ...abstract_classes.tool_provider_base import ToolProviderBase
-from radon.complexity import cc_visit
-
 
 class RadonToolProvider(ToolProviderBase):
     def _run(self, target: str):
-        file_path = Path(target)
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {target}")
+        # Call radon via -m so it returns a CompletedProcess
+        cmd = [sys.executable, "-m", "radon", "cc", target]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
 
-        code = file_path.read_text(encoding="utf-8", errors="ignore")
-        complexity_blocks = cc_visit(code)
-        result = [
-            {"name": blk.name, "complexity": blk.complexity, "lineno": blk.lineno}
-            for blk in complexity_blocks
-        ]
-        return result
+        if proc.stdout:
+            self.logger.debug(proc.stdout)
+        if proc.stderr:
+            self.logger.error(proc.stderr)
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"radon failed: {proc.stderr.strip()}")
+
+        return proc

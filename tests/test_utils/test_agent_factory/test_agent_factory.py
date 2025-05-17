@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 import pydantic
 
+from app.schemas.shared_config_schemas import PromptVariant
+
 # Provide dummy openai module for AgentConfig
 openai_mod = types.ModuleType("openai")
 openai_mod.BaseModel = pydantic.BaseModel
@@ -32,11 +34,11 @@ def test_build_agent_prompt_missing(tmp_path, monkeypatch):
         raising=False,
     )
     config = AgentConfig(
-        name="Dummy",
-        engine="dummy",  # value not used but required
-        engine_config={},
-        prompt_variant="zero_shot",
-        base_prompt_path=str(tmp_path / "missing.txt"),
+        name="gen",
+        engine="custom/fine-tune",    # must match one of ModelEngine
+        engine_config={"temperature": "0.1"},
+        prompt_variant=PromptVariant.ZERO_SHOT,
+        base_prompt_path="nonexistent.txt"
     )
 
     with pytest.raises(FileNotFoundError):

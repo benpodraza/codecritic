@@ -8,19 +8,13 @@ import pytest
 # Patch a minimal `openai` module so schemas importing from openai work
 @pytest.fixture(autouse=True)
 def dummy_openai(monkeypatch):
-    # Create a fake OpenAI module
-    module = types.SimpleNamespace(OpenAIClient=object)
-    # Inject it into sys.modules so import openai returns our fake
-    monkeypatch.setitem(sys.modules, "openai", module)
-    # Override __import__ so that any import openai returns the fake module
-    monkeypatch.setattr(
-        builtins,
-        "__import__",
-        lambda name, globals=None, locals=None, fromlist=(), level=0:
-            module if name == "openai" else __import__(name, globals, locals, fromlist, level)
-    )
-    return module
+    # Create a fake openai module
+    fake_openai = types.SimpleNamespace(OpenAIClient=object)
+    # Inject it into sys.modules so 'import openai' just returns our fake
+    monkeypatch.setitem(sys.modules, "openai", fake_openai)
+    return fake_openai
 
+from app.enums.state_transition_enums import TransitionReason
 from app.schemas.shared_config_schemas import ModelEngine, PromptVariant
 from app.schemas.agent_config_schema import AgentConfig
 from app.schemas.experiment_config_schemas import (
@@ -67,12 +61,13 @@ def test_experiment_config_and_state_log(tmp_path):
     assert exp_cfg.experiment_id == "e1"
 
     log = StateTransitionLog(
-        experiment_id="e1",
+        experiment_id="e1", 
         symbol="foo",
         round=1,
         from_agent=None,
-        to_agent=SystemType.PREPROCESSING.name,  # just string to avoid Enum
-        reason="first_round",
-        timestamp="now",
+        to_agent="GENERATE",
+        reason=TransitionReason.FIRST_ROUND,
+        timestamp="2025-01-01T00:00:00Z"
     )
+
     assert log.experiment_id == "e1"

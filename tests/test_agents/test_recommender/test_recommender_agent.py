@@ -1,7 +1,7 @@
 import os
 import textwrap
 from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Template as JinjaTemplate
 
 from app.utils.recommender_agent.recommender_agent import RecommenderAgent
 from app.utils.symbol_graph.symbol_service import SymbolService
@@ -28,7 +28,8 @@ def test_recommender_agent_run_basic(tmp_path):
 
     # Load prompt template
     prompt_path = Path("app/utils/recommender_agent/recommender_agent.txt")
-    prompt_template = prompt_path.read_text(encoding="utf-8")
+    prompt_text = prompt_path.read_text(encoding="utf-8")
+    prompt_template = JinjaTemplate(prompt_text)
 
     # Instantiate dependencies
     symbol_service = SymbolService(tmp_path)

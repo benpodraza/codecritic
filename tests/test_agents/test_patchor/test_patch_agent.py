@@ -31,8 +31,11 @@ def test_patch_agent_run_basic(tmp_path):
     input_file.write_text(example_code, encoding="utf-8")
 
     # 3. Load patch agent prompt template (no Jinja includes)
+    from jinja2 import Template as JinjaTemplate
+
     prompt_path = Path("app/utils/patch_agent/patch_agent.txt")
-    prompt_template = prompt_path.read_text(encoding="utf-8")
+    prompt_text = prompt_path.read_text(encoding="utf-8")
+    prompt_template = JinjaTemplate(prompt_text)
 
     # 4. Instantiate patch agent
     symbol_service = SymbolService(tmp_path)

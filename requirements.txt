@@ -1,0 +1,11 @@
+black
+mypy
+radon
+ruff
+pytest
+pydantic
+fastapi
+uvicorn
+sqlalchemy
+sqlite3
+sonarcloud

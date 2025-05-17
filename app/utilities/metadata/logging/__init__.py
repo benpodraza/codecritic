@@ -1,5 +1,17 @@
 """Logging schemas for structured experiment data."""
 
-from .log_schemas import StateLog, StateTransitionLog
+from .log_schemas import (
+    StateLog,
+    StateTransitionLog,
+    PromptLog,
+    CodeQualityLog,
+    ErrorLog,
+)
 
-__all__ = ["StateLog", "StateTransitionLog"]
+__all__ = [
+    "StateLog",
+    "StateTransitionLog",
+    "PromptLog",
+    "CodeQualityLog",
+    "ErrorLog",
+]

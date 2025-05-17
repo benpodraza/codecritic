@@ -8,21 +8,21 @@ import json
 from app.enums.agent_management_enums import AgentRole
 from app.schemas.experiment_config_schemas import ExperimentConfig
 from app.systems.preprocessing.utils.tool_provider_preprocessor import ToolProviderPreprocessor
-from app.utils.agent_factory.agent_factory import build_agent
-from app.utils.evaluation.evaluator_factory import build_evaluator
-from app.utils.experiments.path_utils import get_experiment_paths
+from app.utils.agents.agent_factory.agent_factory import build_agent
+from app.utils.experiments.evaluation.evaluator_factory import build_evaluator
+from app.utils.experiments.file_management.path_utils import get_experiment_paths
 from app.enums.state_transition_enums import TransitionTarget
-from app.utils.metadata.footer_annotation_helper import strip_metadata_footer, append_metadata_footer, reapply_footer
-from app.utils.metadata.footer_metadata import FooterMetadata
+from app.utils.metadata.footer.footer_annotation_helper import strip_metadata_footer, append_metadata_footer, reapply_footer
+from app.utils.metadata.footer.footer_metadata import FooterMetadata
 from app.utils.symbol_graph.symbol_service import SymbolService
-from app.utils.logging.log_writers import (
+from app.utils.metadata.logging.log_writers import (
     StateLogger,
     StateTransitionLogger,
     ErrorLogger,
     ExperimentLogger
 )
-from app.utils.snapshots.snapshot_writer import RunSnapshotLogger
-from app.utils.logging.log_writers import EvaluationLogger
+from app.utils.metadata.snapshots.snapshot_writer import RunSnapshotLogger
+from app.utils.metadata.logging.log_writers import EvaluationLogger
 
 class SystemTrainer:
     def __init__(

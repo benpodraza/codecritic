@@ -1,65 +1,83 @@
 import os
-import sys
-import types
-import unittest
 from pathlib import Path
+from unittest.mock import MagicMock
+import pytest
 
-from app.utils.agent_factory import build_agent
-from app.registries.agent_registry import AGENT_REGISTRY
+# Set BEFORE imports to avoid import-time errors
+os.environ["OPENAI_API_KEY"] = "fake-key"
+
+# Imports after setting environment variable
+from app.utils.agents.agent_factory.registry_factory import build_agent
 from app.utils.symbol_graph.symbol_service import SymbolService
-from app.schemas.shared_config_schemas import PromptVariant
+from app.enums.agent_management_enums import AgentRole
+from app.schemas.agent_config_schema import AgentConfig
+from app.schemas.shared_config_schemas import ModelEngine, PromptVariant
 
-class FakeEngine:
-    def call_engine(self, prompt: str, config: dict) -> str:
-        return "fake"
+@pytest.fixture(autouse=True)
+def mock_environment(monkeypatch):
+    # Mock OpenAI client to avoid actual API calls
+    mock_openai_client = MagicMock()
+    mock_openai_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="fake-response"))]
+    )
 
-class DummyToolProvider:
-    pass
+    # Patch the exact import used in openai_gpt4o_runner.py
+    monkeypatch.setattr(
+        "app.utils.agents.engine.openai_gpt4o_runner.client",
+        mock_openai_client
+    )
 
-fake_engine_module = types.SimpleNamespace(OpenAiGpt4oAgentEngineRunner=FakeEngine)
-fake_jinja2 = types.SimpleNamespace(Template=lambda x: x)
-fake_tp_module = types.SimpleNamespace(PreprocessingToolProvider=DummyToolProvider)
+    # Mock Jinja2 Template rendering
+    mock_template = MagicMock()
+    mock_template.render.return_value = "fake-prompt"
+    mock_env = MagicMock()
+    mock_env.get_template.return_value = mock_template
+    monkeypatch.setattr(
+        "app.utils.agents.agent_factory.registry_factory.Environment",
+        MagicMock(return_value=mock_env)
+    )
 
-class BuildAgentTests(unittest.TestCase):
-    def setUp(self):
-        os.environ["OPENAI_API_KEY"] = "fake"
-        self.orig_engine = sys.modules.get('app.utils.engine.openai_gpt4o_runner')
-        self.orig_jinja2 = sys.modules.get('jinja2')
-        self.orig_tp = sys.modules.get('app.tool_providers.preprocessing_tool_provider')
-        sys.modules['app.utils.engine.openai_gpt4o_runner'] = fake_engine_module
-        sys.modules['jinja2'] = fake_jinja2
-        sys.modules['app.tool_providers.preprocessing_tool_provider'] = fake_tp_module
-        self.symbol_service = SymbolService(Path('.'))
+    # Mock PreprocessingToolProvider if needed
+    mock_tool_provider = MagicMock()
+    monkeypatch.setattr(
+        "app.tool_providers.preprocessing_tool_provider.PreprocessingToolProvider",
+        MagicMock(return_value=mock_tool_provider)
+    )
 
-    def tearDown(self):
-        if self.orig_engine is not None:
-            sys.modules['app.utils.engine.openai_gpt4o_runner'] = self.orig_engine
-        else:
-            del sys.modules['app.utils.engine.openai_gpt4o_runner']
-        if self.orig_jinja2 is not None:
-            sys.modules['jinja2'] = self.orig_jinja2
-        else:
-            del sys.modules['jinja2']
-        if self.orig_tp is not None:
-            sys.modules['app.tool_providers.preprocessing_tool_provider'] = self.orig_tp
-        else:
-            del sys.modules['app.tool_providers.preprocessing_tool_provider']
-        if 'bad' in AGENT_REGISTRY:
-            del AGENT_REGISTRY['bad']
+def test_build_agent_success(tmp_path):
+    symbol_service = SymbolService(tmp_path)
+    agent = build_agent('generator', symbol_service)
 
-    def test_build_agent_success(self):
-        agent = build_agent('generator', self.symbol_service)
-        from app.agents.generator_agent import GeneratorAgent
-        self.assertIsInstance(agent, GeneratorAgent)
-        self.assertEqual(agent.engine.call_engine('x', {}), 'fake')
+    assert agent is not None
+    assert agent.engine is not None
+    assert agent.engine.call_engine("prompt", {}) == "fake-response"
+    assert agent.prompt_template.render() == "fake-prompt"
 
-    def test_build_agent_missing_engine(self):
-        # create copy of existing entry and remove engine runner
-        entry = AGENT_REGISTRY['generator'].copy()
-        entry.engine = types.SimpleNamespace(runner_class=None)
-        AGENT_REGISTRY['bad'] = entry
-        with self.assertRaises(ValueError):
-            build_agent('bad', self.symbol_service)
+def test_build_agent_missing_engine(tmp_path):
+    symbol_service = SymbolService(tmp_path)
 
-if __name__ == '__main__':
-    unittest.main()
+    bad_config = AgentConfig(
+        name="test_agent",
+        engine=ModelEngine.CUSTOM,
+        engine_config={"temperature": "0.2"},
+        prompt_variant=PromptVariant.ZERO_SHOT,
+        base_prompt_path="app/prompts/base/ai_first_base.txt"
+    )
+
+    # Temporarily mock ModelEngine's runner_class property to return None
+    original_runner_class = ModelEngine.runner_class
+
+    def mock_runner_class(self):
+        return None
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(ModelEngine, "runner_class", property(mock_runner_class))
+
+        with pytest.raises(ValueError, match="Engine runner not defined"):
+            build_agent(
+                agent_key='generator',
+                symbol_service=symbol_service
+            )
+
+    # Restore original runner_class property
+    ModelEngine.runner_class = original_runner_class

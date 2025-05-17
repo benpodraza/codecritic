@@ -3,8 +3,8 @@ from typing import Any, Dict
 
 import pytest
 
-from app.utils.base_agent.base_agent import BaseAgent
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.base_agent import BaseAgent
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 
 
 class DummyContextProvider:

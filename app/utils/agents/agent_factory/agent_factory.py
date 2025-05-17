@@ -2,8 +2,8 @@ from importlib import import_module
 from pathlib import Path
 
 from app.schemas.agent_config_schema import AgentConfig
-from app.utils.base_agent.base_agent import BaseAgent
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.base_agent import BaseAgent
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 from app.enums.agent_management_enums import AgentRole
 from app.utils.symbol_graph.symbol_service import SymbolService
 from app.systems.preprocessing.utils.context_provider_preprocessor import ContextProviderPreprocessor
@@ -46,10 +46,10 @@ def build_agent(role: AgentRole, config: AgentConfig, symbol_service: SymbolServ
 
     # === Resolve agent class dynamically ===
     if role == AgentRole.PATCHOR:
-        module_path = "app.utils.patch_agent.patch_agent"
+        module_path = "app.utils.agents.patch_agent.patch_agent"
         class_name = "PatchAgent"
     elif role == AgentRole.RECOMMENDER:
-        module_path = "app.utils.recommender_agent.recommender_agent"
+        module_path = "app.utils.agents.recommender_agent.recommender_agent"
         class_name = "RecommenderAgent"
     else:
         module_path = f"app.systems.preprocessing.agents.{role.value}.{role.value}_agent"

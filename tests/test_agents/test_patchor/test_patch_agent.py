@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from app.utils.symbol_graph.symbol_service import SymbolService
 from app.systems.preprocessing.utils.context_provider_preprocessor import ContextProviderPreprocessor
 from app.systems.preprocessing.utils.tool_provider_preprocessor import ToolProviderPreprocessor
-from app.utils.patch_agent.patch_agent import PatchAgent  # adjust import path as needed
+from app.utils.agents.patch_agent.patch_agent import PatchAgent
 
 class FakeEngine:
     def call_engine(self, prompt: str, config: dict) -> str:
@@ -33,7 +33,7 @@ def test_patch_agent_run_basic(tmp_path):
     # 3. Load patch agent prompt template (no Jinja includes)
     from jinja2 import Template as JinjaTemplate
 
-    prompt_path = Path("app/utils/patch_agent/patch_agent.txt")
+    prompt_path = Path("app/utils/agents/patch_agent/patch_agent.txt")
     prompt_text = prompt_path.read_text(encoding="utf-8")
     prompt_template = JinjaTemplate(prompt_text)
 

@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Optional
 
-from app.utils.base_agent.base_agent import BaseAgent
-from app.utils.base_agent.context_provider import ContextProvider
-from app.utils.base_agent.tool_provider import ToolProvider
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.base_agent import BaseAgent
+from app.utils.agents.base_agent.context_provider import ContextProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 from app.enums.agent_management_enums import AgentState
-from app.utils.logging.log_writers import PromptLogger, ErrorLogger, ConversationLogger
-from app.utils.metadata.footer_annotation_helper import strip_metadata_footer, reapply_footer
+from app.utils.metadata.logging.log_writers import PromptLogger, ErrorLogger, ConversationLogger
+from app.utils.metadata.footer.footer_annotation_helper import strip_metadata_footer, reapply_footer
 
 
 class PatchAgent(BaseAgent):

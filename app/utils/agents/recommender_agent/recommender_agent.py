@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 from typing import Dict
 from pathlib import Path
 
-from app.utils.base_agent.base_agent import BaseAgent
-from app.utils.base_agent.context_provider import ContextProvider
-from app.utils.base_agent.tool_provider import ToolProvider
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.base_agent import BaseAgent
+from app.utils.agents.base_agent.context_provider import ContextProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 from app.enums.agent_management_enums import AgentState
-from app.utils.logging.log_writers import ConversationLogger
+from app.utils.metadata.logging.log_writers import ConversationLogger
 
 
 class RecommenderAgent(BaseAgent):

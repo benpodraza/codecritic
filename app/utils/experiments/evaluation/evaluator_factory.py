@@ -1,7 +1,7 @@
 from importlib import import_module
 from app.schemas.experiment_config_schemas import EvaluatorConfig
-from app.utils.base_agent.tool_provider import ToolProvider
-from app.utils.evaluation.system_evaluator import SystemEvaluator
+from app.utils.agents.base_agent.tool_provider import ToolProvider
+from app.utils.experiments.evaluation.system_evaluator import SystemEvaluator
 
 def build_evaluator(config: EvaluatorConfig, tool_provider: ToolProvider) -> SystemEvaluator:
     module_path = f"app.utils.evaluation.{config.name}.{config.name}_{config.version}"

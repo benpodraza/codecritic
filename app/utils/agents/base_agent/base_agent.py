@@ -2,11 +2,11 @@ from abc import ABC
 from typing import Any, Callable, Optional, Dict
 from datetime import datetime, timezone
 
-from app.utils.base_agent.context_provider import ContextProvider
-from app.utils.base_agent.tool_provider import ToolProvider
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.base_agent.context_provider import ContextProvider
+from app.utils.agents.base_agent.tool_provider import ToolProvider
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 from app.enums.agent_management_enums import AgentState
-from app.utils.logging.log_writers import PromptLogger, ErrorLogger
+from app.utils.metadata.logging.log_writers import PromptLogger, ErrorLogger
 
 class BaseAgent(ABC):
     """

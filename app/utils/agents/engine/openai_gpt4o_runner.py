@@ -2,7 +2,7 @@ import os
 import re
 from typing import Any
 from openai import OpenAI
-from app.utils.engine.agent_engine_runner import AgentEngineRunner
+from app.utils.agents.engine.agent_engine_runner import AgentEngineRunner
 
 # === ENV + CLIENT ===
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

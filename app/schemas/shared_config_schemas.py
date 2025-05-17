@@ -1,6 +1,8 @@
 
 from enum import Enum
 
+from app.utils.agents.engine.openai_gpt4o_runner import OpenAiGpt4oAgentEngineRunner
+
 
 class ModelEngine(str, Enum):
     GPT_4O = "openai/gpt-4o"
@@ -11,7 +13,6 @@ class ModelEngine(str, Enum):
 
     @property
     def runner_class(self):
-        from app.utils.engine.openai_gpt4o_runner import OpenAiGpt4oAgentEngineRunner
         return {
             ModelEngine.GPT_4O: OpenAiGpt4oAgentEngineRunner,
             ModelEngine.GPT_4: OpenAiGpt4oAgentEngineRunner,

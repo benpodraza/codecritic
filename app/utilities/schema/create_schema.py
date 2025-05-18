@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from enum import Enum
 import json
 import sqlite3
 from pathlib import Path
 from typing import Type, Any, Union, get_origin, get_args
+from enum import Enum
 
 from app.schemas import (
     AgentEngine,
@@ -92,10 +92,9 @@ def load_seed_data(
         for entry in entries:
             obj = model(**entry)
             data = obj.model_dump()
-            # Convert any Path objects to strings (esp. WindowsPath)
+            # Convert enums and paths to strings
             data = {
-                k: (str(v) if isinstance(v, (Path, Enum)) else v)
-                for k, v in data.items()
+                k: str(v) if isinstance(v, (Path, Enum)) else v for k, v in data.items()
             }
             cols = ",".join(data.keys())
             placeholders = ",".join(["?"] * len(data))

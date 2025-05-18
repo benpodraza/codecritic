@@ -1,33 +1,30 @@
-
 # === PYTHON FILES ===
 
 # __init__.py
 
 
-
 # abstract_classes\__init__.py
-
 
 
 # abstract_classes\agent_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class AgentBase(ABC):
 # 8     """Base class for executing agent logic."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def run(self, *args, **kwargs) -> None:
 # 14         self.logger.debug("Agent run start")
 # 15         self._run_agent_logic(*args, **kwargs)
 # 16         self.logger.debug("Agent run end")
-# 17 
+# 17
 # 18     @abstractmethod
 # 19     def _run_agent_logic(self, *args, **kwargs) -> None:
 # 20         """Execute agent specific logic."""
@@ -37,23 +34,23 @@
 # abstract_classes\context_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class ContextProviderBase(ABC):
 # 8     """Base class for providing context from symbol graphs."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def get_context(self, *args, **kwargs):
 # 14         self.logger.debug("Context retrieval start")
 # 15         context = self._get_context(*args, **kwargs)
 # 16         self.logger.debug("Context retrieval end")
 # 17         return context
-# 18 
+# 18
 # 19     @abstractmethod
 # 20     def _get_context(self, *args, **kwargs):
 # 21         """Return context information."""
@@ -63,53 +60,53 @@
 # abstract_classes\experiment.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from typing import Any, Dict, List
-# 5 
+# 5
 # 6 from ..factories.scoring_provider import ScoringProviderFactory
 # 7 from ..factories.system_manager import SystemManagerFactory
 # 8 from ..factories.experiment_config_provider import ExperimentConfigProvider
 # 9 from ..utilities.db import init_db, insert_logs
 # 10 from ..utilities.metadata.logging import ScoringLog
 # 11 from ..utilities.metrics import EVALUATION_METRICS
-# 12 
-# 13 
+# 12
+# 13
 # 14 class Experiment:
 # 15     """Base experiment handling execution and scoring."""
-# 16 
+# 16
 # 17     def __init__(self, config_id: int) -> None:
 # 18         self.logger = logging.getLogger(self.__class__.__name__)
 # 19         self.config_id = config_id
 # 20         self.config: Dict[str, Any] | None = None
 # 21         self.scoring_model_id = "dummy"
-# 22 
+# 22
 # 23         self.evaluation_logs: List[Any] = []
 # 24         self.code_quality_logs: List[Any] = []
 # 25         self.conversation_logs: List[Any] = []
 # 26         self.prompt_logs: List[Any] = []
 # 27         self.state_logs: List[Any] = []
 # 28         self.metrics: Dict[str, float] | None = None
-# 29 
+# 29
 # 30     def run(self, *args, **kwargs) -> Dict[str, float]:
 # 31         self.logger.debug("Experiment run start")
-# 32 
+# 32
 # 33         #  load configuration
 # 34         self.config = ExperimentConfigProvider.load(self.config_id)
 # 35         self.scoring_model_id = self.config.get("scoring_model_id", "dummy")
 # 36         system_manager_id = self.config.get("system_manager_id", "dummy")
-# 37 
+# 37
 # 38         #  run system manager
 # 39         manager = SystemManagerFactory.create(system_manager_id)
 # 40         manager.run()
-# 41 
+# 41
 # 42         #  collect logs from manager
 # 43         self.evaluation_logs = getattr(manager, "evaluation_logs", [])
 # 44         self.code_quality_logs = getattr(manager, "code_quality_logs", [])
 # 45         self.conversation_logs = getattr(manager, "conversation_logs", [])
 # 46         self.prompt_logs = getattr(manager, "prompt_logs", [])
 # 47         self.state_logs = getattr(manager, "state_logs", [])
-# 48 
+# 48
 # 49         logs = {
 # 50             "evaluation": self.evaluation_logs,
 # 51             "code_quality": self.code_quality_logs,
@@ -117,13 +114,13 @@
 # 53             "prompt": self.prompt_logs,
 # 54             "state": self.state_logs,
 # 55         }
-# 56 
+# 56
 # 57         scoring_provider = ScoringProviderFactory.create(self.scoring_model_id)
 # 58         metrics = scoring_provider.score(logs)
 # 59         for key in EVALUATION_METRICS:
 # 60             metrics.setdefault(key, 0.0)
 # 61         self.logger.info("Experiment metrics: %s", metrics)
-# 62 
+# 62
 # 63         #  persist scoring logs
 # 64         conn = init_db()
 # 65         scoring_logs = [
@@ -137,11 +134,11 @@
 # 73         ]
 # 74         insert_logs(conn, "scoring_log", scoring_logs)
 # 75         conn.close()
-# 76 
+# 76
 # 77         self.metrics = metrics
 # 78         self.logger.debug("Experiment run end")
 # 79         return metrics
-# 80 
+# 80
 # 81     def _run_experiment_logic(self, *args, **kwargs) -> None:
 # 82         """Override to implement experiment steps."""
 # 83         raise NotImplementedError
@@ -150,23 +147,23 @@
 # abstract_classes\prompt_generator_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class PromptGeneratorBase(ABC):
 # 8     """Base class for generating prompts."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def generate_prompt(self, *args, **kwargs) -> str:
 # 14         self.logger.debug("Prompt generation start")
 # 15         prompt = self._generate_prompt(*args, **kwargs)
 # 16         self.logger.debug("Prompt generation end")
 # 17         return prompt
-# 18 
+# 18
 # 19     @abstractmethod
 # 20     def _generate_prompt(self, *args, **kwargs) -> str:
 # 21         """Return a generated prompt."""
@@ -176,23 +173,23 @@
 # abstract_classes\scoring_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class ScoringProviderBase(ABC):
 # 8     """Base class for computing evaluation metrics."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def score(self, *args, **kwargs):
 # 14         self.logger.debug("Scoring start")
 # 15         result = self._score(*args, **kwargs)
 # 16         self.logger.debug("Scoring end")
 # 17         return result
-# 18 
+# 18
 # 19     @abstractmethod
 # 20     def _score(self, *args, **kwargs):
 # 21         """Compute evaluation metrics."""
@@ -202,22 +199,22 @@
 # abstract_classes\state_manager_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class StateManagerBase(ABC):
 # 8     """Base class for managing state-level execution."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def run(self, *args, **kwargs) -> None:
 # 14         self.logger.debug("StateManager run start")
 # 15         self._run_state_logic(*args, **kwargs)
 # 16         self.logger.debug("StateManager run end")
-# 17 
+# 17
 # 18     @abstractmethod
 # 19     def _run_state_logic(self, *args, **kwargs) -> None:
 # 20         """Execute state specific logic."""
@@ -227,22 +224,22 @@
 # abstract_classes\system_manager_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class SystemManagerBase(ABC):
 # 8     """Base class for coordinating high level system logic."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def run(self, *args, **kwargs) -> None:
 # 14         self.logger.debug("SystemManager run start")
 # 15         self._run_system_logic(*args, **kwargs)
 # 16         self.logger.debug("SystemManager run end")
-# 17 
+# 17
 # 18     @abstractmethod
 # 19     def _run_system_logic(self, *args, **kwargs) -> None:
 # 20         """Execute system-specific logic and state transitions."""
@@ -252,23 +249,23 @@
 # abstract_classes\tool_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from abc import ABC, abstractmethod
-# 5 
-# 6 
+# 5
+# 6
 # 7 class ToolProviderBase(ABC):
 # 8     """Base class for running external tools."""
-# 9 
+# 9
 # 10     def __init__(self) -> None:
 # 11         self.logger = logging.getLogger(self.__class__.__name__)
-# 12 
+# 12
 # 13     def run(self, *args, **kwargs):
 # 14         self.logger.debug("Tool run start")
 # 15         result = self._run(*args, **kwargs)
 # 16         self.logger.debug("Tool run end")
 # 17         return result
-# 18 
+# 18
 # 19     @abstractmethod
 # 20     def _run(self, *args, **kwargs):
 # 21         """Run tool-specific logic."""
@@ -278,14 +275,13 @@
 # enums\__init__.py
 
 
-
 # enums\agent_enums.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from enum import Enum
-# 4 
-# 5 
+# 4
+# 5
 # 6 class AgentRole(Enum):
 # 7     CRITIC = "critic"
 # 8     TESTER = "tester"
@@ -295,19 +291,19 @@
 # enums\system_enums.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from enum import Enum
-# 4 
-# 5 
+# 4
+# 5
 # 6 class SystemState(Enum):
 # 7     INIT = "init"
 # 8     RUNNING = "running"
 # 9     COMPLETE = "complete"
-# 10 
-# 11 
+# 10
+# 11
 # 12 class FSMState(Enum):
 # 13     """Finite state machine states for the CodeCritic system."""
-# 14 
+# 14
 # 15     START = "start"
 # 16     GENERATE = "generate"
 # 17     DISCRIMINATE = "discriminate"
@@ -320,10 +316,9 @@
 # extensions\__init__.py
 
 
-
 # extensions\agent_prompts\__init__.py
 
-# 1 
+# 1
 
 
 # extensions\agents\__init__.py
@@ -332,19 +327,19 @@
 # 2 from .generator_agent import GeneratorAgent
 # 3 from .evaluator_agent import EvaluatorAgent
 # 4 from ...registries.agents import AGENT_REGISTRY
-# 5 
+# 5
 # 6 AGENT_REGISTRY.register("dummy", DummyAgent)
 # 7 AGENT_REGISTRY.register("generator", GeneratorAgent)
 # 8 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
-# 9 
+# 9
 # 10 __all__ = ["DummyAgent", "GeneratorAgent", "EvaluatorAgent"]
 
 
 # extensions\agents\dummy_agent.py
 
 # 1 from ...abstract_classes.agent_base import AgentBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyAgent(AgentBase):
 # 5     def _run_agent_logic(self, *args, **kwargs) -> None:
 # 6         self.logger.info("Dummy agent logic executed")
@@ -357,8 +352,8 @@
 # 3 from ...abstract_classes.agent_base import AgentBase
 # 4 from ...factories.tool_provider import ToolProviderFactory
 # 5 from ...utilities.metadata.logging import CodeQualityLog, ErrorLog
-# 6 
-# 7 
+# 6
+# 7
 # 8 class EvaluatorAgent(AgentBase):
 # 9     def __init__(self, target: str) -> None:
 # 10         super().__init__()
@@ -368,14 +363,14 @@
 # 14         self.radon = ToolProviderFactory.create("radon")
 # 15         self.quality_logs: List[CodeQualityLog] = []
 # 16         self.error_logs: List[ErrorLog] = []
-# 17 
+# 17
 # 18     def _run_agent_logic(self, *args, **kwargs) -> None:
 # 19         complexity = 0.0
 # 20         try:
 # 21             self.mypy.run(self.target)
 # 22             ruff_proc = self.ruff.run(self.target)
 # 23             radon_proc = self.radon.run(self.target)
-# 24 
+# 24
 # 25             #  Parse "Complexity: X.Y" from radon output
 # 26             for line in radon_proc.stdout.splitlines():
 # 27                 if "Complexity:" in line:
@@ -384,10 +379,10 @@
 # 30                     except ValueError:
 # 31                         pass
 # 32                     break
-# 33 
+# 33
 # 34         except Exception as exc:
 # 35             self.logger.warning("Radon unavailable: %s", exc)
-# 36 
+# 36
 # 37         lines = sum(1 for _ in open(self.target, "r", encoding="utf-8"))
 # 38         log = CodeQualityLog(
 # 39             experiment_id="exp",
@@ -404,26 +399,26 @@
 # extensions\agents\generator_agent.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import List
 # 4 from datetime import datetime, timezone
-# 5 
+# 5
 # 6 from ...abstract_classes.agent_base import AgentBase
 # 7 from ...enums.agent_enums import AgentRole
 # 8 from ...factories.tool_provider import ToolProviderFactory
 # 9 from ...utilities.metadata.logging import ErrorLog, PromptLog
-# 10 
-# 11 
+# 10
+# 11
 # 12 class GeneratorAgent(AgentBase):
 # 13     """Agent responsible for formatting code using black."""
-# 14 
+# 14
 # 15     def __init__(self, target: str) -> None:
 # 16         super().__init__()
 # 17         self.target = target
 # 18         self.formatter = ToolProviderFactory.create("black")
 # 19         self.prompt_logs: List[PromptLog] = []
 # 20         self.error_logs: List[ErrorLog] = []
-# 21 
+# 21
 # 22     def _run_agent_logic(
 # 23         self, *args, **kwargs
 # 24     ) -> None:  #  pragma: no cover - simple logging
@@ -464,18 +459,18 @@
 # 1 from .dummy_context_provider import DummyContextProvider
 # 2 from .symbol_graph_provider import SymbolGraphProvider
 # 3 from ...registries.context_providers import CONTEXT_PROVIDER_REGISTRY
-# 4 
+# 4
 # 5 CONTEXT_PROVIDER_REGISTRY.register("dummy", DummyContextProvider)
 # 6 CONTEXT_PROVIDER_REGISTRY.register("symbol_graph", SymbolGraphProvider)
-# 7 
+# 7
 # 8 __all__ = ["DummyContextProvider", "SymbolGraphProvider"]
 
 
 # extensions\context_providers\dummy_context_provider.py
 
 # 1 from ...abstract_classes.context_provider_base import ContextProviderBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyContextProvider(ContextProviderBase):
 # 5     def _get_context(self, *args, **kwargs):
 # 6         self.logger.info("Dummy context provided")
@@ -485,34 +480,34 @@
 # extensions\context_providers\symbol_graph_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import ast
 # 4 from pathlib import Path
 # 5 from typing import Any, Dict, List, Set
-# 6 
+# 6
 # 7 from ...abstract_classes.context_provider_base import ContextProviderBase
-# 8 
-# 9 
+# 8
+# 9
 # 10 class SymbolGraphProvider(ContextProviderBase):
 # 11     """Generate a simple symbol graph for a Python module."""
-# 12 
+# 12
 # 13     def __init__(self, module_path: str) -> None:
 # 14         super().__init__()
 # 15         self.module_path = Path(module_path)
-# 16 
+# 16
 # 17     def _get_context(self) -> Dict[str, Any]:
 # 18         """Parse the module and return context information."""
 # 19         if not self.module_path.exists():
 # 20             self.logger.error("Module not found: %s", self.module_path)
 # 21             return {}
-# 22 
+# 22
 # 23         source = self.module_path.read_text(encoding="utf-8")
 # 24         tree = ast.parse(source)
-# 25 
+# 25
 # 26         functions: List[str] = []
 # 27         classes: Dict[str, List[str]] = {}
 # 28         call_map: Dict[str, Set[str]] = {}
-# 29 
+# 29
 # 30         for node in tree.body:
 # 31             if isinstance(node, ast.FunctionDef):
 # 32                 sig = self._format_signature(node)
@@ -527,7 +522,7 @@
 # 41                         key = f"{node.name}.{item.name}"
 # 42                         call_map[key] = self._collect_calls(item)
 # 43                 classes[node.name] = method_sigs
-# 44 
+# 44
 # 45         context = {
 # 46             "functions": functions,
 # 47             "classes": classes,
@@ -535,7 +530,7 @@
 # 49         }
 # 50         self.logger.info("Context generated for %s", self.module_path)
 # 51         return context
-# 52 
+# 52
 # 53     def _format_signature(self, func: ast.FunctionDef) -> str:
 # 54         args = [arg.arg for arg in func.args.args]
 # 55         if func.args.vararg:
@@ -545,7 +540,7 @@
 # 59         if func.args.kwarg:
 # 60             args.append("**" + func.args.kwarg.arg)
 # 61         return f"{func.name}({', '.join(args)})"
-# 62 
+# 62
 # 63     def _collect_calls(self, func: ast.FunctionDef) -> Set[str]:
 # 64         calls: Set[str] = set()
 # 65         for node in ast.walk(func):
@@ -562,45 +557,45 @@
 # 1 from .dummy_prompt_generator import DummyPromptGenerator
 # 2 from .basic_prompt_generator import BasicPromptGenerator
 # 3 from ...registries.prompt_generators import PROMPT_GENERATOR_REGISTRY
-# 4 
+# 4
 # 5 PROMPT_GENERATOR_REGISTRY.register("dummy", DummyPromptGenerator)
 # 6 PROMPT_GENERATOR_REGISTRY.register("basic", BasicPromptGenerator)
-# 7 
+# 7
 # 8 __all__ = ["DummyPromptGenerator", "BasicPromptGenerator"]
 
 
 # extensions\prompt_generators\basic_prompt_generator.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Any, Dict
-# 4 
+# 4
 # 5 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
 # 6 from ...abstract_classes.context_provider_base import ContextProviderBase
-# 7 
-# 8 
+# 7
+# 8
 # 9 class BasicPromptGenerator(PromptGeneratorBase):
 # 10     """Combine system and agent templates with code context."""
-# 11 
+# 11
 # 12     def __init__(self, context_provider: ContextProviderBase) -> None:
 # 13         super().__init__()
 # 14         self.context_provider = context_provider
-# 15 
+# 15
 # 16     def _generate_prompt(
 # 17         self, agent_config: Dict[str, Any], system_config: Dict[str, Any]
 # 18     ) -> str:
 # 19         context = self.context_provider.get_context()
 # 20         self.logger.debug("Raw context: %s", context)
-# 21 
+# 21
 # 22         system_template = system_config.get("template", "")
 # 23         agent_template = agent_config.get("template", "")
-# 24 
+# 24
 # 25         context_snippet = ""
 # 26         if context:
 # 27             funcs = ", ".join(context.get("functions", []))
 # 28             classes = ", ".join(context.get("classes", {}).keys())
 # 29             context_snippet = f"Functions: {funcs}\nClasses: {classes}"
-# 30 
+# 30
 # 31         prompt = f"{system_template}\n\n{agent_template}\n\n{context_snippet}"
 # 32         self.logger.info("Prompt generated")
 # 33         self.logger.debug("Prompt content: %s", prompt)
@@ -610,8 +605,8 @@
 # extensions\prompt_generators\dummy_prompt_generator.py
 
 # 1 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyPromptGenerator(PromptGeneratorBase):
 # 5     def _generate_prompt(self, *args, **kwargs) -> str:
 # 6         self.logger.info("Dummy prompt generated")
@@ -623,26 +618,26 @@
 # 1 from .dummy_scoring_provider import DummyScoringProvider
 # 2 from .basic_scoring_provider import BasicScoringProvider
 # 3 from ...registries.scoring_models import SCORING_MODEL_REGISTRY
-# 4 
+# 4
 # 5 SCORING_MODEL_REGISTRY.register("dummy", DummyScoringProvider)
 # 6 SCORING_MODEL_REGISTRY.register("basic", BasicScoringProvider)
-# 7 
+# 7
 # 8 __all__ = ["DummyScoringProvider", "BasicScoringProvider"]
 
 
 # extensions\scoring_models\basic_scoring_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Any, Dict, List
-# 4 
+# 4
 # 5 from ...abstract_classes.scoring_provider_base import ScoringProviderBase
 # 6 from ...utilities.metrics import compute_metrics
-# 7 
-# 8 
+# 7
+# 8
 # 9 class BasicScoringProvider(ScoringProviderBase):
 # 10     """Compute experiment metrics using basic heuristics."""
-# 11 
+# 11
 # 12     def _score(self, logs: Dict[str, List[Any]]) -> Dict[str, float]:
 # 13         self.logger.debug("Scoring with logs: %s", logs)
 # 14         evaluation_logs = logs.get("evaluation", [])
@@ -650,7 +645,7 @@
 # 16         conversation_logs = logs.get("conversation", [])
 # 17         prompt_logs = logs.get("prompt", [])
 # 18         state_logs = logs.get("state", [])
-# 19 
+# 19
 # 20         metrics = compute_metrics(
 # 21             evaluation_logs,
 # 22             code_quality_logs,
@@ -665,8 +660,8 @@
 # extensions\scoring_models\dummy_scoring_provider.py
 
 # 1 from ...abstract_classes.scoring_provider_base import ScoringProviderBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyScoringProvider(ScoringProviderBase):
 # 5     def _score(self, *args, **kwargs):
 # 6         self.logger.info("Dummy scoring")
@@ -678,18 +673,18 @@
 # 1 from .dummy_state_manager import DummyStateManager
 # 2 from .state_manager import StateManager
 # 3 from ...registries.state_managers import STATE_MANAGER_REGISTRY
-# 4 
+# 4
 # 5 STATE_MANAGER_REGISTRY.register("dummy", DummyStateManager)
 # 6 STATE_MANAGER_REGISTRY.register("state", StateManager)
-# 7 
+# 7
 # 8 __all__ = ["DummyStateManager", "StateManager"]
 
 
 # extensions\state_managers\dummy_state_manager.py
 
 # 1 from ...abstract_classes.state_manager_base import StateManagerBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyStateManager(StateManagerBase):
 # 5     def _run_state_logic(self, *args, **kwargs) -> None:
 # 6         self.logger.info("Dummy state logic executed")
@@ -698,13 +693,13 @@
 # extensions\state_managers\state_manager.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ...abstract_classes.state_manager_base import StateManagerBase
-# 4 
-# 5 
+# 4
+# 5
 # 6 class StateManager(StateManagerBase):
 # 7     """Concrete manager executing actions within each FSM state."""
-# 8 
+# 8
 # 9     def _run_state_logic(self, *args, **kwargs) -> None:
 # 10         state = kwargs.get("state")
 # 11         self.logger.info("Running state logic for %s", state)
@@ -715,18 +710,18 @@
 # 1 from .dummy_system_manager import DummySystemManager
 # 2 from .system_manager import SystemManager
 # 3 from ...registries.system_managers import SYSTEM_MANAGER_REGISTRY
-# 4 
+# 4
 # 5 SYSTEM_MANAGER_REGISTRY.register("dummy", DummySystemManager)
 # 6 SYSTEM_MANAGER_REGISTRY.register("system", SystemManager)
-# 7 
+# 7
 # 8 __all__ = ["DummySystemManager", "SystemManager"]
 
 
 # extensions\system_managers\dummy_system_manager.py
 
 # 1 from ...abstract_classes.system_manager_base import SystemManagerBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummySystemManager(SystemManagerBase):
 # 5     def _run_system_logic(self, *args, **kwargs) -> None:
 # 6         self.logger.info("Dummy system logic executed")
@@ -735,9 +730,9 @@
 # extensions\system_managers\system_manager.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import List
-# 4 
+# 4
 # 5 from ...factories.agent import AgentFactory
 # 6 from ...factories.context_provider import ContextProviderFactory
 # 7 from ...factories.prompt_manager import PromptGeneratorFactory
@@ -749,15 +744,15 @@
 # 13     StateLog,
 # 14     StateTransitionLog,
 # 15 )
-# 16 
+# 16
 # 17 from ...abstract_classes.system_manager_base import SystemManagerBase
 # 18 from ...enums.system_enums import FSMState
 # 19 from ..state_managers.state_manager import StateManager
-# 20 
-# 21 
+# 20
+# 21
 # 22 class SystemManager(SystemManagerBase):
 # 23     """Concrete system manager implementing FSM transitions."""
-# 24 
+# 24
 # 25     def __init__(self) -> None:
 # 26         super().__init__()
 # 27         self.state_manager = StateManager()
@@ -767,7 +762,7 @@
 # 31         self.prompt_logs: List[PromptLog] = []
 # 32         self.code_quality_logs: List[CodeQualityLog] = []
 # 33         self.scoring_logs: List[ScoringLog] = []
-# 34 
+# 34
 # 35         self.context_provider = ContextProviderFactory.create(
 # 36             "symbol_graph", module_path="sample_module.py"
 # 37         )
@@ -776,7 +771,7 @@
 # 40         )
 # 41         self.generator = AgentFactory.create("generator", target="sample_module.py")
 # 42         self.evaluator = AgentFactory.create("evaluator", target="sample_module.py")
-# 43 
+# 43
 # 44     def _transition_to(self, next_state: FSMState, reason: str | None = None) -> None:
 # 45         log = StateTransitionLog(
 # 46             experiment_id="exp",
@@ -788,7 +783,7 @@
 # 52         self.transition_logs.append(log)
 # 53         self.logger.info("%s -> %s", self.current_state.value, next_state.value)
 # 54         self.current_state = next_state
-# 55 
+# 55
 # 56     def _run_system_logic(self, *args, **kwargs) -> None:
 # 57         sequence = [
 # 58             FSMState.GENERATE,
@@ -818,7 +813,7 @@
 # 82                 elif state is FSMState.DISCRIMINATE:
 # 83                     self.evaluator.run()
 # 84                     self.code_quality_logs.extend(self.evaluator.quality_logs)
-# 85 
+# 85
 # 86         insert_logs(conn, "state_transition_log", self.transition_logs)
 # 87         insert_logs(conn, "state_log", self.state_logs)
 # 88         insert_logs(conn, "prompt_log", self.prompt_logs)
@@ -830,7 +825,7 @@
 
 # extensions\system_prompts\__init__.py
 
-# 1 
+# 1
 
 
 # extensions\tool_providers\__init__.py
@@ -841,13 +836,13 @@
 # 4 from .radon_runner import RadonToolProvider
 # 5 from .ruff_runner import RuffToolProvider
 # 6 from ...registries.tool_providers import TOOL_PROVIDER_REGISTRY
-# 7 
+# 7
 # 8 TOOL_PROVIDER_REGISTRY.register("dummy", DummyToolProvider)
 # 9 TOOL_PROVIDER_REGISTRY.register("black", BlackToolProvider)
 # 10 TOOL_PROVIDER_REGISTRY.register("mypy", MypyToolProvider)
 # 11 TOOL_PROVIDER_REGISTRY.register("radon", RadonToolProvider)
 # 12 TOOL_PROVIDER_REGISTRY.register("ruff", RuffToolProvider)
-# 13 
+# 13
 # 14 __all__ = [
 # 15     "DummyToolProvider",
 # 16     "BlackToolProvider",
@@ -863,8 +858,8 @@
 # 2 import subprocess
 # 3 import sys
 # 4 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 5 
-# 6 
+# 5
+# 6
 # 7 class BlackToolProvider(ToolProviderBase):
 # 8     def _run(self, target: str, check: bool = False):
 # 9         #  Use quiet mode to suppress emojis and extra output on Windows
@@ -883,13 +878,13 @@
 # 22         return proc
 
 
-# extensions\tool_providers\docformetter_runner.py
+# extensions\tool_providers\docformatter_runner.py
 
 # 1 import subprocess
 # 2 import sys
 # 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
-# 4 
-# 5 
+# 4
+# 5
 # 6 class DocFormatterToolProvider(ToolProviderBase):
 # 7     def _run(self, target: str, check: bool = False):
 # 8         cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
@@ -908,8 +903,8 @@
 # extensions\tool_providers\dummy_tool_provider.py
 
 # 1 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 2 
-# 3 
+# 2
+# 3
 # 4 class DummyToolProvider(ToolProviderBase):
 # 5     def _run(self, *args, **kwargs):
 # 6         self.logger.info("Dummy tool run")
@@ -919,13 +914,13 @@
 # extensions\tool_providers\mypy_runner.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import subprocess
 # 4 import sys
-# 5 
+# 5
 # 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 7 
-# 8 
+# 7
+# 8
 # 9 class MypyToolProvider(ToolProviderBase):
 # 10     def _run(self, target: str):
 # 11         cmd = [sys.executable, "-m", "mypy", target]
@@ -945,35 +940,35 @@
 # 2 import subprocess
 # 3 import sys
 # 4 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 5 
-# 6 
+# 5
+# 6
 # 7 class RadonToolProvider(ToolProviderBase):
 # 8     def _run(self, target: str):
 # 9         #  Call radon via -m so it returns a CompletedProcess
 # 10         cmd = [sys.executable, "-m", "radon", "cc", target]
 # 11         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 12 
+# 12
 # 13         if proc.stdout:
 # 14             self.logger.debug(proc.stdout)
 # 15         if proc.stderr:
 # 16             self.logger.error(proc.stderr)
-# 17 
+# 17
 # 18         if proc.returncode != 0:
 # 19             raise RuntimeError(f"radon failed: {proc.stderr.strip()}")
-# 20 
+# 20
 # 21         return proc
 
 
 # extensions\tool_providers\ruff_runner.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import subprocess
 # 4 import sys
-# 5 
+# 5
 # 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 7 
-# 8 
+# 7
+# 8
 # 9 class RuffToolProvider(ToolProviderBase):
 # 10     def _run(self, target: str):
 # 11         cmd = [sys.executable, "-m", "ruff", "check", target]
@@ -990,10 +985,10 @@
 # extensions\tool_providers\sonarcloud_runner.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
-# 4 
-# 5 
+# 4
+# 5
 # 6 class SonarCloudToolProvider(ToolProviderBase):
 # 7     def _run(self, project_key: str, organization: str, token: str):
 # 8         self.logger.info(
@@ -1012,18 +1007,16 @@
 # extensions\tools\__init__.py
 
 
-
 # factories\__init__.py
-
 
 
 # factories\agent.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.agents import AGENT_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class AgentFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1036,10 +1029,10 @@
 # factories\context_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.context_providers import CONTEXT_PROVIDER_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class ContextProviderFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1052,19 +1045,19 @@
 # factories\experiment_config_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Dict, Any
-# 4 
+# 4
 # 5 _CONFIGS: Dict[int, Dict[str, Any]] = {}
-# 6 
-# 7 
+# 6
+# 7
 # 8 class ExperimentConfigProvider:
 # 9     """Simple provider storing experiment configurations in memory."""
-# 10 
+# 10
 # 11     @staticmethod
 # 12     def register(config_id: int, config: Dict[str, Any]) -> None:
 # 13         _CONFIGS[config_id] = config
-# 14 
+# 14
 # 15     @staticmethod
 # 16     def load(config_id: int) -> Dict[str, Any]:
 # 17         config = _CONFIGS.get(config_id)
@@ -1076,10 +1069,10 @@
 # factories\prompt_manager.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.prompt_generators import PROMPT_GENERATOR_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class PromptGeneratorFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1092,10 +1085,10 @@
 # factories\scoring_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.scoring_models import SCORING_MODEL_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class ScoringProviderFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1108,10 +1101,10 @@
 # factories\state_manager.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.state_managers import STATE_MANAGER_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class StateManagerFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1124,8 +1117,8 @@
 # factories\system_config_provider.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 
+# 2
+# 3
 # 4 class SystemConfigProvider:
 # 5     @staticmethod
 # 6     def create(config: dict):
@@ -1135,10 +1128,10 @@
 # factories\system_manager.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.system_managers import SYSTEM_MANAGER_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class SystemManagerFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1151,10 +1144,10 @@
 # factories\tool_provider.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from ..registries.tool_providers import TOOL_PROVIDER_REGISTRY
-# 4 
-# 5 
+# 4
+# 5
 # 6 class ToolProviderFactory:
 # 7     @staticmethod
 # 8     def create(name: str, **kwargs):
@@ -1169,7 +1162,7 @@
 # 1 class Registry:
 # 2     def __init__(self):
 # 3         self._registry = {}
-# 4 
+# 4
 # 5     def register(self, name: str, item):
 # 6         existing = self._registry.get(name)
 # 7         if existing is not None:
@@ -1177,10 +1170,10 @@
 # 9                 return
 # 10             raise KeyError(f"{name} already registered")
 # 11         self._registry[name] = item
-# 12 
+# 12
 # 13     def get(self, name: str):
 # 14         return self._registry.get(name)
-# 15 
+# 15
 # 16     def all(self):
 # 17         return dict(self._registry)
 
@@ -1188,77 +1181,77 @@
 # registries\agent_engines\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 AGENT_ENGINE_REGISTRY = Registry()
 
 
 # registries\agent_prompts\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 AGENT_PROMPT_REGISTRY = Registry()
 
 
 # registries\agents\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 AGENT_REGISTRY = Registry()
 
 
 # registries\context_providers\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 CONTEXT_PROVIDER_REGISTRY = Registry()
 
 
 # registries\prompt_generators\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 PROMPT_GENERATOR_REGISTRY = Registry()
 
 
 # registries\scoring_models\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 SCORING_MODEL_REGISTRY = Registry()
 
 
 # registries\state_managers\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 STATE_MANAGER_REGISTRY = Registry()
 
 
 # registries\system_managers\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 SYSTEM_MANAGER_REGISTRY = Registry()
 
 
 # registries\system_prompts\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 SYSTEM_PROMPT_REGISTRY = Registry()
 
 
 # registries\tool_providers\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 TOOL_PROVIDER_REGISTRY = Registry()
 
 
 # registries\tools\__init__.py
 
 # 1 from .. import Registry
-# 2 
+# 2
 # 3 TOOL_REGISTRY = Registry()
 
 
@@ -1277,7 +1270,7 @@
 # 11 from .system_config_schema import SystemConfig
 # 12 from .experiment_config_schema import ExperimentConfig
 # 13 from .series_schema import Series
-# 14 
+# 14
 # 15 __all__ = [
 # 16     "AgentEngine",
 # 17     "AgentPrompt",
@@ -1298,20 +1291,20 @@
 # schemas\agent_config_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator, model_validator
-# 8 
+# 8
 # 9 from .agent_engine_schema import AgentEngine
 # 10 from .prompt_generator_schema import PromptGenerator
-# 11 
-# 12 
+# 11
+# 12
 # 13 class AgentConfig(BaseModel):
 # 14     """Schema for the agent_config table."""
-# 15 
+# 15
 # 16     id: Optional[int] = None
 # 17     name: str
 # 18     description: Optional[str] = None
@@ -1322,9 +1315,9 @@
 # 23     agent_engine: Optional[AgentEngine] = None
 # 24     prompt_generator: Optional[PromptGenerator] = None
 # 25     artifact_path: Optional[Path] = None
-# 26 
+# 26
 # 27     table_name: str = "agent_config"
-# 28 
+# 28
 # 29     @model_validator(mode="after")
 # 30     def _sync_ids(self) -> "AgentConfig":
 # 31         if self.agent_engine is not None and self.agent_engine_id is None:
@@ -1332,7 +1325,7 @@
 # 33         if self.prompt_generator is not None and self.prompt_generator_id is None:
 # 34             self.prompt_generator_id = getattr(self.prompt_generator, "id", None)
 # 35         return self
-# 36 
+# 36
 # 37     @field_validator("artifact_path")
 # 38     @classmethod
 # 39     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1342,7 +1335,7 @@
 # 43         if not p.is_absolute() and ".." in p.parts:
 # 44             raise ValueError("artifact_path must be absolute or project relative")
 # 45         return p
-# 46 
+# 46
 # 47     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 48         data = getattr(super(), "model_dump", super().dict)()
 # 49         for field in ("agent_engine", "prompt_generator"):
@@ -1356,26 +1349,26 @@
 # schemas\agent_engine_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class AgentEngine(BaseModel):
 # 11     """Schema for the agent_engine table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
 # 16     model: Optional[str] = None
 # 17     engine_config: Optional[str] = None
 # 18     artifact_path: Optional[Path] = None
-# 19 
+# 19
 # 20     table_name: str = "agent_engine"
-# 21 
+# 21
 # 22     @field_validator("artifact_path")
 # 23     @classmethod
 # 24     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1385,7 +1378,7 @@
 # 28         if not p.is_absolute() and ".." in p.parts:
 # 29             raise ValueError("artifact_path must be absolute or project relative")
 # 30         return p
-# 31 
+# 31
 # 32     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 33         base_dump = getattr(super(), "model_dump", super().dict)
 # 34         data = base_dump()
@@ -1397,26 +1390,26 @@
 # schemas\agent_prompt_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class AgentPrompt(BaseModel):
 # 11     """Schema for the agent_prompt table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
 # 16     agent_role: Optional[str] = None
 # 17     system_type: Optional[str] = None
 # 18     artifact_path: Optional[Path] = None
-# 19 
+# 19
 # 20     table_name: str = "agent_prompt"
-# 21 
+# 21
 # 22     @field_validator("artifact_path")
 # 23     @classmethod
 # 24     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1426,7 +1419,7 @@
 # 28         if not p.is_absolute() and ".." in p.parts:
 # 29             raise ValueError("artifact_path must be absolute or project relative")
 # 30         return p
-# 31 
+# 31
 # 32     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 33         data = getattr(super(), "model_dump", super().dict)()
 # 34         if data.get("artifact_path") is not None:
@@ -1437,33 +1430,33 @@
 # schemas\context_provider_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Optional
-# 4 
+# 4
 # 5 from pydantic import BaseModel
 # 6 from app.utilities.pydantic_compat import model_validator
-# 7 
+# 7
 # 8 from .tooling_provider_schema import ToolingProvider
-# 9 
-# 10 
+# 9
+# 10
 # 11 class ContextProvider(BaseModel):
 # 12     """Schema for the context_provider table."""
-# 13 
+# 13
 # 14     id: Optional[int] = None
 # 15     name: str
 # 16     description: Optional[str] = None
 # 17     system_type: Optional[str] = None
 # 18     tooling_provider_id: Optional[int] = None
 # 19     tooling_provider: Optional[ToolingProvider] = None
-# 20 
+# 20
 # 21     table_name: str = "context_provider"
-# 22 
+# 22
 # 23     @model_validator(mode="after")
 # 24     def _sync_ids(self) -> "ContextProvider":
 # 25         if self.tooling_provider is not None and self.tooling_provider_id is None:
 # 26             self.tooling_provider_id = getattr(self.tooling_provider, "id", None)
 # 27         return self
-# 28 
+# 28
 # 29     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 30         data = getattr(super(), "model_dump", super().dict)()
 # 31         if data.get("tooling_provider") is not None:
@@ -1474,30 +1467,30 @@
 # schemas\experiment_config_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Optional
-# 4 
+# 4
 # 5 from pydantic import BaseModel
 # 6 from app.utilities.pydantic_compat import model_validator
-# 7 
+# 7
 # 8 from .system_config_schema import SystemConfig
 # 9 from .scoring_provider_schema import ScoringProvider
-# 10 
-# 11 
+# 10
+# 11
 # 12 class ExperimentConfig(BaseModel):
 # 13     """Schema for the experiment_config table."""
-# 14 
+# 14
 # 15     id: Optional[int] = None
 # 16     name: str
 # 17     description: Optional[str] = None
 # 18     system_manager_id: Optional[int] = None
 # 19     scoring_model_id: Optional[int] = None
-# 20 
+# 20
 # 21     system_manager: Optional[SystemConfig] = None
 # 22     scoring_model: Optional[ScoringProvider] = None
-# 23 
+# 23
 # 24     table_name: str = "experiment_config"
-# 25 
+# 25
 # 26     @model_validator(mode="after")
 # 27     def _sync_ids(self) -> "ExperimentConfig":
 # 28         if self.system_manager is not None and self.system_manager_id is None:
@@ -1505,7 +1498,7 @@
 # 30         if self.scoring_model is not None and self.scoring_model_id is None:
 # 31             self.scoring_model_id = getattr(self.scoring_model, "id", None)
 # 32         return self
-# 33 
+# 33
 # 34     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 35         data = getattr(super(), "model_dump", super().dict)()
 # 36         for field in ("system_manager", "scoring_model"):
@@ -1517,20 +1510,20 @@
 # schemas\file_path_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
-# 4 
+# 4
 # 5 from pydantic import BaseModel
 # 6 from app.utilities.pydantic_compat import field_validator
-# 7 
-# 8 
+# 7
+# 8
 # 9 class FilePath(BaseModel):
 # 10     """Schema for file paths tracked in the database."""
-# 11 
+# 11
 # 12     artifact_path: Path
-# 13 
+# 13
 # 14     table_name: str = "file_path"
-# 15 
+# 15
 # 16     @field_validator("artifact_path")
 # 17     @classmethod
 # 18     def _check_path(cls, v: Path) -> Path:
@@ -1538,7 +1531,7 @@
 # 20         if not p.is_absolute() and ".." in p.parts:
 # 21             raise ValueError("artifact_path must be absolute or project relative")
 # 22         return p
-# 23 
+# 23
 # 24     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 25         return {"artifact_path": str(self.artifact_path)}
 
@@ -1546,35 +1539,35 @@
 # schemas\prompt_generator_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator, model_validator
-# 8 
+# 8
 # 9 from .agent_prompt_schema import AgentPrompt
 # 10 from .system_prompt_schema import SystemPrompt
 # 11 from .context_provider_schema import ContextProvider
-# 12 
-# 13 
+# 12
+# 13
 # 14 class PromptGenerator(BaseModel):
 # 15     """Schema for the prompt_generator table."""
-# 16 
+# 16
 # 17     id: Optional[int] = None
 # 18     name: str
 # 19     description: Optional[str] = None
 # 20     agent_prompt_id: Optional[int] = None
 # 21     system_prompt_id: Optional[int] = None
 # 22     content_provider_id: Optional[int] = None
-# 23 
+# 23
 # 24     agent_prompt: Optional[AgentPrompt] = None
 # 25     system_prompt: Optional[SystemPrompt] = None
 # 26     content_provider: Optional[ContextProvider] = None
 # 27     artifact_path: Optional[Path] = None
-# 28 
+# 28
 # 29     table_name: str = "prompt_generator"
-# 30 
+# 30
 # 31     @model_validator(mode="after")
 # 32     def _sync_ids(self) -> "PromptGenerator":
 # 33         if self.agent_prompt is not None and self.agent_prompt_id is None:
@@ -1584,7 +1577,7 @@
 # 37         if self.content_provider is not None and self.content_provider_id is None:
 # 38             self.content_provider_id = getattr(self.content_provider, "id", None)
 # 39         return self
-# 40 
+# 40
 # 41     @field_validator("artifact_path")
 # 42     @classmethod
 # 43     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1594,7 +1587,7 @@
 # 47         if not p.is_absolute() and ".." in p.parts:
 # 48             raise ValueError("artifact_path must be absolute or project relative")
 # 49         return p
-# 50 
+# 50
 # 51     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 52         data = getattr(super(), "model_dump", super().dict)()
 # 53         for field in ("agent_prompt", "system_prompt", "content_provider"):
@@ -1608,24 +1601,24 @@
 # schemas\scoring_provider_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class ScoringProvider(BaseModel):
 # 11     """Schema for the scoring_provider table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
 # 16     artifact_path: Optional[Path] = None
-# 17 
+# 17
 # 18     table_name: str = "scoring_provider"
-# 19 
+# 19
 # 20     @field_validator("artifact_path")
 # 21     @classmethod
 # 22     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1635,7 +1628,7 @@
 # 26         if not p.is_absolute() and ".." in p.parts:
 # 27             raise ValueError("artifact_path must be absolute or project relative")
 # 28         return p
-# 29 
+# 29
 # 30     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 31         data = getattr(super(), "model_dump", super().dict)()
 # 32         if data.get("artifact_path") is not None:
@@ -1646,30 +1639,30 @@
 # schemas\series_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Optional
-# 4 
+# 4
 # 5 from pydantic import BaseModel
 # 6 from app.utilities.pydantic_compat import model_validator
-# 7 
+# 7
 # 8 from .experiment_config_schema import ExperimentConfig
-# 9 
-# 10 
+# 9
+# 10
 # 11 class Series(BaseModel):
 # 12     """Schema for the series table."""
-# 13 
+# 13
 # 14     id: Optional[int] = None
 # 15     experiment_config_id: Optional[int] = None
 # 16     experiment_config: Optional[ExperimentConfig] = None
-# 17 
+# 17
 # 18     table_name: str = "series"
-# 19 
+# 19
 # 20     @model_validator(mode="after")
 # 21     def _sync_ids(self) -> "Series":
 # 22         if self.experiment_config is not None and self.experiment_config_id is None:
 # 23             self.experiment_config_id = getattr(self.experiment_config, "id", None)
 # 24         return self
-# 25 
+# 25
 # 26     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 27         data = getattr(super(), "model_dump", super().dict)()
 # 28         if data.get("experiment_config") is not None:
@@ -1680,17 +1673,17 @@
 # schemas\state_manager_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class StateManager(BaseModel):
 # 11     """Schema for the state_manager table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
@@ -1698,9 +1691,9 @@
 # 17     system_type: Optional[str] = None
 # 18     agent_id: Optional[int] = None
 # 19     artifact_path: Optional[Path] = None
-# 20 
+# 20
 # 21     table_name: str = "state_manager"
-# 22 
+# 22
 # 23     @field_validator("artifact_path")
 # 24     @classmethod
 # 25     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1710,7 +1703,7 @@
 # 29         if not p.is_absolute() and ".." in p.parts:
 # 30             raise ValueError("artifact_path must be absolute or project relative")
 # 31         return p
-# 32 
+# 32
 # 33     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 34         data = getattr(super(), "model_dump", super().dict)()
 # 35         if data.get("artifact_path") is not None:
@@ -1721,31 +1714,31 @@
 # schemas\system_config_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import Optional
-# 4 
+# 4
 # 5 from pydantic import BaseModel
 # 6 from app.utilities.pydantic_compat import model_validator
-# 7 
+# 7
 # 8 from .state_manager_schema import StateManager
 # 9 from .scoring_provider_schema import ScoringProvider
-# 10 
-# 11 
+# 10
+# 11
 # 12 class SystemConfig(BaseModel):
 # 13     """Schema for the system_config table."""
-# 14 
+# 14
 # 15     id: Optional[int] = None
 # 16     name: str
 # 17     description: Optional[str] = None
 # 18     system_type: Optional[str] = None
 # 19     state_manager_id: Optional[int] = None
 # 20     scoring_model_id: Optional[int] = None
-# 21 
+# 21
 # 22     state_manager: Optional[StateManager] = None
 # 23     scoring_model: Optional[ScoringProvider] = None
-# 24 
+# 24
 # 25     table_name: str = "system_config"
-# 26 
+# 26
 # 27     @model_validator(mode="after")
 # 28     def _sync_ids(self) -> "SystemConfig":
 # 29         if self.state_manager is not None and self.state_manager_id is None:
@@ -1753,7 +1746,7 @@
 # 31         if self.scoring_model is not None and self.scoring_model_id is None:
 # 32             self.scoring_model_id = getattr(self.scoring_model, "id", None)
 # 33         return self
-# 34 
+# 34
 # 35     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 36         data = getattr(super(), "model_dump", super().dict)()
 # 37         for field in ("state_manager", "scoring_model"):
@@ -1765,25 +1758,25 @@
 # schemas\system_prompt_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class SystemPrompt(BaseModel):
 # 11     """Schema for the system_prompt table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
 # 16     system_type: Optional[str] = None
 # 17     artifact_path: Optional[Path] = None
-# 18 
+# 18
 # 19     table_name: str = "system_prompt"
-# 20 
+# 20
 # 21     @field_validator("artifact_path")
 # 22     @classmethod
 # 23     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1793,7 +1786,7 @@
 # 27         if not p.is_absolute() and ".." in p.parts:
 # 28             raise ValueError("artifact_path must be absolute or project relative")
 # 29         return p
-# 30 
+# 30
 # 31     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 32         data = getattr(super(), "model_dump", super().dict)()
 # 33         if data.get("artifact_path") is not None:
@@ -1804,24 +1797,24 @@
 # schemas\tooling_provider_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
+# 5
 # 6 from pydantic import BaseModel
 # 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
+# 8
+# 9
 # 10 class ToolingProvider(BaseModel):
 # 11     """Schema for the tooling_provider table."""
-# 12 
+# 12
 # 13     id: Optional[int] = None
 # 14     name: str
 # 15     description: Optional[str] = None
 # 16     artifact_path: Optional[Path] = None
-# 17 
+# 17
 # 18     table_name: str = "tooling_provider"
-# 19 
+# 19
 # 20     @field_validator("artifact_path")
 # 21     @classmethod
 # 22     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
@@ -1831,7 +1824,7 @@
 # 26         if not p.is_absolute() and ".." in p.parts:
 # 27             raise ValueError("artifact_path must be absolute or project relative")
 # 28         return p
-# 29 
+# 29
 # 30     def model_dump(self) -> dict:  #  pragma: no cover - simple wrapper
 # 31         data = getattr(super(), "model_dump", super().dict)()
 # 32         if data.get("artifact_path") is not None:
@@ -1842,7 +1835,6 @@
 # utilities\__init__.py
 
 
-
 # utilities\db.py
 
 # 1 import sqlite3
@@ -1850,10 +1842,10 @@
 # 3 from datetime import datetime
 # 4 from pathlib import Path
 # 5 from typing import Iterable, Any
-# 6 
+# 6
 # 7 DB_PATH = Path("experiments") / "codecritic.sqlite3"
-# 8 
-# 9 
+# 8
+# 9
 # 10 def _serialize(obj: Any) -> dict:
 # 11     data = {}
 # 12     for f in fields(obj):
@@ -1862,14 +1854,14 @@
 # 15             val = val.isoformat()
 # 16         data[f.name] = val
 # 17     return data
-# 18 
-# 19 
+# 18
+# 19
 # 20 def get_connection() -> sqlite3.Connection:
 # 21     DB_PATH.parent.mkdir(exist_ok=True)
 # 22     conn = sqlite3.connect(DB_PATH)
 # 23     return conn
-# 24 
-# 25 
+# 24
+# 25
 # 26 def init_db() -> sqlite3.Connection:
 # 27     conn = get_connection()
 # 28     cur = conn.cursor()
@@ -1935,8 +1927,8 @@
 # 88     )
 # 89     conn.commit()
 # 90     return conn
-# 91 
-# 92 
+# 91
+# 92
 # 93 def insert_logs(conn: sqlite3.Connection, table: str, logs: Iterable[Any]) -> None:
 # 94     logs = list(logs)
 # 95     if not logs:
@@ -1955,19 +1947,16 @@
 # utilities\file_management\__init__.py
 
 
-
 # utilities\metadata\__init__.py
-
 
 
 # utilities\metadata\footer\__init__.py
 
 
-
 # utilities\metadata\logging\__init__.py
 
 # 1 """Logging schemas for structured experiment data."""
-# 2 
+# 2
 # 3 from .log_schemas import (
 # 4     StateLog,
 # 5     StateTransitionLog,
@@ -1976,7 +1965,7 @@
 # 8     ErrorLog,
 # 9     ScoringLog,
 # 10 )
-# 11 
+# 11
 # 12 __all__ = [
 # 13     "StateLog",
 # 14     "StateTransitionLog",
@@ -1990,11 +1979,11 @@
 # utilities\metadata\logging\log_schemas.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from dataclasses import dataclass, field
 # 4 from datetime import datetime, timezone
-# 5 
-# 6 
+# 5
+# 6
 # 7 @dataclass
 # 8 class StateLog:
 # 9     experiment_id: str
@@ -2005,8 +1994,8 @@
 # 14     score: float | None = None
 # 15     details: str | None = None
 # 16     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 17 
-# 18 
+# 17
+# 18
 # 19 @dataclass
 # 20 class StateTransitionLog:
 # 21     experiment_id: str
@@ -2015,12 +2004,12 @@
 # 24     to_state: str
 # 25     reason: str | None = None
 # 26     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 27 
-# 28 
+# 27
+# 28
 # 29 @dataclass
 # 30 class PromptLog:
 # 31     """Log entry for prompts generated and executed by agents."""
-# 32 
+# 32
 # 33     experiment_id: str
 # 34     round: int
 # 35     system: str
@@ -2034,12 +2023,12 @@
 # 43     agent_action_outcome: str | None = None
 # 44     start: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 # 45     stop: datetime | None = None
-# 46 
-# 47 
+# 46
+# 47
 # 48 @dataclass
 # 49 class CodeQualityLog:
 # 50     """Log entry for static analysis and linting results."""
-# 51 
+# 51
 # 52     experiment_id: str
 # 53     round: int
 # 54     symbol: str
@@ -2048,24 +2037,24 @@
 # 57     maintainability_index: float
 # 58     lint_errors: int
 # 59     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 60 
-# 61 
+# 60
+# 61
 # 62 @dataclass
 # 63 class ErrorLog:
 # 64     """Log entry for errors encountered during execution."""
-# 65 
+# 65
 # 66     experiment_id: str
 # 67     round: int
 # 68     error_type: str
 # 69     message: str
 # 70     file_path: str | None = None
 # 71     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 72 
-# 73 
+# 72
+# 73
 # 74 @dataclass
 # 75 class ScoringLog:
 # 76     """Log entry for computed evaluation metrics."""
-# 77 
+# 77
 # 78     experiment_id: str
 # 79     round: int
 # 80     metric: str
@@ -2076,16 +2065,15 @@
 # utilities\metadata\snapshots\__init__.py
 
 
-
 # utilities\metrics.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import logging
 # 4 from typing import Any, Dict, List
-# 5 
+# 5
 # 6 logger = logging.getLogger(__name__)
-# 7 
+# 7
 # 8 #  Unified list of metric names expected in experiment results
 # 9 EVALUATION_METRICS = [
 # 10     "bug_fix_success_rate",
@@ -2100,18 +2088,18 @@
 # 19     "retry_success_rate",
 # 20     "mediation_success_rate",
 # 21 ]
-# 22 
-# 23 
+# 22
+# 23
 # 24 def _get(obj: Any, key: str, default: Any = None) -> Any:
 # 25     if isinstance(obj, dict):
 # 26         return obj.get(key, default)
 # 27     return getattr(obj, key, default)
-# 28 
-# 29 
+# 28
+# 29
 # 30 def _avg(values: List[float]) -> float:
 # 31     return sum(values) / len(values) if values else 0.0
-# 32 
-# 33 
+# 32
+# 33
 # 34 def compute_metrics(
 # 35     evaluation_logs: List[Any],
 # 36     code_quality_logs: List[Any],
@@ -2120,7 +2108,7 @@
 # 39     state_logs: List[Any],
 # 40 ) -> Dict[str, float]:
 # 41     """Compute experiment metrics from structured logs."""
-# 42 
+# 42
 # 43     logger.debug(
 # 44         "Computing metrics: evaluations=%d quality=%d conversation=%d prompts=%d states=%d",
 # 45         len(evaluation_logs),
@@ -2129,15 +2117,15 @@
 # 48         len(prompt_logs),
 # 49         len(state_logs),
 # 50     )
-# 51 
+# 51
 # 52     metrics: Dict[str, float] = {}
-# 53 
+# 53
 # 54     bug_fixes = [_get(log, "bug_fixed", False) for log in evaluation_logs]
 # 55     metrics["bug_fix_success_rate"] = _avg([1.0 for bug in bug_fixes if bug])
-# 56 
+# 56
 # 57     func_correct = [_get(log, "all_tests_passed", False) for log in evaluation_logs]
 # 58     metrics["functional_correctness"] = _avg([1.0 for passes in func_correct if passes])
-# 59 
+# 59
 # 60     pass_rates = []
 # 61     for log in evaluation_logs:
 # 62         total = _get(log, "tests_total", 0)
@@ -2145,30 +2133,30 @@
 # 64         if total:
 # 65             pass_rates.append(passed / total)
 # 66     metrics["avg_test_pass_rate"] = _avg(pass_rates)
-# 67 
+# 67
 # 68     mi_values = [_get(log, "maintainability_index", 0.0) for log in code_quality_logs]
 # 69     metrics["maintainability_index"] = _avg(mi_values)
-# 70 
+# 70
 # 71     cc_values = [_get(log, "cyclomatic_complexity", 0.0) for log in code_quality_logs]
 # 72     metrics["cyclomatic_complexity"] = _avg(cc_values)
-# 73 
+# 73
 # 74     lint_compliance = [
 # 75         1.0 if _get(log, "lint_errors", 1) == 0 else 0.0 for log in code_quality_logs
 # 76     ]
 # 77     metrics["linting_compliance_rate"] = _avg(lint_compliance)
-# 78 
+# 78
 # 79     rounds = [_get(log, "round", 0) for log in state_logs]
 # 80     metrics["iterations_to_convergence"] = max(rounds) + 1 if rounds else 0.0
-# 81 
+# 81
 # 82     interventions = [
 # 83         1.0 for log in conversation_logs if _get(log, "intervention", False)
 # 84     ]
 # 85     metrics["intervention_frequency"] = _avg(interventions)
-# 86 
+# 86
 # 87     outcomes = [_get(log, "agent_action_outcome", None) for log in prompt_logs]
 # 88     successes = [1.0 for o in outcomes if o == "success"]
 # 89     metrics["agent_role_success_rate"] = _avg(successes)
-# 90 
+# 90
 # 91     retry_logs = [log for log in prompt_logs if _get(log, "attempt_number", 0) > 0]
 # 92     retry_successes = [
 # 93         1.0
@@ -2176,7 +2164,7 @@
 # 95         if _get(log, "agent_action_outcome", None) == "success"
 # 96     ]
 # 97     metrics["retry_success_rate"] = _avg(retry_successes)
-# 98 
+# 98
 # 99     mediation_logs = [
 # 100         log
 # 101         for log in conversation_logs
@@ -2186,7 +2174,7 @@
 # 105         1.0 for log in mediation_logs if _get(log, "intervention", False)
 # 106     ]
 # 107     metrics["mediation_success_rate"] = _avg(mediation_success)
-# 108 
+# 108
 # 109     logger.info("Metrics computed: %s", metrics)
 # 110     return metrics
 
@@ -2194,9 +2182,9 @@
 # utilities\pydantic_compat.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 from typing import TYPE_CHECKING, Callable
-# 4 
+# 4
 # 5 if TYPE_CHECKING:
 # 6     from pydantic import field_validator, model_validator  #  type: ignore
 # 7 else:  #  pragma: no cover - runtime fallback for pydantic v1
@@ -2204,10 +2192,10 @@
 # 9         from pydantic import field_validator, model_validator  #  type: ignore
 # 10     except ImportError:  #  pragma: no cover - pydantic v1
 # 11         from pydantic import validator
-# 12 
+# 12
 # 13         def field_validator(*fields: str, **kwargs) -> Callable:
 # 14             return validator(*fields, **kwargs)
-# 15 
+# 15
 # 16         def model_validator(*fields, **kwargs) -> Callable:
 # 17             return validator(*fields, **kwargs)
 
@@ -2215,20 +2203,20 @@
 # utilities\schema\__init__.py
 
 # 1 from .create_schema import initialize_database, create_tables, load_seed_data
-# 2 
+# 2
 # 3 __all__ = ["initialize_database", "create_tables", "load_seed_data"]
 
 
 # utilities\schema\create_schema.py
 
 # 1 from __future__ import annotations
-# 2 
+# 2
 # 3 import json
 # 4 import sqlite3
 # 5 from pathlib import Path
 # 6 from typing import Type, Protocol, Any, get_origin, get_args, Union
-# 7 
-# 8 
+# 7
+# 8
 # 9 from app.schemas import (
 # 10     AgentEngine,
 # 11     AgentPrompt,
@@ -2245,19 +2233,19 @@
 # 22     Series,
 # 23 )
 # 24 from app.utilities import db
-# 25 
-# 26 
+# 25
+# 26
 # 27 class SchemaProtocol(Protocol):
 # 28     table_name: str
 # 29     model_fields: dict
-# 30 
+# 30
 # 31     def __init__(self, **data: object) -> None: ...
-# 32 
+# 32
 # 33     def model_dump(self) -> dict: ...
-# 34 
-# 35 
+# 34
+# 35
 # 36 SchemaModel = Type[Any]
-# 37 
+# 37
 # 38 SCHEMAS: tuple[SchemaModel, ...] = (
 # 39     AgentEngine,
 # 40     AgentPrompt,
@@ -2273,25 +2261,25 @@
 # 50     ExperimentConfig,
 # 51     Series,
 # 52 )
-# 53 
+# 53
 # 54 TABLE_MAP = {model.table_name: model for model in SCHEMAS}
-# 55 
-# 56 
+# 55
+# 56
 # 57 _TYPE_MAP = {
 # 58     int: "INTEGER",
 # 59     str: "TEXT",
 # 60     float: "REAL",
 # 61     Path: "TEXT",
 # 62 }
-# 63 
-# 64 
+# 63
+# 64
 # 65 def _sqlite_type(py_type: Type) -> str:
 # 66     origin = get_origin(py_type)
 # 67     if origin is Union:
 # 68         py_type = get_args(py_type)[0]
 # 69     return _TYPE_MAP.get(py_type, "TEXT")
-# 70 
-# 71 
+# 70
+# 71
 # 72 def create_tables(conn: sqlite3.Connection) -> None:
 # 73     cur = conn.cursor()
 # 74     for model in SCHEMAS:
@@ -2308,8 +2296,8 @@
 # 85         col_sql = ",".join(columns)
 # 86         cur.execute(f"CREATE TABLE IF NOT EXISTS {model.table_name} ({col_sql})")
 # 87     conn.commit()
-# 88 
-# 89 
+# 88
+# 89
 # 90 def load_seed_data(
 # 91     conn: sqlite3.Connection, seed_dir: Path | str = "experiments/config/seed"
 # 92 ) -> None:
@@ -2334,15 +2322,15 @@
 # 111                 list(data.values()),
 # 112             )
 # 113     conn.commit()
-# 114 
-# 115 
+# 114
+# 115
 # 116 def initialize_database() -> sqlite3.Connection:
 # 117     conn = db.get_connection()
 # 118     create_tables(conn)
 # 119     load_seed_data(conn)
 # 120     return conn
-# 121 
-# 122 
+# 121
+# 122
 # 123 if __name__ == "__main__":  #  pragma: no cover - manual invocation
 # 124     initialize_database()
 
@@ -2368,8 +2356,8 @@
 # 2 import json
 # 3 from radon.complexity import cc_visit
 # 4 from pathlib import Path
-# 5 
-# 6 
+# 5
+# 6
 # 7 def analyze_file(filepath):
 # 8     with open(filepath, "r", encoding="utf-8") as file:
 # 9         code = file.read()
@@ -2379,8 +2367,8 @@
 # 13         for c in complexity
 # 14     ]
 # 15     return result
-# 16 
-# 17 
+# 16
+# 17
 # 18 if __name__ == "__main__":
 # 19     try:
 # 20         if len(sys.argv) != 2:
@@ -2405,6 +2393,4 @@
 # 1 #  Placeholder for sonarcloud runner
 
 
-
 # === NON-PYTHON FILES ===
-

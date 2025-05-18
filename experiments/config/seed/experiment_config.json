@@ -1,9 +1,9 @@
 [
-  {
-    "id": 1,
-    "name": "basic_experiment",
-    "description": "Experiment config",
-    "system_manager_id": 1,
-    "scoring_model_id": 1
-  }
+    {
+        "id": 1,
+        "name": "basic_experiment",
+        "description": "Experiment config",
+        "system_manager_id": "system",
+        "scoring_model_id": "basic"
+    }
 ]

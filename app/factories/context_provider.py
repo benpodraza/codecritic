@@ -5,6 +5,13 @@ from ..registries.context_providers import CONTEXT_PROVIDER_REGISTRY
 
 class ContextProviderFactory:
     @staticmethod
+    def register(name: str, cls) -> None:
+        try:
+            CONTEXT_PROVIDER_REGISTRY.register(name, cls)
+        except KeyError:
+            pass
+
+    @staticmethod
     def create(name: str, **kwargs):
         cls = CONTEXT_PROVIDER_REGISTRY.get(name)
         if cls is None:

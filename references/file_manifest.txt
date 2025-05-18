@@ -77,7 +77,7 @@ codecritic
          - tool_providers
             - __init__.py
             - black_runner.py
-            - docformetter_runner.py
+            - docformatter_runner.py
             - dummy_tool_provider.py
             - mypy_runner.py
             - radon_runner.py

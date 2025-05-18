@@ -33,4 +33,4 @@ class SystemConfig(BaseModel):
         return self
 
     def model_dump(self, **kwargs) -> dict:
-        return super().model_dump(**kwargs)
+        return BaseModel.dict(self, **kwargs)

@@ -135,5 +135,19 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
         )"""
     )
 
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS recommendation_log (
+            experiment_id TEXT,
+            round INTEGER,
+            symbol TEXT,
+            file_path TEXT,
+            line_start INTEGER,
+            line_end INTEGER,
+            recommendation TEXT,
+            context TEXT,
+            timestamp TEXT
+        )"""
+    )
+
     conn.commit()
     return conn

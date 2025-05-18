@@ -4,7 +4,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Iterable, Union
 from dataclasses import asdict, is_dataclass
-from app.enums.log_enums import LogType
+
+from app.enums.logging_enums import LogType
 from app.utilities.db import get_connection
 from app.utilities.metadata.logging.log_schemas import (
     StateLog,

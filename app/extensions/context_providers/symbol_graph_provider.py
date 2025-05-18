@@ -161,13 +161,19 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         return ".".join([self.module, *self.scope, name])
 
     def _record(self, qual: str, typ: str, node: ast.AST) -> Dict[str, Any]:
+        # Ensure lineno and col_offset exist on the node, else default to None
+        lineno = getattr(node, "lineno", None)
+        col_offset = getattr(node, "col_offset", None)
+        end_lineno = getattr(node, "end_lineno", lineno)
+        end_col_offset = getattr(node, "end_col_offset", col_offset)
+
         info = {
             "type": typ,
             "file": self.file_path,
-            "lineno": node.lineno,
-            "col_offset": node.col_offset,
-            "end_lineno": getattr(node, "end_lineno", node.lineno),
-            "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+            "lineno": lineno,
+            "col_offset": col_offset,
+            "end_lineno": end_lineno,
+            "end_col_offset": end_col_offset,
             "scope": (
                 ".".join([self.module, *self.scope]) if self.scope else self.module
             ),

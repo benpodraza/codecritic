@@ -26,6 +26,7 @@ def test_end_to_end_experiment(tmp_path):
         db.DB_PATH.unlink()
 
     from app.utilities.schema import initialize_database
+
     initialize_database(reset=True)
 
     exp = Experiment(config_id=1)

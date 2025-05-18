@@ -62,10 +62,10 @@ class LoggingProvider:
 
         if connection:
             self.conn = connection
-            init_db(connection=self.conn)
+            init_db(conn=self.conn)  # Fix applied here
         else:
             self.conn = get_connection()
-            init_db(connection=self.conn)
+            init_db(conn=self.conn)  # Fix applied here
 
         self.output_path = Path(output_path) if output_path else None
         if self.output_path:

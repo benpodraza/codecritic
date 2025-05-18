@@ -631,14 +631,18 @@ Phase 7 is fully complete and stable.
 * `app/registries/` + `app/factories/` updated to load from persistent config.
 * Bootstrapping logic in `bootstrap.py` or `seed_registries.py`.
 * Example registration of one full working system configuration:
-
   * `GeneratorAgent` using `black`, `docformatter`
   * Prompt and context providers
   * Associated scoring config
 
 ### Outcomes
 
-By the end of this phase, any valid schema entry should be fully instantiable from database → registry → factory → runtime component.
+By the end of this phase, any valid schema entry should be fully instantiable from:
+- database → registry
+- registry → factory
+- factory → runtime component
+
+This will complete the foundation for dynamic system reconfiguration, grid-searchable experiments, and runtime injection of custom agent logic.
 
 ---
 

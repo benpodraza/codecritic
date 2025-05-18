@@ -17,14 +17,16 @@ def _load_extensions() -> None:
 
 @pytest.mark.usefixtures("tmp_path")
 def test_system_fsm_transitions(tmp_path):
-    # ✅ Reset singleton to avoid reusing a closed conn
-    LoggingProvider._instance = None
-
-    # ✅ Set writable temp DB path
+    # ✅ Reset db connection
     from app.utilities import db
 
     db._CONN = None  # 🔥 Force rebind of the database
     db.DB_PATH = tmp_path / "codecritic.sqlite3"
+
+    # ✅ Reset singleton to avoid reusing a closed conn
+    LoggingProvider._instance = None
+
+    # ✅ Set writable temp DB path
     initialize_database(reset=True)
     _load_extensions()
 

@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from typing import Iterable, Any
+from typing import Any
 
 DB_PATH = Path("experiments") / "codecritic.sqlite3"
 _CONN: sqlite3.Connection | None = None

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Iterable
 
 from app.enums.logging_enums import LogType
-from app.utilities.db import get_connection
 from ..utilities.metadata.logging.log_schemas import (
     StateLog,
     StateTransitionLog,

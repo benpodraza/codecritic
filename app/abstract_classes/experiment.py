@@ -25,52 +25,58 @@ class Experiment(LoggingMixin):
         self.state_logs: List[Any] = []
         self.metrics: Dict[str, float] | None = None
 
-    def run(self, *args, **kwargs) -> Dict[str, float]:
-        self._log.debug("Experiment run start")
+        def run(self, *args, **kwargs) -> Dict[str, float]:
+            self._log.debug("Experiment run start")
 
-        # load configuration
-        self.config = ExperimentConfigProvider.load(self.config_id)
-        self.scoring_model_id = self.config.get("scoring_model_id", "dummy")
-        system_manager_id = self.config.get("system_manager_id", "dummy")
+            #  load configuration
+            self.config = ExperimentConfigProvider.load(self.config_id)
+            self.scoring_model_id = self.config.get("scoring_model_id", "dummy")
+            system_manager_id = self.config.get("system_manager_id", "dummy")
 
-        # run system manager
-        manager = SystemManagerFactory.create(system_manager_id)
-        manager.run()
-
-        # collect logs from manager
-        self.evaluation_logs = getattr(manager, "evaluation_logs", [])
-        self.code_quality_logs = getattr(manager, "code_quality_logs", [])
-        self.conversation_logs = getattr(manager, "conversation_logs", [])
-        self.prompt_logs = getattr(manager, "prompt_logs", [])
-        self.state_logs = getattr(manager, "state_logs", [])
-
-        logs = {
-            "evaluation": self.evaluation_logs,
-            "code_quality": self.code_quality_logs,
-            "conversation": self.conversation_logs,
-            "prompt": self.prompt_logs,
-            "state": self.state_logs,
-        }
-
-        scoring_provider = ScoringProviderFactory.create(self.scoring_model_id)
-        metrics = scoring_provider.score(logs)
-        for key in EVALUATION_METRICS:
-            metrics.setdefault(key, 0.0)
-        self._log.info("Experiment metrics: %s", metrics)
-
-        for k, v in metrics.items():
-            self.log_scoring(
-                ScoringLog(
-                    experiment_id="exp",
-                    round=0,
-                    metric=k,
-                    value=v,
-                )
+            #  run system manager *with* our injected logger
+            manager = SystemManagerFactory.create(
+                system_manager_id,
+                logger=self.logger,
             )
+            manager.run()
 
-        self.metrics = metrics
-        self._log.debug("Experiment run end")
-        return metrics
+            #  collect logs from manager
+            self.evaluation_logs = getattr(manager, "evaluation_logs", [])
+            self.code_quality_logs = getattr(manager, "code_quality_logs", [])
+            self.conversation_logs = getattr(manager, "conversation_logs", [])
+            self.prompt_logs = getattr(manager, "prompt_logs", [])
+            self.state_logs = getattr(manager, "state_logs", [])
+
+            logs = {
+                "evaluation": self.evaluation_logs,
+                "code_quality": self.code_quality_logs,
+                "conversation": self.conversation_logs,
+                "prompt": self.prompt_logs,
+                "state": self.state_logs,
+            }
+
+            scoring_provider = ScoringProviderFactory.create(
+                self.scoring_model_id,
+                logger=self.logger,
+            )
+            metrics = scoring_provider.score(logs)
+            for key in EVALUATION_METRICS:
+                metrics.setdefault(key, 0.0)
+            self._log.info("Experiment metrics: %s", metrics)
+
+            for k, v in metrics.items():
+                self.log_scoring(
+                    ScoringLog(
+                        experiment_id=str(self.config_id),
+                        round=0,
+                        metric=k,
+                        value=v,
+                    )
+                )
+
+            self.metrics = metrics
+            self._log.debug("Experiment run end")
+            return metrics
 
     def _run_experiment_logic(self, *args, **kwargs) -> None:
         """Override to implement experiment steps."""

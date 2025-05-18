@@ -31,5 +31,5 @@ class ExperimentConfig(BaseModel):
             self.scoring_model_id = getattr(self.scoring_model, "id", None)
         return self
 
-    def model_dump(self, **kwargs) -> dict:
-        return super().model_dump(**kwargs)
+    def model_dump(self, **kwargs) -> dict:  # type: ignore[misc]
+        return super().model_dump(**kwargs)  # type: ignore[misc]

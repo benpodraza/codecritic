@@ -98,20 +98,28 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.current: str | None = None
 
     # --------------------------------------------------------------
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:  # noqa: D401
-        """Handle ``FunctionDef`` nodes."""
-
-        qual = self._qualify(node.name)
-        self._record(qual, "function", node)
-        prev = self.current
-        self.current = qual
-        self.scope.append(node.name)
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._process_function_or_async_function(node)
         self.generic_visit(node)
-        self.scope.pop()
-        self.current = prev
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self.visit_FunctionDef(node)  # treat same as regular function
+        self._process_function_or_async_function(node)
+        self.generic_visit(node)
+
+    def _process_function_or_async_function(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> None:
+        # common handling code here, e.g.:
+        symbol_info = {
+            "name": node.name,
+            "type": (
+                "async_function"
+                if isinstance(node, ast.AsyncFunctionDef)
+                else "function"
+            ),
+            "lineno": node.lineno,
+            "col_offset": node.col_offset,
+        }
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: D401
         """Handle ``ClassDef`` nodes."""

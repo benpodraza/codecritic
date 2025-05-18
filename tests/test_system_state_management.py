@@ -22,6 +22,9 @@ def test_system_fsm_transitions(tmp_path):
     LoggingProvider._instance = None
 
     # ✅ Set writable temp DB path
+    from app.utilities import db
+
+    db._CONN = None  # 🔥 Force rebind of the database
     db.DB_PATH = tmp_path / "codecritic.sqlite3"
     initialize_database(reset=True)
     _load_extensions()

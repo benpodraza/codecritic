@@ -10,6 +10,9 @@ LoggingProvider._instance = None
 
 
 def test_end_to_end_experiment(tmp_path):
+    from app.utilities import db
+
+    db._CONN = None  # 🔥 Force rebind of the database
     db.DB_PATH = tmp_path / "codecritic.sqlite3"
     initialize_database(reset=True)
     load_all_extensions()

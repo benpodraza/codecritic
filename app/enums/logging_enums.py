@@ -10,3 +10,4 @@ class LogType(str, Enum):
     SCORING = "scoring"
     CODE_QUALITY = "code_quality"
     ERROR = "error"
+    RECOMMENDATION = "recommendation"

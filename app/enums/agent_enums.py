@@ -9,6 +9,7 @@ class AgentRole(str, Enum):
     MEDIATOR = "mediator"
     PATCHER = "patcher"
     EVALUATOR = "evaluator"
+    RECOMMENDER = "recommender"
 
 
 class AgentState(Enum):

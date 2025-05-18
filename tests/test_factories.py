@@ -6,6 +6,7 @@ from app.factories.state_manager import StateManagerFactory
 from app.factories.prompt_manager import PromptGeneratorFactory
 from app.factories.tool_provider import ToolProviderFactory
 from app.factories.scoring_provider import ScoringProviderFactory
+from app.factories.context_provider import ContextProviderFactory
 
 
 def _load_extensions():
@@ -46,10 +47,17 @@ def test_state_manager_factory():
     assert manager is not None
 
 
+def test_context_provider_factory():
+    _ensure_loaded()
+    provider = ContextProviderFactory.create("dummy")
+    assert provider.get_context() == {}
+
+
 def test_prompt_generator_factory():
     _ensure_loaded()
-    generator = PromptGeneratorFactory.create("dummy")
-    assert generator.generate_prompt() == "dummy prompt"
+    provider = ContextProviderFactory.create("dummy")
+    generator = PromptGeneratorFactory.create("basic", context_provider=provider)
+    assert isinstance(generator.generate_prompt({}, {}), str)
 
 
 def test_tool_provider_factory():

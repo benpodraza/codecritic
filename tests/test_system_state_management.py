@@ -20,4 +20,4 @@ def test_system_fsm_transitions():
         "recommender",
         "end",
     ]
-    assert [log.to_state for log in manager.transition_logs] == expected
+    assert [log.to_state.value for log in manager.transition_logs] == expected

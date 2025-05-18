@@ -11,3 +11,4 @@ class LogType(str, Enum):
     CODE_QUALITY = "code_quality"
     ERROR = "error"
     RECOMMENDATION = "recommendation"
+    FEEDBACK = "feedback"

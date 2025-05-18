@@ -1,7 +1,6 @@
 from app.abstract_classes.experiment import Experiment
 from app.factories.experiment_config_provider import ExperimentConfigProvider
 from app.factories.logging_provider import LoggingProvider
-from app.utilities import db
 from app.utilities.schema import initialize_database
 from tests.test_bootstrap import load_all_extensions
 

@@ -1,7 +1,6 @@
 import pytest
 from importlib import import_module
 from app.factories.logging_provider import LoggingProvider
-from app.utilities import db
 from app.utilities.schema import initialize_database
 from app.factories.system_manager import SystemManagerFactory
 

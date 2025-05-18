@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "name": "basic_generator",
+    "description": "Generates prompts",
+    "agent_prompt_id": 1,
+    "system_prompt_id": 1,
+    "content_provider_id": 1,
+    "artifact_path": "generators/basic.py"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "name": "default_agent",
+    "description": "Agent prompt",
+    "agent_role": "generator",
+    "system_type": "default",
+    "artifact_path": "prompts/agent.txt"
+  }
+]

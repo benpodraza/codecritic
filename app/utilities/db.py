@@ -22,7 +22,11 @@ def _serialize(obj: Any) -> dict:
 
 def get_connection() -> sqlite3.Connection:
     global _CONN
-    if _CONN is None or _CONN is not None and _CONN.cursor().connection is None:
+    try:
+        if _CONN is None:
+            raise RuntimeError
+        _CONN.execute("SELECT 1")  # ping connection
+    except (sqlite3.ProgrammingError, RuntimeError):
         _CONN = sqlite3.connect(DB_PATH, check_same_thread=False)
     return _CONN
 

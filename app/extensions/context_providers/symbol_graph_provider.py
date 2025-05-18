@@ -122,7 +122,6 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         qualified_name = self._qualify(node.name)
         self.graph[qualified_name] = symbol_info  # explicitly store symbol_info
 
-
     def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: D401
         """Handle ``ClassDef`` nodes."""
 

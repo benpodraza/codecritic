@@ -106,24 +106,25 @@ def load_seed_data(
 
 
 def initialize_database(reset: bool = False) -> sqlite3.Connection:
+    from app.utilities.db import close_connection, get_connection
+
     db_path = Path("experiments/codecritic.sqlite3")
 
     if reset and db_path.exists():
-        try:
-            import sqlite3
-
-            sqlite3.connect(str(db_path)).close()
-        except Exception:
-            pass
-        import gc
-
-        gc.collect()
+        close_connection()  # explicitly close the existing connection first
         db_path.unlink()
 
-    conn = db.get_connection()
+    conn = get_connection()
     create_tables(conn)
     load_seed_data(conn)
     return conn
+
+
+def close_connection() -> None:
+    global _CONN
+    if _CONN:
+        _CONN.close()
+        _CONN = None
 
 
 if __name__ == "__main__":

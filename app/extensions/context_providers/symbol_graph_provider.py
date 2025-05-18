@@ -152,9 +152,23 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
             )
 
     def visit_Call(self, node: ast.Call) -> None:
-        if self.current and isinstance(node.func, (ast.Name, ast.Attribute)):
-            called = getattr(node.func, "attr", None) or getattr(node.func, "id", "")
-            self.graph[self.current].setdefault("calls", []).append(called)
+        if self.scope:
+            current_qual = self._qualify(self.scope[-1])
+        else:
+            current_qual = self.module
+
+        if isinstance(node.func, ast.Name):
+            called_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            called_name = node.func.attr
+        else:
+            called_name = None
+
+        if called_name:
+            if current_qual not in self.graph:
+                self.graph[current_qual] = {"calls": []}
+            self.graph[current_qual].setdefault("calls", []).append(called_name)
+
         self.generic_visit(node)
 
     # --------------------------------------------------------------

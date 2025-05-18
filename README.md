@@ -7,6 +7,7 @@ It supports:
 - Self-healing loops with test generation and validation (TestGenAgent)
 - Structured experiment logging for research and reproducibility
 - Human-in-the-loop feedback with SME scoring
+- Cached symbol graphs for faster repeated analysis
 
 ### Goals
 

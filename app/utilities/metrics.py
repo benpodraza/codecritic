@@ -75,7 +75,9 @@ def compute_metrics(
 
     retry_logs = [log for log in prompt_logs if _get(log, "attempt_number", 0) > 0]
     retry_successes = [
-        1.0 for log in retry_logs if _get(log, "agent_action_outcome", None) == "success"
+        1.0
+        for log in retry_logs
+        if _get(log, "agent_action_outcome", None) == "success"
     ]
     metrics["retry_success_rate"] = _avg(retry_successes)
 

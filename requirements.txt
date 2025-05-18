@@ -8,3 +8,5 @@ fastapi==0.115.12
 uvicorn==0.34.2
 SQLAlchemy==2.0.41
 docformatter==1.7.5
+pandas==2.2.2
+plotly==5.20.0

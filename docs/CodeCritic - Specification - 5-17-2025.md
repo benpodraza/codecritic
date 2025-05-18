@@ -538,6 +538,158 @@ This structured reporting ensures clear visibility of experiment results and fac
 - Fully integrated and operational system.
 - Final benchmarking notebook detailing system performance.
 
+---
+
+## Phase 7: Schema Implementation and Persistence Layer
+
+### Goals
+
+* Define and implement database schemas for all core system entities.
+* Enable persistent representation of experiments, agents, configurations, tools, and prompts.
+* Use SQLite (or SQLAlchemy) as the backing store.
+
+### Deliverables
+
+* `app/schemas/` defining Pydantic models for:
+
+  * `AgentConfig`, `PromptGenerator`, `ToolProvider`, `ScoringProvider`
+  * `SystemConfig`, `StateManager`, `ExperimentConfig`, `Session`
+  * `AgentPrompt`, `SystemPrompt`, `ContextProvider`, `ModelEngine`
+* `app/utilities/schema/create_schema.py` for schema DDL and migration.
+* `experiments/config/seed/*.json` or `.yaml` for bootstrapping entries.
+
+### Tables to Implement
+
+* `agent_engine`
+* `agent_prompt`, `system_prompt`
+* `context_provider`, `tooling_provider`, `file_path`
+* `agent_config`, `prompt_generator`, `scoring_provider`
+* `state_manager`, `system_config`, `experiment_config`, `series`
+
+Each schema must support loading, saving, and updating entries. External references (e.g. tool IDs, prompt file paths) should be explicitly validated.
+
+---
+
+## Phase 8: Registry Seeding and Bootstrap Loader
+
+### Goals
+
+* Load persistent schema entries into in-memory registries.
+* Establish an initial working set of system components (agents, tools, prompts, etc.).
+* Enable modular extension via `extensions/` folder and registry factories.
+
+### Deliverables
+
+* `app/registries/` + `app/factories/` updated to load from persistent config.
+* Bootstrapping logic in `bootstrap.py` or `seed_registries.py`.
+* Example registration of one full working system configuration:
+
+  * `GeneratorAgent` using `black`, `docformatter`
+  * Prompt and context providers
+  * Associated scoring config
+
+### Outcomes
+
+By the end of this phase, any valid schema entry should be fully instantiable from database → registry → factory → runtime component.
+
+---
+
+## Phase 9: LoggingProvider and Snapshot Integration
+
+### Goals
+
+* Implement a centralized `LoggingProvider` and snapshot writer.
+* Standardize structured logging across all `Base` class hierarchies.
+* Enable file-based and SQLite-backed audit trails for all experiment runs.
+
+### Deliverables
+
+* `app/utilities/metadata/logging/logging_provider.py`
+* `app/utilities/snapshots/snapshot_writer.py`
+* Extend all abstract base classes to inherit from `LoggingProvider`:
+
+  * `ExperimentBase`, `SystemManagerBase`, `StateManagerBase`
+  * `AgentBase`, `PromptGeneratorBase`, `ToolProviderBase`, `ScoringProviderBase`
+
+### Outcomes
+
+* Unified logging interface for prompt logs, error logs, scoring logs, etc.
+* Snapshots of modified code and contextual metadata written to `experiments/artifacts/snapshots/`.
+* Enforced consistency in log structure across all phases of system execution.
+
+---
+
+## Phase 10: Footer Annotation System
+
+### Goals
+
+* Restore footer tagging and metadata injection for traceable, annotated outputs.
+* Strip previous metadata, attach new AI-FIRST metadata blocks per round.
+
+### Deliverables
+
+* `app/utilities/metadata/footer/footer_annotation_helper.py`:
+
+  * `strip_metadata_footer(code)`
+  * `append_metadata_footer(code, metadata)`
+  * `reapply_footer(code, previous_footer, new_metadata)`
+* Integrate into all modifying agents (`PatchAgent`, `GeneratorAgent`, etc.)
+
+### Outcomes
+
+* Footer-based traceability across experiments, including:
+
+  * Round and experiment ID
+  * Agent and system used
+  * Modifications and annotations applied
+* Fully reversible and auditable transformations via metadata blocks
+
+---
+
+## Phase 11: SonarCloud Integration
+
+### Goals
+
+* Complete integration with SonarCloud as an external analysis backend.
+* Automate scan process via a temporary Git workflow.
+* Normalize and log metrics returned by the SonarCloud API.
+
+### Deliverables
+
+* `app/tools/sonarcloud_runner.py`
+* Git repo creation, push, scan, and cleanup utility
+* Structured report parser to convert scan results to evaluation-ready metrics
+
+### Outcomes
+
+* SonarCloud integration becomes an additional tool in `ToolProvider`
+* SonarCloud data included in scoring, quality, and experiment-level logs
+* Standardization of tool output metadata for third-party services
+
+---
+
+## Phase 12: Evaluation Notebook
+
+### Goals
+
+* Build an interactive notebook to visualize experiments and system runs.
+* Support comparison across agents, configurations, and scoring metrics.
+* Validate experiment reproducibility with structured snapshots and logs.
+
+### Deliverables
+
+* `notebooks/evaluation_session_runner.ipynb`
+* Matplotlib, seaborn, or Plotly visualizations for experiment logs
+* CLI or cell-based triggers for experiment/session replay
+
+### Outcomes
+
+* Clear visual summary of system performance and agent behavior
+* Central tool for reviewing experiments and benchmarking CodeCritic systems
+* Supports longitudinal research on agent ensembles and iterative improvements
+
+---
+
 **Test Notebook Structure per Phase**
 
 1. **Setup**

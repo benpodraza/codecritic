@@ -6,6 +6,7 @@ from .log_schemas import (
     PromptLog,
     CodeQualityLog,
     ErrorLog,
+    ScoringLog,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "PromptLog",
     "CodeQualityLog",
     "ErrorLog",
+    "ScoringLog",
 ]

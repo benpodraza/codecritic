@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ...abstract_classes.agent_base import AgentBase
 from ...enums.agent_enums import AgentRole
@@ -19,15 +19,13 @@ class GeneratorAgent(AgentBase):
         self.prompt_logs: List[PromptLog] = []
         self.error_logs: List[ErrorLog] = []
 
-    def _run_agent_logic(
-        self, *args, **kwargs
-    ) -> None:  # pragma: no cover - simple logging
+    def _run_agent_logic(self, *args, **kwargs) -> None:
         log = PromptLog(
             experiment_id="exp",
             round=0,
             system="system",
             agent_id="generator",
-            agent_role=AgentRole.FIXER.value,
+            agent_role=AgentRole.GENERATOR,
             symbol=self.target,
             prompt="format code",
             response=None,
@@ -39,7 +37,7 @@ class GeneratorAgent(AgentBase):
             self.formatter.run(self.target)
             log.agent_action_outcome = "success"
             self.logger.info("Formatted %s", self.target)
-        except Exception as exc:  # pragma: no cover - safety
+        except Exception as exc:
             log.agent_action_outcome = "error"
             err = ErrorLog(
                 experiment_id="exp",
@@ -51,4 +49,4 @@ class GeneratorAgent(AgentBase):
             self.error_logs.append(err)
             self.logger.exception("Formatting failed for %s", self.target)
         finally:
-            log.stop = datetime.utcnow()
+            log.stop = datetime.now(timezone.utc)

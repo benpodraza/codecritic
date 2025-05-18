@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import List
 
+from ...abstract_classes.system_manager_base import SystemManagerBase
+from ...enums.system_enums import SystemState, StateTransitionReason
 from ...factories.agent import AgentFactory
 from ...factories.context_provider import ContextProviderFactory
 from ...factories.prompt_manager import PromptGeneratorFactory
@@ -13,19 +15,14 @@ from ...utilities.metadata.logging import (
     StateLog,
     StateTransitionLog,
 )
-
-from ...abstract_classes.system_manager_base import SystemManagerBase
-from ...enums.system_enums import FSMState
 from ..state_managers.state_manager import StateManager
 
 
 class SystemManager(SystemManagerBase):
-    """Concrete system manager implementing FSM transitions."""
-
     def __init__(self) -> None:
         super().__init__()
         self.state_manager = StateManager()
-        self.current_state = FSMState.START
+        self.current_state = SystemState.START
         self.transition_logs: List[StateTransitionLog] = []
         self.state_logs: List[StateLog] = []
         self.prompt_logs: List[PromptLog] = []
@@ -41,12 +38,14 @@ class SystemManager(SystemManagerBase):
         self.generator = AgentFactory.create("generator", target="sample_module.py")
         self.evaluator = AgentFactory.create("evaluator", target="sample_module.py")
 
-    def _transition_to(self, next_state: FSMState, reason: str | None = None) -> None:
+    def _transition_to(
+        self, next_state: SystemState, reason: StateTransitionReason
+    ) -> None:
         log = StateTransitionLog(
             experiment_id="exp",
             round=0,
-            from_state=self.current_state.value,
-            to_state=next_state.value,
+            from_state=self.current_state,
+            to_state=next_state,
             reason=reason,
         )
         self.transition_logs.append(log)
@@ -55,31 +54,31 @@ class SystemManager(SystemManagerBase):
 
     def _run_system_logic(self, *args, **kwargs) -> None:
         sequence = [
-            FSMState.GENERATE,
-            FSMState.DISCRIMINATE,
-            FSMState.MEDIATE,
-            FSMState.PATCHOR,
-            FSMState.RECOMMENDER,
-            FSMState.END,
+            SystemState.GENERATE,
+            SystemState.DISCRIMINATE,
+            SystemState.MEDIATE,
+            SystemState.PATCH,
+            SystemState.EVALUATE,
+            SystemState.END,
         ]
         conn = init_db()
         for state in sequence:
-            self._transition_to(state)
-            if state is not FSMState.END:
+            self._transition_to(state, reason=StateTransitionReason.FIRST_ROUND)
+            if state is not SystemState.END:
                 self.state_manager.run(state=state.value)
                 self.state_logs.append(
                     StateLog(
                         experiment_id="exp",
                         system="system",
                         round=0,
-                        state=state.value,
+                        state=state,
                         action="run",
                     )
                 )
-                if state is FSMState.GENERATE:
+                if state == SystemState.GENERATE:
                     self.generator.run()
                     self.prompt_logs.extend(self.generator.prompt_logs)
-                elif state is FSMState.DISCRIMINATE:
+                elif state == SystemState.DISCRIMINATE:
                     self.evaluator.run()
                     self.code_quality_logs.extend(self.evaluator.quality_logs)
 

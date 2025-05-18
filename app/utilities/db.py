@@ -1,6 +1,4 @@
 import sqlite3
-from dataclasses import fields
-from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Any
 
@@ -8,13 +6,17 @@ DB_PATH = Path("experiments") / "codecritic.sqlite3"
 
 
 def _serialize(obj: Any) -> dict:
-    data = {}
-    for f in fields(obj):
-        val = getattr(obj, f.name)
-        if isinstance(val, datetime):
-            val = val.isoformat()
-        data[f.name] = val
-    return data
+    from dataclasses import asdict, is_dataclass
+    from enum import Enum
+    from pathlib import Path
+
+    if not is_dataclass(obj) or isinstance(obj, type):
+        raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+
+    result = asdict(obj)
+    return {
+        k: (str(v) if isinstance(v, (Path, Enum)) else v) for k, v in result.items()
+    }
 
 
 def get_connection() -> sqlite3.Connection:

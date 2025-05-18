@@ -3,7 +3,15 @@ from __future__ import annotations
 from enum import Enum
 
 
-class AgentRole(Enum):
-    CRITIC = "critic"
-    TESTER = "tester"
-    FIXER = "fixer"
+class AgentRole(str, Enum):
+    GENERATOR = "generator"
+    DISCRIMINATOR = "discriminator"
+    MEDIATOR = "mediator"
+    PATCHER = "patcher"
+    EVALUATOR = "evaluator"
+
+
+class AgentState(Enum):
+    INIT = "init"
+    RUNNING = "running"
+    COMPLETE = "complete"

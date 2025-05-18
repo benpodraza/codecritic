@@ -5,33 +5,35 @@ codecritic
    - .gitignore
    - .mypy_cache
    - .pytest_cache
+   - .ruff.toml
    - .ruff_cache
    - AGENTS.md
    - LICENSE
    - POC
-      - agent_framework
-         - agents
-            - base
-            - preprocessing
-               - agent_1
-                  - agent_utils
-                     - context
-                     - discriminator
-                     - mediator
-                     - scoring
-         - runner
-         - utils
-            - config
-            - generator
       - ai-first-coding-agent
          - utils
    - README.md
+   - agent_framework
+      - agents
+         - base
+         - preprocessing
+            - agent_1
+               - agent_utils
+                  - context
+                  - discriminator
+                  - mediator
+                  - scoring
+      - runner
+      - utils
+         - config
+         - generator
    - app
       - __init__.py
       - abstract_classes
          - __init__.py
          - agent_base.py
          - context_provider_base.py
+         - experiment.py
          - prompt_generator_base.py
          - scoring_provider_base.py
          - state_manager_base.py
@@ -53,11 +55,14 @@ codecritic
          - context_providers
             - __init__.py
             - dummy_context_provider.py
+            - symbol_graph_provider.py
          - prompt_generators
             - __init__.py
+            - basic_prompt_generator.py
             - dummy_prompt_generator.py
          - scoring_models
             - __init__.py
+            - basic_scoring_provider.py
             - dummy_scoring_provider.py
          - state_managers
             - __init__.py
@@ -83,6 +88,7 @@ codecritic
       - factories
          - __init__.py
          - agent.py
+         - context_provider.py
          - experiment_config_provider.py
          - prompt_manager.py
          - scoring_provider.py
@@ -114,8 +120,24 @@ codecritic
             - __init__.py
          - tools
             - __init__.py
+      - schemas
+         - __init__.py
+         - agent_config_schema.py
+         - agent_engine_schema.py
+         - agent_prompt_schema.py
+         - context_provider_schema.py
+         - experiment_config_schema.py
+         - file_path_schema.py
+         - prompt_generator_schema.py
+         - scoring_provider_schema.py
+         - series_schema.py
+         - state_manager_schema.py
+         - system_config_schema.py
+         - system_prompt_schema.py
+         - tooling_provider_schema.py
       - utilities
          - __init__.py
+         - db.py
          - file_management
             - __init__.py
          - metadata
@@ -125,34 +147,62 @@ codecritic
             - logging
                - __init__.py
                - log_schemas.py
-         - snapshots
+            - snapshots
+               - __init__.py
+         - metrics.py
+         - pydantic_compat.py
+         - schema
             - __init__.py
+            - create_schema.py
+         - tools
+            - black_runner.py
+            - doc_formatter.py
+            - mypy_runner.py
+            - radon_runner.py
+            - ruff_runner.py
+            - sonarcloud_runner.py
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
+   - experiments
+      - codecritic.sqlite3
+      - config
+         - seed
+            - agent_engine.json
+            - agent_prompt.json
+            - context_provider.json
+            - experiment_config.json
+            - prompt_generator.json
+            - scoring_provider.json
+            - series.json
+            - state_manager.json
+            - system_config.json
+            - system_prompt.json
+            - tooling_provider.json
    - htmlcov
+   - mypy.ini
    - phase1_tests.ipynb
    - phase2_validation.ipynb
    - phase3_validation.ipynb
+   - phase4_validation.ipynb
+   - phase5_validation.ipynb
+   - phase6_validation.ipynb
    - pytest
    - pytest.ini
    - references
       - file_manifest.txt
+      - flattened_agent_framework.txt
       - flattened_app.txt
    - requirements.txt
+   - sample_module.py
+   - schema_demo.ipynb
    - setup.sh
    - tests
       - __init__.py
       - test_agents.py
       - test_factories.py
+      - test_integration.py
       - test_system_state_management.py
       - test_tool_providers.py
-   - tools
-      - black_runner.py
-      - doc_formatter.py
-      - mypy_runner.py
-      - radon_runner.py
-      - ruff_runner.py
-      - sonarcloud_runner.py
    - utilities.ipynb
    - validation_sample.py

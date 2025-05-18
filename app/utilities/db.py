@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Iterable, Any
 
 DB_PATH = Path("experiments") / "codecritic.sqlite3"
+_CONN: sqlite3.Connection | None = None
 
 
 def _serialize(obj: Any) -> dict:
@@ -20,9 +21,19 @@ def _serialize(obj: Any) -> dict:
 
 
 def get_connection() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+    global _CONN
+    if _CONN is None:
+        _CONN = sqlite3.connect(
+            "experiments/codecritic.sqlite3", check_same_thread=False
+        )
+    return _CONN
+
+
+def close_connection() -> None:
+    global _CONN
+    if _CONN:
+        _CONN.close()
+        _CONN = None
 
 
 def init_db() -> sqlite3.Connection:

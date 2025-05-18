@@ -7,6 +7,6 @@
         "system_type": "default",
         "agent_engine_id": 1,
         "prompt_generator_id": 1,
-        "artifact_path": "agents/generator_agent.py",
+        "artifact_path": "agents/generator_agent.py"
     }
 ]

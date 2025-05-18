@@ -30,4 +30,4 @@ class AgentEngine(BaseModel):
         return p
 
     def model_dump(self, **kwargs) -> dict:
-        return BaseModel.dict(self, **kwargs)
+        return super().model_dump(**kwargs)

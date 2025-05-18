@@ -39,9 +39,12 @@ codecritic
          - state_manager_base.py
          - system_manager_base.py
          - tool_provider_base.py
+      - bootstrap.py
       - enums
          - __init__.py
          - agent_enums.py
+         - logging_enums.py
+         - scoring_enums.py
          - system_enums.py
       - extensions
          - __init__.py
@@ -90,6 +93,7 @@ codecritic
          - agent.py
          - context_provider.py
          - experiment_config_provider.py
+         - logging_provider.py
          - prompt_manager.py
          - scoring_provider.py
          - state_manager.py
@@ -155,12 +159,14 @@ codecritic
             - __init__.py
             - create_schema.py
          - tools
+            - __init__.py
             - black_runner.py
             - doc_formatter.py
             - mypy_runner.py
             - radon_runner.py
             - ruff_runner.py
             - sonarcloud_runner.py
+   - coverage_output.txt
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
@@ -168,6 +174,7 @@ codecritic
       - codecritic.sqlite3
       - config
          - seed
+            - agent_config.json
             - agent_engine.json
             - agent_prompt.json
             - context_provider.json
@@ -187,6 +194,7 @@ codecritic
    - phase4_validation.ipynb
    - phase5_validation.ipynb
    - phase6_validation.ipynb
+   - phase8_validation.ipynb
    - pytest
    - pytest.ini
    - references
@@ -197,6 +205,7 @@ codecritic
    - sample_module.py
    - schema_demo.ipynb
    - setup.sh
+   - test-runner.ps1
    - tests
       - __init__.py
       - test_agents.py

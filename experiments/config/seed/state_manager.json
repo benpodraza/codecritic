@@ -6,6 +6,6 @@
         "system_state": "init",
         "system_type": "default",
         "agent_id": 1,
-        "artifact_path": "state_managers/state_manager.py",
+        "artifact_path": "state_managers/state_manager.py"
     }
 ]

@@ -24,4 +24,4 @@ class Series(BaseModel):
         return self
 
     def model_dump(self, **kwargs) -> dict:
-        return BaseModel.dict(self, **kwargs)
+        return super().model_dump(**kwargs)

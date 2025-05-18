@@ -8,6 +8,7 @@ from ...factories.logging_provider import (
     ConversationLog,
     ErrorLog,
     LoggingProvider,
+    FeedbackLog,
 )
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 
@@ -28,6 +29,17 @@ class MediatorAgent(AgentBase):
         self.error_logs: List[ErrorLog] = []
 
     def _run_agent_logic(self, *args, **kwargs) -> None:
+        feedback = kwargs.get("feedback")
+        if feedback:
+            for item in feedback:
+                self.log_feedback(
+                    FeedbackLog(
+                        experiment_id="exp",
+                        round=0,
+                        source="mediator",
+                        feedback=str(item),
+                    )
+                )
         code: str | None = kwargs.get("generator_output")
         metrics: dict[str, Any] | None = kwargs.get("evaluation_metrics")
 

@@ -3,12 +3,16 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
-from typing import Any, Dict, List, MutableMapping
+from typing import Any, Dict, List, MutableMapping, Tuple
 
 from ...abstract_classes.context_provider_base import ContextProviderBase
 from ...factories.logging_provider import LoggingProvider
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 from ...enums.agent_enums import AgentRole
+
+
+# cache of previously built graphs: {path: (mtime, graph)}
+_GRAPH_CACHE: Dict[str, Tuple[float, Dict[str, Dict[str, Any]]]] = {}
 
 
 class SymbolGraphProvider(ContextProviderBase):
@@ -45,14 +49,25 @@ class SymbolGraphProvider(ContextProviderBase):
             self._log.error("Target not found: %s", self.target)
             return {}
 
-        self._graph.clear()
+        key = str(self.target)
+        mtime = self._target_mtime()
+        cached = _GRAPH_CACHE.get(key)
 
-        paths = [self.target]
-        if self.target.is_dir():
-            paths = list(self.target.rglob("*.py"))
+        if cached and cached[0] == mtime:
+            self._graph = cached[1]
+            self._log.debug("Symbol graph cache hit for %s", self.target)
+        else:
+            self._graph.clear()
 
-        for path in paths:
-            self._parse_file(path)
+            paths = [self.target]
+            if self.target.is_dir():
+                paths = list(self.target.rglob("*.py"))
+
+            for path in paths:
+                self._parse_file(path)
+
+            _GRAPH_CACHE[key] = (mtime, dict(self._graph))
+            self._log.debug("Symbol graph cached for %s", self.target)
 
         self._log.info("Symbol graph built for %s", self.target)
 
@@ -81,6 +96,12 @@ class SymbolGraphProvider(ContextProviderBase):
 
         visitor = _SymbolGraphVisitor(module_name, str(path), self._graph)
         visitor.visit(tree)
+
+    def _target_mtime(self) -> float:
+        if self.target.is_file():
+            return self.target.stat().st_mtime
+        mtimes = [p.stat().st_mtime for p in self.target.rglob("*.py")]
+        return max(mtimes, default=0.0)
 
     def _module_name(self, path: Path) -> str:
         if self.target.is_file():

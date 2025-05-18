@@ -36,11 +36,11 @@ def compute_metrics(
 
     metrics: Dict[str, float] = {}
 
-    bug_fixes = [_get(l, "bug_fixed", False) for l in evaluation_logs]
-    metrics["bug_fix_success_rate"] = _avg([1.0 for b in bug_fixes if b])
+    bug_fixes = [_get(log, "bug_fixed", False) for log in evaluation_logs]
+    metrics["bug_fix_success_rate"] = _avg([1.0 for bug in bug_fixes if bug])
 
-    func_correct = [_get(l, "all_tests_passed", False) for l in evaluation_logs]
-    metrics["functional_correctness"] = _avg([1.0 for p in func_correct if p])
+    func_correct = [_get(log, "all_tests_passed", False) for log in evaluation_logs]
+    metrics["functional_correctness"] = _avg([1.0 for passes in func_correct if passes])
 
     pass_rates = []
     for log in evaluation_logs:
@@ -75,7 +75,7 @@ def compute_metrics(
 
     retry_logs = [log for log in prompt_logs if _get(log, "attempt_number", 0) > 0]
     retry_successes = [
-        1.0 for l in retry_logs if _get(l, "agent_action_outcome", None) == "success"
+        1.0 for log in retry_logs if _get(log, "agent_action_outcome", None) == "success"
     ]
     metrics["retry_success_rate"] = _avg(retry_successes)
 

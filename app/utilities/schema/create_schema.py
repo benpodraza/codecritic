@@ -112,21 +112,13 @@ def initialize_database(reset: bool = False) -> sqlite3.Connection:
     Then re-creates tables (and loads seed data, if any).
     """
     if reset and db.DB_PATH.exists():
-        close_connection()
-        db.DB_PATH.unlink()
+        db.close_connection()  # close the global connection if it’s open
+        db.DB_PATH.unlink()  # now safe to delete the file
 
     conn = db.get_connection()
     create_tables(conn)
-    # if you load seed data, uncomment next line:
-    # load_seed_data(conn)
+    load_seed_data(conn)  # uncomment if you have seed data
     return conn
-
-
-def close_connection() -> None:
-    global _CONN
-    if _CONN:
-        _CONN.close()
-        _CONN = None
 
 
 if __name__ == "__main__":

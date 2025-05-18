@@ -91,6 +91,8 @@ def load_seed_data(
         for entry in entries:
             obj = model(**entry)
             data = obj.model_dump()
+            # Convert any Path objects to strings (esp. WindowsPath)
+            data = {k: str(v) if isinstance(v, Path) else v for k, v in data.items()}
             cols = ",".join(data.keys())
             placeholders = ",".join(["?"] * len(data))
             cur.execute(
@@ -100,7 +102,11 @@ def load_seed_data(
     conn.commit()
 
 
-def initialize_database() -> sqlite3.Connection:
+def initialize_database(reset: bool = False) -> sqlite3.Connection:
+    if reset:
+        db_path = Path("experiments/codecritic.sqlite3")
+        if db_path.exists():
+            db_path.unlink()
     conn = db.get_connection()
     create_tables(conn)
     load_seed_data(conn)

@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from app.enums.agent_enums import AgentRole
-from app.enums.system_enums import SystemState, StateTransitionReason, SystemType
-from app.enums.log_enums import LogType, ScoringMetric
+from app.enums.scoring_enums import ScoringMetric
+from app.enums.system_enums import SystemState, StateTransitionReason
 
 
 @dataclass

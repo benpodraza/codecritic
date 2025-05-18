@@ -28,5 +28,5 @@ class SystemPrompt(BaseModel):
             raise ValueError("artifact_path must be absolute or project relative")
         return p
 
-    def model_dump(self, **kwargs) -> dict:
-        return super().model_dump(**kwargs)
+    def model_dump(self, **kwargs) -> dict:  # type: ignore[misc]
+        return super().model_dump(**kwargs)  # type: ignore[misc]

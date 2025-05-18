@@ -9,3 +9,5 @@ class ScoringMetric(str, Enum):
     AGENT_SUCCESS_RATE = "agent_role_success_rate"
     RETRY_SUCCESS_RATE = "retry_success_rate"
     COVERAGE = "coverage"
+    CYCLOMATIC_COMPLEXITY = "cyclomatic_complexity"
+    RECOMMENDATION_QUALITY = "recommendation_quality"

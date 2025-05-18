@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ...abstract_classes.agent_base import AgentBase
 from ...enums.agent_enums import AgentRole
@@ -51,4 +51,4 @@ class GeneratorAgent(AgentBase):
             self.error_logs.append(err)
             self.logger.exception("Formatting failed for %s", self.target)
         finally:
-            log.stop = datetime.utcnow()
+            log.stop = datetime.now(timezone.utc)

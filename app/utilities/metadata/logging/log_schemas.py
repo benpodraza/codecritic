@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -13,7 +13,7 @@ class StateLog:
     action: str
     score: float | None = None
     details: str | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -23,7 +23,7 @@ class StateTransitionLog:
     from_state: str
     to_state: str
     reason: str | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -41,7 +41,7 @@ class PromptLog:
     response: str | None = None
     attempt_number: int = 0
     agent_action_outcome: str | None = None
-    start: datetime = field(default_factory=datetime.utcnow)
+    start: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     stop: datetime | None = None
 
 
@@ -56,7 +56,7 @@ class CodeQualityLog:
     cyclomatic_complexity: float
     maintainability_index: float
     lint_errors: int
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -68,7 +68,7 @@ class ErrorLog:
     error_type: str
     message: str
     file_path: str | None = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -79,4 +79,4 @@ class ScoringLog:
     round: int
     metric: str
     value: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

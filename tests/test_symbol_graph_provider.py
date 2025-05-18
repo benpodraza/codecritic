@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 import tempfile
+from unittest.mock import patch
 
 from app.extensions.context_providers.symbol_graph_provider import SymbolGraphProvider
 
@@ -49,6 +50,18 @@ class Bar:
             ctx = provider.get_context()
             graph = ctx["symbol_graph"]
             self.assertIn("mod.func", graph)
+
+    def test_symbol_graph_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "mod.py"
+            src.write_text("def func():\n    pass\n", encoding="utf-8")
+            provider = SymbolGraphProvider(str(src))
+            provider.get_context()
+            with patch.object(
+                SymbolGraphProvider, "_parse_file", side_effect=AssertionError
+            ):
+                ctx = provider.get_context()
+            self.assertIn("mod.func", ctx["symbol_graph"])
 
 
 if __name__ == "__main__":

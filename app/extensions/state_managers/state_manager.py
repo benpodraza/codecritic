@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ...abstract_classes.state_manager_base import StateManagerBase
-from ...utilities.metadata.logging import LoggingProvider
+from ...factories.logging_provider import LoggingProvider
 
 
 class StateManager(StateManagerBase):

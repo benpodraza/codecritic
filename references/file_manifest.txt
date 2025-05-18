@@ -173,6 +173,7 @@ codecritic
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
+   - evaluator_agent_demo.ipynb
    - experiments
       - artifacts
          - snapshots
@@ -217,6 +218,8 @@ codecritic
    - test-runner.ps1
    - tests
       - __init__.py
+      - notebooks
+         - __init__.py
       - test_agents.py
       - test_bootstrap.py
       - test_factories.py

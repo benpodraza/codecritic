@@ -15,7 +15,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class AgentBase(LoggingMixin, ABC):
@@ -41,7 +41,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class ContextProviderBase(LoggingMixin, ABC):
@@ -71,7 +71,7 @@
 # 5 from ..factories.scoring_provider import ScoringProviderFactory
 # 6 from ..factories.system_manager import SystemManagerFactory
 # 7 from ..factories.experiment_config_provider import ExperimentConfigProvider
-# 8 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider, ScoringLog
+# 8 from ..factories.logging_provider import LoggingMixin, LoggingProvider, ScoringLog
 # 9 from ..utilities.metrics import EVALUATION_METRICS
 # 10 
 # 11 
@@ -155,7 +155,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class PromptGeneratorBase(LoggingMixin, ABC):
@@ -182,7 +182,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class ScoringProviderBase(LoggingMixin, ABC):
@@ -209,7 +209,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class StateManagerBase(LoggingMixin, ABC):
@@ -235,7 +235,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from app.factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class SystemManagerBase(LoggingMixin, ABC):
@@ -261,7 +261,7 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
 # 6 
 # 7 
 # 8 class ToolProviderBase(LoggingMixin, ABC):
@@ -564,13 +564,23 @@
 # 1 from .dummy_agent import DummyAgent
 # 2 from .generator_agent import GeneratorAgent
 # 3 from .evaluator_agent import EvaluatorAgent
-# 4 from ...registries.agents import AGENT_REGISTRY
-# 5 
-# 6 AGENT_REGISTRY.register("dummy", DummyAgent)
-# 7 AGENT_REGISTRY.register("generator", GeneratorAgent)
-# 8 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
-# 9 
-# 10 __all__ = ["DummyAgent", "GeneratorAgent", "EvaluatorAgent"]
+# 4 from .mediator_agent import MediatorAgent
+# 5 from .patch_agent import PatchAgent
+# 6 from ...registries.agents import AGENT_REGISTRY
+# 7 
+# 8 AGENT_REGISTRY.register("dummy", DummyAgent)
+# 9 AGENT_REGISTRY.register("generator", GeneratorAgent)
+# 10 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
+# 11 AGENT_REGISTRY.register("mediator", MediatorAgent)
+# 12 AGENT_REGISTRY.register("patch", PatchAgent)
+# 13 
+# 14 __all__ = [
+# 15     "DummyAgent",
+# 16     "GeneratorAgent",
+# 17     "EvaluatorAgent",
+# 18     "MediatorAgent",
+# 19     "PatchAgent",
+# 20 ]
 
 
 # extensions\agents\dummy_agent.py
@@ -589,130 +599,141 @@
 # 2 
 # 3 from pathlib import Path
 # 4 from typing import List
-# 5 
-# 6 from ...abstract_classes.agent_base import AgentBase
-# 7 from ...enums.agent_enums import AgentRole
-# 8 from ...factories.tool_provider import ToolProviderFactory
-# 9 from ...utilities.metadata.logging import (
-# 10     CodeQualityLog,
-# 11     ErrorLog,
-# 12     LoggingProvider,
-# 13 )
-# 14 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
-# 15 
+# 5 from datetime import datetime, timezone
+# 6 
+# 7 from ...abstract_classes.agent_base import AgentBase
+# 8 from ...enums.agent_enums import AgentRole
+# 9 from ...factories.tool_provider import ToolProviderFactory
+# 10 from ...factories.logging_provider import (
+# 11     CodeQualityLog,
+# 12     ErrorLog,
+# 13     LoggingProvider,
+# 14 )
+# 15 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 # 16 
-# 17 def _analyze_radon(code: str) -> tuple[float, float]:
-# 18     """Return cyclomatic complexity and maintainability index for the code."""
-# 19     try:
-# 20         from radon.complexity import cc_visit
-# 21         from radon.metrics import mi_visit
-# 22 
-# 23         blocks = cc_visit(code)
-# 24         cc = sum(b.complexity for b in blocks) / max(len(blocks), 1)
-# 25         mi = mi_visit(code, True)
-# 26         return float(cc), float(mi)
-# 27     except Exception:
-# 28         return 0.0, 0.0
-# 29 
+# 17 
+# 18 def _analyze_radon(code: str) -> tuple[float, float]:
+# 19     """Return cyclomatic complexity and maintainability index for the code."""
+# 20     try:
+# 21         from radon.complexity import cc_visit
+# 22         from radon.metrics import mi_visit
+# 23 
+# 24         blocks = cc_visit(code)
+# 25         cc = sum(b.complexity for b in blocks) / max(len(blocks), 1)
+# 26         mi = mi_visit(code, True)
+# 27         return float(cc), float(mi)
+# 28     except Exception:
+# 29         return 0.0, 0.0
 # 30 
-# 31 class EvaluatorAgent(AgentBase):
-# 32     """Run static analysis tools and log code quality metrics."""
-# 33 
-# 34     def __init__(
-# 35         self,
-# 36         target: str,
-# 37         logger: LoggingProvider | None = None,
-# 38         snapshot_writer: SnapshotWriter | None = None,
-# 39     ) -> None:
-# 40         super().__init__(logger)
-# 41         self.target = target
-# 42         self.snapshot_writer = snapshot_writer or SnapshotWriter()
-# 43         self.mypy = ToolProviderFactory.create("mypy")
-# 44         self.ruff = ToolProviderFactory.create("ruff")
-# 45         self.black = ToolProviderFactory.create("black")
-# 46         self.radon = ToolProviderFactory.create("radon")
-# 47         self.quality_logs: List[CodeQualityLog] = []
-# 48         self.error_logs: List[ErrorLog] = []
-# 49 
-# 50     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 51         before = Path(self.target).read_text(encoding="utf-8")
-# 52         lines = len(before.splitlines())
-# 53         complexity = 0.0
-# 54         maintainability = 0.0
-# 55         lint_return = 0
-# 56 
-# 57         try:
-# 58             self.mypy.run(self.target)
-# 59         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 60             self.error_logs.append(
-# 61                 ErrorLog(
-# 62                     experiment_id="exp",
-# 63                     round=0,
-# 64                     error_type=type(exc).__name__,
-# 65                     message=str(exc),
-# 66                     file_path=self.target,
-# 67                 )
-# 68             )
-# 69 
-# 70         try:
-# 71             ruff_proc = self.ruff.run(self.target)
-# 72             lint_return = ruff_proc.returncode
-# 73         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 74             self.error_logs.append(
-# 75                 ErrorLog(
-# 76                     experiment_id="exp",
-# 77                     round=0,
-# 78                     error_type=type(exc).__name__,
-# 79                     message=str(exc),
-# 80                     file_path=self.target,
-# 81                 )
-# 82             )
-# 83             lint_return = 1
-# 84 
-# 85         try:
-# 86             self.black.run(self.target, check=True)
-# 87         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 88             self.error_logs.append(
-# 89                 ErrorLog(
-# 90                     experiment_id="exp",
-# 91                     round=0,
-# 92                     error_type=type(exc).__name__,
-# 93                     message=str(exc),
-# 94                     file_path=self.target,
-# 95                 )
-# 96             )
-# 97 
-# 98         try:
-# 99             #  Run radon CLI primarily for logging/debug purposes
-# 100             self.radon.run(self.target)
-# 101             complexity, maintainability = _analyze_radon(before)
-# 102         except Exception as exc:
-# 103             self._log.warning("Radon unavailable: %s", exc)
-# 104 
-# 105         log = CodeQualityLog(
-# 106             experiment_id="exp",
-# 107             round=0,
-# 108             symbol=self.target,
-# 109             lines_of_code=lines,
-# 110             cyclomatic_complexity=complexity,
-# 111             maintainability_index=maintainability,
-# 112             lint_errors=0 if lint_return == 0 else 1,
-# 113         )
-# 114         self.quality_logs.append(log)
-# 115         self.log_code_quality(log)
-# 116         for err in self.error_logs:
-# 117             self.log_error(err)
-# 118 
-# 119         after = Path(self.target).read_text(encoding="utf-8")
-# 120         self.snapshot_writer.write_snapshot(
-# 121             experiment_id="exp",
-# 122             round=0,
-# 123             file_path=self.target,
-# 124             before=before,
-# 125             after=after,
-# 126             symbol=self.target,
-# 127             agent_role=AgentRole.EVALUATOR,
-# 128         )
+# 31 
+# 32 class EvaluatorAgent(AgentBase):
+# 33     """Run static analysis tools and log code quality metrics."""
+# 34 
+# 35     def __init__(
+# 36         self,
+# 37         target: str,
+# 38         logger: LoggingProvider | None = None,
+# 39         snapshot_writer: SnapshotWriter | None = None,
+# 40     ) -> None:
+# 41         super().__init__(logger)
+# 42         self.target = target
+# 43         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 44         self.mypy = ToolProviderFactory.create("mypy")
+# 45         self.ruff = ToolProviderFactory.create("ruff")
+# 46         self.black = ToolProviderFactory.create("black")
+# 47         self.radon = ToolProviderFactory.create("radon")
+# 48         self.quality_logs: List[CodeQualityLog] = []
+# 49         self.error_logs: List[ErrorLog] = []
+# 50 
+# 51     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 52         before = Path(self.target).read_text(encoding="utf-8")
+# 53         lines = len(before.splitlines())
+# 54         complexity = 0.0
+# 55         maintainability = 0.0
+# 56         lint_return = 0
+# 57 
+# 58         try:
+# 59             self.mypy.run(self.target)
+# 60         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 61             self.error_logs.append(
+# 62                 ErrorLog(
+# 63                     experiment_id="exp",
+# 64                     round=0,
+# 65                     error_type=type(exc).__name__,
+# 66                     message=str(exc),
+# 67                     file_path=self.target,
+# 68                 )
+# 69             )
+# 70 
+# 71         try:
+# 72             ruff_proc = self.ruff.run(self.target)
+# 73             lint_return = ruff_proc.returncode
+# 74         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 75             self.error_logs.append(
+# 76                 ErrorLog(
+# 77                     experiment_id="exp",
+# 78                     round=0,
+# 79                     error_type=type(exc).__name__,
+# 80                     message=str(exc),
+# 81                     file_path=self.target,
+# 82                 )
+# 83             )
+# 84             lint_return = 1
+# 85 
+# 86         try:
+# 87             self.black.run(self.target, check=True)
+# 88         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 89             self.error_logs.append(
+# 90                 ErrorLog(
+# 91                     experiment_id="exp",
+# 92                     round=0,
+# 93                     error_type=type(exc).__name__,
+# 94                     message=str(exc),
+# 95                     file_path=self.target,
+# 96                 )
+# 97             )
+# 98 
+# 99         try:
+# 100             #  Run radon CLI primarily for logging/debug purposes
+# 101             self.radon.run(self.target)
+# 102             complexity, maintainability = _analyze_radon(before)
+# 103         except Exception as exc:
+# 104             self._log.warning("Radon unavailable: %s", exc)
+# 105             self.error_logs.append(
+# 106                 ErrorLog(
+# 107                     experiment_id="exp",
+# 108                     round=0,
+# 109                     error_type=type(exc).__name__,
+# 110                     message=f"Radon analysis failed: {exc}",
+# 111                     file_path=self.target,
+# 112                     timestamp=datetime.now(timezone.utc),
+# 113                 )
+# 114             )
+# 115 
+# 116         log = CodeQualityLog(
+# 117             experiment_id="exp",
+# 118             round=0,
+# 119             symbol=self.target,
+# 120             lines_of_code=lines,
+# 121             cyclomatic_complexity=complexity,
+# 122             maintainability_index=maintainability,
+# 123             lint_errors=0 if lint_return == 0 else 1,
+# 124         )
+# 125         self.quality_logs.append(log)
+# 126         self.log_code_quality(log)
+# 127         for err in self.error_logs:
+# 128             self.log_error(err)
+# 129 
+# 130         after = Path(self.target).read_text(encoding="utf-8")
+# 131         self.snapshot_writer.write_snapshot(
+# 132             experiment_id="exp",
+# 133             round=0,
+# 134             file_path=self.target,
+# 135             before=before,
+# 136             after=after,
+# 137             symbol=self.target,
+# 138             agent_role=AgentRole.EVALUATOR,
+# 139         )
 
 
 # extensions\agents\generator_agent.py
@@ -726,7 +747,7 @@
 # 7 from ...abstract_classes.agent_base import AgentBase
 # 8 from ...enums.agent_enums import AgentRole
 # 9 from ...factories.tool_provider import ToolProviderFactory
-# 10 from ...utilities.metadata.logging import (
+# 10 from ...factories.logging_provider import (
 # 11     ErrorLog,
 # 12     PromptLog,
 # 13     LoggingProvider,
@@ -799,6 +820,235 @@
 # 80                 self.log_error(err)
 
 
+# extensions\agents\mediator_agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import List, Any
+# 4 
+# 5 from ...abstract_classes.agent_base import AgentBase
+# 6 from ...enums.agent_enums import AgentRole
+# 7 from ...factories.logging_provider import (
+# 8     ConversationLog,
+# 9     ErrorLog,
+# 10     LoggingProvider,
+# 11 )
+# 12 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 13 
+# 14 
+# 15 class MediatorAgent(AgentBase):
+# 16     """Agent that reconciles discrepancies between generator and evaluator outputs."""
+# 17 
+# 18     def __init__(
+# 19         self,
+# 20         target: str = "generated.py",
+# 21         logger: LoggingProvider | None = None,
+# 22         snapshot_writer: SnapshotWriter | None = None,
+# 23     ) -> None:
+# 24         super().__init__(logger)
+# 25         self.target = target
+# 26         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 27         self.conversation_logs: List[ConversationLog] = []
+# 28         self.error_logs: List[ErrorLog] = []
+# 29 
+# 30     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 31         code: str | None = kwargs.get("generator_output")
+# 32         metrics: dict[str, Any] | None = kwargs.get("evaluation_metrics")
+# 33 
+# 34         if code is None or metrics is None:
+# 35             err = ErrorLog(
+# 36                 experiment_id="exp",
+# 37                 round=0,
+# 38                 error_type="ValueError",
+# 39                 message="Missing generator output or evaluation metrics",
+# 40                 file_path=self.target,
+# 41             )
+# 42             self.error_logs.append(err)
+# 43             self.log_error(err)
+# 44             return
+# 45 
+# 46         lint_errors = int(metrics.get("lint_errors", 0))
+# 47         maintainability = float(metrics.get("maintainability_index", 100.0))
+# 48         complexity = float(metrics.get("cyclomatic_complexity", 0.0))
+# 49 
+# 50         recommendations: List[str] = []
+# 51         if lint_errors > 0:
+# 52             recommendations.append("Resolve lint errors")
+# 53         if maintainability < 70:
+# 54             recommendations.append("Increase maintainability")
+# 55         if complexity > 10:
+# 56             recommendations.append("Reduce complexity")
+# 57 
+# 58         rec_text = "; ".join(recommendations)
+# 59         conv = ConversationLog(
+# 60             experiment_id="exp",
+# 61             round=0,
+# 62             agent_role=AgentRole.MEDIATOR,
+# 63             target=self.target,
+# 64             content=rec_text,
+# 65             originating_agent="mediator",
+# 66             intervention=bool(recommendations),
+# 67             intervention_type="mediation" if recommendations else None,
+# 68             intervention_reason="evaluation discrepancy" if recommendations else None,
+# 69         )
+# 70         self.conversation_logs.append(conv)
+# 71 
+# 72         try:
+# 73             self.log_conversation(conv)
+# 74         except Exception as exc:  #  pragma: no cover - db write failure
+# 75             err = ErrorLog(
+# 76                 experiment_id="exp",
+# 77                 round=0,
+# 78                 error_type=type(exc).__name__,
+# 79                 message=str(exc),
+# 80                 file_path=self.target,
+# 81             )
+# 82             self.error_logs.append(err)
+# 83             self.log_error(err)
+# 84 
+# 85         after = code
+# 86         if rec_text:
+# 87             after = code + f"\n#  Mediator Recommendation: {rec_text}"
+# 88 
+# 89         self.snapshot_writer.write_snapshot(
+# 90             experiment_id="exp",
+# 91             round=0,
+# 92             file_path=self.target,
+# 93             before=code,
+# 94             after=after,
+# 95             symbol=self.target,
+# 96             agent_role=AgentRole.MEDIATOR,
+# 97         )
+
+
+# extensions\agents\patch_agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import json
+# 4 from pathlib import Path
+# 5 from typing import Any, List
+# 6 
+# 7 from ...abstract_classes.agent_base import AgentBase
+# 8 from ...enums.agent_enums import AgentRole
+# 9 from ...factories.logging_provider import (
+# 10     CodeQualityLog,
+# 11     ConversationLog,
+# 12     ErrorLog,
+# 13     LoggingProvider,
+# 14 )
+# 15 from ...factories.tool_provider import ToolProviderFactory
+# 16 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 17 from .evaluator_agent import _analyze_radon
+# 18 
+# 19 
+# 20 class PatchAgent(AgentBase):
+# 21     """Apply mediator recommendations as code patches."""
+# 22 
+# 23     def __init__(
+# 24         self,
+# 25         target: str,
+# 26         logger: LoggingProvider | None = None,
+# 27         snapshot_writer: SnapshotWriter | None = None,
+# 28     ) -> None:
+# 29         super().__init__(logger)
+# 30         self.target = target
+# 31         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 32         self.black = ToolProviderFactory.create("black")
+# 33         self.ruff = ToolProviderFactory.create("ruff")
+# 34         self.mypy = ToolProviderFactory.create("mypy")
+# 35         self.conversation_logs: List[ConversationLog] = []
+# 36         self.error_logs: List[ErrorLog] = []
+# 37         self.quality_logs: List[CodeQualityLog] = []
+# 38 
+# 39     def _apply_patch(self, code: str, op: dict[str, Any]) -> str:
+# 40         if op.get("op") == "replace":
+# 41             old = op.get("from", "")
+# 42             new = op.get("to", "")
+# 43             if old not in code:
+# 44                 raise ValueError(f"pattern '{old}' not found")
+# 45             return code.replace(old, new)
+# 46         if op.get("op") == "append":
+# 47             return code + op.get("text", "")
+# 48         raise ValueError(f"unsupported op: {op.get('op')}")
+# 49 
+# 50     def _run_agent_logic(self, *args, **kwargs) -> None:  #  noqa: C901 - small
+# 51         recs: List[ConversationLog] | None = kwargs.get("recommendations")
+# 52         if not recs:
+# 53             return
+# 54         path = Path(self.target)
+# 55         before = path.read_text(encoding="utf-8")
+# 56         after = before
+# 57         for conv in recs:
+# 58             self.conversation_logs.append(conv)
+# 59             try:
+# 60                 ops = json.loads(conv.content)
+# 61             except json.JSONDecodeError as exc:
+# 62                 err = ErrorLog(
+# 63                     experiment_id="exp",
+# 64                     round=0,
+# 65                     error_type=type(exc).__name__,
+# 66                     message=str(exc),
+# 67                     file_path=self.target,
+# 68                 )
+# 69                 self.error_logs.append(err)
+# 70                 self.log_error(err)
+# 71                 continue
+# 72             self.log_conversation(conv)
+# 73             for op in ops:
+# 74                 try:
+# 75                     after = self._apply_patch(after, op)
+# 76                 except Exception as exc:  #  patch failure
+# 77                     err = ErrorLog(
+# 78                         experiment_id="exp",
+# 79                         round=0,
+# 80                         error_type=type(exc).__name__,
+# 81                         message=str(exc),
+# 82                         file_path=self.target,
+# 83                     )
+# 84                     self.error_logs.append(err)
+# 85                     self.log_error(err)
+# 86         path.write_text(after, encoding="utf-8")
+# 87         try:
+# 88             self.black.run(self.target)
+# 89             self.ruff.run(self.target)
+# 90             self.mypy.run(self.target)
+# 91         except Exception as exc:  #  pragma: no cover - tool failure
+# 92             err = ErrorLog(
+# 93                 experiment_id="exp",
+# 94                 round=0,
+# 95                 error_type=type(exc).__name__,
+# 96                 message=str(exc),
+# 97                 file_path=self.target,
+# 98             )
+# 99             self.error_logs.append(err)
+# 100             self.log_error(err)
+# 101         final = path.read_text(encoding="utf-8")
+# 102         complexity, maintainability = _analyze_radon(final)
+# 103         quality = CodeQualityLog(
+# 104             experiment_id="exp",
+# 105             round=0,
+# 106             symbol=self.target,
+# 107             lines_of_code=len(final.splitlines()),
+# 108             cyclomatic_complexity=complexity,
+# 109             maintainability_index=maintainability,
+# 110             lint_errors=0,
+# 111         )
+# 112         self.quality_logs.append(quality)
+# 113         self.log_code_quality(quality)
+# 114         for err in self.error_logs:
+# 115             self.log_error(err)
+# 116         self.snapshot_writer.write_snapshot(
+# 117             experiment_id="exp",
+# 118             round=0,
+# 119             file_path=self.target,
+# 120             before=before,
+# 121             after=final,
+# 122             symbol=self.target,
+# 123             agent_role=AgentRole.PATCHER,
+# 124         )
+
+
 # extensions\context_providers\__init__.py
 
 # 1 from .dummy_context_provider import DummyContextProvider
@@ -830,7 +1080,7 @@
 # 4 from pathlib import Path
 # 5 from typing import Any, Dict, List, Set
 # 6 
-# 7 from ...utilities.metadata.logging import LoggingProvider
+# 7 from ...factories.logging_provider import LoggingProvider
 # 8 
 # 9 from ...abstract_classes.context_provider_base import ContextProviderBase
 # 10 
@@ -919,7 +1169,7 @@
 # 4 
 # 5 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
 # 6 from ...abstract_classes.context_provider_base import ContextProviderBase
-# 7 from ...utilities.metadata.logging import LoggingProvider
+# 7 from ...factories.logging_provider import LoggingProvider
 # 8 
 # 9 
 # 10 class BasicPromptGenerator(PromptGeneratorBase):
@@ -1047,7 +1297,7 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from ...abstract_classes.state_manager_base import StateManagerBase
-# 4 from ...utilities.metadata.logging import LoggingProvider
+# 4 from ...factories.logging_provider import LoggingProvider
 # 5 
 # 6 
 # 7 class StateManager(StateManagerBase):
@@ -1094,7 +1344,7 @@
 # 7 from ...factories.agent import AgentFactory
 # 8 from ...factories.context_provider import ContextProviderFactory
 # 9 from ...factories.prompt_manager import PromptGeneratorFactory
-# 10 from ...utilities.metadata.logging import (
+# 10 from ...factories.logging_provider import (
 # 11     CodeQualityLog,
 # 12     PromptLog,
 # 13     ScoringLog,
@@ -1505,123 +1755,132 @@
 # 49         self,
 # 50         db_path: str | Path = "experiments/codecritic.sqlite3",
 # 51         output_path: str | Path | None = None,
-# 52     ) -> None:
-# 53         if getattr(self, "_initialized", False):
-# 54             return
-# 55         self.db_path = Path(db_path)
-# 56         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-# 57         self.conn: sqlite3.Connection = get_connection()
-# 58         from app.utilities.db import init_db
+# 52         connection: sqlite3.Connection | None = None,
+# 53     ) -> None:
+# 54         if getattr(self, "_initialized", False):
+# 55             return
+# 56 
+# 57         self.db_path = Path(db_path)
+# 58         self.db_path.parent.mkdir(exist_ok=True, parents=True)
 # 59 
-# 60         init_db()
-# 61         self.output_path = Path(output_path) if output_path else None
-# 62         if self.output_path:
-# 63             self.output_path.parent.mkdir(parents=True, exist_ok=True)
-# 64         self._initialized = True
-# 65 
-# 66     def _serialize(self, obj: Any) -> dict:
-# 67         def _safe(v: Any) -> Any:
-# 68             if isinstance(v, (Enum, Path)):
-# 69                 return str(v)
-# 70             elif isinstance(v, datetime):
-# 71                 return v.isoformat()
-# 72             elif isinstance(v, list):
-# 73                 return [_safe(i) for i in v]
-# 74             elif isinstance(v, dict):
-# 75                 return {k: _safe(val) for k, val in v.items()}
-# 76             return v
-# 77 
-# 78         if not is_dataclass(obj) or isinstance(obj, type):
-# 79             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 80         return _safe(asdict(obj))
-# 81 
-# 82     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 83         items = list(items)
-# 84         if not items:
-# 85             return
-# 86         keys = list(items[0].keys())
-# 87         cols = ",".join(keys)
-# 88         placeholders = ",".join(["?"] * len(keys))
-# 89         values = [tuple(i[k] for k in keys) for i in items]
-# 90         cur = self.conn.cursor()
-# 91         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 92         self.conn.commit()
-# 93         if self.output_path:
-# 94             with self.output_path.open("a", encoding="utf-8") as fh:
-# 95                 for item in items:
-# 96                     fh.write(json.dumps(item) + "\n")
-# 97 
-# 98     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 99         if not isinstance(entries, list):
-# 100             entries = [entries]
-# 101         model_cls = LOG_MODEL_MAP.get(log_type)
-# 102         if model_cls is None:
-# 103             raise ValueError(f"Unsupported log type: {log_type}")
-# 104         for entry in entries:
-# 105             if not isinstance(entry, model_cls):
-# 106                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
-# 107         serialized = [self._serialize(e) for e in entries]
-# 108         self._insert_many(log_type.value + "_log", serialized)
-# 109 
-# 110     #  Convenience wrappers
-# 111     def log_state(self, log: StateLog) -> None:
-# 112         self.write(LogType.STATE, log)
-# 113 
-# 114     def log_transition(self, log: StateTransitionLog) -> None:
-# 115         self.write(LogType.STATE_TRANSITION, log)
-# 116 
-# 117     def log_prompt(self, log: PromptLog) -> None:
-# 118         self.write(LogType.PROMPT, log)
-# 119 
-# 120     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 121         self.write(LogType.CODE_QUALITY, log)
+# 60         from app.utilities.db import init_db, get_connection
+# 61 
+# 62         if connection:
+# 63             self.conn = connection
+# 64             init_db(self.conn)  #  Explicit schema initialization for the provided connection
+# 65         else:
+# 66             self.conn = get_connection()
+# 67             init_db()  #  Schema initialization when using default connection
+# 68 
+# 69         self.output_path = Path(output_path) if output_path else None
+# 70         if self.output_path:
+# 71             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+# 72 
+# 73         self._initialized = True
+# 74         
+# 75     def _serialize(self, obj: Any) -> dict:
+# 76         def _safe(v: Any) -> Any:
+# 77             if isinstance(v, (Enum, Path)):
+# 78                 return str(v)
+# 79             elif isinstance(v, datetime):
+# 80                 return v.isoformat()
+# 81             elif isinstance(v, list):
+# 82                 return [_safe(i) for i in v]
+# 83             elif isinstance(v, dict):
+# 84                 return {k: _safe(val) for k, val in v.items()}
+# 85             return v
+# 86 
+# 87         if not is_dataclass(obj) or isinstance(obj, type):
+# 88             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 89         return _safe(asdict(obj))
+# 90 
+# 91     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 92         items = list(items)
+# 93         if not items:
+# 94             return
+# 95         keys = list(items[0].keys())
+# 96         cols = ",".join(keys)
+# 97         placeholders = ",".join(["?"] * len(keys))
+# 98         values = [tuple(i[k] for k in keys) for i in items]
+# 99         cur = self.conn.cursor()
+# 100         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 101         self.conn.commit()
+# 102         if self.output_path:
+# 103             with self.output_path.open("a", encoding="utf-8") as fh:
+# 104                 for item in items:
+# 105                     fh.write(json.dumps(item) + "\n")
+# 106 
+# 107     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 108         if not isinstance(entries, list):
+# 109             entries = [entries]
+# 110         model_cls = LOG_MODEL_MAP.get(log_type)
+# 111         if model_cls is None:
+# 112             raise ValueError(f"Unsupported log type: {log_type}")
+# 113         for entry in entries:
+# 114             if not isinstance(entry, model_cls):
+# 115                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
+# 116         serialized = [self._serialize(e) for e in entries]
+# 117         self._insert_many(log_type.value + "_log", serialized)
+# 118 
+# 119     #  Convenience wrappers
+# 120     def log_state(self, log: StateLog) -> None:
+# 121         self.write(LogType.STATE, log)
 # 122 
-# 123     def log_error(self, log: ErrorLog) -> None:
-# 124         self.write(LogType.ERROR, log)
+# 123     def log_transition(self, log: StateTransitionLog) -> None:
+# 124         self.write(LogType.STATE_TRANSITION, log)
 # 125 
-# 126     def log_scoring(self, log: ScoringLog) -> None:
-# 127         self.write(LogType.SCORING, log)
+# 126     def log_prompt(self, log: PromptLog) -> None:
+# 127         self.write(LogType.PROMPT, log)
 # 128 
-# 129     def log_conversation(self, log: ConversationLog) -> None:
-# 130         self.write(LogType.CONVERSATION, log)
+# 129     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 130         self.write(LogType.CODE_QUALITY, log)
 # 131 
-# 132     def log_experiment(self, log: ExperimentLog) -> None:
-# 133         self.write(LogType.EXPERIMENT, log)
+# 132     def log_error(self, log: ErrorLog) -> None:
+# 133         self.write(LogType.ERROR, log)
 # 134 
-# 135     def close(self) -> None:
-# 136         self.conn.close()
+# 135     def log_scoring(self, log: ScoringLog) -> None:
+# 136         self.write(LogType.SCORING, log)
 # 137 
-# 138 
-# 139 class LoggingMixin:
-# 140     """Mixin to provide access to a shared LoggingProvider instance."""
-# 141 
-# 142     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 143         self.logger = logger or LoggingProvider()
-# 144         self._log = logging.getLogger(self.__class__.__name__)
-# 145 
-# 146     def log_state(self, log: StateLog) -> None:
-# 147         self.logger.log_state(log)
-# 148 
-# 149     def log_transition(self, log: StateTransitionLog) -> None:
-# 150         self.logger.log_transition(log)
-# 151 
-# 152     def log_prompt(self, log: PromptLog) -> None:
-# 153         self.logger.log_prompt(log)
+# 138     def log_conversation(self, log: ConversationLog) -> None:
+# 139         self.write(LogType.CONVERSATION, log)
+# 140 
+# 141     def log_experiment(self, log: ExperimentLog) -> None:
+# 142         self.write(LogType.EXPERIMENT, log)
+# 143 
+# 144     def close(self) -> None:
+# 145         self.conn.close()
+# 146 
+# 147 
+# 148 class LoggingMixin:
+# 149     """Mixin to provide access to a shared LoggingProvider instance."""
+# 150 
+# 151     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 152         self.logger = logger or LoggingProvider()
+# 153         self._log = logging.getLogger(self.__class__.__name__)
 # 154 
-# 155     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 156         self.logger.log_code_quality(log)
+# 155     def log_state(self, log: StateLog) -> None:
+# 156         self.logger.log_state(log)
 # 157 
-# 158     def log_error(self, log: ErrorLog) -> None:
-# 159         self.logger.log_error(log)
+# 158     def log_transition(self, log: StateTransitionLog) -> None:
+# 159         self.logger.log_transition(log)
 # 160 
-# 161     def log_scoring(self, log: ScoringLog) -> None:
-# 162         self.logger.log_scoring(log)
+# 161     def log_prompt(self, log: PromptLog) -> None:
+# 162         self.logger.log_prompt(log)
 # 163 
-# 164     def log_conversation(self, log: ConversationLog) -> None:
-# 165         self.logger.log_conversation(log)
+# 164     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 165         self.logger.log_code_quality(log)
 # 166 
-# 167     def log_experiment(self, log: ExperimentLog) -> None:
-# 168         self.logger.log_experiment(log)
+# 167     def log_error(self, log: ErrorLog) -> None:
+# 168         self.logger.log_error(log)
+# 169 
+# 170     def log_scoring(self, log: ScoringLog) -> None:
+# 171         self.logger.log_scoring(log)
+# 172 
+# 173     def log_conversation(self, log: ConversationLog) -> None:
+# 174         self.logger.log_conversation(log)
+# 175 
+# 176     def log_experiment(self, log: ExperimentLog) -> None:
+# 177         self.logger.log_experiment(log)
 
 
 # factories\prompt_manager.py
@@ -2426,96 +2685,97 @@
 # 38         _CONN = None
 # 39 
 # 40 
-# 41 def init_db() -> sqlite3.Connection:
-# 42     conn = get_connection()
-# 43     cur = conn.cursor()
-# 44     cur.execute(
-# 45         """CREATE TABLE IF NOT EXISTS state_log (
-# 46             experiment_id TEXT,
-# 47             system TEXT,
-# 48             round INTEGER,
-# 49             state TEXT,
-# 50             action TEXT,
-# 51             score REAL,
-# 52             details TEXT,
-# 53             timestamp TEXT
-# 54         )"""
-# 55     )
-# 56     cur.execute(
-# 57         """CREATE TABLE IF NOT EXISTS state_transition_log (
-# 58             experiment_id TEXT,
-# 59             round INTEGER,
-# 60             from_state TEXT,
-# 61             to_state TEXT,
-# 62             reason TEXT,
-# 63             timestamp TEXT
-# 64         )"""
-# 65     )
-# 66     cur.execute(
-# 67         """CREATE TABLE IF NOT EXISTS prompt_log (
-# 68             experiment_id TEXT,
-# 69             round INTEGER,
-# 70             system TEXT,
-# 71             agent_id TEXT,
-# 72             agent_role TEXT,
-# 73             agent_engine TEXT,
-# 74             symbol TEXT,
-# 75             prompt TEXT,
-# 76             response TEXT,
-# 77             attempt_number INTEGER,
-# 78             agent_action_outcome TEXT,
-# 79             start TEXT,
-# 80             stop TEXT
-# 81         )"""
-# 82     )
-# 83     cur.execute(
-# 84         """CREATE TABLE IF NOT EXISTS code_quality_log (
-# 85             experiment_id TEXT,
-# 86             round INTEGER,
-# 87             symbol TEXT,
-# 88             lines_of_code INTEGER,
-# 89             cyclomatic_complexity REAL,
-# 90             maintainability_index REAL,
-# 91             lint_errors INTEGER,
-# 92             timestamp TEXT
-# 93         )"""
-# 94     )
-# 95     cur.execute(
-# 96         """CREATE TABLE IF NOT EXISTS scoring_log (
-# 97             experiment_id TEXT,
-# 98             round INTEGER,
-# 99             metric TEXT,
-# 100             value REAL,
-# 101             timestamp TEXT
-# 102         )"""
-# 103     )
-# 104     cur.execute(
-# 105         """CREATE TABLE IF NOT EXISTS error_log (
-# 106             experiment_id TEXT,
-# 107             round INTEGER,
-# 108             error_type TEXT,
-# 109             message TEXT,
-# 110             file_path TEXT,
-# 111             timestamp TEXT
-# 112         )"""
-# 113     )
-# 114     conn.commit()
-# 115     return conn
-# 116 
+# 41 def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
+# 42     if conn is None:
+# 43         conn = get_connection()
+# 44     cur = conn.cursor()
+# 45     cur.execute(
+# 46         """CREATE TABLE IF NOT EXISTS state_log (
+# 47             experiment_id TEXT,
+# 48             system TEXT,
+# 49             round INTEGER,
+# 50             state TEXT,
+# 51             action TEXT,
+# 52             score REAL,
+# 53             details TEXT,
+# 54             timestamp TEXT
+# 55         )"""
+# 56     )
+# 57     cur.execute(
+# 58         """CREATE TABLE IF NOT EXISTS state_transition_log (
+# 59             experiment_id TEXT,
+# 60             round INTEGER,
+# 61             from_state TEXT,
+# 62             to_state TEXT,
+# 63             reason TEXT,
+# 64             timestamp TEXT
+# 65         )"""
+# 66     )
+# 67     cur.execute(
+# 68         """CREATE TABLE IF NOT EXISTS prompt_log (
+# 69             experiment_id TEXT,
+# 70             round INTEGER,
+# 71             system TEXT,
+# 72             agent_id TEXT,
+# 73             agent_role TEXT,
+# 74             agent_engine TEXT,
+# 75             symbol TEXT,
+# 76             prompt TEXT,
+# 77             response TEXT,
+# 78             attempt_number INTEGER,
+# 79             agent_action_outcome TEXT,
+# 80             start TEXT,
+# 81             stop TEXT
+# 82         )"""
+# 83     )
+# 84     cur.execute(
+# 85         """CREATE TABLE IF NOT EXISTS code_quality_log (
+# 86             experiment_id TEXT,
+# 87             round INTEGER,
+# 88             symbol TEXT,
+# 89             lines_of_code INTEGER,
+# 90             cyclomatic_complexity REAL,
+# 91             maintainability_index REAL,
+# 92             lint_errors INTEGER,
+# 93             timestamp TEXT
+# 94         )"""
+# 95     )
+# 96     cur.execute(
+# 97         """CREATE TABLE IF NOT EXISTS scoring_log (
+# 98             experiment_id TEXT,
+# 99             round INTEGER,
+# 100             metric TEXT,
+# 101             value REAL,
+# 102             timestamp TEXT
+# 103         )"""
+# 104     )
+# 105     cur.execute(
+# 106         """CREATE TABLE IF NOT EXISTS error_log (
+# 107             experiment_id TEXT,
+# 108             round INTEGER,
+# 109             error_type TEXT,
+# 110             message TEXT,
+# 111             file_path TEXT,
+# 112             timestamp TEXT
+# 113         )"""
+# 114     )
+# 115     conn.commit()
+# 116     return conn
 # 117 
-# 118 def insert_logs(conn: sqlite3.Connection, table: str, logs: Iterable[Any]) -> None:
-# 119     logs = list(logs)
-# 120     if not logs:
-# 121         return
-# 122     row = _serialize(logs[0])
-# 123     cols = ",".join(row.keys())
-# 124     placeholders = ",".join(["?"] * len(row))
-# 125     values = [tuple(_serialize(log).values()) for log in logs]
-# 126     conn.executemany(
-# 127         f"INSERT INTO {table} ({cols}) VALUES ({placeholders})",
-# 128         values,
-# 129     )
-# 130     conn.commit()
+# 118 
+# 119 def insert_logs(conn: sqlite3.Connection, table: str, logs: Iterable[Any]) -> None:
+# 120     logs = list(logs)
+# 121     if not logs:
+# 122         return
+# 123     row = _serialize(logs[0])
+# 124     cols = ",".join(row.keys())
+# 125     placeholders = ",".join(["?"] * len(row))
+# 126     values = [tuple(_serialize(log).values()) for log in logs]
+# 127     conn.executemany(
+# 128         f"INSERT INTO {table} ({cols}) VALUES ({placeholders})",
+# 129         values,
+# 130     )
+# 131     conn.commit()
 
 
 # utilities\file_management\__init__.py
@@ -2532,28 +2792,23 @@
 
 # utilities\metadata\logging\__init__.py
 
-# 1 """Logging schemas for structured experiment data."""
-# 2 
-# 3 from .log_schemas import (
-# 4     StateLog,
-# 5     StateTransitionLog,
-# 6     PromptLog,
-# 7     CodeQualityLog,
-# 8     ErrorLog,
-# 9     ScoringLog,
-# 10 )
-# 11 from ....factories.logging_provider import LoggingProvider, LoggingMixin
-# 12 
-# 13 __all__ = [
-# 14     "StateLog",
-# 15     "StateTransitionLog",
-# 16     "PromptLog",
-# 17     "CodeQualityLog",
-# 18     "ErrorLog",
-# 19     "ScoringLog",
-# 20     "LoggingProvider",
-# 21     "LoggingMixin",
-# 22 ]
+# 1 from .log_schemas import (
+# 2     StateLog,
+# 3     StateTransitionLog,
+# 4     PromptLog,
+# 5     CodeQualityLog,
+# 6     ErrorLog,
+# 7     ScoringLog,
+# 8 )
+# 9 
+# 10 __all__ = [
+# 11     "StateLog",
+# 12     "StateTransitionLog",
+# 13     "PromptLog",
+# 14     "CodeQualityLog",
+# 15     "ErrorLog",
+# 16     "ScoringLog",
+# 17 ]
 
 
 # utilities\metadata\logging\log_schemas.py

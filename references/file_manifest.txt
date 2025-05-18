@@ -55,6 +55,8 @@ codecritic
             - dummy_agent.py
             - evaluator_agent.py
             - generator_agent.py
+            - mediator_agent.py
+            - patch_agent.py
          - context_providers
             - __init__.py
             - dummy_context_provider.py
@@ -170,6 +172,10 @@ codecritic
             - ruff_runner.py
             - sonarcloud_runner.py
    - coverage_output.txt
+   - demo_eval.py
+   - demo_patch.py
+   - demo_snap
+   - demo_snaps
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
@@ -177,6 +183,8 @@ codecritic
    - experiments
       - artifacts
          - snapshots
+            - exp
+               - 0
       - config
          - seed
             - agent_config.json
@@ -196,7 +204,9 @@ codecritic
          - exp
             - 0
    - htmlcov
+   - mediator_agent_demo.ipynb
    - mypy.ini
+   - patch_agent_demo.ipynb
    - phase1_tests.ipynb
    - phase2_validation.ipynb
    - phase3_validation.ipynb
@@ -224,6 +234,8 @@ codecritic
       - test_bootstrap.py
       - test_factories.py
       - test_integration.py
+      - test_mediator_agent.py
+      - test_patch_agent.py
       - test_system_state_management.py
       - test_tool_providers.py
    - tmp_demo.py

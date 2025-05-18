@@ -7,7 +7,7 @@ from ...enums.system_enums import SystemState, StateTransitionReason
 from ...factories.agent import AgentFactory
 from ...factories.context_provider import ContextProviderFactory
 from ...factories.prompt_manager import PromptGeneratorFactory
-from ...utilities.metadata.logging import (
+from ...factories.logging_provider import (
     CodeQualityLog,
     PromptLog,
     ScoringLog,

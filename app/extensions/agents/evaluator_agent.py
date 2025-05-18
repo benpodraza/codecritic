@@ -6,7 +6,7 @@ from typing import List
 from ...abstract_classes.agent_base import AgentBase
 from ...enums.agent_enums import AgentRole
 from ...factories.tool_provider import ToolProviderFactory
-from ...utilities.metadata.logging import (
+from ...factories.logging_provider import (
     CodeQualityLog,
     ErrorLog,
     LoggingProvider,

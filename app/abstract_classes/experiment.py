@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from ..factories.scoring_provider import ScoringProviderFactory
 from ..factories.system_manager import SystemManagerFactory
 from ..factories.experiment_config_provider import ExperimentConfigProvider
-from ..utilities.metadata.logging import LoggingMixin, LoggingProvider, ScoringLog
+from ..factories.logging_provider import LoggingMixin, LoggingProvider, ScoringLog
 from ..utilities.metrics import EVALUATION_METRICS
 
 

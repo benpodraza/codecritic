@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
 from ...abstract_classes.context_provider_base import ContextProviderBase
-from ...utilities.metadata.logging import LoggingProvider
+from ...factories.logging_provider import LoggingProvider
 
 
 class BasicPromptGenerator(PromptGeneratorBase):

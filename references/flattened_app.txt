@@ -94,53 +94,59 @@
 # 28     def run(self, *args, **kwargs) -> Dict[str, float]:
 # 29         self._log.debug("Experiment run start")
 # 30 
-# 31         #  load configuration
+# 31         #   load configuration
 # 32         self.config = ExperimentConfigProvider.load(self.config_id)
 # 33         self.scoring_model_id = self.config.get("scoring_model_id", "dummy")
 # 34         system_manager_id = self.config.get("system_manager_id", "dummy")
 # 35 
-# 36         #  run system manager
-# 37         manager = SystemManagerFactory.create(system_manager_id)
-# 38         manager.run()
-# 39 
-# 40         #  collect logs from manager
-# 41         self.evaluation_logs = getattr(manager, "evaluation_logs", [])
-# 42         self.code_quality_logs = getattr(manager, "code_quality_logs", [])
-# 43         self.conversation_logs = getattr(manager, "conversation_logs", [])
-# 44         self.prompt_logs = getattr(manager, "prompt_logs", [])
-# 45         self.state_logs = getattr(manager, "state_logs", [])
-# 46 
-# 47         logs = {
-# 48             "evaluation": self.evaluation_logs,
-# 49             "code_quality": self.code_quality_logs,
-# 50             "conversation": self.conversation_logs,
-# 51             "prompt": self.prompt_logs,
-# 52             "state": self.state_logs,
-# 53         }
-# 54 
-# 55         scoring_provider = ScoringProviderFactory.create(self.scoring_model_id)
-# 56         metrics = scoring_provider.score(logs)
-# 57         for key in EVALUATION_METRICS:
-# 58             metrics.setdefault(key, 0.0)
-# 59         self._log.info("Experiment metrics: %s", metrics)
-# 60 
-# 61         for k, v in metrics.items():
-# 62             self.log_scoring(
-# 63                 ScoringLog(
-# 64                     experiment_id="exp",
-# 65                     round=0,
-# 66                     metric=k,
-# 67                     value=v,
-# 68                 )
-# 69             )
-# 70 
-# 71         self.metrics = metrics
-# 72         self._log.debug("Experiment run end")
-# 73         return metrics
-# 74 
-# 75     def _run_experiment_logic(self, *args, **kwargs) -> None:
-# 76         """Override to implement experiment steps."""
-# 77         raise NotImplementedError
+# 36         #   run system manager *with* our injected logger
+# 37         manager = SystemManagerFactory.create(
+# 38             system_manager_id,
+# 39             logger=self.logger,
+# 40         )
+# 41         manager.run()
+# 42 
+# 43         #   collect logs from manager
+# 44         self.evaluation_logs = getattr(manager, "evaluation_logs", [])
+# 45         self.code_quality_logs = getattr(manager, "code_quality_logs", [])
+# 46         self.conversation_logs = getattr(manager, "conversation_logs", [])
+# 47         self.prompt_logs = getattr(manager, "prompt_logs", [])
+# 48         self.state_logs = getattr(manager, "state_logs", [])
+# 49 
+# 50         logs = {
+# 51             "evaluation": self.evaluation_logs,
+# 52             "code_quality": self.code_quality_logs,
+# 53             "conversation": self.conversation_logs,
+# 54             "prompt": self.prompt_logs,
+# 55             "state": self.state_logs,
+# 56         }
+# 57 
+# 58         scoring_provider = ScoringProviderFactory.create(
+# 59             self.scoring_model_id,
+# 60             logger=self.logger,
+# 61         )
+# 62         metrics = scoring_provider.score(logs)
+# 63         for key in EVALUATION_METRICS:
+# 64             metrics.setdefault(key, 0.0)
+# 65         self._log.info("Experiment metrics: %s", metrics)
+# 66 
+# 67         for k, v in metrics.items():
+# 68             self.log_scoring(
+# 69                 ScoringLog(
+# 70                     experiment_id=str(self.config_id),
+# 71                     round=0,
+# 72                     metric=k,
+# 73                     value=v,
+# 74                 )
+# 75             )
+# 76 
+# 77         self.metrics = metrics
+# 78         self._log.debug("Experiment run end")
+# 79         return metrics
+# 80 
+# 81     def _run_experiment_logic(self, *args, **kwargs) -> None:
+# 82         """Override to implement experiment steps."""
+# 83         raise NotImplementedError
 
 
 # abstract_classes\prompt_generator_base.py
@@ -580,59 +586,133 @@
 # extensions\agents\evaluator_agent.py
 
 # 1 from __future__ import annotations
-# 2 from typing import List
-# 3 from ...abstract_classes.agent_base import AgentBase
-# 4 from ...factories.tool_provider import ToolProviderFactory
-# 5 from ...utilities.metadata.logging import (
-# 6     CodeQualityLog,
-# 7     ErrorLog,
-# 8     LoggingProvider,
-# 9 )
-# 10 
-# 11 
-# 12 class EvaluatorAgent(AgentBase):
-# 13     def __init__(self, target: str, logger: LoggingProvider | None = None) -> None:
-# 14         super().__init__(logger)
-# 15         self.target = target
-# 16         self.mypy = ToolProviderFactory.create("mypy")
-# 17         self.ruff = ToolProviderFactory.create("ruff")
-# 18         self.radon = ToolProviderFactory.create("radon")
-# 19         self.quality_logs: List[CodeQualityLog] = []
-# 20         self.error_logs: List[ErrorLog] = []
-# 21 
-# 22     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 23         complexity = 0.0
-# 24         ruff_return = 0
-# 25         try:
-# 26             self.mypy.run(self.target)
-# 27             ruff_proc = self.ruff.run(self.target)
-# 28             ruff_return = ruff_proc.returncode
-# 29             radon_proc = self.radon.run(self.target)
+# 2 
+# 3 from pathlib import Path
+# 4 from typing import List
+# 5 
+# 6 from ...abstract_classes.agent_base import AgentBase
+# 7 from ...enums.agent_enums import AgentRole
+# 8 from ...factories.tool_provider import ToolProviderFactory
+# 9 from ...utilities.metadata.logging import (
+# 10     CodeQualityLog,
+# 11     ErrorLog,
+# 12     LoggingProvider,
+# 13 )
+# 14 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 15 
+# 16 
+# 17 def _analyze_radon(code: str) -> tuple[float, float]:
+# 18     """Return cyclomatic complexity and maintainability index for the code."""
+# 19     try:
+# 20         from radon.complexity import cc_visit
+# 21         from radon.metrics import mi_visit
+# 22 
+# 23         blocks = cc_visit(code)
+# 24         cc = sum(b.complexity for b in blocks) / max(len(blocks), 1)
+# 25         mi = mi_visit(code, True)
+# 26         return float(cc), float(mi)
+# 27     except Exception:
+# 28         return 0.0, 0.0
+# 29 
 # 30 
-# 31             #  Parse "Complexity: X.Y" from radon output
-# 32             for line in radon_proc.stdout.splitlines():
-# 33                 if "Complexity:" in line:
-# 34                     try:
-# 35                         complexity = float(line.split("Complexity:")[1].strip())
-# 36                     except ValueError:
-# 37                         pass
-# 38                     break
-# 39 
-# 40         except Exception as exc:
-# 41             self._log.warning("Radon unavailable: %s", exc)
-# 42 
-# 43         lines = sum(1 for _ in open(self.target, "r", encoding="utf-8"))
-# 44         log = CodeQualityLog(
-# 45             experiment_id="exp",
-# 46             round=0,
-# 47             symbol=self.target,
-# 48             lines_of_code=lines,
-# 49             cyclomatic_complexity=complexity,
-# 50             maintainability_index=0.0,
-# 51             lint_errors=0 if ruff_return == 0 else 1,
-# 52         )
-# 53         self.quality_logs.append(log)
-# 54         self.log_code_quality(log)
+# 31 class EvaluatorAgent(AgentBase):
+# 32     """Run static analysis tools and log code quality metrics."""
+# 33 
+# 34     def __init__(
+# 35         self,
+# 36         target: str,
+# 37         logger: LoggingProvider | None = None,
+# 38         snapshot_writer: SnapshotWriter | None = None,
+# 39     ) -> None:
+# 40         super().__init__(logger)
+# 41         self.target = target
+# 42         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 43         self.mypy = ToolProviderFactory.create("mypy")
+# 44         self.ruff = ToolProviderFactory.create("ruff")
+# 45         self.black = ToolProviderFactory.create("black")
+# 46         self.radon = ToolProviderFactory.create("radon")
+# 47         self.quality_logs: List[CodeQualityLog] = []
+# 48         self.error_logs: List[ErrorLog] = []
+# 49 
+# 50     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 51         before = Path(self.target).read_text(encoding="utf-8")
+# 52         lines = len(before.splitlines())
+# 53         complexity = 0.0
+# 54         maintainability = 0.0
+# 55         lint_return = 0
+# 56 
+# 57         try:
+# 58             self.mypy.run(self.target)
+# 59         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 60             self.error_logs.append(
+# 61                 ErrorLog(
+# 62                     experiment_id="exp",
+# 63                     round=0,
+# 64                     error_type=type(exc).__name__,
+# 65                     message=str(exc),
+# 66                     file_path=self.target,
+# 67                 )
+# 68             )
+# 69 
+# 70         try:
+# 71             ruff_proc = self.ruff.run(self.target)
+# 72             lint_return = ruff_proc.returncode
+# 73         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 74             self.error_logs.append(
+# 75                 ErrorLog(
+# 76                     experiment_id="exp",
+# 77                     round=0,
+# 78                     error_type=type(exc).__name__,
+# 79                     message=str(exc),
+# 80                     file_path=self.target,
+# 81                 )
+# 82             )
+# 83             lint_return = 1
+# 84 
+# 85         try:
+# 86             self.black.run(self.target, check=True)
+# 87         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 88             self.error_logs.append(
+# 89                 ErrorLog(
+# 90                     experiment_id="exp",
+# 91                     round=0,
+# 92                     error_type=type(exc).__name__,
+# 93                     message=str(exc),
+# 94                     file_path=self.target,
+# 95                 )
+# 96             )
+# 97 
+# 98         try:
+# 99             #  Run radon CLI primarily for logging/debug purposes
+# 100             self.radon.run(self.target)
+# 101             complexity, maintainability = _analyze_radon(before)
+# 102         except Exception as exc:
+# 103             self._log.warning("Radon unavailable: %s", exc)
+# 104 
+# 105         log = CodeQualityLog(
+# 106             experiment_id="exp",
+# 107             round=0,
+# 108             symbol=self.target,
+# 109             lines_of_code=lines,
+# 110             cyclomatic_complexity=complexity,
+# 111             maintainability_index=maintainability,
+# 112             lint_errors=0 if lint_return == 0 else 1,
+# 113         )
+# 114         self.quality_logs.append(log)
+# 115         self.log_code_quality(log)
+# 116         for err in self.error_logs:
+# 117             self.log_error(err)
+# 118 
+# 119         after = Path(self.target).read_text(encoding="utf-8")
+# 120         self.snapshot_writer.write_snapshot(
+# 121             experiment_id="exp",
+# 122             round=0,
+# 123             file_path=self.target,
+# 124             before=before,
+# 125             after=after,
+# 126             symbol=self.target,
+# 127             agent_role=AgentRole.EVALUATOR,
+# 128         )
 
 
 # extensions\agents\generator_agent.py

@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-from ...utilities.metadata.logging import LoggingProvider
+from ...factories.logging_provider import LoggingProvider
 
 from ...abstract_classes.context_provider_base import ContextProviderBase
 

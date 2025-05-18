@@ -17,10 +17,7 @@ def _serialize(obj: Any) -> dict:
 
     result = asdict(obj)
     return {
-        k: (
-            str(v) if isinstance(v, (Path, Enum)) else v
-        )
-        for k, v in result.items()
+        k: (str(v) if isinstance(v, (Path, Enum)) else v) for k, v in result.items()
     }
 
 

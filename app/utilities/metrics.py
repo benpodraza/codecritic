@@ -50,39 +50,39 @@ def compute_metrics(
             pass_rates.append(passed / total)
     metrics["avg_test_pass_rate"] = _avg(pass_rates)
 
-    mi_values = [_get(l, "maintainability_index", 0.0) for l in code_quality_logs]
+    mi_values = [_get(log, "maintainability_index", 0.0) for log in code_quality_logs]
     metrics["maintainability_index"] = _avg(mi_values)
 
-    cc_values = [_get(l, "cyclomatic_complexity", 0.0) for l in code_quality_logs]
+    cc_values = [_get(log, "cyclomatic_complexity", 0.0) for log in code_quality_logs]
     metrics["cyclomatic_complexity"] = _avg(cc_values)
 
     lint_compliance = [
-        1.0 if _get(l, "lint_errors", 1) == 0 else 0.0 for l in code_quality_logs
+        1.0 if _get(log, "lint_errors", 1) == 0 else 0.0 for log in code_quality_logs
     ]
     metrics["linting_compliance_rate"] = _avg(lint_compliance)
 
-    rounds = [_get(l, "round", 0) for l in state_logs]
+    rounds = [_get(log, "round", 0) for log in state_logs]
     metrics["iterations_to_convergence"] = max(rounds) + 1 if rounds else 0.0
 
-    interventions = [1.0 for l in conversation_logs if _get(l, "intervention", False)]
+    interventions = [1.0 for log in conversation_logs if _get(log, "intervention", False)]
     metrics["intervention_frequency"] = _avg(interventions)
 
-    outcomes = [_get(l, "agent_action_outcome", None) for l in prompt_logs]
+    outcomes = [_get(log, "agent_action_outcome", None) for log in prompt_logs]
     successes = [1.0 for o in outcomes if o == "success"]
     metrics["agent_role_success_rate"] = _avg(successes)
 
-    retry_logs = [l for l in prompt_logs if _get(l, "attempt_number", 0) > 0]
+    retry_logs = [log for log in prompt_logs if _get(log, "attempt_number", 0) > 0]
     retry_successes = [
         1.0 for l in retry_logs if _get(l, "agent_action_outcome", None) == "success"
     ]
     metrics["retry_success_rate"] = _avg(retry_successes)
 
     mediation_logs = [
-        l
-        for l in conversation_logs
-        if _get(l, "intervention_type", None) == "mediation"
+        log
+        for log in conversation_logs
+        if _get(log, "intervention_type", None) == "mediation"
     ]
-    mediation_success = [1.0 for l in mediation_logs if _get(l, "intervention", False)]
+    mediation_success = [1.0 for log in mediation_logs if _get(log, "intervention", False)]
     metrics["mediation_success_rate"] = _avg(mediation_success)
 
     logger.info("Metrics computed: %s", metrics)

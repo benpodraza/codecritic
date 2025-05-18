@@ -106,17 +106,19 @@ def load_seed_data(
 
 
 def initialize_database(reset: bool = False) -> sqlite3.Connection:
-    from app.utilities.db import close_connection, get_connection
+    """
+    Initialize (and optionally reset) the experiment database.
+    If reset=True, closes any open connection and deletes the existing file.
+    Then re-creates tables (and loads seed data, if any).
+    """
+    if reset and db.DB_PATH.exists():
+        close_connection()
+        db.DB_PATH.unlink()
 
-    db_path = Path("experiments/codecritic.sqlite3")
-
-    if reset and db_path.exists():
-        close_connection()  # explicitly close the existing connection first
-        db_path.unlink()
-
-    conn = get_connection()
+    conn = db.get_connection()
     create_tables(conn)
-    load_seed_data(conn)
+    # if you load seed data, uncomment next line:
+    # load_seed_data(conn)
     return conn
 
 

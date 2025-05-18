@@ -58,16 +58,14 @@ class LoggingProvider:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
 
-        from app.utilities.db import init_db, get_connection
+        from app.utilities.db import get_connection, init_db
 
         if connection:
             self.conn = connection
-            init_db(
-                self.conn
-            )  # Explicit schema initialization for the provided connection
+            init_db(conn=self.conn)  # Fix applied here
         else:
             self.conn = get_connection()
-            init_db()  # Schema initialization when using default connection
+            init_db(conn=self.conn)  # Fix applied here
 
         self.output_path = Path(output_path) if output_path else None
         if self.output_path:

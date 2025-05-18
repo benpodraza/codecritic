@@ -60,11 +60,11 @@ def _is_optional(annotation: Any) -> bool:
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     for table_name, model_cls in SCHEMAS.items():
-        fields = model_cls.model_fields
+        fields = model_cls.__annotations__
         columns = []
-        for name, field_info in fields.items():
-            col_type = _sqlite_type(field_info.annotation)
-            if name == "id" and _is_optional(field_info.annotation):
+        for name, annotation in fields.items():
+            col_type = _sqlite_type(annotation)
+            if name == "id" and _is_optional(annotation):
                 columns.append(f"{name} INTEGER PRIMARY KEY")
             else:
                 columns.append(f"{name} {col_type}")

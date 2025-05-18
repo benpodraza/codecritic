@@ -25,7 +25,7 @@ class GeneratorAgent(AgentBase):
             round=0,
             system="system",
             agent_id="generator",
-            agent_role=AgentRole.GENERATOR.value,
+            agent_role=AgentRole.GENERATOR,
             symbol=self.target,
             prompt="format code",
             response=None,

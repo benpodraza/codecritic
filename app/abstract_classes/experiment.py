@@ -28,16 +28,19 @@ class Experiment(LoggingMixin):
     def run(self, *args, **kwargs) -> Dict[str, float]:
         self._log.debug("Experiment run start")
 
-        # load configuration
+        #  load configuration
         self.config = ExperimentConfigProvider.load(self.config_id)
         self.scoring_model_id = self.config.get("scoring_model_id", "dummy")
         system_manager_id = self.config.get("system_manager_id", "dummy")
 
-        # run system manager
-        manager = SystemManagerFactory.create(system_manager_id)
+        #  run system manager *with* our injected logger
+        manager = SystemManagerFactory.create(
+            system_manager_id,
+            logger=self.logger,
+        )
         manager.run()
 
-        # collect logs from manager
+        #  collect logs from manager
         self.evaluation_logs = getattr(manager, "evaluation_logs", [])
         self.code_quality_logs = getattr(manager, "code_quality_logs", [])
         self.conversation_logs = getattr(manager, "conversation_logs", [])
@@ -52,7 +55,10 @@ class Experiment(LoggingMixin):
             "state": self.state_logs,
         }
 
-        scoring_provider = ScoringProviderFactory.create(self.scoring_model_id)
+        scoring_provider = ScoringProviderFactory.create(
+            self.scoring_model_id,
+            logger=self.logger,
+        )
         metrics = scoring_provider.score(logs)
         for key in EVALUATION_METRICS:
             metrics.setdefault(key, 0.0)
@@ -61,7 +67,7 @@ class Experiment(LoggingMixin):
         for k, v in metrics.items():
             self.log_scoring(
                 ScoringLog(
-                    experiment_id="exp",
+                    experiment_id=str(self.config_id),
                     round=0,
                     metric=k,
                     value=v,

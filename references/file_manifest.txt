@@ -158,6 +158,9 @@ codecritic
          - schema
             - __init__.py
             - create_schema.py
+         - snapshots
+            - __init__.py
+            - snapshot_writer.py
          - tools
             - __init__.py
             - black_runner.py
@@ -171,7 +174,8 @@ codecritic
       - CodeCritic - Specification - 5-17-2025.md
    - env
    - experiments
-      - codecritic.sqlite3
+      - artifacts
+         - snapshots
       - config
          - seed
             - agent_config.json
@@ -186,6 +190,10 @@ codecritic
             - system_config.json
             - system_prompt.json
             - tooling_provider.json
+      - demo_logs.jsonl
+      - demo_snapshots
+         - exp
+            - 0
    - htmlcov
    - mypy.ini
    - phase1_tests.ipynb
@@ -195,6 +203,7 @@ codecritic
    - phase5_validation.ipynb
    - phase6_validation.ipynb
    - phase8_validation.ipynb
+   - phase9_validation.ipynb
    - pytest
    - pytest.ini
    - references
@@ -209,9 +218,11 @@ codecritic
    - tests
       - __init__.py
       - test_agents.py
+      - test_bootstrap.py
       - test_factories.py
       - test_integration.py
       - test_system_state_management.py
       - test_tool_providers.py
+   - tmp_demo.py
    - utilities.ipynb
    - validation_sample.py

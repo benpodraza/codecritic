@@ -64,7 +64,9 @@ def compute_metrics(
     rounds = [_get(log, "round", 0) for log in state_logs]
     metrics["iterations_to_convergence"] = max(rounds) + 1 if rounds else 0.0
 
-    interventions = [1.0 for log in conversation_logs if _get(log, "intervention", False)]
+    interventions = [
+        1.0 for log in conversation_logs if _get(log, "intervention", False)
+    ]
     metrics["intervention_frequency"] = _avg(interventions)
 
     outcomes = [_get(log, "agent_action_outcome", None) for log in prompt_logs]
@@ -82,7 +84,9 @@ def compute_metrics(
         for log in conversation_logs
         if _get(log, "intervention_type", None) == "mediation"
     ]
-    mediation_success = [1.0 for log in mediation_logs if _get(log, "intervention", False)]
+    mediation_success = [
+        1.0 for log in mediation_logs if _get(log, "intervention", False)
+    ]
     metrics["mediation_success_rate"] = _avg(mediation_success)
 
     logger.info("Metrics computed: %s", metrics)

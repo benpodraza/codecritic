@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, ClassVar, Iterable
 
 from app.enums.logging_enums import LogType
-from app.utilities.db import get_connection
 from ..utilities.metadata.logging.log_schemas import (
     StateLog,
     StateTransitionLog,
@@ -49,18 +48,29 @@ class LoggingProvider:
         self,
         db_path: str | Path = "experiments/codecritic.sqlite3",
         output_path: str | Path | None = None,
+        connection: sqlite3.Connection | None = None,
     ) -> None:
         if getattr(self, "_initialized", False):
             return
+
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-        self.conn: sqlite3.Connection = get_connection()
-        from app.utilities.db import init_db
 
-        init_db()
+        from app.utilities.db import init_db, get_connection
+
+        if connection:
+            self.conn = connection
+            init_db(
+                self.conn
+            )  # Explicit schema initialization for the provided connection
+        else:
+            self.conn = get_connection()
+            init_db()  # Schema initialization when using default connection
+
         self.output_path = Path(output_path) if output_path else None
         if self.output_path:
             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+
         self._initialized = True
 
     def _serialize(self, obj: Any) -> dict:

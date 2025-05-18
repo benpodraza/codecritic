@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 
+from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
 
-class SystemManagerBase(ABC):
+
+class SystemManagerBase(LoggingMixin, ABC):
     """Base class for coordinating high level system logic."""
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
 
     def run(self, *args, **kwargs) -> None:
-        self.logger.debug("SystemManager run start")
+        self._log.debug("SystemManager run start")
         self._run_system_logic(*args, **kwargs)
-        self.logger.debug("SystemManager run end")
+        self._log.debug("SystemManager run end")
 
     @abstractmethod
     def _run_system_logic(self, *args, **kwargs) -> None:

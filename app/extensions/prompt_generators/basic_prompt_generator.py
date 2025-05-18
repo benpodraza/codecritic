@@ -4,20 +4,25 @@ from typing import Any, Dict
 
 from ...abstract_classes.prompt_generator_base import PromptGeneratorBase
 from ...abstract_classes.context_provider_base import ContextProviderBase
+from ...utilities.metadata.logging import LoggingProvider
 
 
 class BasicPromptGenerator(PromptGeneratorBase):
     """Combine system and agent templates with code context."""
 
-    def __init__(self, context_provider: ContextProviderBase) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        context_provider: ContextProviderBase,
+        logger: LoggingProvider | None = None,
+    ) -> None:
+        super().__init__(logger)
         self.context_provider = context_provider
 
     def _generate_prompt(
         self, agent_config: Dict[str, Any], system_config: Dict[str, Any]
     ) -> str:
         context = self.context_provider.get_context()
-        self.logger.debug("Raw context: %s", context)
+        self._log.debug("Raw context: %s", context)
 
         system_template = system_config.get("template", "")
         agent_template = agent_config.get("template", "")
@@ -29,6 +34,6 @@ class BasicPromptGenerator(PromptGeneratorBase):
             context_snippet = f"Functions: {funcs}\nClasses: {classes}"
 
         prompt = f"{system_template}\n\n{agent_template}\n\n{context_snippet}"
-        self.logger.info("Prompt generated")
-        self.logger.debug("Prompt content: %s", prompt)
+        self._log.info("Prompt generated")
+        self._log.debug("Prompt content: %s", prompt)
         return prompt

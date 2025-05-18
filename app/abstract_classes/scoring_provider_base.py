@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 
+from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
 
-class ScoringProviderBase(ABC):
+
+class ScoringProviderBase(LoggingMixin, ABC):
     """Base class for computing evaluation metrics."""
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
 
     def score(self, *args, **kwargs):
-        self.logger.debug("Scoring start")
+        self._log.debug("Scoring start")
         result = self._score(*args, **kwargs)
-        self.logger.debug("Scoring end")
+        self._log.debug("Scoring end")
         return result
 
     @abstractmethod

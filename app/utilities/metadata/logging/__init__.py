@@ -8,6 +8,7 @@ from .log_schemas import (
     ErrorLog,
     ScoringLog,
 )
+from ....factories.logging_provider import LoggingProvider, LoggingMixin
 
 __all__ = [
     "StateLog",
@@ -16,4 +17,6 @@ __all__ = [
     "CodeQualityLog",
     "ErrorLog",
     "ScoringLog",
+    "LoggingProvider",
+    "LoggingMixin",
 ]

@@ -3,8 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
-from typing import Type, Protocol, Any, get_origin, get_args, Union
-
+from typing import Type, Any, Union, get_origin, get_args
 
 from app.schemas import (
     AgentEngine,
@@ -13,7 +12,6 @@ from app.schemas import (
     ContextProvider,
     ToolingProvider,
     FilePath,
-    AgentConfig,
     PromptGenerator,
     ScoringProvider,
     StateManager,
@@ -21,19 +19,8 @@ from app.schemas import (
     ExperimentConfig,
     Series,
 )
+from app.schemas.agent_config_schema import AgentConfig
 from app.utilities import db
-
-
-class SchemaProtocol(Protocol):
-    table_name: str
-    model_fields: dict
-
-    def __init__(self, **data: object) -> None: ...
-
-    def model_dump(self) -> dict: ...
-
-
-SchemaModel = Type[Any]
 
 SCHEMAS = {
     "agent_engine": AgentEngine,
@@ -50,9 +37,6 @@ SCHEMAS = {
     "experiment_config": ExperimentConfig,
     "series": Series,
 }
-
-TABLE_MAP = SCHEMAS
-
 
 _TYPE_MAP = {
     int: "INTEGER",
@@ -76,10 +60,12 @@ def _is_optional(annotation: Any) -> bool:
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     for table_name, model_cls in SCHEMAS.items():
+        model = model_cls.model_construct()  # Use construct to skip validation
+        fields = model.__pydantic_fields__
         columns = []
-        for name, field in model_cls.model_fields.items():
-            col_type = _sqlite_type(field.annotation)
-            if name == "id" and _is_optional(field.annotation):
+        for name, field_info in fields.items():
+            col_type = _sqlite_type(field_info.annotation)
+            if name == "id" and _is_optional(field_info.annotation):
                 columns.append(f"{name} INTEGER PRIMARY KEY")
             else:
                 columns.append(f"{name} {col_type}")
@@ -97,7 +83,7 @@ def load_seed_data(
     cur = conn.cursor()
     for file in seed_path.glob("*.json"):
         table_name = file.stem
-        model = TABLE_MAP.get(table_name)
+        model = SCHEMAS.get(table_name)
         if model is None:
             continue
         entries = json.loads(file.read_text())

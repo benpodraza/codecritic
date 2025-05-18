@@ -16,12 +16,17 @@ class SymbolGraphProvider(ContextProviderBase):
 
     def __init__(
         self,
-        target: str,
+        target: str | None = None,
+        module_path: str | None = None,
         logger: LoggingProvider | None = None,
         snapshot_writer: SnapshotWriter | None = None,
     ) -> None:
         super().__init__(logger)
-        self.target = Path(target)
+        # allow both 'target' and legacy 'module_path'
+        path_str = module_path if module_path is not None else target
+        if path_str is None:
+            raise ValueError("SymbolGraphProvider requires 'target' or 'module_path'")
+        self.target = Path(path_str)
         self.snapshot_writer = snapshot_writer or SnapshotWriter()
         self._graph: Dict[str, Dict[str, Any]] = {}
 
@@ -30,7 +35,6 @@ class SymbolGraphProvider(ContextProviderBase):
     # ------------------------------------------------------------------
     def resolve_symbol(self, name: str) -> Dict[str, Any] | None:
         """Return details for a fully qualified symbol."""
-
         return self._graph.get(name)
 
     # ------------------------------------------------------------------
@@ -62,7 +66,7 @@ class SymbolGraphProvider(ContextProviderBase):
                 symbol=str(self.target),
                 agent_role=AgentRole.GENERATOR,
             )
-        except Exception:  # pragma: no cover - snapshot failures not critical
+        except Exception:
             self._log.exception("Failed to snapshot symbol graph")
 
         return {"symbol_graph": self._graph}
@@ -97,7 +101,6 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.scope: List[str] = []
         self.current: str | None = None
 
-    # --------------------------------------------------------------
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._process_function_or_async_function(node)
         self.generic_visit(node)
@@ -109,27 +112,38 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
     def _process_function_or_async_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> None:
-        symbol_info = {
+        qual = self._qualify(node.name)
+        info: Dict[str, Any] = {
             "name": node.name,
             "type": (
                 "async_function"
                 if isinstance(node, ast.AsyncFunctionDef)
                 else "function"
             ),
+            "file": self.file_path,
             "lineno": node.lineno,
             "col_offset": node.col_offset,
+            "end_lineno": getattr(node, "end_lineno", node.lineno),
+            "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+            "scope": (
+                ".".join([self.module, *self.scope]) if self.scope else self.module
+            ),
+            "calls": [],
         }
-        qualified_name = self._qualify(node.name)
-        self.graph[qualified_name] = symbol_info  # explicitly store symbol_info
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: D401
-        """Handle ``ClassDef`` nodes."""
-
-        qual = self._qualify(node.name)
-        self._record(qual, "class", node)
+        self.graph[qual] = info
         self.scope.append(node.name)
+        self.current = qual
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        qual = self._qualify(node.name)
+        info = self._record(qual, "class", node)
+        self.scope.append(node.name)
+        self.current = qual
         self.generic_visit(node)
         self.scope.pop()
+        self.current = (
+            ".".join([self.module, *self.scope]) if self.scope else self.module
+        )
 
     def visit_Assign(self, node: ast.Assign) -> None:
         for target in node.targets:
@@ -142,6 +156,7 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
             name = alias.asname or alias.name
             entry = self._record(self._qualify(name), "import", node)
             entry["target"] = alias.name
+        self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         for alias in node.names:
@@ -150,39 +165,32 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
             entry["target"] = (
                 f"{node.module}.{alias.name}" if node.module else alias.name
             )
+        self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
-        if self.scope:
-            current_qual = self._qualify(self.scope[-1])
-        else:
-            current_qual = self.module
-
+        # Determine current symbol context
+        current = self.current or self.module
+        # Identify called name
         if isinstance(node.func, ast.Name):
             called_name = node.func.id
         elif isinstance(node.func, ast.Attribute):
             called_name = node.func.attr
         else:
             called_name = None
-
         if called_name:
-            if current_qual not in self.graph:
-                self.graph[current_qual] = {"calls": []}
-            self.graph[current_qual].setdefault("calls", []).append(called_name)
-
+            self.graph.setdefault(current, {}).setdefault("calls", []).append(
+                called_name
+            )
         self.generic_visit(node)
 
-    # --------------------------------------------------------------
     def _qualify(self, name: str) -> str:
         return ".".join([self.module, *self.scope, name])
 
     def _record(self, qual: str, typ: str, node: ast.AST) -> Dict[str, Any]:
-        # Safely extract attributes with defaults
         lineno = getattr(node, "lineno", None)
         col_offset = getattr(node, "col_offset", None)
         end_lineno = getattr(node, "end_lineno", lineno)
         end_col_offset = getattr(node, "end_col_offset", col_offset)
-
-        # Explicit type annotation for `info`
         info: Dict[str, Any] = {
             "type": typ,
             "file": self.file_path,

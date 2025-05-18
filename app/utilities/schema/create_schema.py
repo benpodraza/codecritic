@@ -82,7 +82,6 @@ def load_seed_data(
         return
     cur = conn.cursor()
     for file in seed_path.glob("*.json"):
-        print(f"Reading seed file: {file.name}")
         table_name = file.stem
         model = SCHEMAS.get(table_name)
         if model is None:

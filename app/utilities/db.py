@@ -22,10 +22,8 @@ def _serialize(obj: Any) -> dict:
 
 def get_connection() -> sqlite3.Connection:
     global _CONN
-    if _CONN is None:
-        _CONN = sqlite3.connect(
-            "experiments/codecritic.sqlite3", check_same_thread=False
-        )
+    if _CONN is None or _CONN is not None and _CONN.cursor().connection is None:
+        _CONN = sqlite3.connect(DB_PATH, check_same_thread=False)
     return _CONN
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
+from ..factories.logging_provider import LoggingMixin, LoggingProvider
 
 
 class ToolProviderBase(LoggingMixin, ABC):

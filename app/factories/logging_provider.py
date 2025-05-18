@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Any, Iterable, Union
+from typing import Any, Iterable
 from dataclasses import asdict, is_dataclass
-
 from app.enums.logging_enums import LogType
 from app.utilities.db import get_connection
 from app.utilities.metadata.logging.log_schemas import (
@@ -18,7 +17,6 @@ from app.utilities.metadata.logging.log_schemas import (
     ExperimentLog,
 )
 
-# Optional: map LogType to dataclass
 LOG_MODEL_MAP = {
     LogType.STATE: StateLog,
     LogType.STATE_TRANSITION: StateTransitionLog,
@@ -43,17 +41,18 @@ class LoggingProvider:
         return asdict(obj)
 
     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-        cur = self.conn.cursor()
+        items = list(items)
         if not items:
             return
-        keys = items[0].keys()
+        keys = list(items[0].keys())
         cols = ",".join(keys)
         placeholders = ",".join(["?"] * len(keys))
         values = [tuple(i[k] for k in keys) for i in items]
+        cur = self.conn.cursor()
         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
         self.conn.commit()
 
-    def write(self, log_type: LogType, entries: Union[list[Any], Any]) -> None:
+    def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
         if not isinstance(entries, list):
             entries = [entries]
         model_cls = LOG_MODEL_MAP.get(log_type)
@@ -69,7 +68,6 @@ class LoggingProvider:
         self.conn.close()
 
 
-# Example usage:
+# Example:
 # logger = LoggingProvider()
 # logger.write(LogType.STATE, StateLog(...))
-# logger.write(LogType.ERROR, [ErrorLog(...), ErrorLog(...)])

@@ -12,6 +12,7 @@ from app.schemas import (
     ContextProvider,
     ToolingProvider,
     FilePath,
+    AgentConfig,
     PromptGenerator,
     ScoringProvider,
     StateManager,
@@ -19,7 +20,6 @@ from app.schemas import (
     ExperimentConfig,
     Series,
 )
-from app.schemas.agent_config_schema import AgentConfig
 from app.utilities import db
 
 SCHEMAS = {
@@ -60,7 +60,7 @@ def _is_optional(annotation: Any) -> bool:
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     for table_name, model_cls in SCHEMAS.items():
-        fields = model_cls.__pydantic_fields__
+        fields = model_cls.model_fields
         columns = []
         for name, field_info in fields.items():
             col_type = _sqlite_type(field_info.annotation)
@@ -100,16 +100,12 @@ def load_seed_data(
     conn.commit()
 
 
-def initialize_database(reset: bool = False) -> sqlite3.Connection:
-    if reset:
-        db_path = Path("experiments/codecritic.sqlite3")
-        if db_path.exists():
-            db_path.unlink()
+def initialize_database() -> sqlite3.Connection:
     conn = db.get_connection()
     create_tables(conn)
     load_seed_data(conn)
     return conn
 
 
-if __name__ == "__main__":  # pragma: no cover - manual invocation
+if __name__ == "__main__":
     initialize_database()

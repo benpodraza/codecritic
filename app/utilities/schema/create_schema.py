@@ -35,23 +35,23 @@ class SchemaProtocol(Protocol):
 
 SchemaModel = Type[Any]
 
-SCHEMAS: tuple[SchemaModel, ...] = (
-    AgentEngine,
-    AgentPrompt,
-    SystemPrompt,
-    ContextProvider,
-    ToolingProvider,
-    FilePath,
-    AgentConfig,
-    PromptGenerator,
-    ScoringProvider,
-    StateManager,
-    SystemConfig,
-    ExperimentConfig,
-    Series,
-)
+SCHEMAS = {
+    "agent_engine": AgentEngine,
+    "agent_prompt": AgentPrompt,
+    "system_prompt": SystemPrompt,
+    "context_provider": ContextProvider,
+    "tooling_provider": ToolingProvider,
+    "file_path": FilePath,
+    "agent_config": AgentConfig,
+    "prompt_generator": PromptGenerator,
+    "scoring_provider": ScoringProvider,
+    "state_manager": StateManager,
+    "system_config": SystemConfig,
+    "experiment_config": ExperimentConfig,
+    "series": Series,
+}
 
-TABLE_MAP = {model.table_name: model for model in SCHEMAS}
+TABLE_MAP = SCHEMAS
 
 
 _TYPE_MAP = {
@@ -69,21 +69,22 @@ def _sqlite_type(py_type: Type) -> str:
     return _TYPE_MAP.get(py_type, "TEXT")
 
 
+def _is_optional(annotation: Any) -> bool:
+    return get_origin(annotation) is Union and type(None) in get_args(annotation)
+
+
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
-    for model in SCHEMAS:
+    for table_name, model_cls in SCHEMAS.items():
         columns = []
-        for name, field in model.model_fields.items():
-            if name == "table_name":
-                continue
-            column = f"{name}"
+        for name, field in model_cls.model_fields.items():
             col_type = _sqlite_type(field.annotation)
-            if name == "id" and not field.is_required():
-                columns.append(f"{column} INTEGER PRIMARY KEY")
+            if name == "id" and _is_optional(field.annotation):
+                columns.append(f"{name} INTEGER PRIMARY KEY")
             else:
-                columns.append(f"{column} {col_type}")
-        col_sql = ",".join(columns)
-        cur.execute(f"CREATE TABLE IF NOT EXISTS {model.table_name} ({col_sql})")
+                columns.append(f"{name} {col_type}")
+        col_sql = ", ".join(columns)
+        cur.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({col_sql})")
     conn.commit()
 
 
@@ -95,7 +96,8 @@ def load_seed_data(
         return
     cur = conn.cursor()
     for file in seed_path.glob("*.json"):
-        model = TABLE_MAP.get(file.stem)
+        table_name = file.stem
+        model = TABLE_MAP.get(table_name)
         if model is None:
             continue
         entries = json.loads(file.read_text())
@@ -107,13 +109,17 @@ def load_seed_data(
             cols = ",".join(data.keys())
             placeholders = ",".join(["?"] * len(data))
             cur.execute(
-                f"INSERT INTO {model.table_name} ({cols}) VALUES ({placeholders})",
+                f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})",
                 list(data.values()),
             )
     conn.commit()
 
 
-def initialize_database() -> sqlite3.Connection:
+def initialize_database(reset: bool = False) -> sqlite3.Connection:
+    if reset:
+        db_path = Path("experiments/codecritic.sqlite3")
+        if db_path.exists():
+            db_path.unlink()
     conn = db.get_connection()
     create_tables(conn)
     load_seed_data(conn)

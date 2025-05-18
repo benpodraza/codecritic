@@ -8,7 +8,7 @@ from .log_schemas import (
     ErrorLog,
     ScoringLog,
 )
-from .logging_provider import LoggingProvider, LoggingMixin
+from ....factories.logging_provider import LoggingProvider, LoggingMixin
 
 __all__ = [
     "StateLog",

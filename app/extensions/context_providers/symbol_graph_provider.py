@@ -109,7 +109,6 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
     def _process_function_or_async_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> None:
-        # common handling code here, e.g.:
         symbol_info = {
             "name": node.name,
             "type": (
@@ -120,6 +119,9 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
             "lineno": node.lineno,
             "col_offset": node.col_offset,
         }
+        qualified_name = self._qualify(node.name)
+        self.graph[qualified_name] = symbol_info  # explicitly store symbol_info
+
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: D401
         """Handle ``ClassDef`` nodes."""

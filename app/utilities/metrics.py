@@ -5,6 +5,21 @@ from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
+# Unified list of metric names expected in experiment results
+EVALUATION_METRICS = [
+    "bug_fix_success_rate",
+    "functional_correctness",
+    "avg_test_pass_rate",
+    "maintainability_index",
+    "cyclomatic_complexity",
+    "linting_compliance_rate",
+    "iterations_to_convergence",
+    "intervention_frequency",
+    "agent_role_success_rate",
+    "retry_success_rate",
+    "mediation_success_rate",
+]
+
 
 def _get(obj: Any, key: str, default: Any = None) -> Any:
     if isinstance(obj, dict):

@@ -69,3 +69,14 @@ class ErrorLog:
     message: str
     file_path: str | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class ScoringLog:
+    """Log entry for computed evaluation metrics."""
+
+    experiment_id: str
+    round: int
+    metric: str
+    value: float
+    timestamp: datetime = field(default_factory=datetime.utcnow)

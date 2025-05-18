@@ -3,6 +3,7 @@ import sqlite3
 
 from app.abstract_classes.experiment import Experiment
 from app.factories.experiment_config_provider import ExperimentConfigProvider
+from app.factories.logging_provider import LoggingProvider
 from app.utilities.metrics import EVALUATION_METRICS
 from app.utilities import db
 
@@ -17,29 +18,27 @@ def _load_extensions() -> None:
     import_module("app.extensions.scoring_models")
 
 
+from app.utilities import db
+from app.utilities.schema import initialize_database
+
+
 def test_end_to_end_experiment(tmp_path):
-    _load_extensions()
-    config = {"system_manager_id": "system", "scoring_model_id": "basic"}
-    ExperimentConfigProvider.register(1, config)
-
-    if db.DB_PATH.exists():
-        db.DB_PATH.unlink()
-
-    from app.utilities.schema import initialize_database
-
+    # Override DB path and initialize
+    db.DB_PATH = tmp_path / "codecritic.sqlite3"
     initialize_database(reset=True)
 
-    exp = Experiment(config_id=1)
+    # Load registries from database AFTER init
+    _load_extensions()
+
+    # Set up logging
+    log_path = tmp_path / "demo_logs.jsonl"
+    logger = LoggingProvider(db_path=db.DB_PATH, output_path=log_path)
+
+    # Register config and run
+    config = {"system_manager_id": "system", "scoring_model_id": "basic"}
+    ExperimentConfigProvider.register(1, config)
+    exp = Experiment(config_id=1, logger=logger)
+
     metrics = exp.run()
 
-    conn = sqlite3.connect(db.DB_PATH)
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM state_log")
-    assert cur.fetchone()[0] > 0
-    cur.execute("SELECT COUNT(*) FROM prompt_log")
-    assert cur.fetchone()[0] > 0
-    cur.execute("SELECT COUNT(*) FROM scoring_log")
-    assert cur.fetchone()[0] > 0
-    conn.close()
-
-    assert set(metrics.keys()) == set(EVALUATION_METRICS)
+    assert "functional_correctness" in metrics

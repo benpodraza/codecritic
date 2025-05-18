@@ -10,7 +10,7 @@ class BasicScoringProvider(ScoringProviderBase):
     """Compute experiment metrics using basic heuristics."""
 
     def _score(self, logs: Dict[str, List[Any]]) -> Dict[str, float]:
-        self.logger.debug("Scoring with logs: %s", logs)
+        self._log.debug("Scoring with logs: %s", logs)
         evaluation_logs = logs.get("evaluation", [])
         code_quality_logs = logs.get("code_quality", [])
         conversation_logs = logs.get("conversation", [])
@@ -24,5 +24,5 @@ class BasicScoringProvider(ScoringProviderBase):
             prompt_logs,
             state_logs,
         )
-        self.logger.info("Computed metrics: %s", metrics)
+        self._log.info("Computed metrics: %s", metrics)
         return metrics

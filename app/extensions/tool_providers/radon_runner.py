@@ -11,9 +11,9 @@ class RadonToolProvider(ToolProviderBase):
         proc = subprocess.run(cmd, capture_output=True, text=True)
 
         if proc.stdout:
-            self.logger.debug(proc.stdout)
+            self._log.debug(proc.stdout)
         if proc.stderr:
-            self.logger.error(proc.stderr)
+            self._log.error(proc.stderr)
 
         if proc.returncode != 0:
             raise RuntimeError(f"radon failed: {proc.stderr.strip()}")

@@ -1,5 +1,3 @@
-from importlib import import_module
-
 from app.factories.agent import AgentFactory
 from app.factories.system_manager import SystemManagerFactory
 from app.factories.state_manager import StateManagerFactory
@@ -9,14 +7,7 @@ from app.factories.scoring_provider import ScoringProviderFactory
 from app.factories.context_provider import ContextProviderFactory
 
 
-def _load_extensions():
-    import_module("app.extensions.agents")
-    import_module("app.extensions.system_managers")
-    import_module("app.extensions.state_managers")
-    import_module("app.extensions.prompt_generators")
-    import_module("app.extensions.context_providers")
-    import_module("app.extensions.tool_providers")
-    import_module("app.extensions.scoring_models")
+from tests.test_bootstrap import load_all_extensions
 
 
 _def_extensions_loaded = False
@@ -25,7 +16,7 @@ _def_extensions_loaded = False
 def _ensure_loaded():
     global _def_extensions_loaded
     if not _def_extensions_loaded:
-        _load_extensions()
+        load_all_extensions()
         _def_extensions_loaded = True
 
 

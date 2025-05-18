@@ -4,20 +4,22 @@ import ast
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
+from ...utilities.metadata.logging import LoggingProvider
+
 from ...abstract_classes.context_provider_base import ContextProviderBase
 
 
 class SymbolGraphProvider(ContextProviderBase):
     """Generate a simple symbol graph for a Python module."""
 
-    def __init__(self, module_path: str) -> None:
-        super().__init__()
+    def __init__(self, module_path: str, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
         self.module_path = Path(module_path)
 
     def _get_context(self) -> Dict[str, Any]:
         """Parse the module and return context information."""
         if not self.module_path.exists():
-            self.logger.error("Module not found: %s", self.module_path)
+            self._log.error("Module not found: %s", self.module_path)
             return {}
 
         source = self.module_path.read_text(encoding="utf-8")
@@ -47,7 +49,7 @@ class SymbolGraphProvider(ContextProviderBase):
             "classes": classes,
             "call_map": {k: sorted(v) for k, v in call_map.items()},
         }
-        self.logger.info("Context generated for %s", self.module_path)
+        self._log.info("Context generated for %s", self.module_path)
         return context
 
     def _format_signature(self, func: ast.FunctionDef) -> str:

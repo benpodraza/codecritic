@@ -14,9 +14,9 @@ class BlackToolProvider(ToolProviderBase):
             cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
         )
         if proc.stdout:
-            self.logger.debug(proc.stdout)
+            self._log.debug(proc.stdout)
         if proc.stderr:
-            self.logger.error(proc.stderr)
+            self._log.error(proc.stderr)
         if proc.returncode != 0:
             raise RuntimeError(f"black failed: {proc.stderr}")
         return proc

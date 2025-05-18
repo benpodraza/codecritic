@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 
+from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
 
-class StateManagerBase(ABC):
+
+class StateManagerBase(LoggingMixin, ABC):
     """Base class for managing state-level execution."""
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
 
     def run(self, *args, **kwargs) -> None:
-        self.logger.debug("StateManager run start")
+        self._log.debug("StateManager run start")
         self._run_state_logic(*args, **kwargs)
-        self.logger.debug("StateManager run end")
+        self._log.debug("StateManager run end")
 
     @abstractmethod
     def _run_state_logic(self, *args, **kwargs) -> None:

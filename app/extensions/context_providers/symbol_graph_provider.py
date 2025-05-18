@@ -102,12 +102,56 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.current: str | None = None
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self._process_function_or_async_function(node)
+        # Record function definition and track calls
+        qual = self._qualify(node.name)
+        info: Dict[str, Any] = {
+            "name": node.name,
+            "type": "function",
+            "file": self.file_path,
+            "lineno": node.lineno,
+            "col_offset": node.col_offset,
+            "end_lineno": getattr(node, "end_lineno", node.lineno),
+            "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+            "scope": (
+                ".".join([self.module, *self.scope]) if self.scope else self.module
+            ),
+            "calls": [],
+        }
+        self.graph[qual] = info
+        # Enter function scope
+        self.scope.append(node.name)
+        prev_current = self.current
+        self.current = qual
         self.generic_visit(node)
+        # Exit function scope
+        self.scope.pop()
+        self.current = prev_current
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        self._process_function_or_async_function(node)
+        # Record async function definition and track calls
+        qual = self._qualify(node.name)
+        info: Dict[str, Any] = {
+            "name": node.name,
+            "type": "async_function",
+            "file": self.file_path,
+            "lineno": node.lineno,
+            "col_offset": node.col_offset,
+            "end_lineno": getattr(node, "end_lineno", node.lineno),
+            "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+            "scope": (
+                ".".join([self.module, *self.scope]) if self.scope else self.module
+            ),
+            "calls": [],
+        }
+        self.graph[qual] = info
+        # Enter async function scope
+        self.scope.append(node.name)
+        prev_current = self.current
+        self.current = qual
         self.generic_visit(node)
+        # Exit async function scope
+        self.scope.pop()
+        self.current = prev_current
 
     def _process_function_or_async_function(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef

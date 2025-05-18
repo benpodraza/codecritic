@@ -141,7 +141,9 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.current = qual
         self.generic_visit(node)
         self.scope.pop()
-        self.current = ".".join([self.module, *self.scope]) if self.scope else self.module.{alias.name}" if node.module else alias.name)
+        self.current = (
+            ".".join([self.module, *self.scope]) if self.scope else self.module
+        )
         self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:

@@ -11,6 +11,7 @@ from ...factories.logging_provider import (
     ErrorLog,
     PromptLog,
     LoggingProvider,
+    FeedbackLog,
 )
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 
@@ -33,6 +34,17 @@ class GeneratorAgent(AgentBase):
         self.snapshot_writer = snapshot_writer or SnapshotWriter()
 
     def _run_agent_logic(self, *args, **kwargs) -> None:
+        feedback = kwargs.get("feedback")
+        if feedback:
+            for item in feedback:
+                self.log_feedback(
+                    FeedbackLog(
+                        experiment_id="exp",
+                        round=0,
+                        source="generator",
+                        feedback=str(item),
+                    )
+                )
         before = Path(self.target).read_text(encoding="utf-8")
         log = PromptLog(
             experiment_id="exp",

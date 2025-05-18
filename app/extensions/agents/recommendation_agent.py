@@ -13,6 +13,7 @@ from ...factories.logging_provider import (
     ErrorLog,
     RecommendationLog,
     LoggingProvider,
+    FeedbackLog,
 )
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 
@@ -121,6 +122,17 @@ class RecommendationAgent(AgentBase):
         return recs
 
     def _run_agent_logic(self, *args, **kwargs) -> None:
+        feedback = kwargs.get("feedback")
+        if feedback:
+            for item in feedback:
+                self.log_feedback(
+                    FeedbackLog(
+                        experiment_id="exp",
+                        round=0,
+                        source="recommendation",
+                        feedback=str(item),
+                    )
+                )
         conv_logs: List[ConversationLog] = kwargs.get("conversation_log", [])
         qual_logs: List[CodeQualityLog] = kwargs.get("code_quality_log", [])
         scoring_logs: List[ScoringLog] = kwargs.get("scoring_log", [])

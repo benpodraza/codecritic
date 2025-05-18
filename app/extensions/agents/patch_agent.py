@@ -11,6 +11,7 @@ from ...factories.logging_provider import (
     ConversationLog,
     ErrorLog,
     LoggingProvider,
+    FeedbackLog,
 )
 from ...factories.tool_provider import ToolProviderFactory
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
@@ -48,6 +49,18 @@ class PatchAgent(AgentBase):
         raise ValueError(f"unsupported op: {op.get('op')}")
 
     def _run_agent_logic(self, *args, **kwargs) -> None:  # noqa: C901 - small
+        feedback = kwargs.get("feedback")
+        if feedback:
+            for item in feedback:
+                self.log_feedback(
+                    FeedbackLog(
+                        experiment_id="exp",
+                        round=0,
+                        source="patch",
+                        feedback=str(item),
+                    )
+                )
+
         recs: List[ConversationLog] | None = kwargs.get("recommendations")
         if not recs:
             return

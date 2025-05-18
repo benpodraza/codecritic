@@ -120,3 +120,14 @@ class RecommendationLog:
     recommendation: str
     context: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class FeedbackLog:
+    """Capture feedback for adaptive learning."""
+
+    experiment_id: str
+    round: int
+    source: str
+    feedback: str
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

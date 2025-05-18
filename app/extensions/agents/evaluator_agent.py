@@ -11,6 +11,7 @@ from ...factories.logging_provider import (
     CodeQualityLog,
     ErrorLog,
     LoggingProvider,
+    FeedbackLog,
 )
 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 
@@ -49,6 +50,17 @@ class EvaluatorAgent(AgentBase):
         self.error_logs: List[ErrorLog] = []
 
     def _run_agent_logic(self, *args, **kwargs) -> None:
+        feedback = kwargs.get("feedback")
+        if feedback:
+            for item in feedback:
+                self.log_feedback(
+                    FeedbackLog(
+                        experiment_id="exp",
+                        round=0,
+                        source="evaluator",
+                        feedback=str(item),
+                    )
+                )
         before = Path(self.target).read_text(encoding="utf-8")
         lines = len(before.splitlines())
         complexity = 0.0

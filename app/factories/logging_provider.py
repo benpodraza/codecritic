@@ -20,7 +20,9 @@ from ..utilities.metadata.logging.log_schemas import (
     ConversationLog,
     ExperimentLog,
     RecommendationLog,
+    FeedbackLog,
 )
+from ..utilities.feedback import FeedbackRepository
 
 
 LOG_MODEL_MAP = {
@@ -33,6 +35,7 @@ LOG_MODEL_MAP = {
     LogType.CONVERSATION: ConversationLog,
     LogType.EXPERIMENT: ExperimentLog,
     LogType.RECOMMENDATION: RecommendationLog,
+    LogType.FEEDBACK: FeedbackLog,
 }
 
 
@@ -145,6 +148,10 @@ class LoggingProvider:
     def log_recommendation(self, log: RecommendationLog) -> None:
         self.write(LogType.RECOMMENDATION, log)
 
+    def log_feedback(self, log: FeedbackLog) -> None:
+        self.write(LogType.FEEDBACK, log)
+        FeedbackRepository.add_feedback(log)
+
     def close(self) -> None:
         self.conn.close()
 
@@ -182,3 +189,6 @@ class LoggingMixin:
 
     def log_recommendation(self, log: RecommendationLog) -> None:
         self.logger.log_recommendation(log)
+
+    def log_feedback(self, log: FeedbackLog) -> None:
+        self.logger.log_feedback(log)

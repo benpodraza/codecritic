@@ -1,0 +1,11 @@
+[
+    {
+        "id": 1,
+        "name": "basic_state",
+        "description": "Tracks states",
+        "system_state": "init",
+        "system_type": "default",
+        "agent_id": 1,
+        "artifact_path": "state_managers/state_manager.py"
+    }
+]

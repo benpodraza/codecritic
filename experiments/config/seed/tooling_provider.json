@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "name": "black",
+        "description": "Black formatter",
+        "artifact_path": "tool_providers/black_runner.py"
+    },
+    {
+        "id": 2,
+        "name": "docformatter",
+        "description": "Docformatter tool",
+        "artifact_path": "tool_providers/docformatter_runner.py"
+    }
+]

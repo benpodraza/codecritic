@@ -5,15 +5,16 @@ from app.utilities import db
 from app.utilities.schema import initialize_database
 from tests.test_bootstrap import load_all_extensions
 
+# Reset singleton to avoid stale connections
+LoggingProvider._instance = None
+
 
 def test_end_to_end_experiment(tmp_path):
-    # Use a temp SQLite path
     db.DB_PATH = tmp_path / "codecritic.sqlite3"
     initialize_database(reset=True)
     load_all_extensions()
 
-    log_path = tmp_path / "demo_logs.jsonl"
-    logger = LoggingProvider(db_path=db.DB_PATH, output_path=log_path)
+    logger = LoggingProvider(db_path=db.DB_PATH, output_path=tmp_path / "logs.jsonl")
 
     config = {"system_manager_id": "system", "scoring_model_id": "basic"}
     ExperimentConfigProvider.register(1, config)

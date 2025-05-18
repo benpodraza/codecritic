@@ -38,9 +38,11 @@ def close_connection() -> None:
         _CONN = None
 
 
-def init_db() -> sqlite3.Connection:
-    conn = get_connection()
+def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
+    if conn is None:
+        conn = get_connection()
     cur = conn.cursor()
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS state_log (
             experiment_id TEXT,
@@ -53,6 +55,7 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS state_transition_log (
             experiment_id TEXT,
@@ -63,6 +66,7 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS prompt_log (
             experiment_id TEXT,
@@ -80,6 +84,7 @@ def init_db() -> sqlite3.Connection:
             stop TEXT
         )"""
     )
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS code_quality_log (
             experiment_id TEXT,
@@ -92,6 +97,7 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS scoring_log (
             experiment_id TEXT,
@@ -101,6 +107,7 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS error_log (
             experiment_id TEXT,
@@ -111,20 +118,22 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+
+    # ✅ Add this missing table definition
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS conversation_log (
+            experiment_id TEXT,
+            round INTEGER,
+            agent_role TEXT,
+            target TEXT,
+            content TEXT,
+            originating_agent TEXT,
+            intervention INTEGER,
+            intervention_type TEXT,
+            intervention_reason TEXT,
+            timestamp TEXT
+        )"""
+    )
+
     conn.commit()
     return conn
-
-
-def insert_logs(conn: sqlite3.Connection, table: str, logs: Iterable[Any]) -> None:
-    logs = list(logs)
-    if not logs:
-        return
-    row = _serialize(logs[0])
-    cols = ",".join(row.keys())
-    placeholders = ",".join(["?"] * len(row))
-    values = [tuple(_serialize(log).values()) for log in logs]
-    conn.executemany(
-        f"INSERT INTO {table} ({cols}) VALUES ({placeholders})",
-        values,
-    )
-    conn.commit()

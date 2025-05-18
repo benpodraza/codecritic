@@ -106,10 +106,20 @@ def load_seed_data(
 
 
 def initialize_database(reset: bool = False) -> sqlite3.Connection:
-    if reset:
-        db_path = Path("experiments/codecritic.sqlite3")
-        if db_path.exists():
-            db_path.unlink()
+    db_path = Path("experiments/codecritic.sqlite3")
+
+    if reset and db_path.exists():
+        try:
+            import sqlite3
+
+            sqlite3.connect(str(db_path)).close()
+        except Exception:
+            pass
+        import gc
+
+        gc.collect()
+        db_path.unlink()
+
     conn = db.get_connection()
     create_tables(conn)
     load_seed_data(conn)

@@ -1,8 +1,14 @@
 [
-  {
-    "id": 1,
-    "name": "shell",
-    "description": "Shell execution provider",
-    "artifact_path": "tools/shell.py"
-  }
+    {
+        "id": 1,
+        "name": "black",
+        "description": "Black formatter",
+        "artifact_path": "tool_providers/black_runner.py"
+    },
+    {
+        "id": 2,
+        "name": "docformatter",
+        "description": "Docformatter tool",
+        "artifact_path": "tool_providers/docformatter_runner.py"
+    }
 ]

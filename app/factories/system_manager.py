@@ -5,6 +5,13 @@ from ..registries.system_managers import SYSTEM_MANAGER_REGISTRY
 
 class SystemManagerFactory:
     @staticmethod
+    def register(name: str, cls) -> None:
+        try:
+            SYSTEM_MANAGER_REGISTRY.register(name, cls)
+        except KeyError:
+            pass
+
+    @staticmethod
     def create(name: str, **kwargs):
         cls = SYSTEM_MANAGER_REGISTRY.get(name)
         if cls is None:

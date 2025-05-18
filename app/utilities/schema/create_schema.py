@@ -60,8 +60,7 @@ def _is_optional(annotation: Any) -> bool:
 def create_tables(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     for table_name, model_cls in SCHEMAS.items():
-        model = model_cls.model_construct()  # Use construct to skip validation
-        fields = model.__pydantic_fields__
+        fields = model_cls.__pydantic_fields__
         columns = []
         for name, field_info in fields.items():
             col_type = _sqlite_type(field_info.annotation)

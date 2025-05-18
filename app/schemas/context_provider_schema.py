@@ -26,8 +26,5 @@ class ContextProvider(BaseModel):
             self.tooling_provider_id = getattr(self.tooling_provider, "id", None)
         return self
 
-    def model_dump(self) -> dict:  # pragma: no cover - simple wrapper
-        data = getattr(super(), "model_dump", super().dict)()
-        if data.get("tooling_provider") is not None:
-            data["tooling_provider"] = data["tooling_provider"].model_dump()
-        return data
+    def model_dump(self, **kwargs) -> dict:
+        return super().model_dump(**kwargs)

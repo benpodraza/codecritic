@@ -31,9 +31,5 @@ class ExperimentConfig(BaseModel):
             self.scoring_model_id = getattr(self.scoring_model, "id", None)
         return self
 
-    def model_dump(self) -> dict:  # pragma: no cover - simple wrapper
-        data = getattr(super(), "model_dump", super().dict)()
-        for field in ("system_manager", "scoring_model"):
-            if data.get(field) is not None:
-                data[field] = data[field].model_dump()
-        return data
+    def model_dump(self, **kwargs) -> dict:
+        return super().model_dump(**kwargs)

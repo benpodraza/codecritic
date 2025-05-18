@@ -37,9 +37,9 @@ class LoggingProvider:
         self.conn: sqlite3.Connection = get_connection()
 
     def _serialize(self, obj: Any) -> dict:
-        if is_dataclass(obj):
-            return asdict(obj)
-        raise TypeError(f"Cannot serialize non-dataclass type: {type(obj)}")
+        if not is_dataclass(obj) or isinstance(obj, type):
+            raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+        return asdict(obj)
 
     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
         cur = self.conn.cursor()

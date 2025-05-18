@@ -29,9 +29,5 @@ class AgentEngine(BaseModel):
             raise ValueError("artifact_path must be absolute or project relative")
         return p
 
-    def model_dump(self) -> dict:  # pragma: no cover - simple wrapper
-        base_dump = getattr(super(), "model_dump", super().dict)
-        data = base_dump()
-        if data.get("artifact_path") is not None:
-            data["artifact_path"] = str(data["artifact_path"])
-        return data
+    def model_dump(self, **kwargs) -> dict:
+        return super().model_dump(**kwargs)

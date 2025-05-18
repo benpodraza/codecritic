@@ -21,5 +21,5 @@ class FilePath(BaseModel):
             raise ValueError("artifact_path must be absolute or project relative")
         return p
 
-    def model_dump(self) -> dict:  # pragma: no cover - simple wrapper
-        return {"artifact_path": str(self.artifact_path)}
+    def model_dump(self, **kwargs) -> dict:
+        return super().model_dump(**kwargs)

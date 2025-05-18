@@ -2,8 +2,6 @@ import sqlite3
 from pathlib import Path
 import unittest
 
-import pandas as pd
-
 from app.visualization.dashboard import (
     load_logs,
     build_state_transition_sankey,

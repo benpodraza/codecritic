@@ -70,3 +70,18 @@ def test_scoring_provider_factory():
     _ensure_loaded()
     provider = ScoringProviderFactory.create("dummy")
     assert provider.score() == 0
+
+
+def test_basic_scoring_provider_factory():
+    _ensure_loaded()
+    provider = ScoringProviderFactory.create("basic")
+    result = provider.score(
+        {
+            "evaluation": [],
+            "code_quality": [],
+            "conversation": [],
+            "prompt": [],
+            "state": [],
+        }
+    )
+    assert isinstance(result, dict)

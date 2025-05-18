@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 
+from ..utilities.metadata.logging import LoggingMixin, LoggingProvider
 
-class PromptGeneratorBase(ABC):
+
+class PromptGeneratorBase(LoggingMixin, ABC):
     """Base class for generating prompts."""
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
 
     def generate_prompt(self, *args, **kwargs) -> str:
-        self.logger.debug("Prompt generation start")
+        self._log.debug("Prompt generation start")
         prompt = self._generate_prompt(*args, **kwargs)
-        self.logger.debug("Prompt generation end")
+        self._log.debug("Prompt generation end")
         return prompt
 
     @abstractmethod

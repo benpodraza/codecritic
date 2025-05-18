@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-import logging
 from typing import Any, Dict, List
 
 from ..factories.scoring_provider import ScoringProviderFactory
 from ..factories.system_manager import SystemManagerFactory
 from ..factories.experiment_config_provider import ExperimentConfigProvider
-from ..utilities.db import init_db, insert_logs
-from ..utilities.metadata.logging import ScoringLog
+from ..utilities.metadata.logging import LoggingMixin, LoggingProvider, ScoringLog
 from ..utilities.metrics import EVALUATION_METRICS
 
 
-class Experiment:
+class Experiment(LoggingMixin):
     """Base experiment handling execution and scoring."""
 
-    def __init__(self, config_id: int) -> None:
-        self.logger = logging.getLogger(self.__class__.__name__)
+    def __init__(self, config_id: int, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
         self.config_id = config_id
         self.config: Dict[str, Any] | None = None
         self.scoring_model_id = "dummy"
@@ -28,7 +26,7 @@ class Experiment:
         self.metrics: Dict[str, float] | None = None
 
     def run(self, *args, **kwargs) -> Dict[str, float]:
-        self.logger.debug("Experiment run start")
+        self._log.debug("Experiment run start")
 
         # load configuration
         self.config = ExperimentConfigProvider.load(self.config_id)
@@ -58,24 +56,20 @@ class Experiment:
         metrics = scoring_provider.score(logs)
         for key in EVALUATION_METRICS:
             metrics.setdefault(key, 0.0)
-        self.logger.info("Experiment metrics: %s", metrics)
+        self._log.info("Experiment metrics: %s", metrics)
 
-        # persist scoring logs
-        conn = init_db()
-        scoring_logs = [
-            ScoringLog(
-                experiment_id="exp",
-                round=0,
-                metric=k,
-                value=v,
+        for k, v in metrics.items():
+            self.log_scoring(
+                ScoringLog(
+                    experiment_id="exp",
+                    round=0,
+                    metric=k,
+                    value=v,
+                )
             )
-            for k, v in metrics.items()
-        ]
-        insert_logs(conn, "scoring_log", scoring_logs)
-        conn.close()
 
         self.metrics = metrics
-        self.logger.debug("Experiment run end")
+        self._log.debug("Experiment run end")
         return metrics
 
     def _run_experiment_logic(self, *args, **kwargs) -> None:

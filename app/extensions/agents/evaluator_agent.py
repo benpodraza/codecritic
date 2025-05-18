@@ -2,12 +2,16 @@ from __future__ import annotations
 from typing import List
 from ...abstract_classes.agent_base import AgentBase
 from ...factories.tool_provider import ToolProviderFactory
-from ...utilities.metadata.logging import CodeQualityLog, ErrorLog
+from ...utilities.metadata.logging import (
+    CodeQualityLog,
+    ErrorLog,
+    LoggingProvider,
+)
 
 
 class EvaluatorAgent(AgentBase):
-    def __init__(self, target: str) -> None:
-        super().__init__()
+    def __init__(self, target: str, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
         self.target = target
         self.mypy = ToolProviderFactory.create("mypy")
         self.ruff = ToolProviderFactory.create("ruff")
@@ -17,9 +21,11 @@ class EvaluatorAgent(AgentBase):
 
     def _run_agent_logic(self, *args, **kwargs) -> None:
         complexity = 0.0
+        ruff_return = 0
         try:
             self.mypy.run(self.target)
             ruff_proc = self.ruff.run(self.target)
+            ruff_return = ruff_proc.returncode
             radon_proc = self.radon.run(self.target)
 
             # Parse "Complexity: X.Y" from radon output
@@ -32,7 +38,7 @@ class EvaluatorAgent(AgentBase):
                     break
 
         except Exception as exc:
-            self.logger.warning("Radon unavailable: %s", exc)
+            self._log.warning("Radon unavailable: %s", exc)
 
         lines = sum(1 for _ in open(self.target, "r", encoding="utf-8"))
         log = CodeQualityLog(
@@ -42,6 +48,7 @@ class EvaluatorAgent(AgentBase):
             lines_of_code=lines,
             cyclomatic_complexity=complexity,
             maintainability_index=0.0,
-            lint_errors=0 if ruff_proc.returncode == 0 else 1,
+            lint_errors=0 if ruff_return == 0 else 1,
         )
         self.quality_logs.append(log)
+        self.log_code_quality(log)

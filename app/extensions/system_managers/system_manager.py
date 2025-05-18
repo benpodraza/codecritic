@@ -7,21 +7,21 @@ from ...enums.system_enums import SystemState, StateTransitionReason
 from ...factories.agent import AgentFactory
 from ...factories.context_provider import ContextProviderFactory
 from ...factories.prompt_manager import PromptGeneratorFactory
-from ...utilities.db import init_db, insert_logs
 from ...utilities.metadata.logging import (
     CodeQualityLog,
     PromptLog,
     ScoringLog,
     StateLog,
     StateTransitionLog,
+    LoggingProvider,
 )
 from ..state_managers.state_manager import StateManager
 
 
 class SystemManager(SystemManagerBase):
-    def __init__(self) -> None:
-        super().__init__()
-        self.state_manager = StateManager()
+    def __init__(self, logger: LoggingProvider | None = None) -> None:
+        super().__init__(logger)
+        self.state_manager = StateManager(logger=logger)
         self.current_state = SystemState.START
         self.transition_logs: List[StateTransitionLog] = []
         self.state_logs: List[StateLog] = []
@@ -35,8 +35,17 @@ class SystemManager(SystemManagerBase):
         self.prompt_generator = PromptGeneratorFactory.create(
             "basic", context_provider=self.context_provider
         )
-        self.generator = AgentFactory.create("generator", target="sample_module.py")
-        self.evaluator = AgentFactory.create("evaluator", target="sample_module.py")
+        self.generator = AgentFactory.create(
+            "generator",
+            target="sample_module.py",
+            logger=logger,
+            snapshot_writer=None,
+        )
+        self.evaluator = AgentFactory.create(
+            "evaluator",
+            target="sample_module.py",
+            logger=logger,
+        )
 
     def _transition_to(
         self, next_state: SystemState, reason: StateTransitionReason
@@ -49,7 +58,8 @@ class SystemManager(SystemManagerBase):
             reason=reason,
         )
         self.transition_logs.append(log)
-        self.logger.info("%s -> %s", self.current_state.value, next_state.value)
+        self._log.info("%s -> %s", self.current_state.value, next_state.value)
+        self.log_transition(log)
         self.current_state = next_state
 
     def _run_system_logic(self, *args, **kwargs) -> None:
@@ -61,7 +71,6 @@ class SystemManager(SystemManagerBase):
             SystemState.EVALUATE,
             SystemState.END,
         ]
-        conn = init_db()
         for state in sequence:
             self._transition_to(state, reason=StateTransitionReason.FIRST_ROUND)
             if state is not SystemState.END:
@@ -82,10 +91,13 @@ class SystemManager(SystemManagerBase):
                     self.evaluator.run()
                     self.code_quality_logs.extend(self.evaluator.quality_logs)
 
-        insert_logs(conn, "state_transition_log", self.transition_logs)
-        insert_logs(conn, "state_log", self.state_logs)
-        insert_logs(conn, "prompt_log", self.prompt_logs)
-        insert_logs(conn, "code_quality_log", self.code_quality_logs)
-        if self.scoring_logs:
-            insert_logs(conn, "scoring_log", self.scoring_logs)
-        conn.close()
+        for trans in self.transition_logs:
+            self.log_transition(trans)
+        for st in self.state_logs:
+            self.log_state(st)
+        for pr in self.prompt_logs:
+            self.log_prompt(pr)
+        for cq in self.code_quality_logs:
+            self.log_code_quality(cq)
+        for sc in self.scoring_logs:
+            self.log_scoring(sc)

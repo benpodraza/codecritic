@@ -101,6 +101,16 @@ def init_db() -> sqlite3.Connection:
             timestamp TEXT
         )"""
     )
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS error_log (
+            experiment_id TEXT,
+            round INTEGER,
+            error_type TEXT,
+            message TEXT,
+            file_path TEXT,
+            timestamp TEXT
+        )"""
+    )
     conn.commit()
     return conn
 

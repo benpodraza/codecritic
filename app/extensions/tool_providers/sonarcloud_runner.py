@@ -5,7 +5,7 @@ from app.abstract_classes.tool_provider_base import ToolProviderBase
 
 class SonarCloudToolProvider(ToolProviderBase):
     def _run(self, project_key: str, organization: str, token: str):
-        self.logger.info(
+        self._log.info(
             "SonarCloud stub executed for project '%s' in organization '%s'.",
             project_key,
             organization,

@@ -26,5 +26,5 @@ class ContextProvider(BaseModel):
             self.tooling_provider_id = getattr(self.tooling_provider, "id", None)
         return self
 
-    def model_dump(self, **kwargs) -> dict:
-        return super().model_dump(**kwargs)
+    def model_dump(self, **kwargs) -> dict:  # type: ignore[misc]
+        return super().model_dump(**kwargs)  # type: ignore[misc]

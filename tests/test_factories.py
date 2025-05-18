@@ -5,6 +5,7 @@ from app.factories.prompt_manager import PromptGeneratorFactory
 from app.factories.tool_provider import ToolProviderFactory
 from app.factories.scoring_provider import ScoringProviderFactory
 from app.factories.context_provider import ContextProviderFactory
+from app.factories.logging_provider import CodeQualityLog, RecommendationLog
 
 
 from tests.test_bootstrap import load_all_extensions
@@ -76,3 +77,39 @@ def test_basic_scoring_provider_factory():
         }
     )
     assert isinstance(result, dict)
+
+
+def test_advanced_scoring_provider_factory():
+    _ensure_loaded()
+    provider = ScoringProviderFactory.create("advanced")
+    result = provider.score(
+        {
+            "code_quality": [
+                CodeQualityLog(
+                    experiment_id="exp",
+                    round=0,
+                    symbol="mod",
+                    lines_of_code=10,
+                    cyclomatic_complexity=5.0,
+                    maintainability_index=80.0,
+                    lint_errors=0,
+                )
+            ],
+            "recommendation": [
+                RecommendationLog(
+                    experiment_id="exp",
+                    round=0,
+                    symbol="mod",
+                    file_path="mod.py",
+                    line_start=0,
+                    line_end=0,
+                    recommendation="{}",
+                    context="ctx",
+                )
+            ],
+        },
+        experiment_id="exp",
+    )
+    assert result["maintainability_index"] == 80.0
+    assert result["cyclomatic_complexity"] == 5.0
+    assert result["recommendation_quality"] == 1.0

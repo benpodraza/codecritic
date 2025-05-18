@@ -23,5 +23,5 @@ class Series(BaseModel):
             self.experiment_config_id = getattr(self.experiment_config, "id", None)
         return self
 
-    def model_dump(self, **kwargs) -> dict:
-        return super().model_dump(**kwargs)
+    def model_dump(self, **kwargs) -> dict:  # type: ignore[misc]
+        return super().model_dump(**kwargs)  # type: ignore[misc]

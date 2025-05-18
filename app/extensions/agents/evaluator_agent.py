@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List
+from datetime import datetime, timezone
 
 from ...abstract_classes.agent_base import AgentBase
 from ...enums.agent_enums import AgentRole
@@ -101,6 +102,16 @@ class EvaluatorAgent(AgentBase):
             complexity, maintainability = _analyze_radon(before)
         except Exception as exc:
             self._log.warning("Radon unavailable: %s", exc)
+            self.error_logs.append(
+                ErrorLog(
+                    experiment_id="exp",
+                    round=0,
+                    error_type=type(exc).__name__,
+                    message=f"Radon analysis failed: {exc}",
+                    file_path=self.target,
+                    timestamp=datetime.now(timezone.utc),
+                )
+            )
 
         log = CodeQualityLog(
             experiment_id="exp",

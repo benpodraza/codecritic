@@ -107,3 +107,16 @@ class ExperimentLog:
     reason_for_stop: str
     start: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     stop: datetime | None = None
+
+
+@dataclass
+class RecommendationLog:
+    experiment_id: str
+    round: int
+    symbol: str
+    file_path: str
+    line_start: int
+    line_end: int
+    recommendation: str
+    context: str
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

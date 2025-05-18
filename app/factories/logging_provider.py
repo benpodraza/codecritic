@@ -19,6 +19,7 @@ from ..utilities.metadata.logging.log_schemas import (
     ScoringLog,
     ConversationLog,
     ExperimentLog,
+    RecommendationLog,
 )
 
 
@@ -31,6 +32,7 @@ LOG_MODEL_MAP = {
     LogType.SCORING: ScoringLog,
     LogType.CONVERSATION: ConversationLog,
     LogType.EXPERIMENT: ExperimentLog,
+    LogType.RECOMMENDATION: RecommendationLog,
 }
 
 
@@ -142,6 +144,9 @@ class LoggingProvider:
     def log_experiment(self, log: ExperimentLog) -> None:
         self.write(LogType.EXPERIMENT, log)
 
+    def log_recommendation(self, log: RecommendationLog) -> None:
+        self.write(LogType.RECOMMENDATION, log)
+
     def close(self) -> None:
         self.conn.close()
 
@@ -176,3 +181,6 @@ class LoggingMixin:
 
     def log_experiment(self, log: ExperimentLog) -> None:
         self.logger.log_experiment(log)
+
+    def log_recommendation(self, log: RecommendationLog) -> None:
+        self.logger.log_recommendation(log)

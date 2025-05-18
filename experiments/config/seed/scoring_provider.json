@@ -1,8 +1,8 @@
 [
-  {
-    "id": 1,
-    "name": "basic_score",
-    "description": "Basic scoring",
-    "artifact_path": "scoring/basic.py"
-  }
+    {
+        "id": 1,
+        "name": "basic_score",
+        "description": "Basic scoring",
+        "artifact_path": "scoring_models/basic_scoring_provider.py"
+    }
 ]

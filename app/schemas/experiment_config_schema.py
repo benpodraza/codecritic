@@ -15,8 +15,8 @@ class ExperimentConfig(BaseModel):
     id: Optional[int] = None
     name: str
     description: Optional[str] = None
-    system_manager_id: Optional[int] = None
-    scoring_model_id: Optional[int] = None
+    system_manager_id: Optional[int | str] = None
+    scoring_model_id: Optional[int | str] = None
 
     system_manager: Optional[SystemConfig] = None
     scoring_model: Optional[ScoringProvider] = None

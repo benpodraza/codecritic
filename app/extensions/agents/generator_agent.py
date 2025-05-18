@@ -16,6 +16,7 @@ class GeneratorAgent(AgentBase):
         super().__init__()
         self.target = target
         self.formatter = ToolProviderFactory.create("black")
+        self.docformatter = ToolProviderFactory.create("docformatter")
         self.prompt_logs: List[PromptLog] = []
         self.error_logs: List[ErrorLog] = []
 
@@ -35,6 +36,7 @@ class GeneratorAgent(AgentBase):
         self.prompt_logs.append(log)
         try:
             self.formatter.run(self.target)
+            self.docformatter.run(self.target)
             log.agent_action_outcome = "success"
             self.logger.info("Formatted %s", self.target)
         except Exception as exc:

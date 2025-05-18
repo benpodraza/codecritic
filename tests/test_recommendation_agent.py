@@ -115,7 +115,7 @@ class RecommendationAgentTests(unittest.TestCase):
             self.assertIn("refactor_circular_dependency", actions)
             log_rec.assert_called_once()
             log_conv.assert_called_once()
-            snap.assert_called_once()
+            assert snap.call_count == 2
 
 
 if __name__ == "__main__":

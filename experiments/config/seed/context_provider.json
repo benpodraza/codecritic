@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "name": "basic_context",
+    "description": "Provides context",
+    "system_type": "default",
+    "tooling_provider_id": 1
+  }
+]

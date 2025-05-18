@@ -1,0 +1,8 @@
+[
+  {
+    "id": 1,
+    "name": "basic_score",
+    "description": "Basic scoring",
+    "artifact_path": "scoring/basic.py"
+  }
+]

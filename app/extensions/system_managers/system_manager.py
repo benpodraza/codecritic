@@ -50,16 +50,14 @@ class SystemManager(SystemManagerBase):
     def _transition_to(
         self, next_state: SystemState, reason: StateTransitionReason
     ) -> None:
-        log = StateTransitionLog(
+        self.state_manager.transition_state(
             experiment_id="exp",
             round=0,
             from_state=self.current_state,
             to_state=next_state,
             reason=reason,
         )
-        self.transition_logs.append(log)
-        self._log.info("%s -> %s", self.current_state.value, next_state.value)
-        self.log_transition(log)
+        self.transition_logs.append(self.state_manager.transition_logs[-1])
         self.current_state = next_state
 
     def _run_system_logic(self, *args, **kwargs) -> None:
@@ -74,16 +72,14 @@ class SystemManager(SystemManagerBase):
         for state in sequence:
             self._transition_to(state, reason=StateTransitionReason.FIRST_ROUND)
             if state is not SystemState.END:
-                self.state_manager.run(state=state.value)
-                self.state_logs.append(
-                    StateLog(
-                        experiment_id="exp",
-                        system="system",
-                        round=0,
-                        state=state,
-                        action="run",
-                    )
+                self.state_manager.run_state(
+                    experiment_id="exp",
+                    system="system",
+                    round=0,
+                    state=state,
+                    action="run",
                 )
+                self.state_logs.append(self.state_manager.state_logs[-1])
                 if state == SystemState.GENERATE:
                     self.generator.run()
                     self.prompt_logs.extend(self.generator.prompt_logs)
@@ -91,10 +87,6 @@ class SystemManager(SystemManagerBase):
                     self.evaluator.run()
                     self.code_quality_logs.extend(self.evaluator.quality_logs)
 
-        for trans in self.transition_logs:
-            self.log_transition(trans)
-        for st in self.state_logs:
-            self.log_state(st)
         for pr in self.prompt_logs:
             self.log_prompt(pr)
         for cq in self.code_quality_logs:

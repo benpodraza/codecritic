@@ -46,6 +46,7 @@ codecritic
             - __init__.py
             - dummy_context_provider.py
             - symbol_graph_provider.py
+         - experiment_provider.py
          - prompt_generators
             - __init__.py
             - basic_prompt_generator.py
@@ -240,10 +241,13 @@ codecritic
             - schema_demo.ipynb
             - symbol_graph_provider_demo.ipynb
          - experiments
+            - artifacts
+               - snapshots
             - codecritic.sqlite3
          - functional_testing_phase
          - linting_system_build_up.ipynb
          - prompt_generation_and_configuration.ipynb
+         - structured_logging_demo.ipynb
       - test_agents.py
       - test_bootstrap.py
       - test_dashboard.py
@@ -253,6 +257,7 @@ codecritic
       - test_mediator_agent.py
       - test_patch_agent.py
       - test_recommendation_agent.py
+      - test_structured_logging.py
       - test_symbol_graph_provider.py
       - test_system_state_management.py
       - test_tool_providers.py

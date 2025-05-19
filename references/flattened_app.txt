@@ -15,24 +15,62 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
-# 6 
+# 5 import json
+# 6 from datetime import datetime, timezone
 # 7 
-# 8 class AgentBase(LoggingMixin, ABC):
-# 9     """Base class for executing agent logic."""
-# 10 
-# 11     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 12         super().__init__(logger)
+# 8 from ..factories.logging_provider import (
+# 9     LoggingMixin,
+# 10     LoggingProvider,
+# 11 )
+# 12 from ..utilities.metadata.logging.log_schemas import AgentActionLog
 # 13 
-# 14     def run(self, *args, **kwargs) -> None:
-# 15         self._log.debug("Agent run start")
-# 16         self._run_agent_logic(*args, **kwargs)
-# 17         self._log.debug("Agent run end")
-# 18 
-# 19     @abstractmethod
-# 20     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 21         """Execute agent specific logic."""
-# 22         raise NotImplementedError
+# 14 
+# 15 class AgentBase(LoggingMixin, ABC):
+# 16     """Base class for executing agent logic."""
+# 17 
+# 18     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 19         super().__init__(logger)
+# 20 
+# 21     def run(
+# 22         self,
+# 23         *args,
+# 24         experiment_id: str = "",
+# 25         round: int = 0,
+# 26         action: str = "run",
+# 27         **kwargs,
+# 28     ) -> None:
+# 29         self._log.debug("Agent run start")
+# 30         params = json.dumps({"args": args, "kwargs": kwargs})
+# 31         response = ""
+# 32         success = False
+# 33         error_message = None
+# 34         try:
+# 35             self._run_agent_logic(*args, **kwargs)
+# 36             success = True
+# 37         except Exception as exc:
+# 38             error_message = str(exc)
+# 39             raise
+# 40         finally:
+# 41             self.logger.log_agent_action(
+# 42                 AgentActionLog(
+# 43                     experiment_id=str(experiment_id),
+# 44                     round=round,
+# 45                     agent_id=self.__class__.__name__,
+# 46                     agent_role=getattr(self, "role", ""),
+# 47                     action=action,
+# 48                     parameters=params,
+# 49                     response=response,
+# 50                     success=success,
+# 51                     error_message=error_message,
+# 52                     timestamp=datetime.now(timezone.utc),
+# 53                 )
+# 54             )
+# 55             self._log.debug("Agent run logged")
+# 56 
+# 57     @abstractmethod
+# 58     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 59         """Execute agent specific logic."""
+# 60         raise NotImplementedError
 
 
 # abstract_classes\context_provider_base.py
@@ -41,25 +79,56 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
-# 6 
+# 5 import json
+# 6 from datetime import datetime, timezone
 # 7 
-# 8 class ContextProviderBase(LoggingMixin, ABC):
-# 9     """Base class for providing context from symbol graphs."""
-# 10 
-# 11     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 12         super().__init__(logger)
+# 8 from ..factories.logging_provider import (
+# 9     LoggingMixin,
+# 10     LoggingProvider,
+# 11 )
+# 12 from ..utilities.metadata.logging.log_schemas import ContextRetrievalLog
 # 13 
-# 14     def get_context(self, *args, **kwargs):
-# 15         self._log.debug("Context retrieval start")
-# 16         context = self._get_context(*args, **kwargs)
-# 17         self._log.debug("Context retrieval end")
-# 18         return context
-# 19 
-# 20     @abstractmethod
-# 21     def _get_context(self, *args, **kwargs):
-# 22         """Return context information."""
-# 23         raise NotImplementedError
+# 14 
+# 15 class ContextProviderBase(LoggingMixin, ABC):
+# 16     """Base class for providing context from symbol graphs."""
+# 17 
+# 18     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 19         super().__init__(logger)
+# 20 
+# 21     def get_context(self, *args, experiment_id: str = "", round: int = 0, **kwargs):
+# 22         self._log.debug("Context retrieval start")
+# 23         params = json.dumps({"args": args, "kwargs": kwargs})
+# 24         context = None
+# 25         success = False
+# 26         error_message = None
+# 27         try:
+# 28             context = self._get_context(*args, **kwargs)
+# 29             success = True
+# 30             return context
+# 31         except Exception as exc:
+# 32             error_message = str(exc)
+# 33             raise
+# 34         finally:
+# 35             self.logger.log_context_retrieval(
+# 36                 ContextRetrievalLog(
+# 37                     experiment_id=str(experiment_id),
+# 38                     round=round,
+# 39                     context_provider_name=self.__class__.__name__,
+# 40                     context_parameters=params,
+# 41                     retrieved_context=(
+# 42                         json.dumps(context, default=str) if success else ""
+# 43                     ),
+# 44                     success=success,
+# 45                     error_message=error_message,
+# 46                     timestamp=datetime.now(timezone.utc),
+# 47                 )
+# 48             )
+# 49             self._log.debug("Context retrieval logged")
+# 50 
+# 51     @abstractmethod
+# 52     def _get_context(self, *args, **kwargs):
+# 53         """Return context information."""
+# 54         raise NotImplementedError
 
 
 # abstract_classes\experiment.py
@@ -154,69 +223,74 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from abc import ABC, abstractmethod
-# 4 
-# 5 from app.utilities.metadata.logging.log_schemas import ErrorLog
-# 6 
-# 7 from ..factories.logging_provider import LoggingMixin, LoggingProvider
-# 8 
-# 9 import json
-# 10 from pathlib import Path
-# 11 from app.factories.logging_provider import LogType
-# 12 
-# 13 class PromptGeneratorBase(LoggingMixin, ABC):
-# 14     """Base class for generating prompts."""
-# 15 
-# 16     def __init__(self, context_provider, logger: LoggingProvider | None = None) -> None:
-# 17         super().__init__(logger)
-# 18         self.context_provider = context_provider
-# 19 
-# 20     def generate_prompt(self, agent_config, system_config, experiment_id, round):
-# 21         self._log.debug("Prompt generation start")
-# 22         error_message = None
-# 23         success = False
-# 24         generated_prompt = ""
-# 25 
-# 26         try:
-# 27             generated_prompt = self._generate_prompt(agent_config, system_config)
-# 28             success = True
-# 29             return generated_prompt
-# 30         except ValueError as ve:
-# 31             #  Expected operational errors (like invalid configs)
-# 32             error_message = str(ve)
-# 33             self._log.warning("Operational prompt generation error: %s", error_message)
-# 34         except Exception as e:
-# 35             #  Unexpected or critical errors
-# 36             error_message = str(e)
-# 37             error_log = {
-# 38                 "experiment_id": experiment_id,
-# 39                 "round": round,
-# 40                 "error_type": type(e).__name__,
-# 41                 "message": error_message,
-# 42                 "file_path": str(Path(__file__).relative_to(Path.cwd())),
-# 43             }
-# 44             self.logger.write(LogType.ERROR, error_log)
-# 45             self._log.error("Critical prompt generation error logged: %s", error_message)
-# 46             raise  #  re-raise critical errors explicitly
-# 47         finally:
-# 48             #  Always log prompt generation attempt, including operational errors
-# 49             prompt_log = {
-# 50                 "experiment_id": experiment_id,
-# 51                 "round": round,
-# 52                 "generator_name": self.__class__.__name__,
-# 53                 "context_provider_name": self.context_provider.__class__.__name__,
-# 54                 "agent_config": json.dumps(agent_config),
-# 55                 "system_config": json.dumps(system_config),
-# 56                 "generated_prompt": generated_prompt if success else "",
-# 57                 "success": success,
-# 58                 "error_message": error_message if not success else None
-# 59             }
-# 60             self.logger.write(LogType.PROMPT_GENERATION, prompt_log)
-# 61             self._log.debug("Prompt generation logged")
-# 62             
-# 63     @abstractmethod
-# 64     def _generate_prompt(self, *args, **kwargs) -> str:
-# 65         """Return a generated prompt."""
-# 66         raise NotImplementedError
+# 4 from datetime import datetime, timezone
+# 5 
+# 6 from app.utilities.metadata.logging.log_schemas import ErrorLog, PromptGenerationLog
+# 7 
+# 8 from ..factories.logging_provider import LoggingMixin, LoggingProvider
+# 9 
+# 10 import json
+# 11 from pathlib import Path
+# 12 from app.factories.logging_provider import LogType
+# 13 
+# 14 
+# 15 class PromptGeneratorBase(LoggingMixin, ABC):
+# 16     """Base class for generating prompts."""
+# 17 
+# 18     def __init__(self, context_provider, logger: LoggingProvider | None = None) -> None:
+# 19         super().__init__(logger)
+# 20         self.context_provider = context_provider
+# 21 
+# 22     def generate_prompt(self, agent_config, system_config, experiment_id, round):
+# 23         self._log.debug("Prompt generation start")
+# 24         error_message = None
+# 25         success = False
+# 26         generated_prompt = ""
+# 27 
+# 28         try:
+# 29             generated_prompt = self._generate_prompt(agent_config, system_config)
+# 30             success = True
+# 31             return generated_prompt
+# 32         except ValueError as ve:
+# 33             #  Expected operational errors (like invalid configs)
+# 34             error_message = str(ve)
+# 35             self._log.warning("Operational prompt generation error: %s", error_message)
+# 36         except Exception as e:
+# 37             #  Unexpected or critical errors
+# 38             error_message = str(e)
+# 39             error_log = ErrorLog(
+# 40                 experiment_id=experiment_id,
+# 41                 round=round,
+# 42                 error_type=type(e).__name__,
+# 43                 message=error_message,
+# 44                 file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 45                 timestamp=datetime.now(timezone.utc),
+# 46             )
+# 47             self.logger.write(LogType.ERROR, error_log)
+# 48             self._log.error(
+# 49                 "Critical prompt generation error logged: %s", error_message
+# 50             )
+# 51             raise  #  re-raise critical errors explicitly
+# 52         finally:
+# 53             prompt_log = PromptGenerationLog(
+# 54                 experiment_id=experiment_id,
+# 55                 round=round,
+# 56                 generator_name=self.__class__.__name__,
+# 57                 context_provider_name=self.context_provider.__class__.__name__,
+# 58                 agent_config=json.dumps(agent_config),
+# 59                 system_config=json.dumps(system_config),
+# 60                 generated_prompt=generated_prompt if success else "",
+# 61                 success=success,
+# 62                 error_message=error_message if not success else None,
+# 63                 timestamp=datetime.now(timezone.utc),
+# 64             )
+# 65             self.logger.write(LogType.PROMPT_GENERATION, prompt_log)
+# 66             self._log.debug("Prompt generation logged")
+# 67 
+# 68     @abstractmethod
+# 69     def _generate_prompt(self, *args, **kwargs) -> str:
+# 70         """Return a generated prompt."""
+# 71         raise NotImplementedError
 
 
 # abstract_classes\scoring_model_base.py
@@ -319,24 +393,49 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from app.factories.logging_provider import LoggingMixin, LoggingProvider
-# 6 
+# 5 import json
+# 6 from datetime import datetime, timezone
 # 7 
-# 8 class SystemManagerBase(LoggingMixin, ABC):
-# 9     """Base class for coordinating high level system logic."""
+# 8 from app.factories.logging_provider import LoggingMixin, LoggingProvider
+# 9 from ..utilities.metadata.logging.log_schemas import SystemEventLog
 # 10 
-# 11     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 12         super().__init__(logger)
-# 13 
-# 14     def run(self, *args, **kwargs) -> None:
-# 15         self._log.debug("SystemManager run start")
-# 16         self._run_system_logic(*args, **kwargs)
-# 17         self._log.debug("SystemManager run end")
-# 18 
-# 19     @abstractmethod
-# 20     def _run_system_logic(self, *args, **kwargs) -> None:
-# 21         """Execute system-specific logic and state transitions."""
-# 22         raise NotImplementedError
+# 11 
+# 12 class SystemManagerBase(LoggingMixin, ABC):
+# 13     """Base class for coordinating high level system logic."""
+# 14 
+# 15     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 16         super().__init__(logger)
+# 17 
+# 18     def run(self, *args, experiment_id: str = "", round: int = 0, **kwargs) -> None:
+# 19         self._log.debug("SystemManager run start")
+# 20         params = json.dumps({"args": args, "kwargs": kwargs})
+# 21         success = False
+# 22         error_message = None
+# 23         try:
+# 24             self._run_system_logic(*args, **kwargs)
+# 25             success = True
+# 26         except Exception as exc:
+# 27             error_message = str(exc)
+# 28             raise
+# 29         finally:
+# 30             self.logger.log_system_event(
+# 31                 SystemEventLog(
+# 32                     experiment_id=str(experiment_id),
+# 33                     round=round,
+# 34                     system_id=self.__class__.__name__,
+# 35                     event="run",
+# 36                     details=params,
+# 37                     success=success,
+# 38                     error_message=error_message,
+# 39                     timestamp=datetime.now(timezone.utc),
+# 40                 )
+# 41             )
+# 42             self._log.debug("SystemManager run logged")
+# 43 
+# 44     @abstractmethod
+# 45     def _run_system_logic(self, *args, **kwargs) -> None:
+# 46         """Execute system-specific logic and state transitions."""
+# 47         raise NotImplementedError
 
 
 # abstract_classes\tool_provider_base.py
@@ -345,25 +444,72 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
-# 6 
-# 7 
-# 8 class ToolProviderBase(LoggingMixin, ABC):
-# 9     """Base class for running external tools."""
-# 10 
-# 11     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 12         super().__init__(logger)
-# 13 
-# 14     def run(self, *args, **kwargs):
-# 15         self._log.debug("Tool run start")
-# 16         result = self._run(*args, **kwargs)
-# 17         self._log.debug("Tool run end")
-# 18         return result
-# 19 
-# 20     @abstractmethod
-# 21     def _run(self, *args, **kwargs):
-# 22         """Run tool-specific logic."""
-# 23         raise NotImplementedError
+# 5 import json
+# 6 from datetime import datetime, timezone
+# 7 import subprocess
+# 8 
+# 9 from ..factories.logging_provider import (
+# 10     LoggingMixin,
+# 11     LoggingProvider,
+# 12 )
+# 13 from ..utilities.metadata.logging.log_schemas import ToolInvocationLog
+# 14 
+# 15 
+# 16 class ToolProviderBase(LoggingMixin, ABC):
+# 17     """Base class for running external tools."""
+# 18 
+# 19     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 20         super().__init__(logger)
+# 21 
+# 22     def run(self, *args, experiment_id: str = "", round: int = 0, **kwargs):
+# 23         self._log.debug("Tool run start")
+# 24         params = json.dumps({"args": args, "kwargs": kwargs})
+# 25         result: subprocess.CompletedProcess | None = None
+# 26         success = False
+# 27         error_message = None
+# 28         try:
+# 29             result = self._run(*args, **kwargs)
+# 30             success = True
+# 31             return result
+# 32         except Exception as exc:
+# 33             error_message = str(exc)
+# 34             raise
+# 35         finally:
+# 36             stdout = (
+# 37                 result.stdout
+# 38                 if result is not None and hasattr(result, "stdout") and result.stdout
+# 39                 else ""
+# 40             )
+# 41             stderr = (
+# 42                 result.stderr
+# 43                 if result is not None and hasattr(result, "stderr") and result.stderr
+# 44                 else ""
+# 45             )
+# 46             return_code = (
+# 47                 int(result.returncode)
+# 48                 if result is not None and hasattr(result, "returncode")
+# 49                 else 0
+# 50             )
+# 51             self.logger.log_tool_invocation(
+# 52                 ToolInvocationLog(
+# 53                     experiment_id=str(experiment_id),
+# 54                     round=round,
+# 55                     tool_provider_name=self.__class__.__name__,
+# 56                     invocation_parameters=params,
+# 57                     stdout=stdout,
+# 58                     stderr=stderr,
+# 59                     return_code=return_code,
+# 60                     success=success,
+# 61                     error_message=error_message,
+# 62                     timestamp=datetime.now(timezone.utc),
+# 63                 )
+# 64             )
+# 65             self._log.debug("Tool run logged")
+# 66 
+# 67     @abstractmethod
+# 68     def _run(self, *args, **kwargs):
+# 69         """Run tool-specific logic."""
+# 70         raise NotImplementedError
 
 
 # bootstrap.py
@@ -528,6 +674,10 @@
 # 13     RECOMMENDATION = "recommendation"
 # 14     FEEDBACK = "feedback"
 # 15     PROMPT_GENERATION = "prompt_generation"
+# 16     CONTEXT_RETRIEVAL = "context_retrieval"
+# 17     TOOL_INVOCATION = "tool_invocation"
+# 18     AGENT_ACTION = "agent_action"
+# 19     SYSTEM_EVENT = "system_event"
 
 
 # enums\scoring_enums.py
@@ -1735,6 +1885,83 @@
 # 273         return info
 
 
+# extensions\experiment_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from datetime import datetime, timezone
+# 4 
+# 5 from app.factories.logging_provider import LoggingMixin, LoggingProvider
+# 6 from app.utilities.metadata.logging.log_schemas import ExperimentLog
+# 7 
+# 8 
+# 9 class ExperimentProvider(LoggingMixin):
+# 10     """Manage experiment lifecycle and logging."""
+# 11 
+# 12     def __init__(
+# 13         self,
+# 14         experiment_id: str,
+# 15         description: str,
+# 16         mode: str,
+# 17         variant: str,
+# 18         max_iterations: int,
+# 19         stop_threshold: float,
+# 20         model_engine: str,
+# 21         evaluator_name: str,
+# 22         evaluator_version: str,
+# 23         logger: LoggingProvider | None = None,
+# 24     ) -> None:
+# 25         super().__init__(logger)
+# 26         self.experiment_id = experiment_id
+# 27         self.description = description
+# 28         self.mode = mode
+# 29         self.variant = variant
+# 30         self.max_iterations = max_iterations
+# 31         self.stop_threshold = stop_threshold
+# 32         self.model_engine = model_engine
+# 33         self.evaluator_name = evaluator_name
+# 34         self.evaluator_version = evaluator_version
+# 35         self.start_time = datetime.now(timezone.utc)
+# 36         self.logger.log_experiment(
+# 37             ExperimentLog(
+# 38                 experiment_id=experiment_id,
+# 39                 description=description,
+# 40                 mode=mode,
+# 41                 variant=variant,
+# 42                 max_iterations=max_iterations,
+# 43                 stop_threshold=stop_threshold,
+# 44                 model_engine=model_engine,
+# 45                 evaluator_name=evaluator_name,
+# 46                 evaluator_version=evaluator_version,
+# 47                 final_score=0.0,
+# 48                 passed=False,
+# 49                 reason_for_stop="",
+# 50                 start=self.start_time,
+# 51                 stop=None,
+# 52             )
+# 53         )
+# 54 
+# 55     def complete(self, final_score: float, passed: bool, reason: str) -> None:
+# 56         self.logger.log_experiment(
+# 57             ExperimentLog(
+# 58                 experiment_id=self.experiment_id,
+# 59                 description=self.description,
+# 60                 mode=self.mode,
+# 61                 variant=self.variant,
+# 62                 max_iterations=self.max_iterations,
+# 63                 stop_threshold=self.stop_threshold,
+# 64                 model_engine=self.model_engine,
+# 65                 evaluator_name=self.evaluator_name,
+# 66                 evaluator_version=self.evaluator_version,
+# 67                 final_score=final_score,
+# 68                 passed=passed,
+# 69                 reason_for_stop=reason,
+# 70                 start=self.start_time,
+# 71                 stop=datetime.now(timezone.utc),
+# 72             )
+# 73         )
+
+
 # extensions\prompt_generators\__init__.py
 
 # 1 from .dummy_prompt_generator import DummyPromptGenerator
@@ -2447,188 +2674,220 @@
 # 12 from app.enums.logging_enums import LogType
 # 13 from ..utilities.metadata.logging.log_schemas import (
 # 14     PromptGenerationLog,
-# 15     StateLog,
-# 16     StateTransitionLog,
-# 17     PromptLog,
-# 18     CodeQualityLog,
-# 19     ErrorLog,
-# 20     ScoringLog,
-# 21     ConversationLog,
-# 22     ExperimentLog,
-# 23     RecommendationLog,
-# 24     FeedbackLog,
-# 25 )
-# 26 from ..utilities.feedback import FeedbackRepository
-# 27 
-# 28 
-# 29 LOG_MODEL_MAP = {
-# 30     LogType.STATE: StateLog,
-# 31     LogType.STATE_TRANSITION: StateTransitionLog,
-# 32     LogType.PROMPT: PromptLog,
-# 33     LogType.CODE_QUALITY: CodeQualityLog,
-# 34     LogType.ERROR: ErrorLog,
-# 35     LogType.SCORING: ScoringLog,
-# 36     LogType.CONVERSATION: ConversationLog,
-# 37     LogType.EXPERIMENT: ExperimentLog,
-# 38     LogType.RECOMMENDATION: RecommendationLog,
-# 39     LogType.FEEDBACK: FeedbackLog,
-# 40     LogType.PROMPT_GENERATION: PromptGenerationLog
-# 41 }
-# 42 
-# 43 
-# 44 class LoggingProvider:
-# 45     """Centralized provider for structured logging."""
-# 46 
-# 47     _instance: ClassVar["LoggingProvider" | None] = None
-# 48 
-# 49     def __new__(cls, *args, **kwargs):
-# 50         if cls._instance is None:
-# 51             cls._instance = super().__new__(cls)
-# 52         return cls._instance
-# 53 
-# 54     def __init__(
-# 55         self,
-# 56         db_path: str | Path = "experiments/codecritic.sqlite3",
-# 57         output_path: str | Path | None = None,
-# 58         connection: sqlite3.Connection | None = None,
-# 59     ) -> None:
-# 60         if getattr(self, "_initialized", False):
-# 61             return
-# 62 
-# 63         self.db_path = Path(db_path)
-# 64         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-# 65 
-# 66         from app.utilities.db import get_connection, init_db
-# 67 
-# 68         if connection:
-# 69             self.conn = connection
-# 70             init_db(conn=self.conn)  #  Fix applied here
-# 71         else:
-# 72             self.conn = get_connection()
-# 73             init_db(conn=self.conn)  #  Fix applied here
-# 74 
-# 75         self.output_path = Path(output_path) if output_path else None
-# 76         if self.output_path:
-# 77             self.output_path.parent.mkdir(parents=True, exist_ok=True)
-# 78 
-# 79         self._initialized = True
-# 80 
-# 81     def _serialize(self, obj: Any) -> dict:
-# 82         def _safe(v: Any) -> Any:
-# 83             if isinstance(v, (Enum, Path)):
-# 84                 return str(v)
-# 85             elif isinstance(v, datetime):
-# 86                 return v.isoformat()
-# 87             elif isinstance(v, list):
-# 88                 return [_safe(i) for i in v]
-# 89             elif isinstance(v, dict):
-# 90                 return {k: _safe(val) for k, val in v.items()}
-# 91             return v
-# 92 
-# 93         if not is_dataclass(obj) or isinstance(obj, type):
-# 94             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 95         return _safe(asdict(obj))
-# 96 
-# 97     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 98         items = list(items)
-# 99         if not items:
-# 100             return
-# 101         keys = list(items[0].keys())
-# 102         cols = ",".join(keys)
-# 103         placeholders = ",".join(["?"] * len(keys))
-# 104         values = [tuple(i[k] for k in keys) for i in items]
-# 105         cur = self.conn.cursor()
-# 106         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 107         self.conn.commit()
-# 108         if self.output_path:
-# 109             with self.output_path.open("a", encoding="utf-8") as fh:
-# 110                 for item in items:
-# 111                     fh.write(json.dumps(item) + "\n")
-# 112 
-# 113     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 114         if not isinstance(entries, list):
-# 115             entries = [entries]
-# 116         model_cls = LOG_MODEL_MAP.get(log_type)
-# 117         if model_cls is None:
-# 118             raise ValueError(f"Unsupported log type: {log_type}")
-# 119         for entry in entries:
-# 120             if not isinstance(entry, model_cls):
-# 121                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
-# 122         serialized = [self._serialize(e) for e in entries]
-# 123         self._insert_many(log_type.value + "_log", serialized)
-# 124 
-# 125     #  Convenience wrappers
-# 126     def log_state(self, log: StateLog) -> None:
-# 127         self.write(LogType.STATE, log)
-# 128 
-# 129     def log_transition(self, log: StateTransitionLog) -> None:
-# 130         self.write(LogType.STATE_TRANSITION, log)
-# 131 
-# 132     def log_prompt(self, log: PromptLog) -> None:
-# 133         self.write(LogType.PROMPT, log)
-# 134 
-# 135     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 136         self.write(LogType.CODE_QUALITY, log)
-# 137 
-# 138     def log_error(self, log: ErrorLog) -> None:
-# 139         self.write(LogType.ERROR, log)
-# 140 
-# 141     def log_scoring(self, log: ScoringLog) -> None:
-# 142         self.write(LogType.SCORING, log)
-# 143 
-# 144     def log_conversation(self, log: ConversationLog) -> None:
-# 145         self.write(LogType.CONVERSATION, log)
-# 146 
-# 147     def log_experiment(self, log: ExperimentLog) -> None:
-# 148         self.write(LogType.EXPERIMENT, log)
-# 149 
-# 150     def log_recommendation(self, log: RecommendationLog) -> None:
-# 151         self.write(LogType.RECOMMENDATION, log)
-# 152 
-# 153     def log_feedback(self, log: FeedbackLog) -> None:
-# 154         self.write(LogType.FEEDBACK, log)
-# 155         FeedbackRepository.add_feedback(log)
-# 156 
-# 157     def close(self) -> None:
-# 158         self.conn.close()
-# 159 
+# 15     ContextRetrievalLog,
+# 16     ToolInvocationLog,
+# 17     AgentActionLog,
+# 18     SystemEventLog,
+# 19     StateLog,
+# 20     StateTransitionLog,
+# 21     PromptLog,
+# 22     CodeQualityLog,
+# 23     ErrorLog,
+# 24     ScoringLog,
+# 25     ConversationLog,
+# 26     ExperimentLog,
+# 27     RecommendationLog,
+# 28     FeedbackLog,
+# 29 )
+# 30 from ..utilities.feedback import FeedbackRepository
+# 31 
+# 32 
+# 33 LOG_MODEL_MAP = {
+# 34     LogType.STATE: StateLog,
+# 35     LogType.STATE_TRANSITION: StateTransitionLog,
+# 36     LogType.PROMPT: PromptLog,
+# 37     LogType.CODE_QUALITY: CodeQualityLog,
+# 38     LogType.ERROR: ErrorLog,
+# 39     LogType.SCORING: ScoringLog,
+# 40     LogType.CONVERSATION: ConversationLog,
+# 41     LogType.EXPERIMENT: ExperimentLog,
+# 42     LogType.RECOMMENDATION: RecommendationLog,
+# 43     LogType.FEEDBACK: FeedbackLog,
+# 44     LogType.PROMPT_GENERATION: PromptGenerationLog,
+# 45     LogType.CONTEXT_RETRIEVAL: ContextRetrievalLog,
+# 46     LogType.TOOL_INVOCATION: ToolInvocationLog,
+# 47     LogType.AGENT_ACTION: AgentActionLog,
+# 48     LogType.SYSTEM_EVENT: SystemEventLog,
+# 49 }
+# 50 
+# 51 
+# 52 class LoggingProvider:
+# 53     """Centralized provider for structured logging."""
+# 54 
+# 55     _instance: ClassVar["LoggingProvider" | None] = None
+# 56 
+# 57     def __new__(cls, *args, **kwargs):
+# 58         if cls._instance is None:
+# 59             cls._instance = super().__new__(cls)
+# 60         return cls._instance
+# 61 
+# 62     def __init__(
+# 63         self,
+# 64         db_path: str | Path = "experiments/codecritic.sqlite3",
+# 65         output_path: str | Path | None = None,
+# 66         connection: sqlite3.Connection | None = None,
+# 67     ) -> None:
+# 68         if getattr(self, "_initialized", False):
+# 69             return
+# 70 
+# 71         self.db_path = Path(db_path)
+# 72         self.db_path.parent.mkdir(exist_ok=True, parents=True)
+# 73 
+# 74         from app.utilities.db import get_connection, init_db
+# 75 
+# 76         if connection:
+# 77             self.conn = connection
+# 78             init_db(conn=self.conn)  #  Fix applied here
+# 79         else:
+# 80             self.conn = get_connection()
+# 81             init_db(conn=self.conn)  #  Fix applied here
+# 82 
+# 83         self.output_path = Path(output_path) if output_path else None
+# 84         if self.output_path:
+# 85             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+# 86 
+# 87         self._initialized = True
+# 88 
+# 89     def _serialize(self, obj: Any) -> dict:
+# 90         def _safe(v: Any) -> Any:
+# 91             if isinstance(v, (Enum, Path)):
+# 92                 return str(v)
+# 93             elif isinstance(v, datetime):
+# 94                 return v.isoformat()
+# 95             elif isinstance(v, list):
+# 96                 return [_safe(i) for i in v]
+# 97             elif isinstance(v, dict):
+# 98                 return {k: _safe(val) for k, val in v.items()}
+# 99             return v
+# 100 
+# 101         if not is_dataclass(obj) or isinstance(obj, type):
+# 102             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 103         return _safe(asdict(obj))
+# 104 
+# 105     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 106         items = list(items)
+# 107         if not items:
+# 108             return
+# 109         keys = list(items[0].keys())
+# 110         cols = ",".join(keys)
+# 111         placeholders = ",".join(["?"] * len(keys))
+# 112         values = [tuple(i[k] for k in keys) for i in items]
+# 113         cur = self.conn.cursor()
+# 114         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 115         self.conn.commit()
+# 116         if self.output_path:
+# 117             with self.output_path.open("a", encoding="utf-8") as fh:
+# 118                 for item in items:
+# 119                     fh.write(json.dumps(item) + "\n")
+# 120 
+# 121     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 122         if not isinstance(entries, list):
+# 123             entries = [entries]
+# 124         model_cls = LOG_MODEL_MAP.get(log_type)
+# 125         if model_cls is None:
+# 126             raise ValueError(f"Unsupported log type: {log_type}")
+# 127         for entry in entries:
+# 128             if not isinstance(entry, model_cls):
+# 129                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
+# 130         serialized = [self._serialize(e) for e in entries]
+# 131         self._insert_many(log_type.value + "_log", serialized)
+# 132 
+# 133     #  Convenience wrappers
+# 134     def log_state(self, log: StateLog) -> None:
+# 135         self.write(LogType.STATE, log)
+# 136 
+# 137     def log_transition(self, log: StateTransitionLog) -> None:
+# 138         self.write(LogType.STATE_TRANSITION, log)
+# 139 
+# 140     def log_prompt(self, log: PromptLog) -> None:
+# 141         self.write(LogType.PROMPT, log)
+# 142 
+# 143     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 144         self.write(LogType.CODE_QUALITY, log)
+# 145 
+# 146     def log_error(self, log: ErrorLog) -> None:
+# 147         self.write(LogType.ERROR, log)
+# 148 
+# 149     def log_scoring(self, log: ScoringLog) -> None:
+# 150         self.write(LogType.SCORING, log)
+# 151 
+# 152     def log_conversation(self, log: ConversationLog) -> None:
+# 153         self.write(LogType.CONVERSATION, log)
+# 154 
+# 155     def log_experiment(self, log: ExperimentLog) -> None:
+# 156         self.write(LogType.EXPERIMENT, log)
+# 157 
+# 158     def log_recommendation(self, log: RecommendationLog) -> None:
+# 159         self.write(LogType.RECOMMENDATION, log)
 # 160 
-# 161 class LoggingMixin:
-# 162     """Mixin to provide access to a shared LoggingProvider instance."""
-# 163 
-# 164     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 165         self.logger = logger or LoggingProvider()
-# 166         self._log = logging.getLogger(self.__class__.__name__)
+# 161     def log_feedback(self, log: FeedbackLog) -> None:
+# 162         self.write(LogType.FEEDBACK, log)
+# 163         FeedbackRepository.add_feedback(log)
+# 164 
+# 165     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+# 166         self.write(LogType.CONTEXT_RETRIEVAL, log)
 # 167 
-# 168     def log_state(self, log: StateLog) -> None:
-# 169         self.logger.log_state(log)
+# 168     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+# 169         self.write(LogType.TOOL_INVOCATION, log)
 # 170 
-# 171     def log_transition(self, log: StateTransitionLog) -> None:
-# 172         self.logger.log_transition(log)
+# 171     def log_agent_action(self, log: AgentActionLog) -> None:
+# 172         self.write(LogType.AGENT_ACTION, log)
 # 173 
-# 174     def log_prompt(self, log: PromptLog) -> None:
-# 175         self.logger.log_prompt(log)
+# 174     def log_system_event(self, log: SystemEventLog) -> None:
+# 175         self.write(LogType.SYSTEM_EVENT, log)
 # 176 
-# 177     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 178         self.logger.log_code_quality(log)
+# 177     def close(self) -> None:
+# 178         self.conn.close()
 # 179 
-# 180     def log_error(self, log: ErrorLog) -> None:
-# 181         self.logger.log_error(log)
-# 182 
-# 183     def log_scoring(self, log: ScoringLog) -> None:
-# 184         self.logger.log_scoring(log)
-# 185 
-# 186     def log_conversation(self, log: ConversationLog) -> None:
-# 187         self.logger.log_conversation(log)
-# 188 
-# 189     def log_experiment(self, log: ExperimentLog) -> None:
-# 190         self.logger.log_experiment(log)
-# 191 
-# 192     def log_recommendation(self, log: RecommendationLog) -> None:
-# 193         self.logger.log_recommendation(log)
-# 194 
-# 195     def log_feedback(self, log: FeedbackLog) -> None:
-# 196         self.logger.log_feedback(log)
+# 180 
+# 181 class LoggingMixin:
+# 182     """Mixin to provide access to a shared LoggingProvider instance."""
+# 183 
+# 184     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 185         self.logger = logger or LoggingProvider()
+# 186         self._log = logging.getLogger(self.__class__.__name__)
+# 187 
+# 188     def log_state(self, log: StateLog) -> None:
+# 189         self.logger.log_state(log)
+# 190 
+# 191     def log_transition(self, log: StateTransitionLog) -> None:
+# 192         self.logger.log_transition(log)
+# 193 
+# 194     def log_prompt(self, log: PromptLog) -> None:
+# 195         self.logger.log_prompt(log)
+# 196 
+# 197     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 198         self.logger.log_code_quality(log)
+# 199 
+# 200     def log_error(self, log: ErrorLog) -> None:
+# 201         self.logger.log_error(log)
+# 202 
+# 203     def log_scoring(self, log: ScoringLog) -> None:
+# 204         self.logger.log_scoring(log)
+# 205 
+# 206     def log_conversation(self, log: ConversationLog) -> None:
+# 207         self.logger.log_conversation(log)
+# 208 
+# 209     def log_experiment(self, log: ExperimentLog) -> None:
+# 210         self.logger.log_experiment(log)
+# 211 
+# 212     def log_recommendation(self, log: RecommendationLog) -> None:
+# 213         self.logger.log_recommendation(log)
+# 214 
+# 215     def log_feedback(self, log: FeedbackLog) -> None:
+# 216         self.logger.log_feedback(log)
+# 217 
+# 218     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+# 219         self.logger.log_context_retrieval(log)
+# 220 
+# 221     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+# 222         self.logger.log_tool_invocation(log)
+# 223 
+# 224     def log_agent_action(self, log: AgentActionLog) -> None:
+# 225         self.logger.log_agent_action(log)
+# 226 
+# 227     def log_system_event(self, log: SystemEventLog) -> None:
+# 228         self.logger.log_system_event(log)
 
 
 # factories\prompt_manager.py
@@ -3529,49 +3788,104 @@
 # 134         )"""
 # 135     )
 # 136 
-# 137 
-# 138     #  ✅ Add this missing table definition
-# 139     cur.execute(
-# 140         """CREATE TABLE IF NOT EXISTS conversation_log (
-# 141             experiment_id TEXT,
-# 142             round INTEGER,
-# 143             agent_role TEXT,
-# 144             target TEXT,
-# 145             content TEXT,
-# 146             originating_agent TEXT,
-# 147             intervention INTEGER,
-# 148             intervention_type TEXT,
-# 149             intervention_reason TEXT,
-# 150             timestamp TEXT
-# 151         )"""
-# 152     )
-# 153 
-# 154     cur.execute(
-# 155         """CREATE TABLE IF NOT EXISTS recommendation_log (
-# 156             experiment_id TEXT,
-# 157             round INTEGER,
-# 158             symbol TEXT,
-# 159             file_path TEXT,
-# 160             line_start INTEGER,
-# 161             line_end INTEGER,
-# 162             recommendation TEXT,
-# 163             context TEXT,
-# 164             timestamp TEXT
-# 165         )"""
-# 166     )
-# 167 
-# 168     cur.execute(
-# 169         """CREATE TABLE IF NOT EXISTS feedback_log (
-# 170             experiment_id TEXT,
-# 171             round INTEGER,
-# 172             source TEXT,
-# 173             feedback TEXT,
-# 174             timestamp TEXT
-# 175         )"""
-# 176     )
-# 177 
-# 178     conn.commit()
-# 179     return conn
+# 137     cur.execute(
+# 138         """CREATE TABLE IF NOT EXISTS context_retrieval_log (
+# 139             experiment_id TEXT,
+# 140             round INTEGER,
+# 141             context_provider_name TEXT,
+# 142             context_parameters TEXT,
+# 143             retrieved_context TEXT,
+# 144             success INTEGER,
+# 145             error_message TEXT,
+# 146             timestamp TEXT
+# 147         )"""
+# 148     )
+# 149 
+# 150     cur.execute(
+# 151         """CREATE TABLE IF NOT EXISTS tool_invocation_log (
+# 152             experiment_id TEXT,
+# 153             round INTEGER,
+# 154             tool_provider_name TEXT,
+# 155             invocation_parameters TEXT,
+# 156             stdout TEXT,
+# 157             stderr TEXT,
+# 158             return_code INTEGER,
+# 159             success INTEGER,
+# 160             error_message TEXT,
+# 161             timestamp TEXT
+# 162         )"""
+# 163     )
+# 164 
+# 165     cur.execute(
+# 166         """CREATE TABLE IF NOT EXISTS agent_action_log (
+# 167             experiment_id TEXT,
+# 168             round INTEGER,
+# 169             agent_id TEXT,
+# 170             agent_role TEXT,
+# 171             action TEXT,
+# 172             parameters TEXT,
+# 173             response TEXT,
+# 174             success INTEGER,
+# 175             error_message TEXT,
+# 176             timestamp TEXT
+# 177         )"""
+# 178     )
+# 179 
+# 180     cur.execute(
+# 181         """CREATE TABLE IF NOT EXISTS system_event_log (
+# 182             experiment_id TEXT,
+# 183             round INTEGER,
+# 184             system_id TEXT,
+# 185             event TEXT,
+# 186             details TEXT,
+# 187             success INTEGER,
+# 188             error_message TEXT,
+# 189             timestamp TEXT
+# 190         )"""
+# 191     )
+# 192 
+# 193     #  ✅ Add this missing table definition
+# 194     cur.execute(
+# 195         """CREATE TABLE IF NOT EXISTS conversation_log (
+# 196             experiment_id TEXT,
+# 197             round INTEGER,
+# 198             agent_role TEXT,
+# 199             target TEXT,
+# 200             content TEXT,
+# 201             originating_agent TEXT,
+# 202             intervention INTEGER,
+# 203             intervention_type TEXT,
+# 204             intervention_reason TEXT,
+# 205             timestamp TEXT
+# 206         )"""
+# 207     )
+# 208 
+# 209     cur.execute(
+# 210         """CREATE TABLE IF NOT EXISTS recommendation_log (
+# 211             experiment_id TEXT,
+# 212             round INTEGER,
+# 213             symbol TEXT,
+# 214             file_path TEXT,
+# 215             line_start INTEGER,
+# 216             line_end INTEGER,
+# 217             recommendation TEXT,
+# 218             context TEXT,
+# 219             timestamp TEXT
+# 220         )"""
+# 221     )
+# 222 
+# 223     cur.execute(
+# 224         """CREATE TABLE IF NOT EXISTS feedback_log (
+# 225             experiment_id TEXT,
+# 226             round INTEGER,
+# 227             source TEXT,
+# 228             feedback TEXT,
+# 229             timestamp TEXT
+# 230         )"""
+# 231     )
+# 232 
+# 233     conn.commit()
+# 234     return conn
 
 
 # utilities\feedback.py
@@ -3770,18 +4084,71 @@
 # 132     feedback: str
 # 133     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 # 134 
-# 135 @dataclass
-# 136 class PromptGenerationLog:
-# 137     experiment_id: str
-# 138     round: int
-# 139     generator_name: str
-# 140     context_provider_name: str
-# 141     agent_config: dict
-# 142     system_config: dict
-# 143     generated_prompt: str
-# 144     success: bool
-# 145     error_message: str | None = None
-# 146     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 135 
+# 136 @dataclass
+# 137 class PromptGenerationLog:
+# 138     experiment_id: str
+# 139     round: int
+# 140     generator_name: str
+# 141     context_provider_name: str
+# 142     agent_config: str
+# 143     system_config: str
+# 144     generated_prompt: str
+# 145     success: bool
+# 146     error_message: str | None = None
+# 147     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 148 
+# 149 
+# 150 @dataclass
+# 151 class ContextRetrievalLog:
+# 152     experiment_id: str
+# 153     round: int
+# 154     context_provider_name: str
+# 155     context_parameters: str
+# 156     retrieved_context: str
+# 157     success: bool
+# 158     error_message: str | None = None
+# 159     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 160 
+# 161 
+# 162 @dataclass
+# 163 class ToolInvocationLog:
+# 164     experiment_id: str
+# 165     round: int
+# 166     tool_provider_name: str
+# 167     invocation_parameters: str
+# 168     stdout: str
+# 169     stderr: str
+# 170     return_code: int
+# 171     success: bool
+# 172     error_message: str | None = None
+# 173     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 174 
+# 175 
+# 176 @dataclass
+# 177 class AgentActionLog:
+# 178     experiment_id: str
+# 179     round: int
+# 180     agent_id: str
+# 181     agent_role: str
+# 182     action: str
+# 183     parameters: str
+# 184     response: str
+# 185     success: bool
+# 186     error_message: str | None = None
+# 187     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 188 
+# 189 
+# 190 @dataclass
+# 191 class SystemEventLog:
+# 192     experiment_id: str
+# 193     round: int
+# 194     system_id: str
+# 195     event: str
+# 196     details: str
+# 197     success: bool
+# 198     error_message: str | None = None
+# 199     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # utilities\metadata\snapshots\__init__.py

@@ -66,6 +66,11 @@ class LoggingProvider:
         connection: sqlite3.Connection | None = None,
     ) -> None:
         if getattr(self, "_initialized", False):
+            if connection is not None:
+                self.conn = connection
+                from app.utilities.db import init_db
+
+                init_db(conn=self.conn)
             return
 
         self.db_path = Path(db_path)

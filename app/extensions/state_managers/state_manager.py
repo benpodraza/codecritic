@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List
 
 from ...abstract_classes.state_manager_base import StateManagerBase
@@ -12,8 +13,17 @@ from ...utilities.metadata.logging.log_schemas import StateLog, StateTransitionL
 class StateManager(StateManagerBase):
     """Concrete manager executing actions within each FSM state."""
 
-    def __init__(self, logger: LoggingProvider | None = None) -> None:
-        super().__init__(logger)
+    def __init__(
+        self,
+        scoring_function=None,
+        context_manager=None,
+        logger: LoggingProvider | None = None,
+    ) -> None:
+        super().__init__(
+            scoring_function=scoring_function,
+            context_manager=context_manager,
+            logger=logger,
+        )
         self.current_state = SystemState.START
         self.state_logs: List[StateLog] = []
         self.transition_logs: List[StateTransitionLog] = []
@@ -26,23 +36,23 @@ class StateManager(StateManagerBase):
         self,
         experiment_id: str,
         round: int,
-        from_state: SystemState,
-        to_state: SystemState,
-        reason: StateTransitionReason,
+        from_state: Enum,
+        to_state: Enum,
+        reason: str,
     ) -> None:
         """Log a state transition and update current state."""
         log = StateTransitionLog(
             experiment_id=experiment_id,
             round=round,
-            from_state=from_state,
-            to_state=to_state,
-            reason=reason,
+            from_state=SystemState(from_state.value),
+            to_state=SystemState(to_state.value),
+            reason=StateTransitionReason(reason),
             timestamp=datetime.now(timezone.utc),
         )
         self.transition_logs.append(log)
         self.log_transition(log)
         self._log.info("%s -> %s", from_state.value, to_state.value)
-        self.current_state = to_state
+        self.current_state = SystemState(to_state.value)
 
     def run_state(
         self,

@@ -36,13 +36,14 @@ class PromptGeneratorBase(LoggingMixin, ABC):
         except Exception as e:
             # Unexpected or critical errors
             error_message = str(e)
-            error_log = {
-                "experiment_id": experiment_id,
-                "round": round,
-                "error_type": type(e).__name__,
-                "message": error_message,
-                "file_path": str(Path(__file__).relative_to(Path.cwd())),
-            }
+            error_log = ErrorLog(
+                experiment_id=experiment_id,
+                round=round,
+                error_type=type(e).__name__,
+                message=error_message,
+                file_path=str(Path(__file__).relative_to(Path.cwd())),
+                timestamp=datetime.now(timezone.utc),
+            )
             self.logger.write(LogType.ERROR, error_log)
             self._log.error(
                 "Critical prompt generation error logged: %s", error_message

@@ -33,7 +33,7 @@ class BasicPromptGenerator(PromptGeneratorBase):
             classes = ", ".join(context.get("classes", {}).keys())
             context_snippet = f"Functions: {funcs}\nClasses: {classes}"
 
-        prompt = f"{system_template}\n\n{agent_template}\n\n{context_snippet}"
+        prompt = f"{agent_template}\n\n{system_template}\n\n{context_snippet}"
         self._log.info("Prompt generated")
         self._log.debug("Prompt content: %s", prompt)
         return prompt

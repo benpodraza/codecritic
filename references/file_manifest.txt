@@ -9,24 +9,7 @@ codecritic
    - .ruff_cache
    - AGENTS.md
    - LICENSE
-   - POC
-      - ai-first-coding-agent
-         - utils
    - README.md
-   - agent_framework
-      - agents
-         - base
-         - preprocessing
-            - agent_1
-               - agent_utils
-                  - context
-                  - discriminator
-                  - mediator
-                  - scoring
-      - runner
-      - utils
-         - config
-         - generator
    - app
       - __init__.py
       - abstract_classes
@@ -35,6 +18,7 @@ codecritic
          - context_provider_base.py
          - experiment.py
          - prompt_generator_base.py
+         - scoring_model_base.py
          - scoring_provider_base.py
          - state_manager_base.py
          - system_manager_base.py
@@ -57,6 +41,7 @@ codecritic
             - generator_agent.py
             - mediator_agent.py
             - patch_agent.py
+            - recommendation_agent.py
          - context_providers
             - __init__.py
             - dummy_context_provider.py
@@ -67,8 +52,12 @@ codecritic
             - dummy_prompt_generator.py
          - scoring_models
             - __init__.py
+            - adaptive_scoring_provider.py
+            - advanced_scoring_provider.py
             - basic_scoring_provider.py
+            - code_quality_scorer.py
             - dummy_scoring_provider.py
+            - recommendation_quality_scorer.py
          - state_managers
             - __init__.py
             - dummy_state_manager.py
@@ -144,6 +133,7 @@ codecritic
       - utilities
          - __init__.py
          - db.py
+         - feedback.py
          - file_management
             - __init__.py
          - metadata
@@ -171,20 +161,31 @@ codecritic
             - radon_runner.py
             - ruff_runner.py
             - sonarcloud_runner.py
+      - visualization
+         - __init__.py
+         - dashboard.py
    - coverage_output.txt
    - demo_eval.py
    - demo_patch.py
-   - demo_snap
-   - demo_snaps
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
-   - evaluator_agent_demo.ipynb
    - experiments
       - artifacts
          - snapshots
+            - context
+               - 0
+                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.after
+                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.before
+                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.meta
+                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.after
+                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.before
+                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.meta
             - exp
                - 0
+                  - demo.py.20250518T161412312521Z.after
+                  - demo.py.20250518T161412312521Z.before
+                  - demo.py.20250518T161412312521Z.meta
       - config
          - seed
             - agent_config.json
@@ -200,44 +201,60 @@ codecritic
             - system_prompt.json
             - tooling_provider.json
       - demo_logs.jsonl
-      - demo_snapshots
-         - exp
-            - 0
    - htmlcov
-   - mediator_agent_demo.ipynb
    - mypy.ini
-   - patch_agent_demo.ipynb
-   - phase1_tests.ipynb
-   - phase2_validation.ipynb
-   - phase3_validation.ipynb
-   - phase4_validation.ipynb
-   - phase5_validation.ipynb
-   - phase6_validation.ipynb
-   - phase8_validation.ipynb
-   - phase9_validation.ipynb
    - pytest
    - pytest.ini
    - references
       - file_manifest.txt
-      - flattened_agent_framework.txt
       - flattened_app.txt
+      - flattened_docs.txt
+      - flattened_experiments.txt
+      - flattened_tests.txt
    - requirements.txt
    - sample_module.py
-   - schema_demo.ipynb
    - setup.sh
    - test-runner.ps1
    - tests
       - __init__.py
       - notebooks
+         - .mypy_cache
          - __init__.py
+         - development_phase
+            - advanced_scoring_demo.ipynb
+            - context_recommendation_agent_demo.ipynb
+            - evaluation_session_runner.ipynb
+            - evaluator_agent_demo.ipynb
+            - feedback_loop_demo.ipynb
+            - mediator_agent_demo.ipynb
+            - patch_agent_demo.ipynb
+            - phase1_tests.ipynb
+            - phase2_validation.ipynb
+            - phase3_validation.ipynb
+            - phase4_validation.ipynb
+            - phase5_validation.ipynb
+            - phase6_validation.ipynb
+            - phase8_validation.ipynb
+            - phase9_validation.ipynb
+            - recommendation_agent_demo.ipynb
+            - schema_demo.ipynb
+            - symbol_graph_provider_demo.ipynb
+         - experiments
+            - codecritic.sqlite3
+         - functional_testing_phase
+         - linting_system_build_up.ipynb
+         - prompt_generation_and_configuration.ipynb
       - test_agents.py
       - test_bootstrap.py
+      - test_dashboard.py
       - test_factories.py
+      - test_feedback.py
       - test_integration.py
       - test_mediator_agent.py
       - test_patch_agent.py
+      - test_recommendation_agent.py
+      - test_symbol_graph_provider.py
       - test_system_state_management.py
       - test_tool_providers.py
    - tmp_demo.py
    - utilities.ipynb
-   - validation_sample.py

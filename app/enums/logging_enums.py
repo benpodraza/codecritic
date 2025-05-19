@@ -12,3 +12,4 @@ class LogType(str, Enum):
     ERROR = "error"
     RECOMMENDATION = "recommendation"
     FEEDBACK = "feedback"
+    PROMPT_GENERATION = "prompt_generation"

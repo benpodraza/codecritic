@@ -12,7 +12,3 @@ class AgentRole(str, Enum):
     RECOMMENDER = "recommender"
 
 
-class AgentState(Enum):
-    INIT = "init"
-    RUNNING = "running"
-    COMPLETE = "complete"

@@ -1,95 +1,64 @@
-from __future__ import annotations
-
-from typing import List
-
-from ...abstract_classes.system_manager_base import SystemManagerBase
-from ...enums.system_enums import SystemState, StateTransitionReason
-from ...factories.agent import AgentFactory
-from ...factories.context_provider import ContextProviderFactory
-from ...factories.prompt_manager import PromptGeneratorFactory
-from ...factories.logging_provider import (
-    CodeQualityLog,
-    PromptLog,
-    ScoringLog,
-    StateLog,
+from typing import Optional, List
+from datetime import datetime, timezone
+from app.abstract_classes.agent_base import AgentBase
+from app.utilities.metadata.logging.log_schemas import (
     StateTransitionLog,
-    LoggingProvider,
+    StateLog,
 )
-from ..state_managers.state_manager import StateManager
+from app.factories.logging_provider import LoggingProvider, LogType
+from app.enums.system_enums import StateTransitionReason, SystemState
 
-
-class SystemManager(SystemManagerBase):
-    def __init__(self, logger: LoggingProvider | None = None) -> None:
-        super().__init__(logger)
-        self.state_manager = StateManager(logger=logger)
-        self.current_state = SystemState.START
-        self.transition_logs: List[StateTransitionLog] = []
-        self.state_logs: List[StateLog] = []
-        self.prompt_logs: List[PromptLog] = []
-        self.code_quality_logs: List[CodeQualityLog] = []
-        self.scoring_logs: List[ScoringLog] = []
-
-        self.context_provider = ContextProviderFactory.create(
-            "symbol_graph", module_path="sample_module.py"
-        )
-        self.prompt_generator = PromptGeneratorFactory.create(
-            "basic", context_provider=self.context_provider
-        )
-        self.generator = AgentFactory.create(
-            "generator",
-            target="sample_module.py",
-            logger=logger,
-            snapshot_writer=None,
-        )
-        self.evaluator = AgentFactory.create(
-            "evaluator",
-            target="sample_module.py",
-            logger=logger,
-        )
-
-    def _transition_to(
-        self, next_state: SystemState, reason: StateTransitionReason
+class StateManager(StateManagerBase):
+    def __init__(
+        self,
+        scoring_function,
+        context_manager,
+        agent: Optional[AgentBase] = None,
+        logger: LoggingProvider | None = None,
     ) -> None:
-        self.state_manager.transition_state(
-            experiment_id="exp",
-            round=0,
-            from_state=self.current_state,
-            to_state=next_state,
-            reason=reason,
+        super().__init__(
+            scoring_function=scoring_function,
+            context_manager=context_manager,
+            agent=agent,
+            logger=logger,
         )
-        self.transition_logs.append(self.state_manager.transition_logs[-1])
-        self.current_state = next_state
+        self.current_state = SystemState.START
+        self.state_logs: List[StateLog] = []
+        self.transition_logs: List[StateTransitionLog] = []
 
-    def _run_system_logic(self, *args, **kwargs) -> None:
-        sequence = [
-            SystemState.GENERATE,
-            SystemState.DISCRIMINATE,
-            SystemState.MEDIATE,
-            SystemState.PATCH,
-            SystemState.EVALUATE,
-            SystemState.END,
-        ]
-        for state in sequence:
-            self._transition_to(state, reason=StateTransitionReason.FIRST_ROUND)
-            if state is not SystemState.END:
-                self.state_manager.run_state(
-                    experiment_id="exp",
-                    system="system",
-                    round=0,
-                    state=state,
-                    action="run",
-                )
-                self.state_logs.append(self.state_manager.state_logs[-1])
-                if state == SystemState.GENERATE:
-                    self.generator.run()
-                    self.prompt_logs.extend(self.generator.prompt_logs)
-                elif state == SystemState.DISCRIMINATE:
-                    self.evaluator.run()
-                    self.code_quality_logs.extend(self.evaluator.quality_logs)
+    def _run_state_logic(self, *args, **kwargs) -> None:
+        state = kwargs.get("state")
+        self._log.info("Running state logic for state: %s", state)
 
-        for pr in self.prompt_logs:
-            self.log_prompt(pr)
-        for cq in self.code_quality_logs:
-            self.log_code_quality(cq)
-        for sc in self.scoring_logs:
-            self.log_scoring(sc)
+    def _transition_state(
+        self, from_state: str, to_state: str, reason: str
+    ) -> None:
+        self._log.info(
+            "Transitioning from %s to %s due to reason: %s",
+            from_state, to_state, reason
+        )
+        self.current_state = SystemState(to_state)
+
+    def run_state(
+        self,
+        experiment_id: str,
+        system: str,
+        round: int,
+        state: SystemState,
+        action: str,
+        score: float | None = None,
+        details: str | None = "",
+    ) -> None:
+        self._run_state_logic(state=state)
+        log = StateLog(
+            experiment_id=experiment_id,
+            system=system,
+            round=round,
+            state=state,
+            action=action,
+            score=score,
+            details=details,
+            timestamp=datetime.now(timezone.utc),
+        )
+        self.state_logs.append(log)
+        self.log_state(log)

@@ -29,7 +29,7 @@ class StateManagerBase(LoggingMixin, ABC):
         self.agent = agent
         self.current_state = SystemState.START
 
-    def run(
+    def run_state(
         self,
         experiment_id: str,
         system: str,
@@ -71,59 +71,8 @@ class StateManagerBase(LoggingMixin, ABC):
             self.logger.write(LogType.STATE, lifecycle_log)
             self._log.debug("State lifecycle logged")
 
-    def transition_state(
-        self,
-        experiment_id: str,
-        round: int,
-        from_state: SystemState,
-        to_state: SystemState,
-        reason: str,
-    ) -> None:
-        self._log.debug("State transition start")
-        error_message = None
-        score = None
-
-        try:
-            context = self.context_manager.get_context(
-                experiment_id=experiment_id, round=round
-            )
-            score = self.scoring_function(context)
-            if score < 0:
-                raise ValueError("Invalid transition score")
-
-            self._transition_state(from_state.name, to_state.name, reason)
-            self.current_state = to_state
-        except Exception as e:
-            error_message = str(e)
-            error_log = ErrorLog(
-                experiment_id=experiment_id,
-                round=round,
-                error_type=type(e).__name__,
-                message=error_message,
-                file_path=str(Path(__file__).relative_to(Path.cwd())),
-                timestamp=datetime.now(timezone.utc),
-            )
-            self.logger.write(LogType.ERROR, error_log)
-            self._log.error("State transition error logged: %s", error_message)
-            raise
-        finally:
-            transition_log = StateTransitionLog(
-                experiment_id=experiment_id,
-                round=round,
-                from_state=from_state,
-                to_state=to_state,
-                reason=StateTransitionReason(reason),
-                timestamp=datetime.now(timezone.utc),
-            )
-            self.logger.write(LogType.STATE_TRANSITION, transition_log)
-            self._log.debug("State transition logged")
-
     @abstractmethod
     def _run_state_logic(self, *args, **kwargs) -> None:
         """Implement specific logic for the state."""
         raise NotImplementedError
 
-    @abstractmethod
-    def _transition_state(self, from_state: str, to_state: str, reason: str) -> None:
-        """Implement logic for transitioning between states."""
-        raise NotImplementedError

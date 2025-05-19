@@ -147,6 +147,8 @@ codecritic
             - snapshots
                - __init__.py
          - metrics.py
+         - pandas_stub.py
+         - plotly_stub.py
          - pydantic_compat.py
          - schema
             - __init__.py
@@ -251,12 +253,14 @@ codecritic
       - test_agents.py
       - test_bootstrap.py
       - test_dashboard.py
+      - test_dummy_state_manager.py
       - test_factories.py
       - test_feedback.py
       - test_integration.py
       - test_mediator_agent.py
       - test_patch_agent.py
       - test_recommendation_agent.py
+      - test_state_manager_logging.py
       - test_structured_logging.py
       - test_symbol_graph_provider.py
       - test_system_state_management.py

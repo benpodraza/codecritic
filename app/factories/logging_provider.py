@@ -12,6 +12,10 @@ from typing import Any, ClassVar, Iterable
 from app.enums.logging_enums import LogType
 from ..utilities.metadata.logging.log_schemas import (
     PromptGenerationLog,
+    ContextRetrievalLog,
+    ToolInvocationLog,
+    AgentActionLog,
+    SystemEventLog,
     StateLog,
     StateTransitionLog,
     PromptLog,
@@ -38,6 +42,10 @@ LOG_MODEL_MAP = {
     LogType.RECOMMENDATION: RecommendationLog,
     LogType.FEEDBACK: FeedbackLog,
     LogType.PROMPT_GENERATION: PromptGenerationLog,
+    LogType.CONTEXT_RETRIEVAL: ContextRetrievalLog,
+    LogType.TOOL_INVOCATION: ToolInvocationLog,
+    LogType.AGENT_ACTION: AgentActionLog,
+    LogType.SYSTEM_EVENT: SystemEventLog,
 }
 
 
@@ -154,6 +162,18 @@ class LoggingProvider:
         self.write(LogType.FEEDBACK, log)
         FeedbackRepository.add_feedback(log)
 
+    def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+        self.write(LogType.CONTEXT_RETRIEVAL, log)
+
+    def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+        self.write(LogType.TOOL_INVOCATION, log)
+
+    def log_agent_action(self, log: AgentActionLog) -> None:
+        self.write(LogType.AGENT_ACTION, log)
+
+    def log_system_event(self, log: SystemEventLog) -> None:
+        self.write(LogType.SYSTEM_EVENT, log)
+
     def close(self) -> None:
         self.conn.close()
 
@@ -194,3 +214,15 @@ class LoggingMixin:
 
     def log_feedback(self, log: FeedbackLog) -> None:
         self.logger.log_feedback(log)
+
+    def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+        self.logger.log_context_retrieval(log)
+
+    def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+        self.logger.log_tool_invocation(log)
+
+    def log_agent_action(self, log: AgentActionLog) -> None:
+        self.logger.log_agent_action(log)
+
+    def log_system_event(self, log: SystemEventLog) -> None:
+        self.logger.log_system_event(log)

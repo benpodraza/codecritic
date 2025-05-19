@@ -13,3 +13,7 @@ class LogType(str, Enum):
     RECOMMENDATION = "recommendation"
     FEEDBACK = "feedback"
     PROMPT_GENERATION = "prompt_generation"
+    CONTEXT_RETRIEVAL = "context_retrieval"
+    TOOL_INVOCATION = "tool_invocation"
+    AGENT_ACTION = "agent_action"
+    SYSTEM_EVENT = "system_event"

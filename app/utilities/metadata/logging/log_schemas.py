@@ -145,3 +145,55 @@ class PromptGenerationLog:
     success: bool
     error_message: str | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class ContextRetrievalLog:
+    experiment_id: str
+    round: int
+    context_provider_name: str
+    context_parameters: str
+    retrieved_context: str
+    success: bool
+    error_message: str | None = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class ToolInvocationLog:
+    experiment_id: str
+    round: int
+    tool_provider_name: str
+    invocation_parameters: str
+    stdout: str
+    stderr: str
+    return_code: int
+    success: bool
+    error_message: str | None = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class AgentActionLog:
+    experiment_id: str
+    round: int
+    agent_id: str
+    agent_role: str
+    action: str
+    parameters: str
+    response: str
+    success: bool
+    error_message: str | None = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class SystemEventLog:
+    experiment_id: str
+    round: int
+    system_id: str
+    event: str
+    details: str
+    success: bool
+    error_message: str | None = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

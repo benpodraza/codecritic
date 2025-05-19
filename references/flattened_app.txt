@@ -155,25 +155,68 @@
 # 2 
 # 3 from abc import ABC, abstractmethod
 # 4 
-# 5 from ..factories.logging_provider import LoggingMixin, LoggingProvider
+# 5 from app.utilities.metadata.logging.log_schemas import ErrorLog
 # 6 
-# 7 
-# 8 class PromptGeneratorBase(LoggingMixin, ABC):
-# 9     """Base class for generating prompts."""
-# 10 
-# 11     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 12         super().__init__(logger)
-# 13 
-# 14     def generate_prompt(self, *args, **kwargs) -> str:
-# 15         self._log.debug("Prompt generation start")
-# 16         prompt = self._generate_prompt(*args, **kwargs)
-# 17         self._log.debug("Prompt generation end")
-# 18         return prompt
+# 7 from ..factories.logging_provider import LoggingMixin, LoggingProvider
+# 8 
+# 9 import json
+# 10 from pathlib import Path
+# 11 from app.factories.logging_provider import LogType
+# 12 
+# 13 class PromptGeneratorBase(LoggingMixin, ABC):
+# 14     """Base class for generating prompts."""
+# 15 
+# 16     def __init__(self, context_provider, logger: LoggingProvider | None = None) -> None:
+# 17         super().__init__(logger)
+# 18         self.context_provider = context_provider
 # 19 
-# 20     @abstractmethod
-# 21     def _generate_prompt(self, *args, **kwargs) -> str:
-# 22         """Return a generated prompt."""
-# 23         raise NotImplementedError
+# 20     def generate_prompt(self, agent_config, system_config, experiment_id, round):
+# 21         self._log.debug("Prompt generation start")
+# 22         error_message = None
+# 23         success = False
+# 24         generated_prompt = ""
+# 25 
+# 26         try:
+# 27             generated_prompt = self._generate_prompt(agent_config, system_config)
+# 28             success = True
+# 29             return generated_prompt
+# 30         except ValueError as ve:
+# 31             #  Expected operational errors (like invalid configs)
+# 32             error_message = str(ve)
+# 33             self._log.warning("Operational prompt generation error: %s", error_message)
+# 34         except Exception as e:
+# 35             #  Unexpected or critical errors
+# 36             error_message = str(e)
+# 37             error_log = {
+# 38                 "experiment_id": experiment_id,
+# 39                 "round": round,
+# 40                 "error_type": type(e).__name__,
+# 41                 "message": error_message,
+# 42                 "file_path": str(Path(__file__).relative_to(Path.cwd())),
+# 43             }
+# 44             self.logger.write(LogType.ERROR, error_log)
+# 45             self._log.error("Critical prompt generation error logged: %s", error_message)
+# 46             raise  #  re-raise critical errors explicitly
+# 47         finally:
+# 48             #  Always log prompt generation attempt, including operational errors
+# 49             prompt_log = {
+# 50                 "experiment_id": experiment_id,
+# 51                 "round": round,
+# 52                 "generator_name": self.__class__.__name__,
+# 53                 "context_provider_name": self.context_provider.__class__.__name__,
+# 54                 "agent_config": json.dumps(agent_config),
+# 55                 "system_config": json.dumps(system_config),
+# 56                 "generated_prompt": generated_prompt if success else "",
+# 57                 "success": success,
+# 58                 "error_message": error_message if not success else None
+# 59             }
+# 60             self.logger.write(LogType.PROMPT_GENERATION, prompt_log)
+# 61             self._log.debug("Prompt generation logged")
+# 62             
+# 63     @abstractmethod
+# 64     def _generate_prompt(self, *args, **kwargs) -> str:
+# 65         """Return a generated prompt."""
+# 66         raise NotImplementedError
 
 
 # abstract_classes\scoring_model_base.py
@@ -484,6 +527,7 @@
 # 12     ERROR = "error"
 # 13     RECOMMENDATION = "recommendation"
 # 14     FEEDBACK = "feedback"
+# 15     PROMPT_GENERATION = "prompt_generation"
 
 
 # enums\scoring_enums.py
@@ -1740,7 +1784,7 @@
 # 33             classes = ", ".join(context.get("classes", {}).keys())
 # 34             context_snippet = f"Functions: {funcs}\nClasses: {classes}"
 # 35 
-# 36         prompt = f"{system_template}\n\n{agent_template}\n\n{context_snippet}"
+# 36         prompt = f"{agent_template}\n\n{system_template}\n\n{context_snippet}"
 # 37         self._log.info("Prompt generated")
 # 38         self._log.debug("Prompt content: %s", prompt)
 # 39         return prompt
@@ -2402,187 +2446,189 @@
 # 11 
 # 12 from app.enums.logging_enums import LogType
 # 13 from ..utilities.metadata.logging.log_schemas import (
-# 14     StateLog,
-# 15     StateTransitionLog,
-# 16     PromptLog,
-# 17     CodeQualityLog,
-# 18     ErrorLog,
-# 19     ScoringLog,
-# 20     ConversationLog,
-# 21     ExperimentLog,
-# 22     RecommendationLog,
-# 23     FeedbackLog,
-# 24 )
-# 25 from ..utilities.feedback import FeedbackRepository
-# 26 
+# 14     PromptGenerationLog,
+# 15     StateLog,
+# 16     StateTransitionLog,
+# 17     PromptLog,
+# 18     CodeQualityLog,
+# 19     ErrorLog,
+# 20     ScoringLog,
+# 21     ConversationLog,
+# 22     ExperimentLog,
+# 23     RecommendationLog,
+# 24     FeedbackLog,
+# 25 )
+# 26 from ..utilities.feedback import FeedbackRepository
 # 27 
-# 28 LOG_MODEL_MAP = {
-# 29     LogType.STATE: StateLog,
-# 30     LogType.STATE_TRANSITION: StateTransitionLog,
-# 31     LogType.PROMPT: PromptLog,
-# 32     LogType.CODE_QUALITY: CodeQualityLog,
-# 33     LogType.ERROR: ErrorLog,
-# 34     LogType.SCORING: ScoringLog,
-# 35     LogType.CONVERSATION: ConversationLog,
-# 36     LogType.EXPERIMENT: ExperimentLog,
-# 37     LogType.RECOMMENDATION: RecommendationLog,
-# 38     LogType.FEEDBACK: FeedbackLog,
-# 39 }
-# 40 
-# 41 
-# 42 class LoggingProvider:
-# 43     """Centralized provider for structured logging."""
-# 44 
-# 45     _instance: ClassVar["LoggingProvider" | None] = None
+# 28 
+# 29 LOG_MODEL_MAP = {
+# 30     LogType.STATE: StateLog,
+# 31     LogType.STATE_TRANSITION: StateTransitionLog,
+# 32     LogType.PROMPT: PromptLog,
+# 33     LogType.CODE_QUALITY: CodeQualityLog,
+# 34     LogType.ERROR: ErrorLog,
+# 35     LogType.SCORING: ScoringLog,
+# 36     LogType.CONVERSATION: ConversationLog,
+# 37     LogType.EXPERIMENT: ExperimentLog,
+# 38     LogType.RECOMMENDATION: RecommendationLog,
+# 39     LogType.FEEDBACK: FeedbackLog,
+# 40     LogType.PROMPT_GENERATION: PromptGenerationLog
+# 41 }
+# 42 
+# 43 
+# 44 class LoggingProvider:
+# 45     """Centralized provider for structured logging."""
 # 46 
-# 47     def __new__(cls, *args, **kwargs):
-# 48         if cls._instance is None:
-# 49             cls._instance = super().__new__(cls)
-# 50         return cls._instance
-# 51 
-# 52     def __init__(
-# 53         self,
-# 54         db_path: str | Path = "experiments/codecritic.sqlite3",
-# 55         output_path: str | Path | None = None,
-# 56         connection: sqlite3.Connection | None = None,
-# 57     ) -> None:
-# 58         if getattr(self, "_initialized", False):
-# 59             return
-# 60 
-# 61         self.db_path = Path(db_path)
-# 62         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-# 63 
-# 64         from app.utilities.db import get_connection, init_db
+# 47     _instance: ClassVar["LoggingProvider" | None] = None
+# 48 
+# 49     def __new__(cls, *args, **kwargs):
+# 50         if cls._instance is None:
+# 51             cls._instance = super().__new__(cls)
+# 52         return cls._instance
+# 53 
+# 54     def __init__(
+# 55         self,
+# 56         db_path: str | Path = "experiments/codecritic.sqlite3",
+# 57         output_path: str | Path | None = None,
+# 58         connection: sqlite3.Connection | None = None,
+# 59     ) -> None:
+# 60         if getattr(self, "_initialized", False):
+# 61             return
+# 62 
+# 63         self.db_path = Path(db_path)
+# 64         self.db_path.parent.mkdir(exist_ok=True, parents=True)
 # 65 
-# 66         if connection:
-# 67             self.conn = connection
-# 68             init_db(conn=self.conn)  #  Fix applied here
-# 69         else:
-# 70             self.conn = get_connection()
-# 71             init_db(conn=self.conn)  #  Fix applied here
-# 72 
-# 73         self.output_path = Path(output_path) if output_path else None
-# 74         if self.output_path:
-# 75             self.output_path.parent.mkdir(parents=True, exist_ok=True)
-# 76 
-# 77         self._initialized = True
+# 66         from app.utilities.db import get_connection, init_db
+# 67 
+# 68         if connection:
+# 69             self.conn = connection
+# 70             init_db(conn=self.conn)  #  Fix applied here
+# 71         else:
+# 72             self.conn = get_connection()
+# 73             init_db(conn=self.conn)  #  Fix applied here
+# 74 
+# 75         self.output_path = Path(output_path) if output_path else None
+# 76         if self.output_path:
+# 77             self.output_path.parent.mkdir(parents=True, exist_ok=True)
 # 78 
-# 79     def _serialize(self, obj: Any) -> dict:
-# 80         def _safe(v: Any) -> Any:
-# 81             if isinstance(v, (Enum, Path)):
-# 82                 return str(v)
-# 83             elif isinstance(v, datetime):
-# 84                 return v.isoformat()
-# 85             elif isinstance(v, list):
-# 86                 return [_safe(i) for i in v]
-# 87             elif isinstance(v, dict):
-# 88                 return {k: _safe(val) for k, val in v.items()}
-# 89             return v
-# 90 
-# 91         if not is_dataclass(obj) or isinstance(obj, type):
-# 92             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 93         return _safe(asdict(obj))
-# 94 
-# 95     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 96         items = list(items)
-# 97         if not items:
-# 98             return
-# 99         keys = list(items[0].keys())
-# 100         cols = ",".join(keys)
-# 101         placeholders = ",".join(["?"] * len(keys))
-# 102         values = [tuple(i[k] for k in keys) for i in items]
-# 103         cur = self.conn.cursor()
-# 104         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 105         self.conn.commit()
-# 106         if self.output_path:
-# 107             with self.output_path.open("a", encoding="utf-8") as fh:
-# 108                 for item in items:
-# 109                     fh.write(json.dumps(item) + "\n")
-# 110 
-# 111     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 112         if not isinstance(entries, list):
-# 113             entries = [entries]
-# 114         model_cls = LOG_MODEL_MAP.get(log_type)
-# 115         if model_cls is None:
-# 116             raise ValueError(f"Unsupported log type: {log_type}")
-# 117         for entry in entries:
-# 118             if not isinstance(entry, model_cls):
-# 119                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
-# 120         serialized = [self._serialize(e) for e in entries]
-# 121         self._insert_many(log_type.value + "_log", serialized)
-# 122 
-# 123     #  Convenience wrappers
-# 124     def log_state(self, log: StateLog) -> None:
-# 125         self.write(LogType.STATE, log)
-# 126 
-# 127     def log_transition(self, log: StateTransitionLog) -> None:
-# 128         self.write(LogType.STATE_TRANSITION, log)
-# 129 
-# 130     def log_prompt(self, log: PromptLog) -> None:
-# 131         self.write(LogType.PROMPT, log)
-# 132 
-# 133     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 134         self.write(LogType.CODE_QUALITY, log)
-# 135 
-# 136     def log_error(self, log: ErrorLog) -> None:
-# 137         self.write(LogType.ERROR, log)
-# 138 
-# 139     def log_scoring(self, log: ScoringLog) -> None:
-# 140         self.write(LogType.SCORING, log)
-# 141 
-# 142     def log_conversation(self, log: ConversationLog) -> None:
-# 143         self.write(LogType.CONVERSATION, log)
-# 144 
-# 145     def log_experiment(self, log: ExperimentLog) -> None:
-# 146         self.write(LogType.EXPERIMENT, log)
-# 147 
-# 148     def log_recommendation(self, log: RecommendationLog) -> None:
-# 149         self.write(LogType.RECOMMENDATION, log)
-# 150 
-# 151     def log_feedback(self, log: FeedbackLog) -> None:
-# 152         self.write(LogType.FEEDBACK, log)
-# 153         FeedbackRepository.add_feedback(log)
-# 154 
-# 155     def close(self) -> None:
-# 156         self.conn.close()
-# 157 
-# 158 
-# 159 class LoggingMixin:
-# 160     """Mixin to provide access to a shared LoggingProvider instance."""
-# 161 
-# 162     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 163         self.logger = logger or LoggingProvider()
-# 164         self._log = logging.getLogger(self.__class__.__name__)
-# 165 
-# 166     def log_state(self, log: StateLog) -> None:
-# 167         self.logger.log_state(log)
-# 168 
-# 169     def log_transition(self, log: StateTransitionLog) -> None:
-# 170         self.logger.log_transition(log)
-# 171 
-# 172     def log_prompt(self, log: PromptLog) -> None:
-# 173         self.logger.log_prompt(log)
-# 174 
-# 175     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 176         self.logger.log_code_quality(log)
-# 177 
-# 178     def log_error(self, log: ErrorLog) -> None:
-# 179         self.logger.log_error(log)
-# 180 
-# 181     def log_scoring(self, log: ScoringLog) -> None:
-# 182         self.logger.log_scoring(log)
-# 183 
-# 184     def log_conversation(self, log: ConversationLog) -> None:
-# 185         self.logger.log_conversation(log)
-# 186 
-# 187     def log_experiment(self, log: ExperimentLog) -> None:
-# 188         self.logger.log_experiment(log)
-# 189 
-# 190     def log_recommendation(self, log: RecommendationLog) -> None:
-# 191         self.logger.log_recommendation(log)
-# 192 
-# 193     def log_feedback(self, log: FeedbackLog) -> None:
-# 194         self.logger.log_feedback(log)
+# 79         self._initialized = True
+# 80 
+# 81     def _serialize(self, obj: Any) -> dict:
+# 82         def _safe(v: Any) -> Any:
+# 83             if isinstance(v, (Enum, Path)):
+# 84                 return str(v)
+# 85             elif isinstance(v, datetime):
+# 86                 return v.isoformat()
+# 87             elif isinstance(v, list):
+# 88                 return [_safe(i) for i in v]
+# 89             elif isinstance(v, dict):
+# 90                 return {k: _safe(val) for k, val in v.items()}
+# 91             return v
+# 92 
+# 93         if not is_dataclass(obj) or isinstance(obj, type):
+# 94             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 95         return _safe(asdict(obj))
+# 96 
+# 97     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 98         items = list(items)
+# 99         if not items:
+# 100             return
+# 101         keys = list(items[0].keys())
+# 102         cols = ",".join(keys)
+# 103         placeholders = ",".join(["?"] * len(keys))
+# 104         values = [tuple(i[k] for k in keys) for i in items]
+# 105         cur = self.conn.cursor()
+# 106         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 107         self.conn.commit()
+# 108         if self.output_path:
+# 109             with self.output_path.open("a", encoding="utf-8") as fh:
+# 110                 for item in items:
+# 111                     fh.write(json.dumps(item) + "\n")
+# 112 
+# 113     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 114         if not isinstance(entries, list):
+# 115             entries = [entries]
+# 116         model_cls = LOG_MODEL_MAP.get(log_type)
+# 117         if model_cls is None:
+# 118             raise ValueError(f"Unsupported log type: {log_type}")
+# 119         for entry in entries:
+# 120             if not isinstance(entry, model_cls):
+# 121                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
+# 122         serialized = [self._serialize(e) for e in entries]
+# 123         self._insert_many(log_type.value + "_log", serialized)
+# 124 
+# 125     #  Convenience wrappers
+# 126     def log_state(self, log: StateLog) -> None:
+# 127         self.write(LogType.STATE, log)
+# 128 
+# 129     def log_transition(self, log: StateTransitionLog) -> None:
+# 130         self.write(LogType.STATE_TRANSITION, log)
+# 131 
+# 132     def log_prompt(self, log: PromptLog) -> None:
+# 133         self.write(LogType.PROMPT, log)
+# 134 
+# 135     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 136         self.write(LogType.CODE_QUALITY, log)
+# 137 
+# 138     def log_error(self, log: ErrorLog) -> None:
+# 139         self.write(LogType.ERROR, log)
+# 140 
+# 141     def log_scoring(self, log: ScoringLog) -> None:
+# 142         self.write(LogType.SCORING, log)
+# 143 
+# 144     def log_conversation(self, log: ConversationLog) -> None:
+# 145         self.write(LogType.CONVERSATION, log)
+# 146 
+# 147     def log_experiment(self, log: ExperimentLog) -> None:
+# 148         self.write(LogType.EXPERIMENT, log)
+# 149 
+# 150     def log_recommendation(self, log: RecommendationLog) -> None:
+# 151         self.write(LogType.RECOMMENDATION, log)
+# 152 
+# 153     def log_feedback(self, log: FeedbackLog) -> None:
+# 154         self.write(LogType.FEEDBACK, log)
+# 155         FeedbackRepository.add_feedback(log)
+# 156 
+# 157     def close(self) -> None:
+# 158         self.conn.close()
+# 159 
+# 160 
+# 161 class LoggingMixin:
+# 162     """Mixin to provide access to a shared LoggingProvider instance."""
+# 163 
+# 164     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 165         self.logger = logger or LoggingProvider()
+# 166         self._log = logging.getLogger(self.__class__.__name__)
+# 167 
+# 168     def log_state(self, log: StateLog) -> None:
+# 169         self.logger.log_state(log)
+# 170 
+# 171     def log_transition(self, log: StateTransitionLog) -> None:
+# 172         self.logger.log_transition(log)
+# 173 
+# 174     def log_prompt(self, log: PromptLog) -> None:
+# 175         self.logger.log_prompt(log)
+# 176 
+# 177     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 178         self.logger.log_code_quality(log)
+# 179 
+# 180     def log_error(self, log: ErrorLog) -> None:
+# 181         self.logger.log_error(log)
+# 182 
+# 183     def log_scoring(self, log: ScoringLog) -> None:
+# 184         self.logger.log_scoring(log)
+# 185 
+# 186     def log_conversation(self, log: ConversationLog) -> None:
+# 187         self.logger.log_conversation(log)
+# 188 
+# 189     def log_experiment(self, log: ExperimentLog) -> None:
+# 190         self.logger.log_experiment(log)
+# 191 
+# 192     def log_recommendation(self, log: RecommendationLog) -> None:
+# 193         self.logger.log_recommendation(log)
+# 194 
+# 195     def log_feedback(self, log: FeedbackLog) -> None:
+# 196         self.logger.log_feedback(log)
 
 
 # factories\prompt_manager.py
@@ -3468,48 +3514,64 @@
 # 119         )"""
 # 120     )
 # 121 
-# 122     #  ✅ Add this missing table definition
-# 123     cur.execute(
-# 124         """CREATE TABLE IF NOT EXISTS conversation_log (
-# 125             experiment_id TEXT,
-# 126             round INTEGER,
-# 127             agent_role TEXT,
-# 128             target TEXT,
-# 129             content TEXT,
-# 130             originating_agent TEXT,
-# 131             intervention INTEGER,
-# 132             intervention_type TEXT,
-# 133             intervention_reason TEXT,
-# 134             timestamp TEXT
-# 135         )"""
-# 136     )
+# 122     cur.execute(
+# 123         """CREATE TABLE IF NOT EXISTS prompt_generation_log (
+# 124             experiment_id TEXT,
+# 125             round INTEGER,
+# 126             generator_name TEXT,
+# 127             context_provider_name TEXT,
+# 128             agent_config TEXT,
+# 129             system_config TEXT,
+# 130             generated_prompt TEXT,
+# 131             success INTEGER,
+# 132             error_message TEXT,
+# 133             timestamp TEXT
+# 134         )"""
+# 135     )
+# 136 
 # 137 
-# 138     cur.execute(
-# 139         """CREATE TABLE IF NOT EXISTS recommendation_log (
-# 140             experiment_id TEXT,
-# 141             round INTEGER,
-# 142             symbol TEXT,
-# 143             file_path TEXT,
-# 144             line_start INTEGER,
-# 145             line_end INTEGER,
-# 146             recommendation TEXT,
-# 147             context TEXT,
-# 148             timestamp TEXT
-# 149         )"""
-# 150     )
-# 151 
-# 152     cur.execute(
-# 153         """CREATE TABLE IF NOT EXISTS feedback_log (
-# 154             experiment_id TEXT,
-# 155             round INTEGER,
-# 156             source TEXT,
-# 157             feedback TEXT,
-# 158             timestamp TEXT
-# 159         )"""
-# 160     )
-# 161 
-# 162     conn.commit()
-# 163     return conn
+# 138     #  ✅ Add this missing table definition
+# 139     cur.execute(
+# 140         """CREATE TABLE IF NOT EXISTS conversation_log (
+# 141             experiment_id TEXT,
+# 142             round INTEGER,
+# 143             agent_role TEXT,
+# 144             target TEXT,
+# 145             content TEXT,
+# 146             originating_agent TEXT,
+# 147             intervention INTEGER,
+# 148             intervention_type TEXT,
+# 149             intervention_reason TEXT,
+# 150             timestamp TEXT
+# 151         )"""
+# 152     )
+# 153 
+# 154     cur.execute(
+# 155         """CREATE TABLE IF NOT EXISTS recommendation_log (
+# 156             experiment_id TEXT,
+# 157             round INTEGER,
+# 158             symbol TEXT,
+# 159             file_path TEXT,
+# 160             line_start INTEGER,
+# 161             line_end INTEGER,
+# 162             recommendation TEXT,
+# 163             context TEXT,
+# 164             timestamp TEXT
+# 165         )"""
+# 166     )
+# 167 
+# 168     cur.execute(
+# 169         """CREATE TABLE IF NOT EXISTS feedback_log (
+# 170             experiment_id TEXT,
+# 171             round INTEGER,
+# 172             source TEXT,
+# 173             feedback TEXT,
+# 174             timestamp TEXT
+# 175         )"""
+# 176     )
+# 177 
+# 178     conn.commit()
+# 179     return conn
 
 
 # utilities\feedback.py
@@ -3707,6 +3769,19 @@
 # 131     source: str
 # 132     feedback: str
 # 133     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 134 
+# 135 @dataclass
+# 136 class PromptGenerationLog:
+# 137     experiment_id: str
+# 138     round: int
+# 139     generator_name: str
+# 140     context_provider_name: str
+# 141     agent_config: dict
+# 142     system_config: dict
+# 143     generated_prompt: str
+# 144     success: bool
+# 145     error_message: str | None = None
+# 146     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # utilities\metadata\snapshots\__init__.py

@@ -49,7 +49,7 @@ def test_prompt_generator_factory():
     _ensure_loaded()
     provider = ContextProviderFactory.create("dummy")
     generator = PromptGeneratorFactory.create("basic", context_provider=provider)
-    assert isinstance(generator.generate_prompt({}, {}), str)
+    assert isinstance(generator.generate_prompt({}, {}, "test_experiment", 0), str)
 
 
 def test_tool_provider_factory():

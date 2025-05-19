@@ -11,6 +11,7 @@ from typing import Any, ClassVar, Iterable
 
 from app.enums.logging_enums import LogType
 from ..utilities.metadata.logging.log_schemas import (
+    PromptGenerationLog,
     StateLog,
     StateTransitionLog,
     PromptLog,
@@ -36,6 +37,7 @@ LOG_MODEL_MAP = {
     LogType.EXPERIMENT: ExperimentLog,
     LogType.RECOMMENDATION: RecommendationLog,
     LogType.FEEDBACK: FeedbackLog,
+    LogType.PROMPT_GENERATION: PromptGenerationLog,
 }
 
 

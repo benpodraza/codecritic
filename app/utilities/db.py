@@ -119,6 +119,21 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
         )"""
     )
 
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS prompt_generation_log (
+            experiment_id TEXT,
+            round INTEGER,
+            generator_name TEXT,
+            context_provider_name TEXT,
+            agent_config TEXT,
+            system_config TEXT,
+            generated_prompt TEXT,
+            success INTEGER,
+            error_message TEXT,
+            timestamp TEXT
+        )"""
+    )
+
     # ✅ Add this missing table definition
     cur.execute(
         """CREATE TABLE IF NOT EXISTS conversation_log (

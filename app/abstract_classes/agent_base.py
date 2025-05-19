@@ -27,7 +27,7 @@ class AgentBase(LoggingMixin, ABC):
         **kwargs,
     ) -> None:
         self._log.debug("Agent run start")
-        params = json.dumps({"args": args, "kwargs": kwargs})
+        params = json.dumps({"args": args, "kwargs": kwargs}, default=str)
         response = ""
         success = False
         error_message = None

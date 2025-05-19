@@ -4,9 +4,17 @@ import sqlite3
 from pathlib import Path
 from typing import Dict
 
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+try:  # pragma: no cover - prefer real deps
+    import pandas as pd  # type: ignore
+except Exception:  # pragma: no cover - fallback for limited envs
+    from app.utilities import pandas_stub as pd  # type: ignore
+
+try:  # pragma: no cover - prefer real deps
+    import plotly.express as px
+    import plotly.graph_objects as go
+except Exception:  # pragma: no cover - fallback for limited envs
+    from app.utilities import plotly_stub as px  # type: ignore
+    from app.utilities import plotly_stub as go  # type: ignore
 
 
 _LOG_TABLES = {

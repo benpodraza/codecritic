@@ -75,4 +75,3 @@ class StateManagerBase(LoggingMixin, ABC):
     def _run_state_logic(self, *args, **kwargs) -> None:
         """Implement specific logic for the state."""
         raise NotImplementedError
-

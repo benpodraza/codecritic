@@ -8,6 +8,7 @@ from app.utilities.metadata.logging.log_schemas import (
 from app.factories.logging_provider import LoggingProvider, LogType
 from app.enums.system_enums import StateTransitionReason, SystemState
 
+
 class StateManager(StateManagerBase):
     def __init__(
         self,
@@ -30,12 +31,12 @@ class StateManager(StateManagerBase):
         state = kwargs.get("state")
         self._log.info("Running state logic for state: %s", state)
 
-    def _transition_state(
-        self, from_state: str, to_state: str, reason: str
-    ) -> None:
+    def _transition_state(self, from_state: str, to_state: str, reason: str) -> None:
         self._log.info(
             "Transitioning from %s to %s due to reason: %s",
-            from_state, to_state, reason
+            from_state,
+            to_state,
+            reason,
         )
         self.current_state = SystemState(to_state)
 

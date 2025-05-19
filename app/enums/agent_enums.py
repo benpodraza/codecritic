@@ -10,5 +10,3 @@ class AgentRole(str, Enum):
     PATCHER = "patcher"
     EVALUATOR = "evaluator"
     RECOMMENDER = "recommender"
-
-

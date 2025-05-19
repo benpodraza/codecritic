@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.factories.logging_provider import LoggingMixin, LoggingProvider
-from app.utilities.metadata.logging.log_schemas import ExperimentLog
+from app.utilities.metadata.logging.log_schemas import ExperimentLog, SystemEventLog
 
 
 class ExperimentProvider(LoggingMixin):
@@ -33,22 +33,16 @@ class ExperimentProvider(LoggingMixin):
         self.evaluator_name = evaluator_name
         self.evaluator_version = evaluator_version
         self.start_time = datetime.now(timezone.utc)
-        self.logger.log_experiment(
-            ExperimentLog(
+        self.logger.log_system_event(
+            SystemEventLog(
                 experiment_id=experiment_id,
-                description=description,
-                mode=mode,
-                variant=variant,
-                max_iterations=max_iterations,
-                stop_threshold=stop_threshold,
-                model_engine=model_engine,
-                evaluator_name=evaluator_name,
-                evaluator_version=evaluator_version,
-                final_score=0.0,
-                passed=False,
-                reason_for_stop="",
-                start=self.start_time,
-                stop=None,
+                round=0,
+                system_id=self.__class__.__name__,
+                event="start",
+                details="",
+                success=True,
+                error_message=None,
+                timestamp=self.start_time,
             )
         )
 

@@ -1,0 +1,173 @@
+
+# === PYTHON FILES ===
+
+
+# === NON-PYTHON FILES ===
+
+# config\seed\agent_config.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "generator",
+# 5         "description": "Generator agent",
+# 6         "agent_role": "generator",
+# 7         "system_type": "default",
+# 8         "agent_engine_id": 1,
+# 9         "prompt_generator_id": 1,
+# 10         "artifact_path": "agents/generator_agent.py"
+# 11     }
+# 12 ]
+
+
+# config\seed\agent_engine.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "name": "basic",
+# 5     "description": "Basic test engine",
+# 6     "model": "gpt-4",
+# 7     "engine_config": "{}",
+# 8     "artifact_path": "engines/basic.json"
+# 9   }
+# 10 ]
+
+
+# config\seed\agent_prompt.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "name": "default_agent",
+# 5     "description": "Agent prompt",
+# 6     "agent_role": "generator",
+# 7     "system_type": "default",
+# 8     "artifact_path": "prompts/agent.txt"
+# 9   }
+# 10 ]
+
+
+# config\seed\context_provider.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "name": "basic_context",
+# 5     "description": "Provides context",
+# 6     "system_type": "default",
+# 7     "tooling_provider_id": 1
+# 8   }
+# 9 ]
+
+
+# config\seed\experiment_config.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "basic_experiment",
+# 5         "description": "Experiment config",
+# 6         "system_manager_id": "system",
+# 7         "scoring_model_id": "basic"
+# 8     }
+# 9 ]
+
+
+# config\seed\prompt_generator.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "basic_generator",
+# 5         "description": "Generates prompts",
+# 6         "agent_prompt_id": 1,
+# 7         "system_prompt_id": 1,
+# 8         "content_provider_id": 1,
+# 9         "artifact_path": "prompt_generators/basic_prompt_generator.py"
+# 10     }
+# 11 ]
+
+
+# config\seed\scoring_provider.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "basic_score",
+# 5         "description": "Basic scoring",
+# 6         "artifact_path": "scoring_models/basic_scoring_provider.py"
+# 7     }
+# 8 ]
+
+
+# config\seed\series.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "experiment_config_id": 1
+# 5   }
+# 6 ]
+
+
+# config\seed\state_manager.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "basic_state",
+# 5         "description": "Tracks states",
+# 6         "system_state": "init",
+# 7         "system_type": "default",
+# 8         "agent_id": 1,
+# 9         "artifact_path": "state_managers/state_manager.py"
+# 10     }
+# 11 ]
+
+
+# config\seed\system_config.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "name": "basic_system",
+# 5     "description": "System config",
+# 6     "system_type": "default",
+# 7     "state_manager_id": 1,
+# 8     "scoring_model_id": 1
+# 9   }
+# 10 ]
+
+
+# config\seed\system_prompt.json
+
+# 1 [
+# 2   {
+# 3     "id": 1,
+# 4     "name": "default_system",
+# 5     "description": "System prompt",
+# 6     "system_type": "default",
+# 7     "artifact_path": "prompts/system.txt"
+# 8   }
+# 9 ]
+
+
+# config\seed\tooling_provider.json
+
+# 1 [
+# 2     {
+# 3         "id": 1,
+# 4         "name": "black",
+# 5         "description": "Black formatter",
+# 6         "artifact_path": "tool_providers/black_runner.py"
+# 7     },
+# 8     {
+# 9         "id": 2,
+# 10         "name": "docformatter",
+# 11         "description": "Docformatter tool",
+# 12         "artifact_path": "tool_providers/docformatter_runner.py"
+# 13     }
+# 14 ]
+
+

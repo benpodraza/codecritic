@@ -1,0 +1,777 @@
+
+# === PYTHON FILES ===
+
+
+# === NON-PYTHON FILES ===
+
+# CodeCritic - Specification - 5-17-2025.md
+
+# 1 **Comprehensive End-to-End Engineering Specification for CodeCritic Experimentation**
+# 2 
+# 3 **Overview**
+# 4 
+# 5 The CodeCritic system is an autonomous multi-agent framework designed to facilitate software generation, evaluation, maintenance, and continuous improvement. This comprehensive manual provides detailed guidance on structuring, executing, and evaluating experiments. These experiments systematically identify the optimal combinations of system components for creating software systems maintainable by artificial intelligence (AI).
+# 6 
+# 7 **Purpose of Experiments**
+# 8 
+# 9 The experiments aim to explore different configurations of CodeCritic’s integrated tools and methodologies, including structured logging, multi-agent interactions, symbolic reasoning via symbol graphs, and iterative self-improvement. Each experimental iteration seeks to enhance agent interactions, logging accuracy, and system adaptability to achieve AI-driven software maintenance.
+# 10 
+# 11 **Folder-File Structure**
+# 12 
+# 13 The following folder and file structure outlines how the CodeCritic framework organizes its components and outputs:
+# 14 
+# 15 app
+# 16 
+# 17 ├── abstract_classes
+# 18 
+# 19 │ ├── system_manager_base.py
+# 20 
+# 21 │ ├── agent_base.py
+# 22 
+# 23 │ ├── state_manager_base.py
+# 24 
+# 25 │ ├── prompt_generator_base.py
+# 26 
+# 27 │ ├── context_provider_base.py
+# 28 
+# 29 │ ├── tool_provider_base.py
+# 30 
+# 31 │ └── scoring_provider_base.py
+# 32 
+# 33 ├── extensions
+# 34 
+# 35 │ ├── system_managers
+# 36 
+# 37 │ ├── state_managers
+# 38 
+# 39 │ ├── agents
+# 40 
+# 41 │ ├── tools
+# 42 
+# 43 │ ├── prompt_generators
+# 44 
+# 45 │ ├── context_providers
+# 46 
+# 47 │ ├── tool_providers
+# 48 
+# 49 │ ├── agent_prompts
+# 50 
+# 51 │ ├── system_prompts
+# 52 
+# 53 │ └── scoring_models
+# 54 
+# 55 ├── enums
+# 56 
+# 57 │ ├── system_enums.py
+# 58 
+# 59 │ └── agent_enums.py
+# 60 
+# 61 ├── utilities
+# 62 
+# 63 │ ├── file_management
+# 64 
+# 65 │ ├── metadata
+# 66 
+# 67 │ │ ├── logging
+# 68 
+# 69 │ │ └── footer
+# 70 
+# 71 │ └── snapshots
+# 72 
+# 73 ├── factories
+# 74 
+# 75 │ ├── system_manager.py
+# 76 
+# 77 │ ├── state_manager.py
+# 78 
+# 79 │ ├── agent.py
+# 80 
+# 81 │ ├── prompt_manager.py
+# 82 
+# 83 │ ├── system_config_provider.py
+# 84 
+# 85 │ ├── experiment_config_provider.py
+# 86 
+# 87 │ ├── tool_provider.py
+# 88 
+# 89 │ └── scoring_provider.py
+# 90 
+# 91 ├── registries
+# 92 
+# 93 │ ├── system_managers
+# 94 
+# 95 │ ├── state_managers
+# 96 
+# 97 │ ├── agents
+# 98 
+# 99 │ ├── agent_engines
+# 100 
+# 101 │ ├── prompt_generators
+# 102 
+# 103 │ ├── agent_prompts
+# 104 
+# 105 │ ├── system_prompts
+# 106 
+# 107 │ ├── context_providers
+# 108 
+# 109 │ ├── tool_providers
+# 110 
+# 111 │ ├── tools
+# 112 
+# 113 │ └── scoring_models
+# 114 
+# 115 └── tools
+# 116 
+# 117 ├── black_runner.py
+# 118 
+# 119 ├── doc_formatter.py
+# 120 
+# 121 ├── mypy_runner.py
+# 122 
+# 123 ├── radon_runner.py
+# 124 
+# 125 ├── ruff_runner.py
+# 126 
+# 127 └── sonarcloud_runner.py
+# 128 
+# 129 experiments
+# 130 
+# 131 ├── logs
+# 132 
+# 133 │ ├── structured logging output
+# 134 
+# 135 │ └── detailed execution logs
+# 136 
+# 137 └── artifacts
+# 138 
+# 139 ├── intermediate and final outputs
+# 140 
+# 141 └── snapshots of code states
+# 142 
+# 143 **Database Schemas**
+# 144 
+# 145 SQLite is the database backend for structured logging and metadata storage, supporting experiment reproducibility and analysis.
+# 146 
+# 147 CREATE TABLE agent_engine (
+# 148 
+# 149 id INTEGER PRIMARY KEY,
+# 150 
+# 151 name TEXT,
+# 152 
+# 153 description TEXT,
+# 154 
+# 155 model TEXT,
+# 156 
+# 157 engine_config TEXT,
+# 158 
+# 159 artifact_path TEXT
+# 160 
+# 161 );
+# 162 
+# 163 CREATE TABLE agent_prompt (
+# 164 
+# 165 id INTEGER PRIMARY KEY,
+# 166 
+# 167 name TEXT,
+# 168 
+# 169 description TEXT,
+# 170 
+# 171 agent_role TEXT,
+# 172 
+# 173 system_type TEXT,
+# 174 
+# 175 artifact_path TEXT
+# 176 
+# 177 );
+# 178 
+# 179 CREATE TABLE system_prompt (
+# 180 
+# 181 id INTEGER PRIMARY KEY,
+# 182 
+# 183 name TEXT,
+# 184 
+# 185 description TEXT,
+# 186 
+# 187 system_type TEXT,
+# 188 
+# 189 artifact_path TEXT
+# 190 
+# 191 );
+# 192 
+# 193 CREATE TABLE context_provider (
+# 194 
+# 195 id INTEGER PRIMARY KEY,
+# 196 
+# 197 name TEXT,
+# 198 
+# 199 description TEXT,
+# 200 
+# 201 system_type TEXT,
+# 202 
+# 203 tooling_provider_id INTEGER
+# 204 
+# 205 );
+# 206 
+# 207 CREATE TABLE file_path (
+# 208 
+# 209 artifact_path TEXT PRIMARY KEY
+# 210 
+# 211 );
+# 212 
+# 213 CREATE TABLE agent_config (
+# 214 
+# 215 id INTEGER PRIMARY KEY,
+# 216 
+# 217 name TEXT,
+# 218 
+# 219 description TEXT,
+# 220 
+# 221 agent_role TEXT,
+# 222 
+# 223 system_type TEXT,
+# 224 
+# 225 agent_engine_id INTEGER,
+# 226 
+# 227 prompt_generator_id INTEGER,
+# 228 
+# 229 artifact_path TEXT
+# 230 
+# 231 );
+# 232 
+# 233 CREATE TABLE tooling_provider (
+# 234 
+# 235 id INTEGER PRIMARY KEY,
+# 236 
+# 237 name TEXT,
+# 238 
+# 239 description TEXT,
+# 240 
+# 241 artifact_path TEXT
+# 242 
+# 243 );
+# 244 
+# 245 CREATE TABLE scoring_provider (
+# 246 
+# 247 id INTEGER PRIMARY KEY,
+# 248 
+# 249 name TEXT,
+# 250 
+# 251 description TEXT,
+# 252 
+# 253 artifact_path TEXT
+# 254 
+# 255 );
+# 256 
+# 257 CREATE TABLE prompt_generator (
+# 258 
+# 259 id INTEGER PRIMARY KEY,
+# 260 
+# 261 name TEXT,
+# 262 
+# 263 description TEXT,
+# 264 
+# 265 agent_prompt_id INTEGER,
+# 266 
+# 267 system_prompt_id INTEGER,
+# 268 
+# 269 content_provider_id INTEGER,
+# 270 
+# 271 artifact_path TEXT
+# 272 
+# 273 );
+# 274 
+# 275 CREATE TABLE state_manager (
+# 276 
+# 277 id INTEGER PRIMARY KEY,
+# 278 
+# 279 name TEXT,
+# 280 
+# 281 description TEXT,
+# 282 
+# 283 system_state TEXT,
+# 284 
+# 285 system_type TEXT,
+# 286 
+# 287 agent_id INTEGER,
+# 288 
+# 289 artifact_path TEXT
+# 290 
+# 291 );
+# 292 
+# 293 CREATE TABLE system_config (
+# 294 
+# 295 id INTEGER PRIMARY KEY,
+# 296 
+# 297 name TEXT,
+# 298 
+# 299 description TEXT,
+# 300 
+# 301 system_type TEXT,
+# 302 
+# 303 state_manager_id INTEGER,
+# 304 
+# 305 scoring_model_id INTEGER
+# 306 
+# 307 );
+# 308 
+# 309 CREATE TABLE experiment_config (
+# 310 
+# 311 id INTEGER PRIMARY KEY,
+# 312 
+# 313 name TEXT,
+# 314 
+# 315 description TEXT,
+# 316 
+# 317 system_manager_id INTEGER,
+# 318 
+# 319 scoring_model_id INTEGER
+# 320 
+# 321 );
+# 322 
+# 323 CREATE TABLE series (
+# 324 
+# 325 id INTEGER PRIMARY KEY,
+# 326 
+# 327 experiment_config_id INTEGER
+# 328 
+# 329 );
+# 330 
+# 331 **Comprehensive End-to-End Engineering Specification for CodeCritic Experimentation (Part 2)**
+# 332 
+# 333 **Components and Responsibilities**
+# 334 
+# 335 **Experiment Lifecycle Management**
+# 336 
+# 337 **Experiment**
+# 338 
+# 339 - Initiates and manages the execution of experiments.
+# 340 - **Method:** run() initiates experiments based on configurations.
+# 341 
+# 342 **System and State Management**
+# 343 
+# 344 **SystemManagerBase**
+# 345 
+# 346 - Handles logging and finite state machine (FSM) logic.
+# 347 - **Method:** run() ensures logging; \_run_system_logic() performs state transitions.
+# 348 
+# 349 **StateManagerBase**
+# 350 
+# 351 - Manages the execution of agent-level operations within system states.
+# 352 - **Method:** run() executes logging and agent actions.
+# 353 
+# 354 **Agents and Logic Execution**
+# 355 
+# 356 **AgentBase**
+# 357 
+# 358 - Responsible for executing agent-specific logic with logging.
+# 359 - **Method:** run() manages logging; \_run_agent_logic() implements agent tasks.
+# 360 
+# 361 **Prompt Generation**
+# 362 
+# 363 **PromptGeneratorBase**
+# 364 
+# 365 - Generates prompts needed by agents, ensuring logging.
+# 366 - **Method:** generate_prompt() oversees logging and calls \_generate_prompt().
+# 367 
+# 368 **Context and Symbol Management**
+# 369 
+# 370 **ContextProviderBase**
+# 371 
+# 372 - Supplies context using symbol graphs, enforcing comprehensive logging.
+# 373 - **Method:** get_context() handles logging; \_get_context() manages symbol graph access.
+# 374 
+# 375 **External Tool Integration**
+# 376 
+# 377 **ToolProviderBase**
+# 378 
+# 379 - Integrates and manages the execution of external tools with robust logging.
+# 380 - **Method:** run() handles logging; \_run() executes tool-specific logic.
+# 381 
+# 382 **Scoring and Evaluation**
+# 383 
+# 384 **ScoringProviderBase**
+# 385 
+# 386 - Evaluates agent performance using predefined metrics.
+# 387 - **Method:** score() ensures logging; \_score() computes evaluation metrics.
+# 388 
+# 389 **Logging Strategy**
+# 390 
+# 391 Structured logging captures comprehensive data throughout each experiment run. Logs are categorized into:
+# 392 
+# 393 - **Experiment Logs**
+# 394 - **State and Transition Logs**
+# 395 - **Prompt and Conversation Logs**
+# 396 - **Scoring Logs**
+# 397 - **Code Quality Logs**
+# 398 - **Error Logs**
+# 399 
+# 400 Each category has clearly defined triggers and schemas to ensure consistent and analyzable data.
+# 401 
+# 402 **Unified Log Schemas**
+# 403 
+# 404 - **ScoringLog:** experiment_id, round, symbol, final, score, passed, evaluator_name, evaluator_version, diagnostics, tests_total, tests_passed, all_tests_passed, issue_id, attempt_number, parent_attempt_number, timestamp
+# 405 - **CodeQualityLog:** experiment_id, round, symbol, lines_of_code, cyclomatic_complexity, maintainability_index, lint_errors, timestamp
+# 406 - **ConversationLog:** experiment_id, round, agent_role, target, content, originating_agent, intervention, intervention_type, intervention_reason, timestamp
+# 407 - **PromptLog:** experiment_id, round, system, agent_id, agent_role, agent_engine, symbol, prompt, response, attempt_number, agent_action_outcome, start, stop
+# 408 - **StateLog:** experiment_id, system, round, state, action, score, details, timestamp
+# 409 - **StateTransitionLog:** experiment_id, round, from_state, to_state, reason, timestamp
+# 410 - **ErrorLog:** experiment_id, round, error_type, message, file_path, timestamp
+# 411 - **ExperimentLog:** experiment_id, description, mode, variant, max_iterations, stop_threshold, model_engine, evaluator_name, evaluator_version, final_score, passed, reason_for_stop, start, stop
+# 412 
+# 413 **Comprehensive Trigger Events**
+# 414 
+# 415 - **ExperimentLog:** Experiment initialization/start, completion/end, errors or exceptions.
+# 416 - **StateLog:** Entry into and completion of system states; errors during execution.
+# 417 - **StateTransitionLog:** Transition between states.
+# 418 - **PromptLog:** Generation attempts by agents, including successes, failures, partial completions, and exceptions.
+# 419 - **ConversationLog:** Communications between agents, humans, and orchestrators; interventions; exceptions.
+# 420 - **ScoringLog:** Scoring events, including start, completion of evaluations, and test suite execution; exceptions.
+# 421 - **CodeQualityLog:** Completion of static code analysis and linting checks; exceptions.
+# 422 - **ErrorLog:** Any encountered exceptions.
+# 423 
+# 424 **Evaluation Metrics**
+# 425 
+# 426 Each experiment evaluates performance against multiple metrics:
+# 427 
+# 428 - **Bug-fix success rate**
+# 429 - **Functional correctness**
+# 430 - **Test pass rates**
+# 431 - **Maintainability and complexity indices**
+# 432 - **Linting compliance**
+# 433 - **Iterations to convergence**
+# 434 - **Intervention frequencies**
+# 435 - **Role-specific success rates**
+# 436 - **Retry and mediation effectiveness**
+# 437 
+# 438 Detailed evaluation functions and metric computations are provided separately.
+# 439 
+# 440 **Comprehensive End-to-End Engineering Specification for CodeCritic Experimentation (Part 3)**
+# 441 
+# 442 **Conducting Experiments**
+# 443 
+# 444 Follow these structured steps for systematically conducting and managing experiments:
+# 445 
+# 446 1. **Configure Experiment Parameters**
+# 447     - Clearly define and document all experiment settings, including agent configurations, evaluation criteria, and logging preferences.
+# 448 2. **Execution of Experiments**
+# 449     - Invoke the run() method of the Experiment class to initiate the configured experiments.
+# 450 3. **Data Logging**
+# 451     - Verify that all logs are accurately captured and stored in the designated SQLite database and filesystem.
+# 452 4. **Data Analysis**
+# 453     - Utilize provided analysis scripts and notebooks to evaluate and interpret the collected log data and experiment outcomes.
+# 454 
+# 455 **Reporting Results**
+# 456 
+# 457 Upon experiment completion, results should be systematically reported using:
+# 458 
+# 459 - **Evaluation Notebooks:** Clearly documented notebooks to visualize metrics and performance outcomes.
+# 460 - **Benchmark Comparisons:** Results should be benchmarked against established industry standards and known baselines such as SWE-Bench and HumanEval.
+# 461 
+# 462 This structured reporting ensures clear visibility of experiment results and facilitates informed decisions on system optimizations.
+# 463 
+# 464 **Detailed Implementation Plan**
+# 465 
+# 466 **Phase 1: Infrastructure Setup**
+# 467 
+# 468 **Tasks:**
+# 469 
+# 470 - Implement abstract base classes.
+# 471 - Define and validate folder structure.
+# 472 - Set up registries and factories.
+# 473 
+# 474 **Deliverables:**
+# 475 
+# 476 - Initial class and directory structure.
+# 477 - Test notebook confirming instantiation and structural correctness.
+# 478 
+# 479 **Phase 2: FSM Logic and State Management**
+# 480 
+# 481 **Tasks:**
+# 482 
+# 483 - Develop finite state machine (FSM) transitions.
+# 484 - Implement system and state management classes.
+# 485 
+# 486 **Deliverables:**
+# 487 
+# 488 - Functional FSM implementation.
+# 489 - State manager execution logic.
+# 490 - Test notebook for validating state transitions and logging.
+# 491 
+# 492 **Phase 3: Agent Logic and Tool Integration**
+# 493 
+# 494 **Tasks:**
+# 495 
+# 496 - Implement agent logic for execution.
+# 497 - Integrate tooling such as black, mypy, radon, ruff, sonarcloud.
+# 498 
+# 499 **Deliverables:**
+# 500 
+# 501 - Integrated agent logic with external tools.
+# 502 - Test notebook demonstrating agent actions and tool outputs.
+# 503 
+# 504 **Phase 4: Contextual and Prompt Generation**
+# 505 
+# 506 **Tasks:**
+# 507 
+# 508 - Implement context providers integrating symbol graphs.
+# 509 - Develop prompt generators for agent and system prompts.
+# 510 
+# 511 **Deliverables:**
+# 512 
+# 513 - Operational context providers.
+# 514 - Prompt generation modules.
+# 515 - Test notebook confirming the accuracy of generated contexts and prompts.
+# 516 
+# 517 **Phase 5: Scoring and Metric Evaluation**
+# 518 
+# 519 **Tasks:**
+# 520 
+# 521 - Implement scoring providers.
+# 522 - Develop evaluation metric computation logic.
+# 523 
+# 524 **Deliverables:**
+# 525 
+# 526 - Fully functional scoring mechanisms.
+# 527 - Test notebook demonstrating accurate computation of evaluation metrics.
+# 528 
+# 529 **Phase 6: Full System Integration and Validation**
+# 530 
+# 531 **Tasks:**
+# 532 
+# 533 - Perform comprehensive integration of all system components.
+# 534 - Implement multi-agent interaction logic.
+# 535 
+# 536 **Deliverables:**
+# 537 
+# 538 - Fully integrated and operational system.
+# 539 - Final benchmarking notebook detailing system performance.
+# 540 
+# 541 ---
+# 542 
+# 543 # #  Phase 7: Schema Implementation and Persistence Layer
+# 544 
+# 545 # # #  Goals
+# 546 
+# 547 * Define and implement database schemas for all core system entities.
+# 548 * Enable persistent representation of experiments, agents, configurations, tools, and prompts.
+# 549 * Use SQLite (or SQLAlchemy) as the backing store.
+# 550 
+# 551 # # #  Deliverables
+# 552 
+# 553 * `app/schemas/` defining Pydantic models for:
+# 554 
+# 555   * `AgentConfig`, `PromptGenerator`, `ToolProvider`, `ScoringProvider`
+# 556   * `SystemConfig`, `StateManager`, `ExperimentConfig`, `Session`
+# 557   * `AgentPrompt`, `SystemPrompt`, `ContextProvider`, `ModelEngine`
+# 558 * `app/utilities/schema/create_schema.py` for schema DDL and migration.
+# 559 * `experiments/config/seed/*.json` or `.yaml` for bootstrapping entries.
+# 560 
+# 561 # # #  Tables to Implement
+# 562 
+# 563 * `agent_engine`
+# 564 * `agent_prompt`, `system_prompt`
+# 565 * `context_provider`, `tooling_provider`, `file_path`
+# 566 * `agent_config`, `prompt_generator`, `scoring_provider`
+# 567 * `state_manager`, `system_config`, `experiment_config`, `series`
+# 568 
+# 569 Each schema must support loading, saving, and updating entries. External references (e.g. tool IDs, prompt file paths) should be explicitly validated.
+# 570 
+# 571 ---
+# 572 
+# 573 #  CodeCritic Specification (Updated after Phase 7 Completion)
+# 574 
+# 575 # #  Summary of Updates
+# 576 This version of the CodeCritic specification reflects the complete and tested implementation of Phase 7. All seed schemas, enum-safe insertions, Pydantic v2 compatibility improvements, and logging provider integration are now complete and aligned with the runtime architecture.
+# 577 
+# 578 # #  Key Changes
+# 579 
+# 580 # # #  ✅ Enum and Path Serialization
+# 581 - All enum fields and `Path` objects in both schema seeding and logging are now converted to strings before SQLite insertion.
+# 582 - This prevents `ProgrammingError` on insertion and ensures logs and data are human-readable.
+# 583 
+# 584 # # #  ✅ Schema Reflection (Pydantic v2 Compliant)
+# 585 - Field introspection now uses `__annotations__` instead of `model_fields`.
+# 586 - Schema generation for SQLite does not require model instantiation.
+# 587 
+# 588 # # #  ✅ LoggingProvider Implementation
+# 589 - A centralized `LoggingProvider` was introduced and is now injected across all base classes.
+# 590 - Logs are validated by type using a `LogType → dataclass` mapping.
+# 591 - `_serialize()` safely converts dataclass instances and enums.
+# 592 
+# 593 # # #  ✅ Seed Initialization Pipeline
+# 594 - `initialize_database(reset=True)` deletes and rebuilds the DB.
+# 595 - Seed files in `experiments/config/seed/*.json` are automatically loaded and type-checked.
+# 596 - Schema files have been confirmed present and validated for:
+# 597   - `agent_engine`, `agent_prompt`, `system_prompt`
+# 598   - `context_provider`, `tooling_provider`, `file_path`
+# 599   - `agent_config`, `prompt_generator`, `scoring_provider`
+# 600   - `state_manager`, `system_config`, `experiment_config`, `series`
+# 601 
+# 602 # # #  ✅ All Seed Data Type Constraints Enforced
+# 603 - Enums are now used in fields such as `system_state`, `agent_role`, and `system_type`
+# 604 - All `model_dump()` calls conform to Pydantic’s default signature.
+# 605 
+# 606 # # #  ✅ Logging Schema Consistency
+# 607 - Logging format uses defined schemas from `log_schemas.py`.
+# 608 - Logging provider guarantees consistent insertions using validated log models.
+# 609 
+# 610 # #  Status
+# 611 Phase 7 is fully complete and stable.
+# 612 - ✅ Enum compatibility
+# 613 - ✅ Schema serialization
+# 614 - ✅ Logging provider
+# 615 - ✅ Clean `mypy` and `ruff`
+# 616 - ✅ Seed tested and loaded
+# 617 - ✅ Database introspection verified
+# 618 
+# 619 ---
+# 620 
+# 621 # #  Phase 8: Registry Seeding and Bootstrap Loader
+# 622 
+# 623 # # #  Goals
+# 624 
+# 625 * Load persistent schema entries into in-memory registries.
+# 626 * Establish an initial working set of system components (agents, tools, prompts, etc.).
+# 627 * Enable modular extension via `extensions/` folder and registry factories.
+# 628 
+# 629 # # #  Deliverables
+# 630 
+# 631 * `app/registries/` + `app/factories/` updated to load from persistent config.
+# 632 * Bootstrapping logic in `bootstrap.py` or `seed_registries.py`.
+# 633 * Example registration of one full working system configuration:
+# 634   * `GeneratorAgent` using `black`, `docformatter`
+# 635   * Prompt and context providers
+# 636   * Associated scoring config
+# 637 
+# 638 # # #  Outcomes
+# 639 
+# 640 By the end of this phase, any valid schema entry should be fully instantiable from:
+# 641 - database → registry
+# 642 - registry → factory
+# 643 - factory → runtime component
+# 644 
+# 645 This will complete the foundation for dynamic system reconfiguration, grid-searchable experiments, and runtime injection of custom agent logic.
+# 646 
+# 647 ---
+# 648 
+# 649 # #  Phase 9: LoggingProvider and Snapshot Integration
+# 650 
+# 651 # # #  Goals
+# 652 
+# 653 * Implement a centralized `LoggingProvider` and snapshot writer.
+# 654 * Standardize structured logging across all `Base` class hierarchies.
+# 655 * Enable file-based and SQLite-backed audit trails for all experiment runs.
+# 656 
+# 657 # # #  Deliverables
+# 658 
+# 659 * `app/utilities/metadata/logging/logging_provider.py`
+# 660 * `app/utilities/snapshots/snapshot_writer.py`
+# 661 * Extend all abstract base classes to inherit from `LoggingProvider`:
+# 662 
+# 663   * `ExperimentBase`, `SystemManagerBase`, `StateManagerBase`
+# 664   * `AgentBase`, `PromptGeneratorBase`, `ToolProviderBase`, `ScoringProviderBase`
+# 665 
+# 666 # # #  Outcomes
+# 667 
+# 668 * Unified logging interface for prompt logs, error logs, scoring logs, etc.
+# 669 * Snapshots of modified code and contextual metadata written to `experiments/artifacts/snapshots/`.
+# 670 * Enforced consistency in log structure across all phases of system execution.
+# 671 
+# 672 ---
+# 673 
+# 674 # #  Phase 10: Footer Annotation System
+# 675 
+# 676 # # #  Goals
+# 677 
+# 678 * Restore footer tagging and metadata injection for traceable, annotated outputs.
+# 679 * Strip previous metadata, attach new AI-FIRST metadata blocks per round.
+# 680 
+# 681 # # #  Deliverables
+# 682 
+# 683 * `app/utilities/metadata/footer/footer_annotation_helper.py`:
+# 684 
+# 685   * `strip_metadata_footer(code)`
+# 686   * `append_metadata_footer(code, metadata)`
+# 687   * `reapply_footer(code, previous_footer, new_metadata)`
+# 688 * Integrate into all modifying agents (`PatchAgent`, `GeneratorAgent`, etc.)
+# 689 
+# 690 # # #  Outcomes
+# 691 
+# 692 * Footer-based traceability across experiments, including:
+# 693 
+# 694   * Round and experiment ID
+# 695   * Agent and system used
+# 696   * Modifications and annotations applied
+# 697 * Fully reversible and auditable transformations via metadata blocks
+# 698 
+# 699 ---
+# 700 
+# 701 # #  Phase 11: SonarCloud Integration
+# 702 
+# 703 # # #  Goals
+# 704 
+# 705 * Complete integration with SonarCloud as an external analysis backend.
+# 706 * Automate scan process via a temporary Git workflow.
+# 707 * Normalize and log metrics returned by the SonarCloud API.
+# 708 
+# 709 # # #  Deliverables
+# 710 
+# 711 * `app/tools/sonarcloud_runner.py`
+# 712 * Git repo creation, push, scan, and cleanup utility
+# 713 * Structured report parser to convert scan results to evaluation-ready metrics
+# 714 
+# 715 # # #  Outcomes
+# 716 
+# 717 * SonarCloud integration becomes an additional tool in `ToolProvider`
+# 718 * SonarCloud data included in scoring, quality, and experiment-level logs
+# 719 * Standardization of tool output metadata for third-party services
+# 720 
+# 721 ---
+# 722 
+# 723 # #  Phase 12: Evaluation Notebook
+# 724 
+# 725 # # #  Goals
+# 726 
+# 727 * Build an interactive notebook to visualize experiments and system runs.
+# 728 * Support comparison across agents, configurations, and scoring metrics.
+# 729 * Validate experiment reproducibility with structured snapshots and logs.
+# 730 
+# 731 # # #  Deliverables
+# 732 
+# 733 * `notebooks/evaluation_session_runner.ipynb`
+# 734 * Matplotlib, seaborn, or Plotly visualizations for experiment logs
+# 735 * CLI or cell-based triggers for experiment/session replay
+# 736 
+# 737 # # #  Outcomes
+# 738 
+# 739 * Clear visual summary of system performance and agent behavior
+# 740 * Central tool for reviewing experiments and benchmarking CodeCritic systems
+# 741 * Supports longitudinal research on agent ensembles and iterative improvements
+# 742 
+# 743 ---
+# 744 
+# 745 **Test Notebook Structure per Phase**
+# 746 
+# 747 1. **Setup**
+# 748     - Environment initialization.
+# 749 2. **Execution**
+# 750     - Task and agent execution.
+# 751 3. **Validation**
+# 752     - Verification of states, outputs, and logging integrity.
+# 753 4. **Metrics**
+# 754     - Computation and validation of evaluation metrics.
+# 755 
+# 756 **Final Benchmark Notebook**
+# 757 
+# 758 - Comprehensive evaluation and visualization against benchmarks.
+# 759 - Detailed metrics performance report.
+# 760 
+# 761 **Recommendations for Codex Implementation**
+# 762 
+# 763 - Provide explicit, clear examples.
+# 764 - Ensure structured and consistent logging practices.
+# 765 - Conduct stepwise implementations to facilitate easy debugging and iterative refinement.
+# 766 
+# 767 This document concludes the comprehensive guide to executing and optimizing CodeCritic experiments.
+
+

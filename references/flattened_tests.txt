@@ -1,0 +1,884 @@
+
+# === PYTHON FILES ===
+
+# __init__.py
+
+
+
+# notebooks\__init__.py
+
+
+
+# test_agents.py
+
+# 1 import subprocess
+# 2 import unittest
+# 3 from importlib import import_module
+# 4 from pathlib import Path
+# 5 from unittest.mock import patch, MagicMock
+# 6 
+# 7 from app.factories.agent import AgentFactory
+# 8 from app.utilities.snapshots.snapshot_writer import SnapshotWriter
+# 9 
+# 10 
+# 11 class EvaluatorAgentTests(unittest.TestCase):
+# 12     def setUp(self):
+# 13         import_module("app.extensions.agents")
+# 14         import_module("app.extensions.tool_providers")
+# 15 
+# 16     def _make_stub(self, returncode: int = 0, stdout: str = ""):
+# 17         proc = subprocess.CompletedProcess(
+# 18             ["tool"], returncode, stdout=stdout, stderr=""
+# 19         )
+# 20         mock = MagicMock()
+# 21         mock.run.return_value = proc
+# 22         return mock
+# 23 
+# 24     @patch("app.extensions.agents.evaluator_agent.ToolProviderFactory.create")
+# 25     @patch(
+# 26         "app.extensions.agents.evaluator_agent._analyze_radon", return_value=(2.0, 75.0)
+# 27     )
+# 28     def test_evaluator_success(self, mock_analyze, mock_create):
+# 29         radon = self._make_stub()
+# 30         ruff = self._make_stub(returncode=1)
+# 31         mypy = self._make_stub()
+# 32         black = self._make_stub()
+# 33         mock_create.side_effect = lambda name: {
+# 34             "radon": radon,
+# 35             "ruff": ruff,
+# 36             "mypy": mypy,
+# 37             "black": black,
+# 38         }[name]
+# 39 
+# 40         tmp = Path("eval_success.py")
+# 41         tmp.write_text("x = 1\n")
+# 42         try:
+# 43             agent = AgentFactory.create(
+# 44                 "evaluator",
+# 45                 target=str(tmp),
+# 46                 snapshot_writer=SnapshotWriter(root="snap_s"),
+# 47             )
+# 48             agent.run()
+# 49             self.assertEqual(len(agent.quality_logs), 1)
+# 50             qlog = agent.quality_logs[0]
+# 51             self.assertEqual(qlog.cyclomatic_complexity, 2.0)
+# 52             self.assertEqual(qlog.maintainability_index, 75.0)
+# 53             self.assertEqual(qlog.lint_errors, 1)
+# 54             self.assertFalse(list(Path("snap_s/exp/0").glob("*.before")))
+# 55         finally:
+# 56             tmp.unlink(missing_ok=True)
+# 57 
+# 58     @patch("app.extensions.agents.evaluator_agent.ToolProviderFactory.create")
+# 59     @patch(
+# 60         "app.extensions.agents.evaluator_agent._analyze_radon", return_value=(0.0, 0.0)
+# 61     )
+# 62     def test_evaluator_radon_failure(self, mock_analyze, mock_create):
+# 63         radon = MagicMock()
+# 64         radon.run.side_effect = RuntimeError("no radon")
+# 65         ruff = self._make_stub()
+# 66         mypy = self._make_stub()
+# 67         black = self._make_stub()
+# 68         mock_create.side_effect = lambda name: {
+# 69             "radon": radon,
+# 70             "ruff": ruff,
+# 71             "mypy": mypy,
+# 72             "black": black,
+# 73         }[name]
+# 74 
+# 75         tmp = Path("eval_fail.py")
+# 76         tmp.write_text("x = 1\n")
+# 77         try:
+# 78             agent = AgentFactory.create("evaluator", target=str(tmp))
+# 79             agent.run()
+# 80             qlog = agent.quality_logs[0]
+# 81             self.assertEqual(qlog.cyclomatic_complexity, 0.0)
+# 82             self.assertEqual(qlog.maintainability_index, 0.0)
+# 83             self.assertEqual(qlog.lint_errors, 0)
+# 84             self.assertGreaterEqual(len(agent.error_logs), 1)
+# 85         finally:
+# 86             tmp.unlink(missing_ok=True)
+# 87 
+# 88 
+# 89 if __name__ == "__main__":
+# 90     unittest.main()
+
+
+# test_bootstrap.py
+
+# 1 from importlib import import_module
+# 2 
+# 3 
+# 4 def load_all_extensions():
+# 5     import_module("app.extensions.agents")
+# 6     import_module("app.extensions.system_managers")
+# 7     import_module("app.extensions.state_managers")
+# 8     import_module("app.extensions.prompt_generators")
+# 9     import_module("app.extensions.context_providers")
+# 10     import_module("app.extensions.tool_providers")
+# 11     import_module("app.extensions.scoring_models")
+
+
+# test_dashboard.py
+
+# 1 import sqlite3
+# 2 from pathlib import Path
+# 3 import unittest
+# 4 
+# 5 from app.visualization.dashboard import (
+# 6     load_logs,
+# 7     build_state_transition_sankey,
+# 8     build_scoring_line_plot,
+# 9     build_recommendation_bar_plot,
+# 10 )
+# 11 
+# 12 
+# 13 class DashboardTests(unittest.TestCase):
+# 14     def setUp(self) -> None:
+# 15         self.db_path = Path("test_logs.sqlite3")
+# 16         conn = sqlite3.connect(self.db_path)
+# 17         cur = conn.cursor()
+# 18         cur.execute(
+# 19             "CREATE TABLE state_transition_log (experiment_id TEXT, round INTEGER, from_state TEXT, to_state TEXT, reason TEXT, timestamp TEXT)"
+# 20         )
+# 21         cur.execute(
+# 22             "CREATE TABLE scoring_log (experiment_id TEXT, round INTEGER, metric TEXT, value REAL, timestamp TEXT)"
+# 23         )
+# 24         cur.execute(
+# 25             "CREATE TABLE recommendation_log (experiment_id TEXT, round INTEGER, symbol TEXT, file_path TEXT, line_start INTEGER, line_end INTEGER, recommendation TEXT, context TEXT, timestamp TEXT)"
+# 26         )
+# 27         cur.execute(
+# 28             "INSERT INTO state_transition_log VALUES ('exp', 0, 'start', 'generate', 'first_round', 't')"
+# 29         )
+# 30         cur.execute(
+# 31             "INSERT INTO scoring_log VALUES ('exp', 0, 'maintainability_index', 80.0, 't')"
+# 32         )
+# 33         cur.execute(
+# 34             "INSERT INTO recommendation_log VALUES ('exp', 0, 'demo', 'demo.py', 1, 1, 'Add docstring', 'ctx', 't')"
+# 35         )
+# 36         conn.commit()
+# 37         conn.close()
+# 38 
+# 39     def tearDown(self) -> None:
+# 40         self.db_path.unlink(missing_ok=True)
+# 41 
+# 42     def test_load_and_visualize(self) -> None:
+# 43         logs = load_logs(self.db_path)
+# 44         self.assertIn("transition", logs)
+# 45         self.assertFalse(logs["transition"].empty)
+# 46 
+# 47         fig1 = build_state_transition_sankey(logs["transition"])
+# 48         fig2 = build_scoring_line_plot(logs["scoring"])
+# 49         fig3 = build_recommendation_bar_plot(logs["recommendation"])
+# 50 
+# 51         self.assertGreater(len(fig1.data), 0)
+# 52         self.assertGreater(len(fig2.data), 0)
+# 53         self.assertGreater(len(fig3.data), 0)
+# 54 
+# 55 
+# 56 if __name__ == "__main__":
+# 57     unittest.main()
+
+
+# test_factories.py
+
+# 1 from app.factories.agent import AgentFactory
+# 2 from app.factories.system_manager import SystemManagerFactory
+# 3 from app.factories.state_manager import StateManagerFactory
+# 4 from app.factories.prompt_manager import PromptGeneratorFactory
+# 5 from app.factories.tool_provider import ToolProviderFactory
+# 6 from app.factories.scoring_provider import ScoringProviderFactory
+# 7 from app.factories.context_provider import ContextProviderFactory
+# 8 from app.factories.logging_provider import CodeQualityLog, RecommendationLog
+# 9 
+# 10 
+# 11 from tests.test_bootstrap import load_all_extensions
+# 12 
+# 13 
+# 14 _def_extensions_loaded = False
+# 15 
+# 16 
+# 17 def _ensure_loaded():
+# 18     global _def_extensions_loaded
+# 19     if not _def_extensions_loaded:
+# 20         load_all_extensions()
+# 21         _def_extensions_loaded = True
+# 22 
+# 23 
+# 24 def test_agent_factory():
+# 25     _ensure_loaded()
+# 26     agent = AgentFactory.create("dummy")
+# 27     assert agent is not None
+# 28 
+# 29 
+# 30 def test_system_manager_factory():
+# 31     _ensure_loaded()
+# 32     manager = SystemManagerFactory.create("dummy")
+# 33     assert manager is not None
+# 34 
+# 35 
+# 36 def test_state_manager_factory():
+# 37     _ensure_loaded()
+# 38     manager = StateManagerFactory.create("dummy")
+# 39     assert manager is not None
+# 40 
+# 41 
+# 42 def test_context_provider_factory():
+# 43     _ensure_loaded()
+# 44     provider = ContextProviderFactory.create("dummy")
+# 45     assert provider.get_context() == {}
+# 46 
+# 47 
+# 48 def test_prompt_generator_factory():
+# 49     _ensure_loaded()
+# 50     provider = ContextProviderFactory.create("dummy")
+# 51     generator = PromptGeneratorFactory.create("basic", context_provider=provider)
+# 52     assert isinstance(generator.generate_prompt({}, {}), str)
+# 53 
+# 54 
+# 55 def test_tool_provider_factory():
+# 56     _ensure_loaded()
+# 57     provider = ToolProviderFactory.create("dummy")
+# 58     assert provider.run() is True
+# 59 
+# 60 
+# 61 def test_scoring_provider_factory():
+# 62     _ensure_loaded()
+# 63     provider = ScoringProviderFactory.create("dummy")
+# 64     assert provider.score() == 0
+# 65 
+# 66 
+# 67 def test_basic_scoring_provider_factory():
+# 68     _ensure_loaded()
+# 69     provider = ScoringProviderFactory.create("basic")
+# 70     result = provider.score(
+# 71         {
+# 72             "evaluation": [],
+# 73             "code_quality": [],
+# 74             "conversation": [],
+# 75             "prompt": [],
+# 76             "state": [],
+# 77         }
+# 78     )
+# 79     assert isinstance(result, dict)
+# 80 
+# 81 
+# 82 def test_advanced_scoring_provider_factory():
+# 83     _ensure_loaded()
+# 84     provider = ScoringProviderFactory.create("advanced")
+# 85     result = provider.score(
+# 86         {
+# 87             "code_quality": [
+# 88                 CodeQualityLog(
+# 89                     experiment_id="exp",
+# 90                     round=0,
+# 91                     symbol="mod",
+# 92                     lines_of_code=10,
+# 93                     cyclomatic_complexity=5.0,
+# 94                     maintainability_index=80.0,
+# 95                     lint_errors=0,
+# 96                 )
+# 97             ],
+# 98             "recommendation": [
+# 99                 RecommendationLog(
+# 100                     experiment_id="exp",
+# 101                     round=0,
+# 102                     symbol="mod",
+# 103                     file_path="mod.py",
+# 104                     line_start=0,
+# 105                     line_end=0,
+# 106                     recommendation="{}",
+# 107                     context="ctx",
+# 108                 )
+# 109             ],
+# 110         },
+# 111         experiment_id="exp",
+# 112     )
+# 113     assert result["maintainability_index"] == 80.0
+# 114     assert result["cyclomatic_complexity"] == 5.0
+# 115     assert result["recommendation_quality"] == 1.0
+
+
+# test_feedback.py
+
+# 1 import unittest
+# 2 from importlib import import_module
+# 3 from unittest.mock import patch, MagicMock
+# 4 from pathlib import Path
+# 5 
+# 6 from app.utilities.feedback import FeedbackRepository
+# 7 from app.utilities.metadata.logging.log_schemas import FeedbackLog
+# 8 from app.factories.agent import AgentFactory
+# 9 
+# 10 
+# 11 class FeedbackTests(unittest.TestCase):
+# 12     def setUp(self):
+# 13         import_module("app.extensions.agents")
+# 14         import_module("app.extensions.tool_providers")
+# 15         FeedbackRepository.clear()
+# 16 
+# 17     def test_repository(self):
+# 18         log = FeedbackLog(
+# 19             experiment_id="exp", round=0, source="tester", feedback="good"
+# 20         )
+# 21         FeedbackRepository.add_feedback(log)
+# 22         logs = FeedbackRepository.get_feedback("exp")
+# 23         self.assertEqual(len(logs), 1)
+# 24         self.assertEqual(logs[0].feedback, "good")
+# 25 
+# 26     @patch("app.extensions.agents.generator_agent.ToolProviderFactory.create")
+# 27     @patch("app.extensions.agents.generator_agent.SnapshotWriter.write_snapshot")
+# 28     @patch("app.extensions.agents.generator_agent.LoggingProvider.log_feedback")
+# 29     def test_agent_accepts_feedback(self, log_fb, snap, mock_create):
+# 30         stub = MagicMock()
+# 31         stub.run.return_value = MagicMock()
+# 32         mock_create.return_value = stub
+# 33 
+# 34         tmp = Path("g.py")
+# 35         tmp.write_text("x=1\n")
+# 36         try:
+# 37             agent = AgentFactory.create("generator", target=str(tmp))
+# 38             agent.run(feedback=["formatting"])
+# 39             log_fb.assert_called()
+# 40         finally:
+# 41             tmp.unlink(missing_ok=True)
+# 42 
+# 43 
+# 44 if __name__ == "__main__":
+# 45     unittest.main()
+
+
+# test_integration.py
+
+# 1 from importlib import import_module
+# 2 from app.abstract_classes.experiment import Experiment
+# 3 from app.factories.experiment_config_provider import ExperimentConfigProvider
+# 4 
+# 5 
+# 6 def _load_extensions() -> None:
+# 7     import_module("app.extensions.system_managers")
+# 8     import_module("app.extensions.state_managers")
+# 9     import_module("app.extensions.agents")
+# 10     import_module("app.extensions.prompt_generators")
+# 11     import_module("app.extensions.context_providers")
+# 12     import_module("app.extensions.tool_providers")
+# 13     import_module("app.extensions.scoring_models")
+# 14 
+# 15 
+# 16 def test_end_to_end_experiment(tmp_path):
+# 17     #  Reset global DB connection BEFORE importing logging or creating the provider
+# 18     from app.utilities import db
+# 19 
+# 20     db._CONN = None
+# 21     db.DB_PATH = tmp_path / "codecritic.sqlite3"
+# 22 
+# 23     #  Explicitly reset LoggingProvider singleton before instantiation
+# 24     from app.factories.logging_provider import LoggingProvider
+# 25 
+# 26     LoggingProvider._instance = None
+# 27 
+# 28     #  Now initialize the database schema with the correct writable path
+# 29     from app.utilities.schema import initialize_database
+# 30 
+# 31     initialize_database(reset=True)
+# 32 
+# 33     #  Load all extensions after initializing the database
+# 34     _load_extensions()
+# 35 
+# 36     #  Create a new LoggingProvider that correctly uses the writable database
+# 37     logger = LoggingProvider(db_path=db.DB_PATH, output_path=tmp_path / "logs.jsonl")
+# 38 
+# 39     #  Register the experiment config and run the experiment
+# 40     config = {"system_manager_id": "system", "scoring_model_id": "basic"}
+# 41     ExperimentConfigProvider.register(1, config)
+# 42 
+# 43     exp = Experiment(config_id=1, logger=logger)
+# 44     metrics = exp.run()
+# 45 
+# 46     assert "functional_correctness" in metrics
+
+
+# test_mediator_agent.py
+
+# 1 import unittest
+# 2 from importlib import import_module
+# 3 from unittest.mock import patch
+# 4 
+# 5 from app.factories.agent import AgentFactory
+# 6 
+# 7 
+# 8 class MediatorAgentTests(unittest.TestCase):
+# 9     def setUp(self):
+# 10         import_module("app.extensions.agents")
+# 11 
+# 12     @patch("app.extensions.agents.mediator_agent.SnapshotWriter.write_snapshot")
+# 13     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_conversation")
+# 14     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_error")
+# 15     def test_mediator_with_discrepancy(self, log_error, log_conv, snap):
+# 16         agent = AgentFactory.create("mediator", target="demo.py")
+# 17         agent.run(
+# 18             generator_output="x=1",
+# 19             evaluation_metrics={"lint_errors": 1, "maintainability_index": 60},
+# 20         )
+# 21         self.assertEqual(len(agent.conversation_logs), 1)
+# 22         self.assertTrue(agent.conversation_logs[0].intervention)
+# 23         self.assertIn("Resolve lint errors", agent.conversation_logs[0].content)
+# 24         snap.assert_called_once()
+# 25         log_conv.assert_called_once()
+# 26         log_error.assert_not_called()
+# 27 
+# 28     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_conversation")
+# 29     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_error")
+# 30     def test_mediator_no_discrepancy(self, log_error, log_conv):
+# 31         agent = AgentFactory.create("mediator", target="demo.py")
+# 32         agent.run(
+# 33             generator_output="x=1",
+# 34             evaluation_metrics={"lint_errors": 0, "maintainability_index": 90},
+# 35         )
+# 36         self.assertEqual(len(agent.conversation_logs), 1)
+# 37         self.assertFalse(agent.conversation_logs[0].intervention)
+# 38         self.assertEqual(agent.conversation_logs[0].content, "")
+# 39         log_conv.assert_called_once()
+# 40         log_error.assert_not_called()
+# 41 
+# 42     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_conversation")
+# 43     @patch("app.extensions.agents.mediator_agent.LoggingProvider.log_error")
+# 44     def test_mediator_missing_metrics(self, log_error, log_conv):
+# 45         agent = AgentFactory.create("mediator", target="demo.py")
+# 46         agent.run(generator_output="x=1", evaluation_metrics=None)
+# 47         self.assertEqual(len(agent.error_logs), 1)
+# 48         log_conv.assert_not_called()
+# 49         log_error.assert_called_once()
+# 50 
+# 51 
+# 52 if __name__ == "__main__":
+# 53     unittest.main()
+
+
+# test_patch_agent.py
+
+# 1 import subprocess
+# 2 import unittest
+# 3 from importlib import import_module
+# 4 from pathlib import Path
+# 5 from unittest.mock import patch, MagicMock
+# 6 
+# 7 from app.factories.agent import AgentFactory
+# 8 from app.enums.agent_enums import AgentRole
+# 9 from app.factories.logging_provider import ConversationLog
+# 10 from app.utilities.snapshots.snapshot_writer import SnapshotWriter
+# 11 
+# 12 
+# 13 class PatchAgentTests(unittest.TestCase):
+# 14     def setUp(self):
+# 15         import_module("app.extensions.agents")
+# 16         import_module("app.extensions.tool_providers")
+# 17 
+# 18     def _stub(self):
+# 19         proc = subprocess.CompletedProcess(["tool"], 0)
+# 20         stub = MagicMock()
+# 21         stub.run.return_value = proc
+# 22         return stub
+# 23 
+# 24     @patch("app.extensions.agents.patch_agent.SnapshotWriter.write_snapshot")
+# 25     @patch("app.extensions.agents.patch_agent.LoggingProvider.log_code_quality")
+# 26     @patch("app.extensions.agents.patch_agent.LoggingProvider.log_error")
+# 27     @patch("app.extensions.agents.patch_agent.LoggingProvider.log_conversation")
+# 28     @patch("app.extensions.agents.patch_agent.ToolProviderFactory.create")
+# 29     @patch("app.extensions.agents.patch_agent._analyze_radon", return_value=(1.0, 90.0))
+# 30     def test_patch_success(
+# 31         self, mock_radon, mock_create, log_conv, log_err, log_q, snap
+# 32     ):
+# 33         black = self._stub()
+# 34         ruff = self._stub()
+# 35         mypy = self._stub()
+# 36         mock_create.side_effect = [black, ruff, mypy]
+# 37 
+# 38         tmp = Path("patch_success.py")
+# 39         tmp.write_text("x = 1\n")
+# 40         try:
+# 41             conv = ConversationLog(
+# 42                 experiment_id="exp",
+# 43                 round=0,
+# 44                 agent_role=AgentRole.MEDIATOR,
+# 45                 target=str(tmp),
+# 46                 content='[{"op":"replace","from":"1","to":"2"}, {"op":"append","text":"\\n#  done"}]',
+# 47                 originating_agent="mediator",
+# 48                 intervention=True,
+# 49             )
+# 50             agent = AgentFactory.create(
+# 51                 "patch", target=str(tmp), snapshot_writer=SnapshotWriter(root="snap")
+# 52             )
+# 53             agent.run(recommendations=[conv])
+# 54             self.assertEqual(tmp.read_text(), "x = 2\n\n#  done")
+# 55             self.assertEqual(len(agent.conversation_logs), 1)
+# 56             self.assertEqual(len(agent.quality_logs), 1)
+# 57             self.assertEqual(agent.error_logs, [])
+# 58             log_conv.assert_called_once()
+# 59             log_q.assert_called_once()
+# 60             log_err.assert_not_called()
+# 61             snap.assert_called_once()
+# 62         finally:
+# 63             tmp.unlink(missing_ok=True)
+# 64 
+# 65     @patch("app.extensions.agents.patch_agent.SnapshotWriter.write_snapshot")
+# 66     @patch("app.extensions.agents.patch_agent.LoggingProvider.log_error")
+# 67     @patch("app.extensions.agents.patch_agent.LoggingProvider.log_conversation")
+# 68     @patch("app.extensions.agents.patch_agent.ToolProviderFactory.create")
+# 69     def test_patch_conflict(self, mock_create, log_conv, log_err, snap):
+# 70         black = self._stub()
+# 71         ruff = self._stub()
+# 72         mypy = self._stub()
+# 73         mock_create.side_effect = [black, ruff, mypy]
+# 74 
+# 75         tmp = Path("patch_fail.py")
+# 76         tmp.write_text("x = 1\n")
+# 77         try:
+# 78             conv = ConversationLog(
+# 79                 experiment_id="exp",
+# 80                 round=0,
+# 81                 agent_role=AgentRole.MEDIATOR,
+# 82                 target=str(tmp),
+# 83                 content='[{"op":"replace","from":"missing","to":"0"}]',
+# 84                 originating_agent="mediator",
+# 85                 intervention=True,
+# 86             )
+# 87             agent = AgentFactory.create(
+# 88                 "patch", target=str(tmp), snapshot_writer=SnapshotWriter(root="snap")
+# 89             )
+# 90             agent.run(recommendations=[conv])
+# 91             self.assertEqual(tmp.read_text(), "x = 1\n")
+# 92             self.assertEqual(len(agent.error_logs), 1)
+# 93             log_err.assert_called()
+# 94             log_conv.assert_called_once()
+# 95             snap.assert_called_once()
+# 96         finally:
+# 97             tmp.unlink(missing_ok=True)
+# 98 
+# 99 
+# 100 if __name__ == "__main__":
+# 101     unittest.main()
+
+
+# test_recommendation_agent.py
+
+# 1 import unittest
+# 2 from importlib import import_module
+# 3 from unittest.mock import patch
+# 4 from pathlib import Path
+# 5 import tempfile
+# 6 import json
+# 7 
+# 8 from app.factories.agent import AgentFactory
+# 9 from app.enums.agent_enums import AgentRole
+# 10 from app.factories.logging_provider import (
+# 11     ConversationLog,
+# 12     CodeQualityLog,
+# 13     ScoringLog,
+# 14 )
+# 15 from app.enums.scoring_enums import ScoringMetric
+# 16 from app.utilities.snapshots.snapshot_writer import SnapshotWriter
+# 17 from app.extensions.context_providers.symbol_graph_provider import SymbolGraphProvider
+# 18 
+# 19 
+# 20 class RecommendationAgentTests(unittest.TestCase):
+# 21     def setUp(self):
+# 22         import_module("app.extensions.agents")
+# 23 
+# 24     @patch("app.extensions.agents.recommendation_agent.SnapshotWriter.write_snapshot")
+# 25     @patch(
+# 26         "app.extensions.agents.recommendation_agent.LoggingProvider.log_recommendation"
+# 27     )
+# 28     @patch(
+# 29         "app.extensions.agents.recommendation_agent.LoggingProvider.log_conversation"
+# 30     )
+# 31     @patch("app.extensions.agents.recommendation_agent.LoggingProvider.log_error")
+# 32     def test_generate_recommendation(self, log_err, log_conv, log_rec, snap):
+# 33         conv = ConversationLog(
+# 34             experiment_id="exp",
+# 35             round=0,
+# 36             agent_role=AgentRole.MEDIATOR,
+# 37             target="demo.py",
+# 38             content="Use list comprehension",
+# 39             originating_agent="mediator",
+# 40             intervention=True,
+# 41         )
+# 42         qlog = CodeQualityLog(
+# 43             experiment_id="exp",
+# 44             round=0,
+# 45             symbol="demo.py",
+# 46             lines_of_code=10,
+# 47             cyclomatic_complexity=12.0,
+# 48             maintainability_index=60.0,
+# 49             lint_errors=1,
+# 50         )
+# 51         slog = ScoringLog(
+# 52             experiment_id="exp",
+# 53             round=0,
+# 54             metric=ScoringMetric.LINTING_COMPLIANCE,
+# 55             value=0.3,
+# 56         )
+# 57 
+# 58         agent = AgentFactory.create(
+# 59             "recommendation",
+# 60             target="demo.py",
+# 61             snapshot_writer=SnapshotWriter(root="rec_snap"),
+# 62         )
+# 63         agent.run(conversation_log=[conv], code_quality_log=[qlog], scoring_log=[slog])
+# 64 
+# 65         self.assertEqual(len(agent.recommendation_logs), 1)
+# 66         rec = agent.recommendation_logs[0]
+# 67         data = json.loads(rec.recommendation)
+# 68         actions = {d["action"] for d in data}
+# 69         self.assertIn("general", actions)
+# 70         log_rec.assert_called_once()
+# 71         log_conv.assert_called_once()
+# 72         log_err.assert_not_called()
+# 73         snap.assert_called_once()
+# 74 
+# 75     @patch(
+# 76         "app.extensions.agents.recommendation_agent.LoggingProvider.log_recommendation"
+# 77     )
+# 78     def test_no_recommendation(self, log_rec):
+# 79         agent = AgentFactory.create("recommendation", target="demo.py")
+# 80         agent.run(conversation_log=[], code_quality_log=[], scoring_log=[])
+# 81         self.assertEqual(agent.recommendation_logs, [])
+# 82         log_rec.assert_not_called()
+# 83 
+# 84     @patch("app.extensions.agents.recommendation_agent.SnapshotWriter.write_snapshot")
+# 85     @patch(
+# 86         "app.extensions.agents.recommendation_agent.LoggingProvider.log_recommendation"
+# 87     )
+# 88     @patch(
+# 89         "app.extensions.agents.recommendation_agent.LoggingProvider.log_conversation"
+# 90     )
+# 91     def test_symbol_graph_analysis(self, log_conv, log_rec, snap):
+# 92         with tempfile.TemporaryDirectory() as tmp:
+# 93             src = Path(tmp) / "mod.py"
+# 94             src.write_text(
+# 95                 """import os\n\n"""
+# 96                 "def used():\n    return os.getcwd()\n\n"
+# 97                 "def unused():\n    pass\n\n"
+# 98                 "def a():\n    b()\n\n"
+# 99                 "def b():\n    a()\n",
+# 100                 encoding="utf-8",
+# 101             )
+# 102             provider = SymbolGraphProvider(str(src))
+# 103             agent = AgentFactory.create(
+# 104                 "recommendation",
+# 105                 target=str(src),
+# 106                 context_provider=provider,
+# 107                 snapshot_writer=SnapshotWriter(root="snap"),
+# 108             )
+# 109             agent.run()
+# 110 
+# 111             self.assertEqual(len(agent.recommendation_logs), 1)
+# 112             rec = json.loads(agent.recommendation_logs[0].recommendation)
+# 113             actions = {d["action"] for d in rec}
+# 114             self.assertIn("remove_unused_symbol", actions)
+# 115             self.assertIn("refactor_circular_dependency", actions)
+# 116             log_rec.assert_called_once()
+# 117             log_conv.assert_called_once()
+# 118             assert snap.call_count == 2
+# 119 
+# 120 
+# 121 if __name__ == "__main__":
+# 122     unittest.main()
+
+
+# test_symbol_graph_provider.py
+
+# 1 import unittest
+# 2 from pathlib import Path
+# 3 import tempfile
+# 4 from unittest.mock import patch
+# 5 
+# 6 from app.extensions.context_providers.symbol_graph_provider import SymbolGraphProvider
+# 7 
+# 8 
+# 9 class SymbolGraphProviderTests(unittest.TestCase):
+# 10     def test_missing_path(self):
+# 11         with tempfile.TemporaryDirectory() as tmp:
+# 12             provider = SymbolGraphProvider(str(Path(tmp) / "missing.py"))
+# 13             self.assertEqual(provider.get_context(), {})
+# 14 
+# 15     def test_symbol_graph_generation(self):
+# 16         with tempfile.TemporaryDirectory() as tmp:
+# 17             src = Path(tmp) / "mod.py"
+# 18             src.write_text(
+# 19                 """import math as m
+# 20 VAR = 1
+# 21 
+# 22 def foo(x):
+# 23     return x + VAR
+# 24 
+# 25 class Bar:
+# 26     def baz(self, y):
+# 27         return foo(y) + m.sqrt(y)
+# 28 """,
+# 29                 encoding="utf-8",
+# 30             )
+# 31             provider = SymbolGraphProvider(str(src))
+# 32             ctx = provider.get_context()
+# 33             graph = ctx["symbol_graph"]
+# 34             self.assertIn("mod.foo", graph)
+# 35             self.assertEqual(graph["mod.foo"]["type"], "function")
+# 36             self.assertIn("mod.Bar.baz", graph)
+# 37             self.assertEqual(
+# 38                 set(graph["mod.Bar.baz"].get("calls", [])), {"foo", "sqrt"}
+# 39             )
+# 40             resolved = provider.resolve_symbol("mod.foo")
+# 41             self.assertIs(resolved, graph["mod.foo"])
+# 42 
+# 43     def test_package_support(self):
+# 44         with tempfile.TemporaryDirectory() as tmp:
+# 45             pkg = Path(tmp) / "pkg"
+# 46             pkg.mkdir()
+# 47             (pkg / "__init__.py").write_text("", encoding="utf-8")
+# 48             (pkg / "mod.py").write_text("def func():\n    pass\n", encoding="utf-8")
+# 49             provider = SymbolGraphProvider(str(pkg))
+# 50             ctx = provider.get_context()
+# 51             graph = ctx["symbol_graph"]
+# 52             self.assertIn("mod.func", graph)
+# 53 
+# 54     def test_symbol_graph_cache(self):
+# 55         with tempfile.TemporaryDirectory() as tmp:
+# 56             src = Path(tmp) / "mod.py"
+# 57             src.write_text("def func():\n    pass\n", encoding="utf-8")
+# 58             provider = SymbolGraphProvider(str(src))
+# 59             provider.get_context()
+# 60             with patch.object(
+# 61                 SymbolGraphProvider, "_parse_file", side_effect=AssertionError
+# 62             ):
+# 63                 ctx = provider.get_context()
+# 64             self.assertIn("mod.func", ctx["symbol_graph"])
+# 65 
+# 66 
+# 67 if __name__ == "__main__":
+# 68     unittest.main()
+
+
+# test_system_state_management.py
+
+# 1 from importlib import import_module
+# 2 from app.abstract_classes.experiment import Experiment
+# 3 from app.factories.experiment_config_provider import ExperimentConfigProvider
+# 4 
+# 5 
+# 6 def _load_extensions() -> None:
+# 7     import_module("app.extensions.system_managers")
+# 8     import_module("app.extensions.state_managers")
+# 9     import_module("app.extensions.agents")
+# 10     import_module("app.extensions.prompt_generators")
+# 11     import_module("app.extensions.context_providers")
+# 12     import_module("app.extensions.tool_providers")
+# 13     import_module("app.extensions.scoring_models")
+# 14 
+# 15 
+# 16 def test_end_to_end_experiment(tmp_path):
+# 17     #  1) Reset global DB connection state and point DB_PATH at a fresh tmp file
+# 18     from app.utilities import db
+# 19 
+# 20     db._CONN = None
+# 21     db.DB_PATH = tmp_path / "codecritic.sqlite3"
+# 22 
+# 23     #  2) Initialize the schema in that writable location
+# 24     from app.utilities.schema import initialize_database
+# 25 
+# 26     initialize_database(reset=True)
+# 27 
+# 28     #  3) Load all extension registries
+# 29     _load_extensions()
+# 30 
+# 31     #  4) Import & reset the LoggingProvider singleton
+# 32     from app.factories.logging_provider import LoggingProvider
+# 33 
+# 34     LoggingProvider._instance = None
+# 35 
+# 36     #  5) Instantiate a new logger bound to our temp DB
+# 37     logger = LoggingProvider(
+# 38         db_path=db.DB_PATH,
+# 39         output_path=tmp_path / "demo_logs.jsonl",
+# 40     )
+# 41 
+# 42     #  6) Register experiment configuration and run
+# 43     config = {"system_manager_id": "system", "scoring_model_id": "basic"}
+# 44     ExperimentConfigProvider.register(1, config)
+# 45 
+# 46     exp = Experiment(config_id=1, logger=logger)
+# 47     metrics = exp.run()
+# 48 
+# 49     #  7) Verify that at least one expected metric is present
+# 50     assert "functional_correctness" in metrics
+
+
+# test_tool_providers.py
+
+# 1 import unittest
+# 2 from importlib import import_module
+# 3 from pathlib import Path
+# 4 import sys
+# 5 
+# 6 from app.factories.tool_provider import ToolProviderFactory
+# 7 
+# 8 
+# 9 class ToolProviderTests(unittest.TestCase):
+# 10     def setUp(self):
+# 11         import_module("app.extensions.tool_providers")
+# 12 
+# 13     def test_black_provider(self):
+# 14         tmp = Path("tp_black.py")
+# 15         tmp.write_text("x=1")
+# 16         try:
+# 17             provider = ToolProviderFactory.create("black")
+# 18             result = provider.run(str(tmp))
+# 19             self.assertEqual(result.returncode, 0)
+# 20             self.assertEqual(result.args[0], sys.executable)
+# 21             self.assertEqual(tmp.read_text(), "x = 1\n")
+# 22         finally:
+# 23             tmp.unlink(missing_ok=True)
+# 24 
+# 25     def test_mypy_provider(self):
+# 26         tmp = Path("tp_mypy.py")
+# 27         tmp.write_text("a: int = 1\n")
+# 28         try:
+# 29             provider = ToolProviderFactory.create("mypy")
+# 30             result = provider.run(str(tmp))
+# 31             self.assertEqual(result.returncode, 0)
+# 32             self.assertEqual(result.args[0], sys.executable)
+# 33         finally:
+# 34             tmp.unlink(missing_ok=True)
+# 35 
+# 36     def test_ruff_provider(self):
+# 37         tmp = Path("tp_ruff.py")
+# 38         tmp.write_text("x = 1\n")
+# 39         try:
+# 40             provider = ToolProviderFactory.create("ruff")
+# 41             result = provider.run(str(tmp))
+# 42             self.assertEqual(result.returncode, 0)
+# 43             self.assertEqual(result.args[0], sys.executable)
+# 44         finally:
+# 45             tmp.unlink(missing_ok=True)
+# 46 
+# 47     def test_radon_provider(self):
+# 48         tmp = Path("tp_radon.py")
+# 49         tmp.write_text("def f(x):\n    return x + 1\n")
+# 50         try:
+# 51             provider = ToolProviderFactory.create("radon")
+# 52             try:
+# 53                 result = provider.run(str(tmp))
+# 54             except RuntimeError:
+# 55                 self.skipTest("radon tool unavailable")
+# 56             else:
+# 57                 self.assertEqual(result.returncode, 0)
+# 58                 self.assertEqual(result.args[0], sys.executable)
+# 59         finally:
+# 60             tmp.unlink(missing_ok=True)
+# 61 
+# 62 
+# 63 if __name__ == "__main__":
+# 64     unittest.main()
+
+
+
+# === NON-PYTHON FILES ===
+

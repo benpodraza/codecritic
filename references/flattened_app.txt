@@ -176,6 +176,47 @@
 # 23         raise NotImplementedError
 
 
+# abstract_classes\scoring_model_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from abc import ABC, abstractmethod
+# 4 from typing import Dict
+# 5 
+# 6 from ..factories.logging_provider import LoggingMixin, LoggingProvider, ScoringLog
+# 7 from ..enums.scoring_enums import ScoringMetric
+# 8 
+# 9 
+# 10 class ScoringModelBase(LoggingMixin, ABC):
+# 11     """Base class for more granular scoring models."""
+# 12 
+# 13     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 14         super().__init__(logger)
+# 15 
+# 16     def score(self, experiment_id: str, *args, **kwargs) -> Dict[str, float]:
+# 17         self._log.debug("Scoring start")
+# 18         result = self._score(experiment_id, *args, **kwargs)
+# 19         self._log.debug("Scoring end")
+# 20         return result
+# 21 
+# 22     @abstractmethod
+# 23     def _score(self, experiment_id: str, *args, **kwargs) -> Dict[str, float]:
+# 24         """Compute evaluation metrics."""
+# 25         raise NotImplementedError
+# 26 
+# 27     def _log_metric(
+# 28         self, experiment_id: str, metric: ScoringMetric, value: float
+# 29     ) -> None:
+# 30         self.log_scoring(
+# 31             ScoringLog(
+# 32                 experiment_id=experiment_id,
+# 33                 round=0,
+# 34                 metric=metric,
+# 35                 value=value,
+# 36             )
+# 37         )
+
+
 # abstract_classes\scoring_provider_base.py
 
 # 1 from __future__ import annotations
@@ -418,12 +459,13 @@
 # 9     MEDIATOR = "mediator"
 # 10     PATCHER = "patcher"
 # 11     EVALUATOR = "evaluator"
-# 12 
+# 12     RECOMMENDER = "recommender"
 # 13 
-# 14 class AgentState(Enum):
-# 15     INIT = "init"
-# 16     RUNNING = "running"
-# 17     COMPLETE = "complete"
+# 14 
+# 15 class AgentState(Enum):
+# 16     INIT = "init"
+# 17     RUNNING = "running"
+# 18     COMPLETE = "complete"
 
 
 # enums\logging_enums.py
@@ -440,6 +482,8 @@
 # 10     SCORING = "scoring"
 # 11     CODE_QUALITY = "code_quality"
 # 12     ERROR = "error"
+# 13     RECOMMENDATION = "recommendation"
+# 14     FEEDBACK = "feedback"
 
 
 # enums\scoring_enums.py
@@ -454,6 +498,9 @@
 # 8     LINTING_COMPLIANCE = "linting_compliance"
 # 9     AGENT_SUCCESS_RATE = "agent_role_success_rate"
 # 10     RETRY_SUCCESS_RATE = "retry_success_rate"
+# 11     COVERAGE = "coverage"
+# 12     CYCLOMATIC_COMPLEXITY = "cyclomatic_complexity"
+# 13     RECOMMENDATION_QUALITY = "recommendation_quality"
 
 
 # enums\system_enums.py
@@ -566,21 +613,24 @@
 # 3 from .evaluator_agent import EvaluatorAgent
 # 4 from .mediator_agent import MediatorAgent
 # 5 from .patch_agent import PatchAgent
-# 6 from ...registries.agents import AGENT_REGISTRY
-# 7 
-# 8 AGENT_REGISTRY.register("dummy", DummyAgent)
-# 9 AGENT_REGISTRY.register("generator", GeneratorAgent)
-# 10 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
-# 11 AGENT_REGISTRY.register("mediator", MediatorAgent)
-# 12 AGENT_REGISTRY.register("patch", PatchAgent)
-# 13 
-# 14 __all__ = [
-# 15     "DummyAgent",
-# 16     "GeneratorAgent",
-# 17     "EvaluatorAgent",
-# 18     "MediatorAgent",
-# 19     "PatchAgent",
-# 20 ]
+# 6 from .recommendation_agent import RecommendationAgent
+# 7 from ...registries.agents import AGENT_REGISTRY
+# 8 
+# 9 AGENT_REGISTRY.register("dummy", DummyAgent)
+# 10 AGENT_REGISTRY.register("generator", GeneratorAgent)
+# 11 AGENT_REGISTRY.register("evaluator", EvaluatorAgent)
+# 12 AGENT_REGISTRY.register("mediator", MediatorAgent)
+# 13 AGENT_REGISTRY.register("patch", PatchAgent)
+# 14 AGENT_REGISTRY.register("recommendation", RecommendationAgent)
+# 15 
+# 16 __all__ = [
+# 17     "DummyAgent",
+# 18     "GeneratorAgent",
+# 19     "EvaluatorAgent",
+# 20     "MediatorAgent",
+# 21     "PatchAgent",
+# 22     "RecommendationAgent",
+# 23 ]
 
 
 # extensions\agents\dummy_agent.py
@@ -608,132 +658,144 @@
 # 11     CodeQualityLog,
 # 12     ErrorLog,
 # 13     LoggingProvider,
-# 14 )
-# 15 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
-# 16 
+# 14     FeedbackLog,
+# 15 )
+# 16 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 # 17 
-# 18 def _analyze_radon(code: str) -> tuple[float, float]:
-# 19     """Return cyclomatic complexity and maintainability index for the code."""
-# 20     try:
-# 21         from radon.complexity import cc_visit
-# 22         from radon.metrics import mi_visit
-# 23 
-# 24         blocks = cc_visit(code)
-# 25         cc = sum(b.complexity for b in blocks) / max(len(blocks), 1)
-# 26         mi = mi_visit(code, True)
-# 27         return float(cc), float(mi)
-# 28     except Exception:
-# 29         return 0.0, 0.0
-# 30 
+# 18 
+# 19 def _analyze_radon(code: str) -> tuple[float, float]:
+# 20     """Return cyclomatic complexity and maintainability index for the code."""
+# 21     try:
+# 22         from radon.complexity import cc_visit
+# 23         from radon.metrics import mi_visit
+# 24 
+# 25         blocks = cc_visit(code)
+# 26         cc = sum(b.complexity for b in blocks) / max(len(blocks), 1)
+# 27         mi = mi_visit(code, True)
+# 28         return float(cc), float(mi)
+# 29     except Exception:
+# 30         return 0.0, 0.0
 # 31 
-# 32 class EvaluatorAgent(AgentBase):
-# 33     """Run static analysis tools and log code quality metrics."""
-# 34 
-# 35     def __init__(
-# 36         self,
-# 37         target: str,
-# 38         logger: LoggingProvider | None = None,
-# 39         snapshot_writer: SnapshotWriter | None = None,
-# 40     ) -> None:
-# 41         super().__init__(logger)
-# 42         self.target = target
-# 43         self.snapshot_writer = snapshot_writer or SnapshotWriter()
-# 44         self.mypy = ToolProviderFactory.create("mypy")
-# 45         self.ruff = ToolProviderFactory.create("ruff")
-# 46         self.black = ToolProviderFactory.create("black")
-# 47         self.radon = ToolProviderFactory.create("radon")
-# 48         self.quality_logs: List[CodeQualityLog] = []
-# 49         self.error_logs: List[ErrorLog] = []
-# 50 
-# 51     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 52         before = Path(self.target).read_text(encoding="utf-8")
-# 53         lines = len(before.splitlines())
-# 54         complexity = 0.0
-# 55         maintainability = 0.0
-# 56         lint_return = 0
-# 57 
-# 58         try:
-# 59             self.mypy.run(self.target)
-# 60         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 61             self.error_logs.append(
-# 62                 ErrorLog(
-# 63                     experiment_id="exp",
-# 64                     round=0,
-# 65                     error_type=type(exc).__name__,
-# 66                     message=str(exc),
-# 67                     file_path=self.target,
-# 68                 )
-# 69             )
-# 70 
-# 71         try:
-# 72             ruff_proc = self.ruff.run(self.target)
-# 73             lint_return = ruff_proc.returncode
-# 74         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 75             self.error_logs.append(
-# 76                 ErrorLog(
-# 77                     experiment_id="exp",
-# 78                     round=0,
-# 79                     error_type=type(exc).__name__,
-# 80                     message=str(exc),
-# 81                     file_path=self.target,
-# 82                 )
-# 83             )
-# 84             lint_return = 1
-# 85 
-# 86         try:
-# 87             self.black.run(self.target, check=True)
-# 88         except Exception as exc:  #  pragma: no cover - tool execution failure
-# 89             self.error_logs.append(
-# 90                 ErrorLog(
-# 91                     experiment_id="exp",
-# 92                     round=0,
-# 93                     error_type=type(exc).__name__,
-# 94                     message=str(exc),
-# 95                     file_path=self.target,
-# 96                 )
-# 97             )
-# 98 
-# 99         try:
-# 100             #  Run radon CLI primarily for logging/debug purposes
-# 101             self.radon.run(self.target)
-# 102             complexity, maintainability = _analyze_radon(before)
-# 103         except Exception as exc:
-# 104             self._log.warning("Radon unavailable: %s", exc)
-# 105             self.error_logs.append(
-# 106                 ErrorLog(
-# 107                     experiment_id="exp",
-# 108                     round=0,
-# 109                     error_type=type(exc).__name__,
-# 110                     message=f"Radon analysis failed: {exc}",
-# 111                     file_path=self.target,
-# 112                     timestamp=datetime.now(timezone.utc),
-# 113                 )
-# 114             )
-# 115 
-# 116         log = CodeQualityLog(
-# 117             experiment_id="exp",
-# 118             round=0,
-# 119             symbol=self.target,
-# 120             lines_of_code=lines,
-# 121             cyclomatic_complexity=complexity,
-# 122             maintainability_index=maintainability,
-# 123             lint_errors=0 if lint_return == 0 else 1,
-# 124         )
-# 125         self.quality_logs.append(log)
-# 126         self.log_code_quality(log)
-# 127         for err in self.error_logs:
-# 128             self.log_error(err)
-# 129 
-# 130         after = Path(self.target).read_text(encoding="utf-8")
-# 131         self.snapshot_writer.write_snapshot(
-# 132             experiment_id="exp",
-# 133             round=0,
-# 134             file_path=self.target,
-# 135             before=before,
-# 136             after=after,
-# 137             symbol=self.target,
-# 138             agent_role=AgentRole.EVALUATOR,
-# 139         )
+# 32 
+# 33 class EvaluatorAgent(AgentBase):
+# 34     """Run static analysis tools and log code quality metrics."""
+# 35 
+# 36     def __init__(
+# 37         self,
+# 38         target: str,
+# 39         logger: LoggingProvider | None = None,
+# 40         snapshot_writer: SnapshotWriter | None = None,
+# 41     ) -> None:
+# 42         super().__init__(logger)
+# 43         self.target = target
+# 44         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 45         self.mypy = ToolProviderFactory.create("mypy")
+# 46         self.ruff = ToolProviderFactory.create("ruff")
+# 47         self.black = ToolProviderFactory.create("black")
+# 48         self.radon = ToolProviderFactory.create("radon")
+# 49         self.quality_logs: List[CodeQualityLog] = []
+# 50         self.error_logs: List[ErrorLog] = []
+# 51 
+# 52     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 53         feedback = kwargs.get("feedback")
+# 54         if feedback:
+# 55             for item in feedback:
+# 56                 self.log_feedback(
+# 57                     FeedbackLog(
+# 58                         experiment_id="exp",
+# 59                         round=0,
+# 60                         source="evaluator",
+# 61                         feedback=str(item),
+# 62                     )
+# 63                 )
+# 64         before = Path(self.target).read_text(encoding="utf-8")
+# 65         lines = len(before.splitlines())
+# 66         complexity = 0.0
+# 67         maintainability = 0.0
+# 68         lint_return = 0
+# 69 
+# 70         try:
+# 71             self.mypy.run(self.target)
+# 72         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 73             self.error_logs.append(
+# 74                 ErrorLog(
+# 75                     experiment_id="exp",
+# 76                     round=0,
+# 77                     error_type=type(exc).__name__,
+# 78                     message=str(exc),
+# 79                     file_path=self.target,
+# 80                 )
+# 81             )
+# 82 
+# 83         try:
+# 84             ruff_proc = self.ruff.run(self.target)
+# 85             lint_return = ruff_proc.returncode
+# 86         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 87             self.error_logs.append(
+# 88                 ErrorLog(
+# 89                     experiment_id="exp",
+# 90                     round=0,
+# 91                     error_type=type(exc).__name__,
+# 92                     message=str(exc),
+# 93                     file_path=self.target,
+# 94                 )
+# 95             )
+# 96             lint_return = 1
+# 97 
+# 98         try:
+# 99             self.black.run(self.target, check=True)
+# 100         except Exception as exc:  #  pragma: no cover - tool execution failure
+# 101             self.error_logs.append(
+# 102                 ErrorLog(
+# 103                     experiment_id="exp",
+# 104                     round=0,
+# 105                     error_type=type(exc).__name__,
+# 106                     message=str(exc),
+# 107                     file_path=self.target,
+# 108                 )
+# 109             )
+# 110 
+# 111         try:
+# 112             #  Run radon CLI primarily for logging/debug purposes
+# 113             self.radon.run(self.target)
+# 114             complexity, maintainability = _analyze_radon(before)
+# 115         except Exception as exc:
+# 116             self._log.warning("Radon unavailable: %s", exc)
+# 117             self.error_logs.append(
+# 118                 ErrorLog(
+# 119                     experiment_id="exp",
+# 120                     round=0,
+# 121                     error_type=type(exc).__name__,
+# 122                     message=f"Radon analysis failed: {exc}",
+# 123                     file_path=self.target,
+# 124                     timestamp=datetime.now(timezone.utc),
+# 125                 )
+# 126             )
+# 127 
+# 128         log = CodeQualityLog(
+# 129             experiment_id="exp",
+# 130             round=0,
+# 131             symbol=self.target,
+# 132             lines_of_code=lines,
+# 133             cyclomatic_complexity=complexity,
+# 134             maintainability_index=maintainability,
+# 135             lint_errors=0 if lint_return == 0 else 1,
+# 136         )
+# 137         self.quality_logs.append(log)
+# 138         self.log_code_quality(log)
+# 139         for err in self.error_logs:
+# 140             self.log_error(err)
+# 141 
+# 142         after = Path(self.target).read_text(encoding="utf-8")
+# 143         self.snapshot_writer.write_snapshot(
+# 144             experiment_id="exp",
+# 145             round=0,
+# 146             file_path=self.target,
+# 147             before=before,
+# 148             after=after,
+# 149             symbol=self.target,
+# 150             agent_role=AgentRole.EVALUATOR,
+# 151         )
 
 
 # extensions\agents\generator_agent.py
@@ -751,73 +813,85 @@
 # 11     ErrorLog,
 # 12     PromptLog,
 # 13     LoggingProvider,
-# 14 )
-# 15 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
-# 16 
+# 14     FeedbackLog,
+# 15 )
+# 16 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 # 17 
-# 18 class GeneratorAgent(AgentBase):
-# 19     """Agent responsible for formatting code using black."""
-# 20 
-# 21     def __init__(
-# 22         self,
-# 23         target: str,
-# 24         logger: LoggingProvider | None = None,
-# 25         snapshot_writer: SnapshotWriter | None = None,
-# 26     ) -> None:
-# 27         super().__init__(logger)
-# 28         self.target = target
-# 29         self.formatter = ToolProviderFactory.create("black")
-# 30         self.docformatter = ToolProviderFactory.create("docformatter")
-# 31         self.prompt_logs: List[PromptLog] = []
-# 32         self.error_logs: List[ErrorLog] = []
-# 33         self.snapshot_writer = snapshot_writer or SnapshotWriter()
-# 34 
-# 35     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 36         before = Path(self.target).read_text(encoding="utf-8")
-# 37         log = PromptLog(
-# 38             experiment_id="exp",
-# 39             round=0,
-# 40             system="system",
-# 41             agent_id="generator",
-# 42             agent_role=AgentRole.GENERATOR,
-# 43             symbol=self.target,
-# 44             prompt="format code",
-# 45             response=None,
-# 46             attempt_number=0,
-# 47             agent_action_outcome="started",
-# 48         )
-# 49         self.prompt_logs.append(log)
-# 50         try:
-# 51             self.formatter.run(self.target)
-# 52             self.docformatter.run(self.target)
-# 53             log.agent_action_outcome = "success"
-# 54             self._log.info("Formatted %s", self.target)
-# 55         except Exception as exc:
-# 56             log.agent_action_outcome = "error"
-# 57             err = ErrorLog(
-# 58                 experiment_id="exp",
-# 59                 round=0,
-# 60                 error_type=type(exc).__name__,
-# 61                 message=str(exc),
-# 62                 file_path=self.target,
-# 63             )
-# 64             self.error_logs.append(err)
-# 65             self._log.exception("Formatting failed for %s", self.target)
-# 66         finally:
-# 67             log.stop = datetime.now(timezone.utc)
-# 68             after = Path(self.target).read_text(encoding="utf-8")
-# 69             self.snapshot_writer.write_snapshot(
+# 18 
+# 19 class GeneratorAgent(AgentBase):
+# 20     """Agent responsible for formatting code using black."""
+# 21 
+# 22     def __init__(
+# 23         self,
+# 24         target: str,
+# 25         logger: LoggingProvider | None = None,
+# 26         snapshot_writer: SnapshotWriter | None = None,
+# 27     ) -> None:
+# 28         super().__init__(logger)
+# 29         self.target = target
+# 30         self.formatter = ToolProviderFactory.create("black")
+# 31         self.docformatter = ToolProviderFactory.create("docformatter")
+# 32         self.prompt_logs: List[PromptLog] = []
+# 33         self.error_logs: List[ErrorLog] = []
+# 34         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 35 
+# 36     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 37         feedback = kwargs.get("feedback")
+# 38         if feedback:
+# 39             for item in feedback:
+# 40                 self.log_feedback(
+# 41                     FeedbackLog(
+# 42                         experiment_id="exp",
+# 43                         round=0,
+# 44                         source="generator",
+# 45                         feedback=str(item),
+# 46                     )
+# 47                 )
+# 48         before = Path(self.target).read_text(encoding="utf-8")
+# 49         log = PromptLog(
+# 50             experiment_id="exp",
+# 51             round=0,
+# 52             system="system",
+# 53             agent_id="generator",
+# 54             agent_role=AgentRole.GENERATOR,
+# 55             symbol=self.target,
+# 56             prompt="format code",
+# 57             response=None,
+# 58             attempt_number=0,
+# 59             agent_action_outcome="started",
+# 60         )
+# 61         self.prompt_logs.append(log)
+# 62         try:
+# 63             self.formatter.run(self.target)
+# 64             self.docformatter.run(self.target)
+# 65             log.agent_action_outcome = "success"
+# 66             self._log.info("Formatted %s", self.target)
+# 67         except Exception as exc:
+# 68             log.agent_action_outcome = "error"
+# 69             err = ErrorLog(
 # 70                 experiment_id="exp",
 # 71                 round=0,
-# 72                 file_path=self.target,
-# 73                 before=before,
-# 74                 after=after,
-# 75                 symbol=self.target,
-# 76                 agent_role=AgentRole.GENERATOR,
-# 77             )
-# 78             self.log_prompt(log)
-# 79             for err in self.error_logs:
-# 80                 self.log_error(err)
+# 72                 error_type=type(exc).__name__,
+# 73                 message=str(exc),
+# 74                 file_path=self.target,
+# 75             )
+# 76             self.error_logs.append(err)
+# 77             self._log.exception("Formatting failed for %s", self.target)
+# 78         finally:
+# 79             log.stop = datetime.now(timezone.utc)
+# 80             after = Path(self.target).read_text(encoding="utf-8")
+# 81             self.snapshot_writer.write_snapshot(
+# 82                 experiment_id="exp",
+# 83                 round=0,
+# 84                 file_path=self.target,
+# 85                 before=before,
+# 86                 after=after,
+# 87                 symbol=self.target,
+# 88                 agent_role=AgentRole.GENERATOR,
+# 89             )
+# 90             self.log_prompt(log)
+# 91             for err in self.error_logs:
+# 92                 self.log_error(err)
 
 
 # extensions\agents\mediator_agent.py
@@ -832,93 +906,105 @@
 # 8     ConversationLog,
 # 9     ErrorLog,
 # 10     LoggingProvider,
-# 11 )
-# 12 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
-# 13 
+# 11     FeedbackLog,
+# 12 )
+# 13 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
 # 14 
-# 15 class MediatorAgent(AgentBase):
-# 16     """Agent that reconciles discrepancies between generator and evaluator outputs."""
-# 17 
-# 18     def __init__(
-# 19         self,
-# 20         target: str = "generated.py",
-# 21         logger: LoggingProvider | None = None,
-# 22         snapshot_writer: SnapshotWriter | None = None,
-# 23     ) -> None:
-# 24         super().__init__(logger)
-# 25         self.target = target
-# 26         self.snapshot_writer = snapshot_writer or SnapshotWriter()
-# 27         self.conversation_logs: List[ConversationLog] = []
-# 28         self.error_logs: List[ErrorLog] = []
-# 29 
-# 30     def _run_agent_logic(self, *args, **kwargs) -> None:
-# 31         code: str | None = kwargs.get("generator_output")
-# 32         metrics: dict[str, Any] | None = kwargs.get("evaluation_metrics")
-# 33 
-# 34         if code is None or metrics is None:
-# 35             err = ErrorLog(
-# 36                 experiment_id="exp",
-# 37                 round=0,
-# 38                 error_type="ValueError",
-# 39                 message="Missing generator output or evaluation metrics",
-# 40                 file_path=self.target,
-# 41             )
-# 42             self.error_logs.append(err)
-# 43             self.log_error(err)
-# 44             return
+# 15 
+# 16 class MediatorAgent(AgentBase):
+# 17     """Agent that reconciles discrepancies between generator and evaluator outputs."""
+# 18 
+# 19     def __init__(
+# 20         self,
+# 21         target: str = "generated.py",
+# 22         logger: LoggingProvider | None = None,
+# 23         snapshot_writer: SnapshotWriter | None = None,
+# 24     ) -> None:
+# 25         super().__init__(logger)
+# 26         self.target = target
+# 27         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 28         self.conversation_logs: List[ConversationLog] = []
+# 29         self.error_logs: List[ErrorLog] = []
+# 30 
+# 31     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 32         feedback = kwargs.get("feedback")
+# 33         if feedback:
+# 34             for item in feedback:
+# 35                 self.log_feedback(
+# 36                     FeedbackLog(
+# 37                         experiment_id="exp",
+# 38                         round=0,
+# 39                         source="mediator",
+# 40                         feedback=str(item),
+# 41                     )
+# 42                 )
+# 43         code: str | None = kwargs.get("generator_output")
+# 44         metrics: dict[str, Any] | None = kwargs.get("evaluation_metrics")
 # 45 
-# 46         lint_errors = int(metrics.get("lint_errors", 0))
-# 47         maintainability = float(metrics.get("maintainability_index", 100.0))
-# 48         complexity = float(metrics.get("cyclomatic_complexity", 0.0))
-# 49 
-# 50         recommendations: List[str] = []
-# 51         if lint_errors > 0:
-# 52             recommendations.append("Resolve lint errors")
-# 53         if maintainability < 70:
-# 54             recommendations.append("Increase maintainability")
-# 55         if complexity > 10:
-# 56             recommendations.append("Reduce complexity")
+# 46         if code is None or metrics is None:
+# 47             err = ErrorLog(
+# 48                 experiment_id="exp",
+# 49                 round=0,
+# 50                 error_type="ValueError",
+# 51                 message="Missing generator output or evaluation metrics",
+# 52                 file_path=self.target,
+# 53             )
+# 54             self.error_logs.append(err)
+# 55             self.log_error(err)
+# 56             return
 # 57 
-# 58         rec_text = "; ".join(recommendations)
-# 59         conv = ConversationLog(
-# 60             experiment_id="exp",
-# 61             round=0,
-# 62             agent_role=AgentRole.MEDIATOR,
-# 63             target=self.target,
-# 64             content=rec_text,
-# 65             originating_agent="mediator",
-# 66             intervention=bool(recommendations),
-# 67             intervention_type="mediation" if recommendations else None,
-# 68             intervention_reason="evaluation discrepancy" if recommendations else None,
-# 69         )
-# 70         self.conversation_logs.append(conv)
-# 71 
-# 72         try:
-# 73             self.log_conversation(conv)
-# 74         except Exception as exc:  #  pragma: no cover - db write failure
-# 75             err = ErrorLog(
-# 76                 experiment_id="exp",
-# 77                 round=0,
-# 78                 error_type=type(exc).__name__,
-# 79                 message=str(exc),
-# 80                 file_path=self.target,
-# 81             )
-# 82             self.error_logs.append(err)
-# 83             self.log_error(err)
-# 84 
-# 85         after = code
-# 86         if rec_text:
-# 87             after = code + f"\n#  Mediator Recommendation: {rec_text}"
-# 88 
-# 89         self.snapshot_writer.write_snapshot(
-# 90             experiment_id="exp",
-# 91             round=0,
-# 92             file_path=self.target,
-# 93             before=code,
-# 94             after=after,
-# 95             symbol=self.target,
-# 96             agent_role=AgentRole.MEDIATOR,
-# 97         )
+# 58         lint_errors = int(metrics.get("lint_errors", 0))
+# 59         maintainability = float(metrics.get("maintainability_index", 100.0))
+# 60         complexity = float(metrics.get("cyclomatic_complexity", 0.0))
+# 61 
+# 62         recommendations: List[str] = []
+# 63         if lint_errors > 0:
+# 64             recommendations.append("Resolve lint errors")
+# 65         if maintainability < 70:
+# 66             recommendations.append("Increase maintainability")
+# 67         if complexity > 10:
+# 68             recommendations.append("Reduce complexity")
+# 69 
+# 70         rec_text = "; ".join(recommendations)
+# 71         conv = ConversationLog(
+# 72             experiment_id="exp",
+# 73             round=0,
+# 74             agent_role=AgentRole.MEDIATOR,
+# 75             target=self.target,
+# 76             content=rec_text,
+# 77             originating_agent="mediator",
+# 78             intervention=bool(recommendations),
+# 79             intervention_type="mediation" if recommendations else None,
+# 80             intervention_reason="evaluation discrepancy" if recommendations else None,
+# 81         )
+# 82         self.conversation_logs.append(conv)
+# 83 
+# 84         try:
+# 85             self.log_conversation(conv)
+# 86         except Exception as exc:  #  pragma: no cover - db write failure
+# 87             err = ErrorLog(
+# 88                 experiment_id="exp",
+# 89                 round=0,
+# 90                 error_type=type(exc).__name__,
+# 91                 message=str(exc),
+# 92                 file_path=self.target,
+# 93             )
+# 94             self.error_logs.append(err)
+# 95             self.log_error(err)
+# 96 
+# 97         after = code
+# 98         if rec_text:
+# 99             after = code + f"\n#  Mediator Recommendation: {rec_text}"
+# 100 
+# 101         self.snapshot_writer.write_snapshot(
+# 102             experiment_id="exp",
+# 103             round=0,
+# 104             file_path=self.target,
+# 105             before=code,
+# 106             after=after,
+# 107             symbol=self.target,
+# 108             agent_role=AgentRole.MEDIATOR,
+# 109         )
 
 
 # extensions\agents\patch_agent.py
@@ -936,117 +1022,373 @@
 # 11     ConversationLog,
 # 12     ErrorLog,
 # 13     LoggingProvider,
-# 14 )
-# 15 from ...factories.tool_provider import ToolProviderFactory
-# 16 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
-# 17 from .evaluator_agent import _analyze_radon
-# 18 
+# 14     FeedbackLog,
+# 15 )
+# 16 from ...factories.tool_provider import ToolProviderFactory
+# 17 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 18 from .evaluator_agent import _analyze_radon
 # 19 
-# 20 class PatchAgent(AgentBase):
-# 21     """Apply mediator recommendations as code patches."""
-# 22 
-# 23     def __init__(
-# 24         self,
-# 25         target: str,
-# 26         logger: LoggingProvider | None = None,
-# 27         snapshot_writer: SnapshotWriter | None = None,
-# 28     ) -> None:
-# 29         super().__init__(logger)
-# 30         self.target = target
-# 31         self.snapshot_writer = snapshot_writer or SnapshotWriter()
-# 32         self.black = ToolProviderFactory.create("black")
-# 33         self.ruff = ToolProviderFactory.create("ruff")
-# 34         self.mypy = ToolProviderFactory.create("mypy")
-# 35         self.conversation_logs: List[ConversationLog] = []
-# 36         self.error_logs: List[ErrorLog] = []
-# 37         self.quality_logs: List[CodeQualityLog] = []
-# 38 
-# 39     def _apply_patch(self, code: str, op: dict[str, Any]) -> str:
-# 40         if op.get("op") == "replace":
-# 41             old = op.get("from", "")
-# 42             new = op.get("to", "")
-# 43             if old not in code:
-# 44                 raise ValueError(f"pattern '{old}' not found")
-# 45             return code.replace(old, new)
-# 46         if op.get("op") == "append":
-# 47             return code + op.get("text", "")
-# 48         raise ValueError(f"unsupported op: {op.get('op')}")
-# 49 
-# 50     def _run_agent_logic(self, *args, **kwargs) -> None:  #  noqa: C901 - small
-# 51         recs: List[ConversationLog] | None = kwargs.get("recommendations")
-# 52         if not recs:
-# 53             return
-# 54         path = Path(self.target)
-# 55         before = path.read_text(encoding="utf-8")
-# 56         after = before
-# 57         for conv in recs:
-# 58             self.conversation_logs.append(conv)
-# 59             try:
-# 60                 ops = json.loads(conv.content)
-# 61             except json.JSONDecodeError as exc:
-# 62                 err = ErrorLog(
-# 63                     experiment_id="exp",
-# 64                     round=0,
-# 65                     error_type=type(exc).__name__,
-# 66                     message=str(exc),
-# 67                     file_path=self.target,
-# 68                 )
-# 69                 self.error_logs.append(err)
-# 70                 self.log_error(err)
-# 71                 continue
-# 72             self.log_conversation(conv)
-# 73             for op in ops:
-# 74                 try:
-# 75                     after = self._apply_patch(after, op)
-# 76                 except Exception as exc:  #  patch failure
-# 77                     err = ErrorLog(
-# 78                         experiment_id="exp",
-# 79                         round=0,
-# 80                         error_type=type(exc).__name__,
-# 81                         message=str(exc),
-# 82                         file_path=self.target,
-# 83                     )
-# 84                     self.error_logs.append(err)
-# 85                     self.log_error(err)
-# 86         path.write_text(after, encoding="utf-8")
-# 87         try:
-# 88             self.black.run(self.target)
-# 89             self.ruff.run(self.target)
-# 90             self.mypy.run(self.target)
-# 91         except Exception as exc:  #  pragma: no cover - tool failure
-# 92             err = ErrorLog(
-# 93                 experiment_id="exp",
-# 94                 round=0,
-# 95                 error_type=type(exc).__name__,
-# 96                 message=str(exc),
-# 97                 file_path=self.target,
-# 98             )
-# 99             self.error_logs.append(err)
-# 100             self.log_error(err)
-# 101         final = path.read_text(encoding="utf-8")
-# 102         complexity, maintainability = _analyze_radon(final)
-# 103         quality = CodeQualityLog(
-# 104             experiment_id="exp",
-# 105             round=0,
-# 106             symbol=self.target,
-# 107             lines_of_code=len(final.splitlines()),
-# 108             cyclomatic_complexity=complexity,
-# 109             maintainability_index=maintainability,
-# 110             lint_errors=0,
-# 111         )
-# 112         self.quality_logs.append(quality)
-# 113         self.log_code_quality(quality)
-# 114         for err in self.error_logs:
-# 115             self.log_error(err)
-# 116         self.snapshot_writer.write_snapshot(
+# 20 
+# 21 class PatchAgent(AgentBase):
+# 22     """Apply mediator recommendations as code patches."""
+# 23 
+# 24     def __init__(
+# 25         self,
+# 26         target: str,
+# 27         logger: LoggingProvider | None = None,
+# 28         snapshot_writer: SnapshotWriter | None = None,
+# 29     ) -> None:
+# 30         super().__init__(logger)
+# 31         self.target = target
+# 32         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 33         self.black = ToolProviderFactory.create("black")
+# 34         self.ruff = ToolProviderFactory.create("ruff")
+# 35         self.mypy = ToolProviderFactory.create("mypy")
+# 36         self.conversation_logs: List[ConversationLog] = []
+# 37         self.error_logs: List[ErrorLog] = []
+# 38         self.quality_logs: List[CodeQualityLog] = []
+# 39 
+# 40     def _apply_patch(self, code: str, op: dict[str, Any]) -> str:
+# 41         if op.get("op") == "replace":
+# 42             old = op.get("from", "")
+# 43             new = op.get("to", "")
+# 44             if old not in code:
+# 45                 raise ValueError(f"pattern '{old}' not found")
+# 46             return code.replace(old, new)
+# 47         if op.get("op") == "append":
+# 48             return code + op.get("text", "")
+# 49         raise ValueError(f"unsupported op: {op.get('op')}")
+# 50 
+# 51     def _run_agent_logic(self, *args, **kwargs) -> None:  #  noqa: C901 - small
+# 52         feedback = kwargs.get("feedback")
+# 53         if feedback:
+# 54             for item in feedback:
+# 55                 self.log_feedback(
+# 56                     FeedbackLog(
+# 57                         experiment_id="exp",
+# 58                         round=0,
+# 59                         source="patch",
+# 60                         feedback=str(item),
+# 61                     )
+# 62                 )
+# 63 
+# 64         recs: List[ConversationLog] | None = kwargs.get("recommendations")
+# 65         if not recs:
+# 66             return
+# 67         path = Path(self.target)
+# 68         before = path.read_text(encoding="utf-8")
+# 69         after = before
+# 70         for conv in recs:
+# 71             self.conversation_logs.append(conv)
+# 72             try:
+# 73                 ops = json.loads(conv.content)
+# 74             except json.JSONDecodeError as exc:
+# 75                 err = ErrorLog(
+# 76                     experiment_id="exp",
+# 77                     round=0,
+# 78                     error_type=type(exc).__name__,
+# 79                     message=str(exc),
+# 80                     file_path=self.target,
+# 81                 )
+# 82                 self.error_logs.append(err)
+# 83                 self.log_error(err)
+# 84                 continue
+# 85             self.log_conversation(conv)
+# 86             for op in ops:
+# 87                 try:
+# 88                     after = self._apply_patch(after, op)
+# 89                 except Exception as exc:  #  patch failure
+# 90                     err = ErrorLog(
+# 91                         experiment_id="exp",
+# 92                         round=0,
+# 93                         error_type=type(exc).__name__,
+# 94                         message=str(exc),
+# 95                         file_path=self.target,
+# 96                     )
+# 97                     self.error_logs.append(err)
+# 98                     self.log_error(err)
+# 99         path.write_text(after, encoding="utf-8")
+# 100         try:
+# 101             self.black.run(self.target)
+# 102             self.ruff.run(self.target)
+# 103             self.mypy.run(self.target)
+# 104         except Exception as exc:  #  pragma: no cover - tool failure
+# 105             err = ErrorLog(
+# 106                 experiment_id="exp",
+# 107                 round=0,
+# 108                 error_type=type(exc).__name__,
+# 109                 message=str(exc),
+# 110                 file_path=self.target,
+# 111             )
+# 112             self.error_logs.append(err)
+# 113             self.log_error(err)
+# 114         final = path.read_text(encoding="utf-8")
+# 115         complexity, maintainability = _analyze_radon(final)
+# 116         quality = CodeQualityLog(
 # 117             experiment_id="exp",
 # 118             round=0,
-# 119             file_path=self.target,
-# 120             before=before,
-# 121             after=final,
-# 122             symbol=self.target,
-# 123             agent_role=AgentRole.PATCHER,
+# 119             symbol=self.target,
+# 120             lines_of_code=len(final.splitlines()),
+# 121             cyclomatic_complexity=complexity,
+# 122             maintainability_index=maintainability,
+# 123             lint_errors=0,
 # 124         )
+# 125         self.quality_logs.append(quality)
+# 126         self.log_code_quality(quality)
+# 127         for err in self.error_logs:
+# 128             self.log_error(err)
+# 129         self.snapshot_writer.write_snapshot(
+# 130             experiment_id="exp",
+# 131             round=0,
+# 132             file_path=self.target,
+# 133             before=before,
+# 134             after=final,
+# 135             symbol=self.target,
+# 136             agent_role=AgentRole.PATCHER,
+# 137         )
+
+
+# extensions\agents\recommendation_agent.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import json
+# 4 from typing import Any, Dict, List
+# 5 
+# 6 from ...abstract_classes.agent_base import AgentBase
+# 7 from ...enums.agent_enums import AgentRole
+# 8 from ...abstract_classes.context_provider_base import ContextProviderBase
+# 9 from ...factories.logging_provider import (
+# 10     ConversationLog,
+# 11     CodeQualityLog,
+# 12     ScoringLog,
+# 13     ErrorLog,
+# 14     RecommendationLog,
+# 15     LoggingProvider,
+# 16     FeedbackLog,
+# 17 )
+# 18 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 19 
+# 20 
+# 21 class RecommendationAgent(AgentBase):
+# 22     """Analyze historical logs and generate code improvement recommendations."""
+# 23 
+# 24     def __init__(
+# 25         self,
+# 26         target: str,
+# 27         logger: LoggingProvider | None = None,
+# 28         snapshot_writer: SnapshotWriter | None = None,
+# 29         context_provider: ContextProviderBase | None = None,
+# 30     ) -> None:
+# 31         super().__init__(logger)
+# 32         self.target = target
+# 33         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 34         self.context_provider = context_provider
+# 35         self.recommendation_logs: List[RecommendationLog] = []
+# 36         self.error_logs: List[ErrorLog] = []
+# 37         self.conversation_logs: List[ConversationLog] = []
+# 38 
+# 39     #  ------------------------------------------------------------------
+# 40     #  Internal helpers
+# 41     #  ------------------------------------------------------------------
+# 42     def _analyze_symbol_graph(
+# 43         self, graph: Dict[str, Dict[str, Any]]
+# 44     ) -> List[Dict[str, Any]]:
+# 45         """Generate recommendations based on a symbol graph."""
+# 46         recs: List[Dict[str, Any]] = []
+# 47 
+# 48         #  Build call relationships by symbol name
+# 49         callers: Dict[str, set[str]] = {}
+# 50         definitions: Dict[str, Dict[str, Any]] = {}
+# 51         for qual, info in graph.items():
+# 52             definitions[qual] = info
+# 53             for called in info.get("calls", []):
+# 54                 callers.setdefault(called, set()).add(qual)
+# 55 
+# 56         #  Unused imports and symbols
+# 57         for qual, info in definitions.items():
+# 58             name = info.get("name")
+# 59             typ = info.get("type")
+# 60             if typ == "import" and name not in callers:
+# 61                 recs.append(
+# 62                     {
+# 63                         "action": "remove_unused_import",
+# 64                         "target": qual,
+# 65                         "rationale": f"Import '{name}' is never referenced",
+# 66                     }
+# 67                 )
+# 68             if typ in {"function", "async_function", "class"} and name not in callers:
+# 69                 recs.append(
+# 70                     {
+# 71                         "action": "remove_unused_symbol",
+# 72                         "target": qual,
+# 73                         "rationale": f"Symbol '{name}' is defined but not used",
+# 74                     }
+# 75                 )
+# 76 
+# 77         #  Circular dependencies detection
+# 78         graph_by_name = {
+# 79             info.get("name"): qual
+# 80             for qual, info in definitions.items()
+# 81             if info.get("type") in {"function", "async_function", "class"}
+# 82         }
+# 83         edges: Dict[str, set[str]] = {}
+# 84         for qual, info in definitions.items():
+# 85             if info.get("type") not in {"function", "async_function", "class"}:
+# 86                 continue
+# 87             for called in info.get("calls", []):
+# 88                 dest = graph_by_name.get(called)
+# 89                 if dest:
+# 90                     edges.setdefault(qual, set()).add(dest)
+# 91 
+# 92         def _find_cycles() -> List[List[str]]:
+# 93             cycles: List[List[str]] = []
+# 94             path: List[str] = []
+# 95 
+# 96             def visit(node: str, stack: set[str]) -> None:
+# 97                 stack.add(node)
+# 98                 path.append(node)
+# 99                 for nxt in edges.get(node, set()):
+# 100                     if nxt in stack:
+# 101                         idx = path.index(nxt)
+# 102                         cycles.append(path[idx:] + [nxt])
+# 103                     else:
+# 104                         visit(nxt, stack)
+# 105                 stack.remove(node)
+# 106                 path.pop()
+# 107 
+# 108             for n in list(edges):
+# 109                 visit(n, set())
+# 110             return cycles
+# 111 
+# 112         for cycle in _find_cycles():
+# 113             if len(cycle) > 1:
+# 114                 recs.append(
+# 115                     {
+# 116                         "action": "refactor_circular_dependency",
+# 117                         "symbols": cycle,
+# 118                         "rationale": " -> ".join(cycle),
+# 119                     }
+# 120                 )
+# 121 
+# 122         return recs
+# 123 
+# 124     def _run_agent_logic(self, *args, **kwargs) -> None:
+# 125         feedback = kwargs.get("feedback")
+# 126         if feedback:
+# 127             for item in feedback:
+# 128                 self.log_feedback(
+# 129                     FeedbackLog(
+# 130                         experiment_id="exp",
+# 131                         round=0,
+# 132                         source="recommendation",
+# 133                         feedback=str(item),
+# 134                     )
+# 135                 )
+# 136         conv_logs: List[ConversationLog] = kwargs.get("conversation_log", [])
+# 137         qual_logs: List[CodeQualityLog] = kwargs.get("code_quality_log", [])
+# 138         scoring_logs: List[ScoringLog] = kwargs.get("scoring_log", [])
+# 139 
+# 140         recommendations: List[str] = []
+# 141         context_parts: List[str] = []
+# 142         structured_recs: List[Dict[str, Any]] = []
+# 143 
+# 144         ctx = kwargs.get("context")
+# 145         if ctx is None and self.context_provider is not None:
+# 146             ctx = self.context_provider.get_context()
+# 147         graph = {}
+# 148         if isinstance(ctx, dict):
+# 149             graph = ctx.get("symbol_graph", {})
+# 150         if graph:
+# 151             structured_recs.extend(self._analyze_symbol_graph(graph))
+# 152             if structured_recs:
+# 153                 context_parts.append("symbol graph analysis")
+# 154 
+# 155         for qlog in qual_logs:
+# 156             if qlog.lint_errors > 0:
+# 157                 recommendations.append("Fix lint errors")
+# 158                 context_parts.append("lint issues detected")
+# 159             if qlog.maintainability_index < 70:
+# 160                 recommendations.append("Refactor to improve maintainability")
+# 161                 context_parts.append("low maintainability")
+# 162             if qlog.cyclomatic_complexity > 10:
+# 163                 recommendations.append("Simplify to reduce complexity")
+# 164                 context_parts.append("high complexity")
+# 165 
+# 166         for slog in scoring_logs:
+# 167             if slog.value < 0.5:
+# 168                 recommendations.append(f"Improve score for {slog.metric.value}")
+# 169                 context_parts.append(f"low score {slog.metric.value}")
+# 170 
+# 171         for clog in conv_logs:
+# 172             if clog.intervention and clog.content:
+# 173                 recommendations.append(clog.content)
+# 174                 context_parts.append("prior intervention")
+# 175 
+# 176         unique: List[str] = []
+# 177         for r in recommendations:
+# 178             if r not in unique:
+# 179                 unique.append(r)
+# 180 
+# 181         for text in unique:
+# 182             structured_recs.append({"action": "general", "message": text})
+# 183 
+# 184         if not structured_recs:
+# 185             return
+# 186 
+# 187         rec_text = json.dumps(structured_recs, indent=2)
+# 188         ctx_text = "; ".join(context_parts)
+# 189 
+# 190         rec_log = RecommendationLog(
+# 191             experiment_id="exp",
+# 192             round=0,
+# 193             symbol=self.target,
+# 194             file_path=self.target,
+# 195             line_start=0,
+# 196             line_end=0,
+# 197             recommendation=rec_text,
+# 198             context=ctx_text,
+# 199         )
+# 200         self.recommendation_logs.append(rec_log)
+# 201 
+# 202         conv_log = ConversationLog(
+# 203             experiment_id="exp",
+# 204             round=0,
+# 205             agent_role=AgentRole.RECOMMENDER,
+# 206             target=self.target,
+# 207             content=rec_text,
+# 208             originating_agent="recommender",
+# 209             intervention=bool(structured_recs),
+# 210             intervention_type="recommendation" if structured_recs else None,
+# 211             intervention_reason="analysis" if structured_recs else None,
+# 212         )
+# 213         self.conversation_logs.append(conv_log)
+# 214 
+# 215         try:
+# 216             self.log_recommendation(rec_log)
+# 217             self.log_conversation(conv_log)
+# 218         except Exception as exc:  #  pragma: no cover - db failure
+# 219             err = ErrorLog(
+# 220                 experiment_id="exp",
+# 221                 round=0,
+# 222                 error_type=type(exc).__name__,
+# 223                 message=str(exc),
+# 224                 file_path=self.target,
+# 225             )
+# 226             self.error_logs.append(err)
+# 227             self.log_error(err)
+# 228 
+# 229         before = ctx_text
+# 230         after = rec_text
+# 231         self.snapshot_writer.write_snapshot(
+# 232             experiment_id="exp",
+# 233             round=0,
+# 234             file_path=self.target,
+# 235             before=before,
+# 236             after=after,
+# 237             symbol=self.target,
+# 238             agent_role=AgentRole.RECOMMENDER,
+# 239         )
 
 
 # extensions\context_providers\__init__.py
@@ -1077,76 +1419,276 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 import ast
-# 4 from pathlib import Path
-# 5 from typing import Any, Dict, List, Set
-# 6 
-# 7 from ...factories.logging_provider import LoggingProvider
-# 8 
-# 9 from ...abstract_classes.context_provider_base import ContextProviderBase
-# 10 
-# 11 
-# 12 class SymbolGraphProvider(ContextProviderBase):
-# 13     """Generate a simple symbol graph for a Python module."""
-# 14 
-# 15     def __init__(self, module_path: str, logger: LoggingProvider | None = None) -> None:
-# 16         super().__init__(logger)
-# 17         self.module_path = Path(module_path)
-# 18 
-# 19     def _get_context(self) -> Dict[str, Any]:
-# 20         """Parse the module and return context information."""
-# 21         if not self.module_path.exists():
-# 22             self._log.error("Module not found: %s", self.module_path)
-# 23             return {}
-# 24 
-# 25         source = self.module_path.read_text(encoding="utf-8")
-# 26         tree = ast.parse(source)
-# 27 
-# 28         functions: List[str] = []
-# 29         classes: Dict[str, List[str]] = {}
-# 30         call_map: Dict[str, Set[str]] = {}
-# 31 
-# 32         for node in tree.body:
-# 33             if isinstance(node, ast.FunctionDef):
-# 34                 sig = self._format_signature(node)
-# 35                 functions.append(sig)
-# 36                 call_map[node.name] = self._collect_calls(node)
-# 37             elif isinstance(node, ast.ClassDef):
-# 38                 method_sigs: List[str] = []
-# 39                 for item in node.body:
-# 40                     if isinstance(item, ast.FunctionDef):
-# 41                         sig = self._format_signature(item)
-# 42                         method_sigs.append(sig)
-# 43                         key = f"{node.name}.{item.name}"
-# 44                         call_map[key] = self._collect_calls(item)
-# 45                 classes[node.name] = method_sigs
-# 46 
-# 47         context = {
-# 48             "functions": functions,
-# 49             "classes": classes,
-# 50             "call_map": {k: sorted(v) for k, v in call_map.items()},
-# 51         }
-# 52         self._log.info("Context generated for %s", self.module_path)
-# 53         return context
-# 54 
-# 55     def _format_signature(self, func: ast.FunctionDef) -> str:
-# 56         args = [arg.arg for arg in func.args.args]
-# 57         if func.args.vararg:
-# 58             args.append("*" + func.args.vararg.arg)
-# 59         for kw in func.args.kwonlyargs:
-# 60             args.append(kw.arg)
-# 61         if func.args.kwarg:
-# 62             args.append("**" + func.args.kwarg.arg)
-# 63         return f"{func.name}({', '.join(args)})"
-# 64 
-# 65     def _collect_calls(self, func: ast.FunctionDef) -> Set[str]:
-# 66         calls: Set[str] = set()
-# 67         for node in ast.walk(func):
-# 68             if isinstance(node, ast.Call):
-# 69                 if isinstance(node.func, ast.Name):
-# 70                     calls.add(node.func.id)
-# 71                 elif isinstance(node.func, ast.Attribute):
-# 72                     calls.add(node.func.attr)
-# 73         return calls
+# 4 import json
+# 5 from pathlib import Path
+# 6 from typing import Any, Dict, List, MutableMapping, Tuple
+# 7 
+# 8 from ...abstract_classes.context_provider_base import ContextProviderBase
+# 9 from ...factories.logging_provider import LoggingProvider
+# 10 from ...utilities.snapshots.snapshot_writer import SnapshotWriter
+# 11 from ...enums.agent_enums import AgentRole
+# 12 
+# 13 
+# 14 #  cache of previously built graphs: {path: (mtime, graph)}
+# 15 _GRAPH_CACHE: Dict[str, Tuple[float, Dict[str, Dict[str, Any]]]] = {}
+# 16 
+# 17 
+# 18 class SymbolGraphProvider(ContextProviderBase):
+# 19     """Generate a detailed symbol graph for a Python module or package."""
+# 20 
+# 21     def __init__(
+# 22         self,
+# 23         target: str | None = None,
+# 24         module_path: str | None = None,
+# 25         logger: LoggingProvider | None = None,
+# 26         snapshot_writer: SnapshotWriter | None = None,
+# 27     ) -> None:
+# 28         super().__init__(logger)
+# 29         #  allow both 'target' and legacy 'module_path'
+# 30         path_str = module_path if module_path is not None else target
+# 31         if path_str is None:
+# 32             raise ValueError("SymbolGraphProvider requires 'target' or 'module_path'")
+# 33         self.target = Path(path_str)
+# 34         self.snapshot_writer = snapshot_writer or SnapshotWriter()
+# 35         self._graph: Dict[str, Dict[str, Any]] = {}
+# 36 
+# 37     #  ------------------------------------------------------------------
+# 38     #  Public API
+# 39     #  ------------------------------------------------------------------
+# 40     def resolve_symbol(self, name: str) -> Dict[str, Any] | None:
+# 41         """Return details for a fully qualified symbol."""
+# 42         return self._graph.get(name)
+# 43 
+# 44     #  ------------------------------------------------------------------
+# 45     #  ContextProviderBase implementation
+# 46     #  ------------------------------------------------------------------
+# 47     def _get_context(self) -> Dict[str, Any]:
+# 48         if not self.target.exists():
+# 49             self._log.error("Target not found: %s", self.target)
+# 50             return {}
+# 51 
+# 52         key = str(self.target)
+# 53         mtime = self._target_mtime()
+# 54         cached = _GRAPH_CACHE.get(key)
+# 55 
+# 56         if cached and cached[0] == mtime:
+# 57             self._graph = cached[1]
+# 58             self._log.debug("Symbol graph cache hit for %s", self.target)
+# 59         else:
+# 60             self._graph.clear()
+# 61 
+# 62             paths = [self.target]
+# 63             if self.target.is_dir():
+# 64                 paths = list(self.target.rglob("*.py"))
+# 65 
+# 66             for path in paths:
+# 67                 self._parse_file(path)
+# 68 
+# 69             _GRAPH_CACHE[key] = (mtime, dict(self._graph))
+# 70             self._log.debug("Symbol graph cached for %s", self.target)
+# 71 
+# 72         self._log.info("Symbol graph built for %s", self.target)
+# 73 
+# 74         try:
+# 75             self.snapshot_writer.write_snapshot(
+# 76                 experiment_id="context",
+# 77                 round=0,
+# 78                 file_path=f"{self.target}.symbol_graph.json",
+# 79                 before="",
+# 80                 after=json.dumps(self._graph, indent=2),
+# 81                 symbol=str(self.target),
+# 82                 agent_role=AgentRole.GENERATOR,
+# 83             )
+# 84         except Exception:
+# 85             self._log.exception("Failed to snapshot symbol graph")
+# 86 
+# 87         return {"symbol_graph": self._graph}
+# 88 
+# 89     #  ------------------------------------------------------------------
+# 90     #  Internal helpers
+# 91     #  ------------------------------------------------------------------
+# 92     def _parse_file(self, path: Path) -> None:
+# 93         source = path.read_text(encoding="utf-8")
+# 94         tree = ast.parse(source, filename=str(path))
+# 95         module_name = self._module_name(path)
+# 96 
+# 97         visitor = _SymbolGraphVisitor(module_name, str(path), self._graph)
+# 98         visitor.visit(tree)
+# 99 
+# 100     def _target_mtime(self) -> float:
+# 101         if self.target.is_file():
+# 102             return self.target.stat().st_mtime
+# 103         mtimes = [p.stat().st_mtime for p in self.target.rglob("*.py")]
+# 104         return max(mtimes, default=0.0)
+# 105 
+# 106     def _module_name(self, path: Path) -> str:
+# 107         if self.target.is_file():
+# 108             return path.stem
+# 109         rel = path.relative_to(self.target)
+# 110         return ".".join(rel.with_suffix("").parts)
+# 111 
+# 112 
+# 113 class _SymbolGraphVisitor(ast.NodeVisitor):
+# 114     """AST visitor building a symbol graph."""
+# 115 
+# 116     def __init__(
+# 117         self, module: str, file_path: str, graph: MutableMapping[str, Dict[str, Any]]
+# 118     ) -> None:
+# 119         self.module = module
+# 120         self.file_path = file_path
+# 121         self.graph = graph
+# 122         self.scope: List[str] = []
+# 123         self.current: str | None = None
+# 124 
+# 125     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+# 126         #  Record function definition and track calls
+# 127         qual = self._qualify(node.name)
+# 128         info: Dict[str, Any] = {
+# 129             "name": node.name,
+# 130             "type": "function",
+# 131             "file": self.file_path,
+# 132             "lineno": node.lineno,
+# 133             "col_offset": node.col_offset,
+# 134             "end_lineno": getattr(node, "end_lineno", node.lineno),
+# 135             "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+# 136             "scope": (
+# 137                 ".".join([self.module, *self.scope]) if self.scope else self.module
+# 138             ),
+# 139             "calls": [],
+# 140         }
+# 141         self.graph[qual] = info
+# 142         #  Enter function scope
+# 143         self.scope.append(node.name)
+# 144         prev_current = self.current
+# 145         self.current = qual
+# 146         self.generic_visit(node)
+# 147         #  Exit function scope
+# 148         self.scope.pop()
+# 149         self.current = prev_current
+# 150 
+# 151     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+# 152         #  Record async function definition and track calls
+# 153         qual = self._qualify(node.name)
+# 154         info: Dict[str, Any] = {
+# 155             "name": node.name,
+# 156             "type": "async_function",
+# 157             "file": self.file_path,
+# 158             "lineno": node.lineno,
+# 159             "col_offset": node.col_offset,
+# 160             "end_lineno": getattr(node, "end_lineno", node.lineno),
+# 161             "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+# 162             "scope": (
+# 163                 ".".join([self.module, *self.scope]) if self.scope else self.module
+# 164             ),
+# 165             "calls": [],
+# 166         }
+# 167         self.graph[qual] = info
+# 168         #  Enter async function scope
+# 169         self.scope.append(node.name)
+# 170         prev_current = self.current
+# 171         self.current = qual
+# 172         self.generic_visit(node)
+# 173         #  Exit async function scope
+# 174         self.scope.pop()
+# 175         self.current = prev_current
+# 176 
+# 177     def _process_function_or_async_function(
+# 178         self, node: ast.FunctionDef | ast.AsyncFunctionDef
+# 179     ) -> None:
+# 180         qual = self._qualify(node.name)
+# 181         info: Dict[str, Any] = {
+# 182             "name": node.name,
+# 183             "type": (
+# 184                 "async_function"
+# 185                 if isinstance(node, ast.AsyncFunctionDef)
+# 186                 else "function"
+# 187             ),
+# 188             "file": self.file_path,
+# 189             "lineno": node.lineno,
+# 190             "col_offset": node.col_offset,
+# 191             "end_lineno": getattr(node, "end_lineno", node.lineno),
+# 192             "end_col_offset": getattr(node, "end_col_offset", node.col_offset),
+# 193             "scope": (
+# 194                 ".".join([self.module, *self.scope]) if self.scope else self.module
+# 195             ),
+# 196             "calls": [],
+# 197         }
+# 198         self.graph[qual] = info
+# 199         self.scope.append(node.name)
+# 200         self.current = qual
+# 201 
+# 202     def visit_ClassDef(self, node: ast.ClassDef) -> None:
+# 203         qual = self._qualify(node.name)
+# 204         self._record(qual, "class", node)
+# 205         self.scope.append(node.name)
+# 206         self.current = qual
+# 207         self.generic_visit(node)
+# 208         self.scope.pop()
+# 209         self.current = (
+# 210             ".".join([self.module, *self.scope]) if self.scope else self.module
+# 211         )
+# 212         self.generic_visit(node)
+# 213 
+# 214     def visit_Assign(self, node: ast.Assign) -> None:
+# 215         for target in node.targets:
+# 216             if isinstance(target, ast.Name):
+# 217                 self._record(self._qualify(target.id), "variable", target)
+# 218         self.generic_visit(node)
+# 219 
+# 220     def visit_Import(self, node: ast.Import) -> None:
+# 221         for alias in node.names:
+# 222             name = alias.asname or alias.name
+# 223             entry = self._record(self._qualify(name), "import", node)
+# 224             entry["target"] = alias.name
+# 225         self.generic_visit(node)
+# 226 
+# 227     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+# 228         for alias in node.names:
+# 229             name = alias.asname or alias.name
+# 230             entry = self._record(self._qualify(name), "import", node)
+# 231             entry["target"] = (
+# 232                 f"{node.module}.{alias.name}" if node.module else alias.name
+# 233             )
+# 234         self.generic_visit(node)
+# 235 
+# 236     def visit_Call(self, node: ast.Call) -> None:
+# 237         #  Determine current symbol context
+# 238         current = self.current or self.module
+# 239         #  Identify called name
+# 240         if isinstance(node.func, ast.Name):
+# 241             called_name = node.func.id
+# 242         elif isinstance(node.func, ast.Attribute):
+# 243             called_name = node.func.attr
+# 244         else:
+# 245             called_name = None
+# 246         if called_name:
+# 247             self.graph.setdefault(current, {}).setdefault("calls", []).append(
+# 248                 called_name
+# 249             )
+# 250         self.generic_visit(node)
+# 251 
+# 252     def _qualify(self, name: str) -> str:
+# 253         return ".".join([self.module, *self.scope, name])
+# 254 
+# 255     def _record(self, qual: str, typ: str, node: ast.AST) -> Dict[str, Any]:
+# 256         lineno = getattr(node, "lineno", None)
+# 257         col_offset = getattr(node, "col_offset", None)
+# 258         end_lineno = getattr(node, "end_lineno", lineno)
+# 259         end_col_offset = getattr(node, "end_col_offset", col_offset)
+# 260         info: Dict[str, Any] = {
+# 261             "type": typ,
+# 262             "file": self.file_path,
+# 263             "lineno": lineno,
+# 264             "col_offset": col_offset,
+# 265             "end_lineno": end_lineno,
+# 266             "end_col_offset": end_col_offset,
+# 267             "scope": (
+# 268                 ".".join([self.module, *self.scope]) if self.scope else self.module
+# 269             ),
+# 270             "calls": [],
+# 271         }
+# 272         self.graph[qual] = info
+# 273         return info
 
 
 # extensions\prompt_generators\__init__.py
@@ -1219,12 +1761,94 @@
 
 # 1 from .dummy_scoring_provider import DummyScoringProvider
 # 2 from .basic_scoring_provider import BasicScoringProvider
-# 3 from ...registries.scoring_models import SCORING_MODEL_REGISTRY
+# 3 from .advanced_scoring_provider import AdvancedScoringProvider
+# 4 from .adaptive_scoring_provider import AdaptiveScoringProvider
+# 5 from ...registries.scoring_models import SCORING_MODEL_REGISTRY
+# 6 
+# 7 SCORING_MODEL_REGISTRY.register("dummy", DummyScoringProvider)
+# 8 SCORING_MODEL_REGISTRY.register("basic", BasicScoringProvider)
+# 9 SCORING_MODEL_REGISTRY.register("advanced", AdvancedScoringProvider)
+# 10 SCORING_MODEL_REGISTRY.register("adaptive", AdaptiveScoringProvider)
+# 11 
+# 12 __all__ = [
+# 13     "DummyScoringProvider",
+# 14     "BasicScoringProvider",
+# 15     "AdvancedScoringProvider",
+# 16     "AdaptiveScoringProvider",
+# 17 ]
+
+
+# extensions\scoring_models\adaptive_scoring_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import Any, Dict, List
 # 4 
-# 5 SCORING_MODEL_REGISTRY.register("dummy", DummyScoringProvider)
-# 6 SCORING_MODEL_REGISTRY.register("basic", BasicScoringProvider)
-# 7 
-# 8 __all__ = ["DummyScoringProvider", "BasicScoringProvider"]
+# 5 from .advanced_scoring_provider import AdvancedScoringProvider
+# 6 from ...utilities.feedback import FeedbackRepository
+# 7 from ...factories.logging_provider import LoggingProvider
+# 8 
+# 9 
+# 10 class AdaptiveScoringProvider(AdvancedScoringProvider):
+# 11     """Scoring provider that adjusts weights based on feedback."""
+# 12 
+# 13     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 14         super().__init__(logger)
+# 15         self.weights: Dict[str, float] = {
+# 16             "maintainability_index": 1.0,
+# 17             "cyclomatic_complexity": 1.0,
+# 18             "recommendation_quality": 1.0,
+# 19         }
+# 20 
+# 21     def _score(
+# 22         self, logs: Dict[str, List[Any]], experiment_id: str = "exp"
+# 23     ) -> Dict[str, float]:
+# 24         metrics = super()._score(logs, experiment_id)
+# 25 
+# 26         for fb in FeedbackRepository.get_feedback(experiment_id):
+# 27             text = fb.feedback.lower()
+# 28             if "maintainability" in text:
+# 29                 self.weights["maintainability_index"] += 0.1
+# 30             if "complexity" in text:
+# 31                 self.weights["cyclomatic_complexity"] += 0.1
+# 32             if "recommendation" in text:
+# 33                 self.weights["recommendation_quality"] += 0.1
+# 34 
+# 35         weighted = {
+# 36             key: value * self.weights.get(key, 1.0) for key, value in metrics.items()
+# 37         }
+# 38         return weighted
+
+
+# extensions\scoring_models\advanced_scoring_provider.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import Any, Dict, List
+# 4 
+# 5 from ...abstract_classes.scoring_provider_base import ScoringProviderBase
+# 6 from .code_quality_scorer import CodeQualityScorer
+# 7 from .recommendation_quality_scorer import RecommendationQualityScorer
+# 8 
+# 9 
+# 10 class AdvancedScoringProvider(ScoringProviderBase):
+# 11     """Combine quality and recommendation scoring into a single provider."""
+# 12 
+# 13     def __init__(self, logger=None) -> None:
+# 14         super().__init__(logger)
+# 15         self.code_quality = CodeQualityScorer(logger)
+# 16         self.recommendation = RecommendationQualityScorer(logger)
+# 17 
+# 18     def _score(
+# 19         self, logs: Dict[str, List[Any]], experiment_id: str = "exp"
+# 20     ) -> Dict[str, float]:
+# 21         code_quality_logs = logs.get("code_quality", [])
+# 22         recommendation_logs = logs.get("recommendation", [])
+# 23 
+# 24         metrics: Dict[str, float] = {}
+# 25         metrics.update(self.code_quality.score(experiment_id, code_quality_logs))
+# 26         metrics.update(self.recommendation.score(experiment_id, recommendation_logs))
+# 27         return metrics
 
 
 # extensions\scoring_models\basic_scoring_provider.py
@@ -1259,6 +1883,39 @@
 # 28         return metrics
 
 
+# extensions\scoring_models\code_quality_scorer.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import Dict, List
+# 4 
+# 5 from ...abstract_classes.scoring_model_base import ScoringModelBase
+# 6 from ...factories.logging_provider import CodeQualityLog
+# 7 from ...enums.scoring_enums import ScoringMetric
+# 8 
+# 9 
+# 10 class CodeQualityScorer(ScoringModelBase):
+# 11     """Evaluate code quality logs and compute quality metrics."""
+# 12 
+# 13     def _score(
+# 14         self, experiment_id: str, logs: List[CodeQualityLog]
+# 15     ) -> Dict[str, float]:
+# 16         if not logs:
+# 17             mi = 0.0
+# 18             cc = 0.0
+# 19         else:
+# 20             mi = sum(log.maintainability_index for log in logs) / len(logs)
+# 21             cc = sum(log.cyclomatic_complexity for log in logs) / len(logs)
+# 22 
+# 23         self._log_metric(experiment_id, ScoringMetric.MAINTAINABILITY_INDEX, mi)
+# 24         self._log_metric(experiment_id, ScoringMetric.CYCLOMATIC_COMPLEXITY, cc)
+# 25 
+# 26         return {
+# 27             ScoringMetric.MAINTAINABILITY_INDEX.value: mi,
+# 28             ScoringMetric.CYCLOMATIC_COMPLEXITY.value: cc,
+# 29         }
+
+
 # extensions\scoring_models\dummy_scoring_provider.py
 
 # 1 from ...abstract_classes.scoring_provider_base import ScoringProviderBase
@@ -1268,6 +1925,34 @@
 # 5     def _score(self, *args, **kwargs):
 # 6         self._log.info("Dummy scoring")
 # 7         return 0
+
+
+# extensions\scoring_models\recommendation_quality_scorer.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import Dict, List
+# 4 
+# 5 from ...abstract_classes.scoring_model_base import ScoringModelBase
+# 6 from ...factories.logging_provider import RecommendationLog
+# 7 from ...enums.scoring_enums import ScoringMetric
+# 8 
+# 9 
+# 10 class RecommendationQualityScorer(ScoringModelBase):
+# 11     """Evaluate recommendations for context relevance."""
+# 12 
+# 13     def _score(
+# 14         self, experiment_id: str, logs: List[RecommendationLog]
+# 15     ) -> Dict[str, float]:
+# 16         if not logs:
+# 17             quality = 0.0
+# 18         else:
+# 19             with_context = [1.0 for log in logs if log.context]
+# 20             quality = sum(with_context) / len(logs)
+# 21 
+# 22         self._log_metric(experiment_id, ScoringMetric.RECOMMENDATION_QUALITY, quality)
+# 23 
+# 24         return {ScoringMetric.RECOMMENDATION_QUALITY.value: quality}
 
 
 # extensions\state_managers\__init__.py
@@ -1716,171 +2401,188 @@
 # 10 from typing import Any, ClassVar, Iterable
 # 11 
 # 12 from app.enums.logging_enums import LogType
-# 13 from app.utilities.db import get_connection
-# 14 from ..utilities.metadata.logging.log_schemas import (
-# 15     StateLog,
-# 16     StateTransitionLog,
-# 17     PromptLog,
-# 18     CodeQualityLog,
-# 19     ErrorLog,
-# 20     ScoringLog,
-# 21     ConversationLog,
-# 22     ExperimentLog,
-# 23 )
-# 24 
-# 25 
-# 26 LOG_MODEL_MAP = {
-# 27     LogType.STATE: StateLog,
-# 28     LogType.STATE_TRANSITION: StateTransitionLog,
-# 29     LogType.PROMPT: PromptLog,
-# 30     LogType.CODE_QUALITY: CodeQualityLog,
-# 31     LogType.ERROR: ErrorLog,
-# 32     LogType.SCORING: ScoringLog,
-# 33     LogType.CONVERSATION: ConversationLog,
-# 34     LogType.EXPERIMENT: ExperimentLog,
-# 35 }
-# 36 
-# 37 
-# 38 class LoggingProvider:
-# 39     """Centralized provider for structured logging."""
+# 13 from ..utilities.metadata.logging.log_schemas import (
+# 14     StateLog,
+# 15     StateTransitionLog,
+# 16     PromptLog,
+# 17     CodeQualityLog,
+# 18     ErrorLog,
+# 19     ScoringLog,
+# 20     ConversationLog,
+# 21     ExperimentLog,
+# 22     RecommendationLog,
+# 23     FeedbackLog,
+# 24 )
+# 25 from ..utilities.feedback import FeedbackRepository
+# 26 
+# 27 
+# 28 LOG_MODEL_MAP = {
+# 29     LogType.STATE: StateLog,
+# 30     LogType.STATE_TRANSITION: StateTransitionLog,
+# 31     LogType.PROMPT: PromptLog,
+# 32     LogType.CODE_QUALITY: CodeQualityLog,
+# 33     LogType.ERROR: ErrorLog,
+# 34     LogType.SCORING: ScoringLog,
+# 35     LogType.CONVERSATION: ConversationLog,
+# 36     LogType.EXPERIMENT: ExperimentLog,
+# 37     LogType.RECOMMENDATION: RecommendationLog,
+# 38     LogType.FEEDBACK: FeedbackLog,
+# 39 }
 # 40 
-# 41     _instance: ClassVar["LoggingProvider" | None] = None
-# 42 
-# 43     def __new__(cls, *args, **kwargs):
-# 44         if cls._instance is None:
-# 45             cls._instance = super().__new__(cls)
-# 46         return cls._instance
-# 47 
-# 48     def __init__(
-# 49         self,
-# 50         db_path: str | Path = "experiments/codecritic.sqlite3",
-# 51         output_path: str | Path | None = None,
-# 52         connection: sqlite3.Connection | None = None,
-# 53     ) -> None:
-# 54         if getattr(self, "_initialized", False):
-# 55             return
-# 56 
-# 57         self.db_path = Path(db_path)
-# 58         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-# 59 
-# 60         from app.utilities.db import init_db, get_connection
-# 61 
-# 62         if connection:
-# 63             self.conn = connection
-# 64             init_db(self.conn)  #  Explicit schema initialization for the provided connection
-# 65         else:
-# 66             self.conn = get_connection()
-# 67             init_db()  #  Schema initialization when using default connection
-# 68 
-# 69         self.output_path = Path(output_path) if output_path else None
-# 70         if self.output_path:
-# 71             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+# 41 
+# 42 class LoggingProvider:
+# 43     """Centralized provider for structured logging."""
+# 44 
+# 45     _instance: ClassVar["LoggingProvider" | None] = None
+# 46 
+# 47     def __new__(cls, *args, **kwargs):
+# 48         if cls._instance is None:
+# 49             cls._instance = super().__new__(cls)
+# 50         return cls._instance
+# 51 
+# 52     def __init__(
+# 53         self,
+# 54         db_path: str | Path = "experiments/codecritic.sqlite3",
+# 55         output_path: str | Path | None = None,
+# 56         connection: sqlite3.Connection | None = None,
+# 57     ) -> None:
+# 58         if getattr(self, "_initialized", False):
+# 59             return
+# 60 
+# 61         self.db_path = Path(db_path)
+# 62         self.db_path.parent.mkdir(exist_ok=True, parents=True)
+# 63 
+# 64         from app.utilities.db import get_connection, init_db
+# 65 
+# 66         if connection:
+# 67             self.conn = connection
+# 68             init_db(conn=self.conn)  #  Fix applied here
+# 69         else:
+# 70             self.conn = get_connection()
+# 71             init_db(conn=self.conn)  #  Fix applied here
 # 72 
-# 73         self._initialized = True
-# 74         
-# 75     def _serialize(self, obj: Any) -> dict:
-# 76         def _safe(v: Any) -> Any:
-# 77             if isinstance(v, (Enum, Path)):
-# 78                 return str(v)
-# 79             elif isinstance(v, datetime):
-# 80                 return v.isoformat()
-# 81             elif isinstance(v, list):
-# 82                 return [_safe(i) for i in v]
-# 83             elif isinstance(v, dict):
-# 84                 return {k: _safe(val) for k, val in v.items()}
-# 85             return v
-# 86 
-# 87         if not is_dataclass(obj) or isinstance(obj, type):
-# 88             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 89         return _safe(asdict(obj))
+# 73         self.output_path = Path(output_path) if output_path else None
+# 74         if self.output_path:
+# 75             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+# 76 
+# 77         self._initialized = True
+# 78 
+# 79     def _serialize(self, obj: Any) -> dict:
+# 80         def _safe(v: Any) -> Any:
+# 81             if isinstance(v, (Enum, Path)):
+# 82                 return str(v)
+# 83             elif isinstance(v, datetime):
+# 84                 return v.isoformat()
+# 85             elif isinstance(v, list):
+# 86                 return [_safe(i) for i in v]
+# 87             elif isinstance(v, dict):
+# 88                 return {k: _safe(val) for k, val in v.items()}
+# 89             return v
 # 90 
-# 91     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 92         items = list(items)
-# 93         if not items:
-# 94             return
-# 95         keys = list(items[0].keys())
-# 96         cols = ",".join(keys)
-# 97         placeholders = ",".join(["?"] * len(keys))
-# 98         values = [tuple(i[k] for k in keys) for i in items]
-# 99         cur = self.conn.cursor()
-# 100         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 101         self.conn.commit()
-# 102         if self.output_path:
-# 103             with self.output_path.open("a", encoding="utf-8") as fh:
-# 104                 for item in items:
-# 105                     fh.write(json.dumps(item) + "\n")
-# 106 
-# 107     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 108         if not isinstance(entries, list):
-# 109             entries = [entries]
-# 110         model_cls = LOG_MODEL_MAP.get(log_type)
-# 111         if model_cls is None:
-# 112             raise ValueError(f"Unsupported log type: {log_type}")
-# 113         for entry in entries:
-# 114             if not isinstance(entry, model_cls):
-# 115                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
-# 116         serialized = [self._serialize(e) for e in entries]
-# 117         self._insert_many(log_type.value + "_log", serialized)
-# 118 
-# 119     #  Convenience wrappers
-# 120     def log_state(self, log: StateLog) -> None:
-# 121         self.write(LogType.STATE, log)
+# 91         if not is_dataclass(obj) or isinstance(obj, type):
+# 92             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 93         return _safe(asdict(obj))
+# 94 
+# 95     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 96         items = list(items)
+# 97         if not items:
+# 98             return
+# 99         keys = list(items[0].keys())
+# 100         cols = ",".join(keys)
+# 101         placeholders = ",".join(["?"] * len(keys))
+# 102         values = [tuple(i[k] for k in keys) for i in items]
+# 103         cur = self.conn.cursor()
+# 104         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 105         self.conn.commit()
+# 106         if self.output_path:
+# 107             with self.output_path.open("a", encoding="utf-8") as fh:
+# 108                 for item in items:
+# 109                     fh.write(json.dumps(item) + "\n")
+# 110 
+# 111     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 112         if not isinstance(entries, list):
+# 113             entries = [entries]
+# 114         model_cls = LOG_MODEL_MAP.get(log_type)
+# 115         if model_cls is None:
+# 116             raise ValueError(f"Unsupported log type: {log_type}")
+# 117         for entry in entries:
+# 118             if not isinstance(entry, model_cls):
+# 119                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
+# 120         serialized = [self._serialize(e) for e in entries]
+# 121         self._insert_many(log_type.value + "_log", serialized)
 # 122 
-# 123     def log_transition(self, log: StateTransitionLog) -> None:
-# 124         self.write(LogType.STATE_TRANSITION, log)
-# 125 
-# 126     def log_prompt(self, log: PromptLog) -> None:
-# 127         self.write(LogType.PROMPT, log)
-# 128 
-# 129     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 130         self.write(LogType.CODE_QUALITY, log)
-# 131 
-# 132     def log_error(self, log: ErrorLog) -> None:
-# 133         self.write(LogType.ERROR, log)
-# 134 
-# 135     def log_scoring(self, log: ScoringLog) -> None:
-# 136         self.write(LogType.SCORING, log)
-# 137 
-# 138     def log_conversation(self, log: ConversationLog) -> None:
-# 139         self.write(LogType.CONVERSATION, log)
-# 140 
-# 141     def log_experiment(self, log: ExperimentLog) -> None:
-# 142         self.write(LogType.EXPERIMENT, log)
-# 143 
-# 144     def close(self) -> None:
-# 145         self.conn.close()
-# 146 
+# 123     #  Convenience wrappers
+# 124     def log_state(self, log: StateLog) -> None:
+# 125         self.write(LogType.STATE, log)
+# 126 
+# 127     def log_transition(self, log: StateTransitionLog) -> None:
+# 128         self.write(LogType.STATE_TRANSITION, log)
+# 129 
+# 130     def log_prompt(self, log: PromptLog) -> None:
+# 131         self.write(LogType.PROMPT, log)
+# 132 
+# 133     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 134         self.write(LogType.CODE_QUALITY, log)
+# 135 
+# 136     def log_error(self, log: ErrorLog) -> None:
+# 137         self.write(LogType.ERROR, log)
+# 138 
+# 139     def log_scoring(self, log: ScoringLog) -> None:
+# 140         self.write(LogType.SCORING, log)
+# 141 
+# 142     def log_conversation(self, log: ConversationLog) -> None:
+# 143         self.write(LogType.CONVERSATION, log)
+# 144 
+# 145     def log_experiment(self, log: ExperimentLog) -> None:
+# 146         self.write(LogType.EXPERIMENT, log)
 # 147 
-# 148 class LoggingMixin:
-# 149     """Mixin to provide access to a shared LoggingProvider instance."""
+# 148     def log_recommendation(self, log: RecommendationLog) -> None:
+# 149         self.write(LogType.RECOMMENDATION, log)
 # 150 
-# 151     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 152         self.logger = logger or LoggingProvider()
-# 153         self._log = logging.getLogger(self.__class__.__name__)
+# 151     def log_feedback(self, log: FeedbackLog) -> None:
+# 152         self.write(LogType.FEEDBACK, log)
+# 153         FeedbackRepository.add_feedback(log)
 # 154 
-# 155     def log_state(self, log: StateLog) -> None:
-# 156         self.logger.log_state(log)
+# 155     def close(self) -> None:
+# 156         self.conn.close()
 # 157 
-# 158     def log_transition(self, log: StateTransitionLog) -> None:
-# 159         self.logger.log_transition(log)
-# 160 
-# 161     def log_prompt(self, log: PromptLog) -> None:
-# 162         self.logger.log_prompt(log)
-# 163 
-# 164     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 165         self.logger.log_code_quality(log)
-# 166 
-# 167     def log_error(self, log: ErrorLog) -> None:
-# 168         self.logger.log_error(log)
-# 169 
-# 170     def log_scoring(self, log: ScoringLog) -> None:
-# 171         self.logger.log_scoring(log)
-# 172 
-# 173     def log_conversation(self, log: ConversationLog) -> None:
-# 174         self.logger.log_conversation(log)
-# 175 
-# 176     def log_experiment(self, log: ExperimentLog) -> None:
-# 177         self.logger.log_experiment(log)
+# 158 
+# 159 class LoggingMixin:
+# 160     """Mixin to provide access to a shared LoggingProvider instance."""
+# 161 
+# 162     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 163         self.logger = logger or LoggingProvider()
+# 164         self._log = logging.getLogger(self.__class__.__name__)
+# 165 
+# 166     def log_state(self, log: StateLog) -> None:
+# 167         self.logger.log_state(log)
+# 168 
+# 169     def log_transition(self, log: StateTransitionLog) -> None:
+# 170         self.logger.log_transition(log)
+# 171 
+# 172     def log_prompt(self, log: PromptLog) -> None:
+# 173         self.logger.log_prompt(log)
+# 174 
+# 175     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 176         self.logger.log_code_quality(log)
+# 177 
+# 178     def log_error(self, log: ErrorLog) -> None:
+# 179         self.logger.log_error(log)
+# 180 
+# 181     def log_scoring(self, log: ScoringLog) -> None:
+# 182         self.logger.log_scoring(log)
+# 183 
+# 184     def log_conversation(self, log: ConversationLog) -> None:
+# 185         self.logger.log_conversation(log)
+# 186 
+# 187     def log_experiment(self, log: ExperimentLog) -> None:
+# 188         self.logger.log_experiment(log)
+# 189 
+# 190     def log_recommendation(self, log: RecommendationLog) -> None:
+# 191         self.logger.log_recommendation(log)
+# 192 
+# 193     def log_feedback(self, log: FeedbackLog) -> None:
+# 194         self.logger.log_feedback(log)
 
 
 # factories\prompt_manager.py
@@ -2188,8 +2890,8 @@
 # 44             raise ValueError("artifact_path must be absolute or project relative")
 # 45         return p
 # 46 
-# 47     def model_dump(self, **kwargs) -> dict:
-# 48         return super().model_dump(**kwargs)
+# 47     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 48         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\agent_engine_schema.py
@@ -2225,8 +2927,8 @@
 # 29             raise ValueError("artifact_path must be absolute or project relative")
 # 30         return p
 # 31 
-# 32     def model_dump(self, **kwargs) -> dict:
-# 33         return super().model_dump(**kwargs)
+# 32     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 33         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\agent_prompt_schema.py
@@ -2262,8 +2964,8 @@
 # 29             raise ValueError("artifact_path must be absolute or project relative")
 # 30         return p
 # 31 
-# 32     def model_dump(self, **kwargs) -> dict:
-# 33         return super().model_dump(**kwargs)
+# 32     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 33         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\context_provider_schema.py
@@ -2296,8 +2998,8 @@
 # 26             self.tooling_provider_id = getattr(self.tooling_provider, "id", None)
 # 27         return self
 # 28 
-# 29     def model_dump(self, **kwargs) -> dict:
-# 30         return super().model_dump(**kwargs)
+# 29     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 30         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\experiment_config_schema.py
@@ -2335,8 +3037,8 @@
 # 31             self.scoring_model_id = getattr(self.scoring_model, "id", None)
 # 32         return self
 # 33 
-# 34     def model_dump(self, **kwargs) -> dict:
-# 35         return super().model_dump(**kwargs)
+# 34     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 35         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\file_path_schema.py
@@ -2364,8 +3066,8 @@
 # 21             raise ValueError("artifact_path must be absolute or project relative")
 # 22         return p
 # 23 
-# 24     def model_dump(self, **kwargs) -> dict:
-# 25         return super().model_dump(**kwargs)
+# 24     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 25         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\prompt_generator_schema.py
@@ -2420,8 +3122,8 @@
 # 48             raise ValueError("artifact_path must be absolute or project relative")
 # 49         return p
 # 50 
-# 51     def model_dump(self, **kwargs) -> dict:
-# 52         return super().model_dump(**kwargs)
+# 51     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 52         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\scoring_provider_schema.py
@@ -2455,8 +3157,8 @@
 # 27             raise ValueError("artifact_path must be absolute or project relative")
 # 28         return p
 # 29 
-# 30     def model_dump(self, **kwargs) -> dict:
-# 31         return super().model_dump(**kwargs)
+# 30     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 31         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\series_schema.py
@@ -2486,8 +3188,8 @@
 # 23             self.experiment_config_id = getattr(self.experiment_config, "id", None)
 # 24         return self
 # 25 
-# 26     def model_dump(self, **kwargs) -> dict:
-# 27         return super().model_dump(**kwargs)
+# 26     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 27         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\state_manager_schema.py
@@ -2524,8 +3226,8 @@
 # 30             raise ValueError("artifact_path must be absolute or project relative")
 # 31         return p
 # 32 
-# 33     def model_dump(self, **kwargs) -> dict:
-# 34         return super().model_dump(**kwargs)
+# 33     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 34         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\system_config_schema.py
@@ -2564,8 +3266,8 @@
 # 32             self.scoring_model_id = getattr(self.scoring_model, "id", None)
 # 33         return self
 # 34 
-# 35     def model_dump(self, **kwargs) -> dict:
-# 36         return super().model_dump(**kwargs)
+# 35     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 36         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\system_prompt_schema.py
@@ -2600,8 +3302,8 @@
 # 28             raise ValueError("artifact_path must be absolute or project relative")
 # 29         return p
 # 30 
-# 31     def model_dump(self, **kwargs) -> dict:
-# 32         return super().model_dump(**kwargs)
+# 31     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 32         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # schemas\tooling_provider_schema.py
@@ -2635,8 +3337,8 @@
 # 27             raise ValueError("artifact_path must be absolute or project relative")
 # 28         return p
 # 29 
-# 30     def model_dump(self, **kwargs) -> dict:
-# 31         return super().model_dump(**kwargs)
+# 30     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
+# 31         return super().model_dump(**kwargs)  #  type: ignore[misc]
 
 
 # utilities\__init__.py
@@ -2647,7 +3349,7 @@
 
 # 1 import sqlite3
 # 2 from pathlib import Path
-# 3 from typing import Iterable, Any
+# 3 from typing import Any
 # 4 
 # 5 DB_PATH = Path("experiments") / "codecritic.sqlite3"
 # 6 _CONN: sqlite3.Connection | None = None
@@ -2689,93 +3391,152 @@
 # 42     if conn is None:
 # 43         conn = get_connection()
 # 44     cur = conn.cursor()
-# 45     cur.execute(
-# 46         """CREATE TABLE IF NOT EXISTS state_log (
-# 47             experiment_id TEXT,
-# 48             system TEXT,
-# 49             round INTEGER,
-# 50             state TEXT,
-# 51             action TEXT,
-# 52             score REAL,
-# 53             details TEXT,
-# 54             timestamp TEXT
-# 55         )"""
-# 56     )
-# 57     cur.execute(
-# 58         """CREATE TABLE IF NOT EXISTS state_transition_log (
-# 59             experiment_id TEXT,
-# 60             round INTEGER,
-# 61             from_state TEXT,
-# 62             to_state TEXT,
-# 63             reason TEXT,
-# 64             timestamp TEXT
-# 65         )"""
-# 66     )
-# 67     cur.execute(
-# 68         """CREATE TABLE IF NOT EXISTS prompt_log (
-# 69             experiment_id TEXT,
-# 70             round INTEGER,
-# 71             system TEXT,
-# 72             agent_id TEXT,
-# 73             agent_role TEXT,
-# 74             agent_engine TEXT,
-# 75             symbol TEXT,
-# 76             prompt TEXT,
-# 77             response TEXT,
-# 78             attempt_number INTEGER,
-# 79             agent_action_outcome TEXT,
-# 80             start TEXT,
-# 81             stop TEXT
-# 82         )"""
-# 83     )
-# 84     cur.execute(
-# 85         """CREATE TABLE IF NOT EXISTS code_quality_log (
-# 86             experiment_id TEXT,
-# 87             round INTEGER,
-# 88             symbol TEXT,
-# 89             lines_of_code INTEGER,
-# 90             cyclomatic_complexity REAL,
-# 91             maintainability_index REAL,
-# 92             lint_errors INTEGER,
-# 93             timestamp TEXT
-# 94         )"""
-# 95     )
-# 96     cur.execute(
-# 97         """CREATE TABLE IF NOT EXISTS scoring_log (
-# 98             experiment_id TEXT,
-# 99             round INTEGER,
-# 100             metric TEXT,
-# 101             value REAL,
-# 102             timestamp TEXT
-# 103         )"""
-# 104     )
-# 105     cur.execute(
-# 106         """CREATE TABLE IF NOT EXISTS error_log (
-# 107             experiment_id TEXT,
-# 108             round INTEGER,
-# 109             error_type TEXT,
-# 110             message TEXT,
-# 111             file_path TEXT,
-# 112             timestamp TEXT
-# 113         )"""
-# 114     )
-# 115     conn.commit()
-# 116     return conn
-# 117 
-# 118 
-# 119 def insert_logs(conn: sqlite3.Connection, table: str, logs: Iterable[Any]) -> None:
-# 120     logs = list(logs)
-# 121     if not logs:
-# 122         return
-# 123     row = _serialize(logs[0])
-# 124     cols = ",".join(row.keys())
-# 125     placeholders = ",".join(["?"] * len(row))
-# 126     values = [tuple(_serialize(log).values()) for log in logs]
-# 127     conn.executemany(
-# 128         f"INSERT INTO {table} ({cols}) VALUES ({placeholders})",
-# 129         values,
-# 130     )
-# 131     conn.commit()
+# 45 
+# 46     cur.execute(
+# 47         """CREATE TABLE IF NOT EXISTS state_log (
+# 48             experiment_id TEXT,
+# 49             system TEXT,
+# 50             round INTEGER,
+# 51             state TEXT,
+# 52             action TEXT,
+# 53             score REAL,
+# 54             details TEXT,
+# 55             timestamp TEXT
+# 56         )"""
+# 57     )
+# 58 
+# 59     cur.execute(
+# 60         """CREATE TABLE IF NOT EXISTS state_transition_log (
+# 61             experiment_id TEXT,
+# 62             round INTEGER,
+# 63             from_state TEXT,
+# 64             to_state TEXT,
+# 65             reason TEXT,
+# 66             timestamp TEXT
+# 67         )"""
+# 68     )
+# 69 
+# 70     cur.execute(
+# 71         """CREATE TABLE IF NOT EXISTS prompt_log (
+# 72             experiment_id TEXT,
+# 73             round INTEGER,
+# 74             system TEXT,
+# 75             agent_id TEXT,
+# 76             agent_role TEXT,
+# 77             agent_engine TEXT,
+# 78             symbol TEXT,
+# 79             prompt TEXT,
+# 80             response TEXT,
+# 81             attempt_number INTEGER,
+# 82             agent_action_outcome TEXT,
+# 83             start TEXT,
+# 84             stop TEXT
+# 85         )"""
+# 86     )
+# 87 
+# 88     cur.execute(
+# 89         """CREATE TABLE IF NOT EXISTS code_quality_log (
+# 90             experiment_id TEXT,
+# 91             round INTEGER,
+# 92             symbol TEXT,
+# 93             lines_of_code INTEGER,
+# 94             cyclomatic_complexity REAL,
+# 95             maintainability_index REAL,
+# 96             lint_errors INTEGER,
+# 97             timestamp TEXT
+# 98         )"""
+# 99     )
+# 100 
+# 101     cur.execute(
+# 102         """CREATE TABLE IF NOT EXISTS scoring_log (
+# 103             experiment_id TEXT,
+# 104             round INTEGER,
+# 105             metric TEXT,
+# 106             value REAL,
+# 107             timestamp TEXT
+# 108         )"""
+# 109     )
+# 110 
+# 111     cur.execute(
+# 112         """CREATE TABLE IF NOT EXISTS error_log (
+# 113             experiment_id TEXT,
+# 114             round INTEGER,
+# 115             error_type TEXT,
+# 116             message TEXT,
+# 117             file_path TEXT,
+# 118             timestamp TEXT
+# 119         )"""
+# 120     )
+# 121 
+# 122     #  ✅ Add this missing table definition
+# 123     cur.execute(
+# 124         """CREATE TABLE IF NOT EXISTS conversation_log (
+# 125             experiment_id TEXT,
+# 126             round INTEGER,
+# 127             agent_role TEXT,
+# 128             target TEXT,
+# 129             content TEXT,
+# 130             originating_agent TEXT,
+# 131             intervention INTEGER,
+# 132             intervention_type TEXT,
+# 133             intervention_reason TEXT,
+# 134             timestamp TEXT
+# 135         )"""
+# 136     )
+# 137 
+# 138     cur.execute(
+# 139         """CREATE TABLE IF NOT EXISTS recommendation_log (
+# 140             experiment_id TEXT,
+# 141             round INTEGER,
+# 142             symbol TEXT,
+# 143             file_path TEXT,
+# 144             line_start INTEGER,
+# 145             line_end INTEGER,
+# 146             recommendation TEXT,
+# 147             context TEXT,
+# 148             timestamp TEXT
+# 149         )"""
+# 150     )
+# 151 
+# 152     cur.execute(
+# 153         """CREATE TABLE IF NOT EXISTS feedback_log (
+# 154             experiment_id TEXT,
+# 155             round INTEGER,
+# 156             source TEXT,
+# 157             feedback TEXT,
+# 158             timestamp TEXT
+# 159         )"""
+# 160     )
+# 161 
+# 162     conn.commit()
+# 163     return conn
+
+
+# utilities\feedback.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from typing import ClassVar, Dict, List
+# 4 
+# 5 from .metadata.logging.log_schemas import FeedbackLog
+# 6 
+# 7 
+# 8 class FeedbackRepository:
+# 9     """In-memory store for feedback logs."""
+# 10 
+# 11     _data: ClassVar[Dict[str, List[FeedbackLog]]] = {}
+# 12 
+# 13     @classmethod
+# 14     def add_feedback(cls, log: FeedbackLog) -> None:
+# 15         cls._data.setdefault(log.experiment_id, []).append(log)
+# 16 
+# 17     @classmethod
+# 18     def get_feedback(cls, experiment_id: str) -> List[FeedbackLog]:
+# 19         return list(cls._data.get(experiment_id, []))
+# 20 
+# 21     @classmethod
+# 22     def clear(cls) -> None:
+# 23         cls._data.clear()
 
 
 # utilities\file_management\__init__.py
@@ -2922,6 +3683,30 @@
 # 107     reason_for_stop: str
 # 108     start: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 # 109     stop: datetime | None = None
+# 110 
+# 111 
+# 112 @dataclass
+# 113 class RecommendationLog:
+# 114     experiment_id: str
+# 115     round: int
+# 116     symbol: str
+# 117     file_path: str
+# 118     line_start: int
+# 119     line_end: int
+# 120     recommendation: str
+# 121     context: str
+# 122     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 123 
+# 124 
+# 125 @dataclass
+# 126 class FeedbackLog:
+# 127     """Capture feedback for adaptive learning."""
+# 128 
+# 129     experiment_id: str
+# 130     round: int
+# 131     source: str
+# 132     feedback: str
+# 133     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # utilities\metadata\snapshots\__init__.py
@@ -3211,28 +3996,23 @@
 # 106 
 # 107 
 # 108 def initialize_database(reset: bool = False) -> sqlite3.Connection:
-# 109     db_path = Path("experiments/codecritic.sqlite3")
-# 110 
-# 111     if reset and db_path.exists():
-# 112         try:
-# 113             import sqlite3
-# 114 
-# 115             sqlite3.connect(str(db_path)).close()
-# 116         except Exception:
-# 117             pass
-# 118         import gc
-# 119 
-# 120         gc.collect()
-# 121         db_path.unlink()
+# 109     """
+# 110     Initialize (and optionally reset) the experiment database.
+# 111     If reset=True, closes any open connection and deletes the existing file.
+# 112     Then re-creates tables (and loads seed data, if any).
+# 113     """
+# 114     if reset and db.DB_PATH.exists():
+# 115         db.close_connection()  #  close the global connection if it’s open
+# 116         db.DB_PATH.unlink()  #  now safe to delete the file
+# 117 
+# 118     conn = db.get_connection()
+# 119     create_tables(conn)
+# 120     load_seed_data(conn)  #  uncomment if you have seed data
+# 121     return conn
 # 122 
-# 123     conn = db.get_connection()
-# 124     create_tables(conn)
-# 125     load_seed_data(conn)
-# 126     return conn
-# 127 
-# 128 
-# 129 if __name__ == "__main__":
-# 130     initialize_database()
+# 123 
+# 124 if __name__ == "__main__":
+# 125     initialize_database()
 
 
 # utilities\snapshots\__init__.py
@@ -3344,6 +4124,81 @@
 # utilities\tools\sonarcloud_runner.py
 
 # 1 #  Placeholder for sonarcloud runner
+
+
+# visualization\__init__.py
+
+
+
+# visualization\dashboard.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import sqlite3
+# 4 from pathlib import Path
+# 5 from typing import Dict
+# 6 
+# 7 import pandas as pd
+# 8 import plotly.express as px
+# 9 import plotly.graph_objects as go
+# 10 
+# 11 
+# 12 _LOG_TABLES = {
+# 13     "state": "state_log",
+# 14     "transition": "state_transition_log",
+# 15     "prompt": "prompt_log",
+# 16     "scoring": "scoring_log",
+# 17     "recommendation": "recommendation_log",
+# 18 }
+# 19 
+# 20 
+# 21 def load_logs(db_path: str | Path) -> Dict[str, pd.DataFrame]:
+# 22     """Load structured logs from the experiment database."""
+# 23     path = Path(db_path)
+# 24     if not path.exists():
+# 25         raise FileNotFoundError(path)
+# 26     conn = sqlite3.connect(path)
+# 27     logs: Dict[str, pd.DataFrame] = {}
+# 28     for key, table in _LOG_TABLES.items():
+# 29         try:
+# 30             df = pd.read_sql_query(f"SELECT * FROM {table}", conn)
+# 31         except Exception:
+# 32             df = pd.DataFrame()
+# 33         logs[key] = df
+# 34     conn.close()
+# 35     return logs
+# 36 
+# 37 
+# 38 def build_state_transition_sankey(df: pd.DataFrame) -> go.Figure:
+# 39     """Return a Sankey diagram for state transitions."""
+# 40     if df.empty:
+# 41         return go.Figure()
+# 42     states = pd.unique(pd.concat([df["from_state"], df["to_state"]]))
+# 43     indices = {state: i for i, state in enumerate(states)}
+# 44     source = [indices[s] for s in df["from_state"]]
+# 45     target = [indices[t] for t in df["to_state"]]
+# 46     value = [1] * len(df)
+# 47     return go.Figure(
+# 48         go.Sankey(
+# 49             node={"label": list(states)},
+# 50             link={"source": source, "target": target, "value": value},
+# 51         )
+# 52     )
+# 53 
+# 54 
+# 55 def build_scoring_line_plot(df: pd.DataFrame) -> go.Figure:
+# 56     """Return a line chart for scoring metrics over rounds."""
+# 57     if df.empty:
+# 58         return go.Figure()
+# 59     return px.line(df, x="round", y="value", color="metric")
+# 60 
+# 61 
+# 62 def build_recommendation_bar_plot(df: pd.DataFrame) -> go.Figure:
+# 63     """Return a bar plot summarizing recommendation counts per symbol."""
+# 64     if df.empty:
+# 65         return go.Figure()
+# 66     counts = df.groupby("symbol").size().reset_index(name="count")
+# 67     return px.bar(counts, x="symbol", y="count")
 
 
 

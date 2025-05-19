@@ -10,9 +10,3 @@ class AgentRole(str, Enum):
     PATCHER = "patcher"
     EVALUATOR = "evaluator"
     RECOMMENDER = "recommender"
-
-
-class AgentState(Enum):
-    INIT = "init"
-    RUNNING = "running"
-    COMPLETE = "complete"

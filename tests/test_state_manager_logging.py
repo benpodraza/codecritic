@@ -2,6 +2,7 @@ import sqlite3
 from importlib import import_module
 
 from app.extensions.state_managers.state_manager import StateManager
+from app.extensions.context_providers.dummy_context_provider import DummyContextProvider
 from app.enums.system_enums import SystemState, StateTransitionReason
 from app.factories.logging_provider import LoggingProvider
 
@@ -10,7 +11,16 @@ def test_state_manager_logging():
     import_module("app.extensions.state_managers")
     conn = sqlite3.connect(":memory:")
     logger = LoggingProvider(connection=conn)
-    manager = StateManager(logger=logger)
+    context = DummyContextProvider(logger=logger)
+
+    def scoring_fn(data):
+        return 0.0
+
+    manager = StateManager(
+        scoring_function=scoring_fn,
+        context_manager=context,
+        logger=logger,
+    )
 
     manager.transition_state(
         experiment_id="exp",

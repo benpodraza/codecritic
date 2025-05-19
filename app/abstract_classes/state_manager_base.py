@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-import json
 from pathlib import Path
 
 from app.utilities.metadata.logging.log_schemas import (
@@ -40,13 +39,11 @@ class StateManagerBase(LoggingMixin, ABC):
         **kwargs,
     ) -> None:
         self._log.debug("State logic execution start")
-        success = False
         error_message = None
         details = None
 
         try:
             self._run_state_logic(*args, **kwargs)
-            success = True
         except Exception as e:
             error_message = str(e)
             error_log = ErrorLog(
@@ -83,7 +80,6 @@ class StateManagerBase(LoggingMixin, ABC):
         reason: str,
     ) -> None:
         self._log.debug("State transition start")
-        success = False
         error_message = None
         score = None
 
@@ -96,7 +92,6 @@ class StateManagerBase(LoggingMixin, ABC):
                 raise ValueError("Invalid transition score")
 
             self._transition_state(from_state.name, to_state.name, reason)
-            success = True
             self.current_state = to_state
         except Exception as e:
             error_message = str(e)

@@ -43,6 +43,44 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
         conn = get_connection()
     cur = conn.cursor()
 
+    # TESTED
+
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS prompt_generation_log (
+            experiment_id TEXT,
+            round INTEGER,
+            generator_name TEXT,
+            context_provider_name TEXT,
+            agent_config TEXT,
+            system_config TEXT,
+            generated_prompt TEXT,
+            success INTEGER,
+            error_message TEXT,
+            timestamp TEXT
+        )"""
+    )
+
+    cur.execute(
+        """CREATE TABLE IF NOT EXISTS experiment_log (
+            experiment_id TEXT,
+            description TEXT,
+            mode TEXT,
+            variant TEXT,
+            max_iterations INTEGER,
+            stop_threshold REAL,
+            model_engine TEXT,
+            evaluator_name TEXT,
+            evaluator_version TEXT,
+            final_score REAL,
+            passed INTEGER,
+            reason_for_stop TEXT,
+            start TEXT,
+            stop TEXT
+        )"""
+    )
+
+    # UNTESTED
+
     cur.execute(
         """CREATE TABLE IF NOT EXISTS state_log (
             experiment_id TEXT,
@@ -120,21 +158,6 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
     )
 
     cur.execute(
-        """CREATE TABLE IF NOT EXISTS prompt_generation_log (
-            experiment_id TEXT,
-            round INTEGER,
-            generator_name TEXT,
-            context_provider_name TEXT,
-            agent_config TEXT,
-            system_config TEXT,
-            generated_prompt TEXT,
-            success INTEGER,
-            error_message TEXT,
-            timestamp TEXT
-        )"""
-    )
-
-    cur.execute(
         """CREATE TABLE IF NOT EXISTS context_retrieval_log (
             experiment_id TEXT,
             round INTEGER,
@@ -190,7 +213,6 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
         )"""
     )
 
-    # ✅ Add this missing table definition
     cur.execute(
         """CREATE TABLE IF NOT EXISTS conversation_log (
             experiment_id TEXT,

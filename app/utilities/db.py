@@ -2,7 +2,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-DB_PATH = Path("experiments") / "codecritic.sqlite3"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DB_PATH = PROJECT_ROOT / "experiments" / "codecritic.sqlite3"
 _CONN: sqlite3.Connection | None = None
 
 
@@ -175,6 +176,7 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
             experiment_id TEXT,
             round INTEGER,
             tool_provider_name TEXT,
+            tool_provider_guid TEXT,
             invocation_parameters TEXT,
             stdout TEXT,
             stderr TEXT,

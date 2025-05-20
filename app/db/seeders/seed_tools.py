@@ -1,0 +1,46 @@
+from uuid import uuid4
+from pathlib import Path
+import shutil
+from sqlalchemy.orm import Session
+
+from app.db.models import ToolConfig
+
+
+SEED_FILES_DIR = Path(__file__).resolve().parent / "files"
+PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent
+EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+
+TOOLS = [
+    ("black_tool.py", "Black Formatter", "Formats Python code using Black.", {}),
+    ("sonarcloud_tool.py", "SonarCloud Analyzer", "Static analysis via SonarCloud.", {}),
+    ("ruff_tool.py", "Ruff Linter", "Python linting with Ruff.", {}),
+    ("radon_tool.py", "Radon Analyzer", "Analyzes Python code complexity.", {}),
+    ("mypy_tool.py", "Mypy Type Checker", "Static type checking with mypy.", {}),
+    ("docformatter_tool.py", "Docformatter Formatter", "Static type checking with mypy.", {}),
+]
+
+def seed_tools(db_session: Session):
+    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+    for filename, name, description, config in TOOLS:
+        guid = str(uuid4())
+        source_file = SEED_FILES_DIR / filename
+        dest_file = EXTENSIONS_DIR / f"{guid}.py"
+
+        if not source_file.exists():
+            raise FileNotFoundError(f"Tool script not found: {source_file}")
+
+        shutil.copy(source_file, dest_file)
+
+        tool = ToolConfig(
+            guid=guid,
+            name=name,
+            description=description,
+            config=config,
+            artifact_path=str(dest_file)
+        )
+
+        db_session.add(tool)
+
+    db_session.commit()
+    print("Seeded tool configurations successfully.")

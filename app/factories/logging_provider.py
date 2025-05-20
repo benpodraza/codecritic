@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Iterable
 
 from app.enums.logging_enums import LogType
-from ..utilities.metadata.logging.log_schemas import (
+from app.utilities.metadata.logging.log_schemas import (
     PromptGenerationLog,
     ContextRetrievalLog,
     ToolInvocationLog,
@@ -27,7 +27,7 @@ from ..utilities.metadata.logging.log_schemas import (
     RecommendationLog,
     FeedbackLog,
 )
-from ..utilities.feedback import FeedbackRepository
+from app.utilities.feedback import FeedbackRepository
 
 
 LOG_MODEL_MAP = {

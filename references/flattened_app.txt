@@ -40,7 +40,7 @@
 # 27         **kwargs,
 # 28     ) -> None:
 # 29         self._log.debug("Agent run start")
-# 30         params = json.dumps({"args": args, "kwargs": kwargs})
+# 30         params = json.dumps({"args": args, "kwargs": kwargs}, default=str)
 # 31         response = ""
 # 32         success = False
 # 33         error_message = None
@@ -440,76 +440,70 @@
 
 # abstract_classes\tool_provider_base.py
 
-# 1 from __future__ import annotations
-# 2 
-# 3 from abc import ABC, abstractmethod
-# 4 
-# 5 import json
-# 6 from datetime import datetime, timezone
-# 7 import subprocess
-# 8 
-# 9 from ..factories.logging_provider import (
-# 10     LoggingMixin,
-# 11     LoggingProvider,
-# 12 )
-# 13 from ..utilities.metadata.logging.log_schemas import ToolInvocationLog
-# 14 
-# 15 
-# 16 class ToolProviderBase(LoggingMixin, ABC):
-# 17     """Base class for running external tools."""
-# 18 
-# 19     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 20         super().__init__(logger)
-# 21 
-# 22     def run(self, *args, experiment_id: str = "", round: int = 0, **kwargs):
-# 23         self._log.debug("Tool run start")
-# 24         params = json.dumps({"args": args, "kwargs": kwargs})
-# 25         result: subprocess.CompletedProcess | None = None
-# 26         success = False
-# 27         error_message = None
-# 28         try:
-# 29             result = self._run(*args, **kwargs)
-# 30             success = True
-# 31             return result
-# 32         except Exception as exc:
-# 33             error_message = str(exc)
-# 34             raise
-# 35         finally:
-# 36             stdout = (
-# 37                 result.stdout
-# 38                 if result is not None and hasattr(result, "stdout") and result.stdout
-# 39                 else ""
-# 40             )
-# 41             stderr = (
-# 42                 result.stderr
-# 43                 if result is not None and hasattr(result, "stderr") and result.stderr
-# 44                 else ""
-# 45             )
-# 46             return_code = (
-# 47                 int(result.returncode)
-# 48                 if result is not None and hasattr(result, "returncode")
-# 49                 else 0
-# 50             )
-# 51             self.logger.log_tool_invocation(
-# 52                 ToolInvocationLog(
-# 53                     experiment_id=str(experiment_id),
-# 54                     round=round,
-# 55                     tool_provider_name=self.__class__.__name__,
-# 56                     invocation_parameters=params,
-# 57                     stdout=stdout,
-# 58                     stderr=stderr,
-# 59                     return_code=return_code,
-# 60                     success=success,
-# 61                     error_message=error_message,
-# 62                     timestamp=datetime.now(timezone.utc),
-# 63                 )
-# 64             )
-# 65             self._log.debug("Tool run logged")
-# 66 
-# 67     @abstractmethod
-# 68     def _run(self, *args, **kwargs):
-# 69         """Run tool-specific logic."""
-# 70         raise NotImplementedError
+# 1 from abc import ABC, abstractmethod
+# 2 from datetime import datetime, timezone
+# 3 import json
+# 4 import subprocess
+# 5 from pathlib import Path
+# 6 from app.db.schemas import ToolConfig
+# 7 from app.factories.logging_provider import LoggingMixin, LoggingProvider, LogType
+# 8 from app.utilities.metadata.logging.log_schemas import ToolInvocationLog, ErrorLog
+# 9 
+# 10 class ToolProviderBase(LoggingMixin, ABC):
+# 11     """Base class for running external tools."""
+# 12 
+# 13     def __init__(self, tool_config: ToolConfig, logger: LoggingProvider | None = None):
+# 14         super().__init__(logger)
+# 15         self.tool_config = tool_config
+# 16 
+# 17     def run(self, *args, experiment_id: str, round: int, **kwargs):
+# 18         self._log.debug("Tool run start")
+# 19         params = json.dumps({"args": args, "kwargs": kwargs})
+# 20         result: subprocess.CompletedProcess | None = None
+# 21         success = False
+# 22         error_message = None
+# 23 
+# 24         try:
+# 25             result = self._run(*args, **kwargs)
+# 26             success = result.returncode == 0
+# 27             return result
+# 28         except Exception as exc:
+# 29             error_message = str(exc)
+# 30             error_log = ErrorLog(
+# 31                 experiment_id=experiment_id,
+# 32                 round=round,
+# 33                 error_type=type(exc).__name__,
+# 34                 message=error_message,
+# 35                 file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 36                 timestamp=datetime.now(timezone.utc),
+# 37             )
+# 38             self.logger.write(LogType.ERROR, error_log)
+# 39             self._log.error("Critical tool run error logged: %s", error_message)
+# 40             raise
+# 41         finally:
+# 42             stdout = result.stdout if result and result.stdout else ""
+# 43             stderr = result.stderr if result and result.stderr else ""
+# 44             return_code = result.returncode if result else -1
+# 45 
+# 46             invocation_log =  ToolInvocationLog(
+# 47                 experiment_id=str(experiment_id),
+# 48                 round=round,
+# 49                 tool_provider_name=self.__class__.__name__,
+# 50                 tool_provider_guid=self.tool_config.guid,
+# 51                 invocation_parameters=params,
+# 52                 stdout=stdout,
+# 53                 stderr=stderr,
+# 54                 return_code=return_code,
+# 55                 success=success,
+# 56                 error_message=error_message,
+# 57                 timestamp=datetime.now(timezone.utc),
+# 58             )
+# 59             self.logger.write(LogType.TOOL_INVOCATION, invocation_log)
+# 60             self._log.debug("Tool run logged")
+# 61 
+# 62     @abstractmethod
+# 63     def _run(self, *args, **kwargs):
+# 64         raise NotImplementedError
 
 
 # bootstrap.py
@@ -629,6 +623,446 @@
 # 113 
 # 114 if __name__ == "__main__":
 # 115     seed_registries(reset_db=True)
+
+
+# db\__init__.py
+
+# 1 from app.db.connection import get_connection
+# 2 from app.db.models import Base
+# 3 
+# 4 def init_db():
+# 5     conn = get_connection()
+# 6     Base.metadata.create_all(bind=conn)
+
+
+# db\base.py
+
+# 1 from sqlalchemy.orm import declarative_base
+# 2 
+# 3 Base = declarative_base()
+
+
+# db\connection.py
+
+# 1 from pathlib import Path
+# 2 import sqlite3
+# 3 
+# 4 DB_PATH = Path("experiments") / "codecritic.sqlite3"
+# 5 _CONN: sqlite3.Connection | None = None
+# 6 
+# 7 def get_connection() -> sqlite3.Connection:
+# 8     global _CONN
+# 9     try:
+# 10         if _CONN is None:
+# 11             raise RuntimeError
+# 12         _CONN.execute("SELECT 1")
+# 13     except (sqlite3.ProgrammingError, RuntimeError):
+# 14         _CONN = sqlite3.connect(DB_PATH, check_same_thread=False)
+# 15     return _CONN
+# 16 
+# 17 def close_connection() -> None:
+# 18     global _CONN
+# 19     if _CONN:
+# 20         _CONN.close()
+# 21         _CONN = None
+
+
+# db\models.py
+
+# 1 from datetime import datetime
+# 2 from sqlalchemy import Boolean, Column, DateTime, Integer, String, JSON
+# 3 from sqlalchemy.dialects.sqlite import TEXT
+# 4 from app.db.base import Base
+# 5 from uuid import uuid4
+# 6 
+# 7 class AgentPrompt(Base):
+# 8     __tablename__ = 'agent_prompt'
+# 9     id = Column(Integer, primary_key=True, index=True)
+# 10     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 11     name = Column(String, nullable=False)
+# 12     description = Column(String)
+# 13     artifact_path = Column(String, nullable=False)
+# 14     tags = Column(JSON, nullable=True)  #  JSON column for tags explicitly
+# 15 
+# 16 class SystemPrompt(Base):
+# 17     __tablename__ = 'system_prompt'
+# 18     id = Column(Integer, primary_key=True, index=True)
+# 19     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 20     name = Column(String, nullable=False)
+# 21     description = Column(String)
+# 22     artifact_path = Column(String, nullable=False)
+# 23     tags = Column(JSON, nullable=True)  #  JSON column for tags explicitly
+# 24 
+# 25 class ToolConfig(Base):
+# 26     __tablename__ = 'tool_config'
+# 27 
+# 28     id = Column(Integer, primary_key=True, index=True)
+# 29     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()), nullable=False)
+# 30     name = Column(String, nullable=False, unique=True)
+# 31     description = Column(String, nullable=True)
+# 32     config = Column(JSON, nullable=True)
+# 33     artifact_path = Column(String, nullable=False)
+# 34 
+# 35 class ToolInvocationLog(Base):
+# 36     __tablename__ = "tool_invocation_log"
+# 37 
+# 38     id = Column(Integer, primary_key=True, index=True)
+# 39     experiment_id = Column(String, nullable=False)
+# 40     round = Column(Integer, nullable=False)
+# 41     tool_provider_name = Column(String, nullable=False)
+# 42     tool_provider_guid = Column(String, nullable=False)  #  ✅ ADD THIS COLUMN
+# 43     invocation_parameters = Column(String, nullable=False)
+# 44     stdout = Column(String, nullable=True)
+# 45     stderr = Column(String, nullable=True)
+# 46     return_code = Column(Integer, nullable=False)
+# 47     success = Column(Boolean, nullable=False)
+# 48     error_message = Column(String, nullable=True)
+# 49     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+# db\schemas.py
+
+# 1 from pydantic import BaseModel, Field
+# 2 from pathlib import Path
+# 3 from typing import Dict, List, Optional
+# 4 from uuid import UUID, uuid4
+# 5 from app.utilities.pydantic_compat import field_validator
+# 6 
+# 7 class AgentPromptSchema(BaseModel):
+# 8     id: Optional[int]
+# 9     guid: UUID = Field(default_factory=uuid4)
+# 10     name: str
+# 11     description: Optional[str]
+# 12     artifact_path: Path
+# 13     tags: Optional[List[str]] = None
+# 14 
+# 15     @field_validator("artifact_path")
+# 16     @classmethod
+# 17     def _check_path(cls, v: Path) -> Path:
+# 18         if not v.is_absolute() and ".." in v.parts:
+# 19             raise ValueError("Invalid artifact path")
+# 20         return v
+# 21 
+# 22 class SystemPromptSchema(BaseModel):
+# 23     id: Optional[int]
+# 24     guid: UUID = Field(default_factory=uuid4)
+# 25     name: str
+# 26     description: Optional[str]
+# 27     artifact_path: Path
+# 28     tags: Optional[List[str]] = None
+# 29 
+# 30     @field_validator("artifact_path")
+# 31     @classmethod
+# 32     def _check_path(cls, v: Path) -> Path:
+# 33         if not v.is_absolute() and ".." in v.parts:
+# 34             raise ValueError("Invalid artifact path")
+# 35         return v
+# 36 
+# 37 class ToolConfig(BaseModel):
+# 38     """Configuration for an agent tool."""
+# 39 
+# 40     id: Optional[int] = None
+# 41     guid: UUID = Field(default_factory=uuid4)
+# 42     name: str
+# 43     description: Optional[str] = None
+# 44     config: Optional[Dict] = None
+# 45     artifact_path: Path
+# 46 
+# 47     @field_validator("artifact_path")
+# 48     @classmethod
+# 49     def _check_path(cls, v: Path) -> Path:
+# 50         if not v.is_absolute() and ".." in v.parts:
+# 51             raise ValueError("Invalid artifact path")
+# 52         return v
+# 53 
+
+
+# db\seed.py
+
+# 1 from sqlalchemy.orm import Session
+# 2 from sqlalchemy import create_engine
+# 3 from pathlib import Path
+# 4 from app.db.seeders.seed_tools import seed_tools
+# 5 from app.db.seeders.seed_prompts import seed_prompts
+# 6 
+# 7 #  Ensure your project root matches explicitly
+# 8 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# 9 DB_PATH = PROJECT_ROOT / "experiments" / "codecritic.sqlite3"
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 def main():
+# 13     engine = create_engine(f"sqlite:///{DB_PATH}")
+# 14     with Session(bind=engine) as session:
+# 15         seed_prompts(session)
+# 16         seed_tools(session)
+# 17     print(f"Database seeded successfully at {DB_PATH.resolve()}")
+# 18 
+# 19 if __name__ == "__main__":
+# 20     main()
+
+
+# db\seeders\__init__.py
+
+
+
+# db\seeders\files\__init__.py
+
+
+
+# db\seeders\files\black_tool.py
+
+# 1 from __future__ import annotations
+# 2 import subprocess
+# 3 import sys
+# 4 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 5 
+# 6 
+# 7 class BlackToolProvider(ToolProviderBase):
+# 8     def _run(self, target: str, check: bool = False):
+# 9         #  Use quiet mode to suppress emojis and extra output on Windows
+# 10         cmd = [sys.executable, "-m", "black", "--quiet", target]
+# 11         if check:
+# 12             cmd.append("--check")
+# 13         proc = subprocess.run(
+# 14             cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+# 15         )
+# 16         if proc.stdout:
+# 17             self._log.debug(proc.stdout)
+# 18         if proc.stderr:
+# 19             self._log.error(proc.stderr)
+# 20         if proc.returncode != 0:
+# 21             raise RuntimeError(f"black failed: {proc.stderr}")
+# 22         return proc
+
+
+# db\seeders\files\docformatter_tool.py
+
+# 1 import subprocess
+# 2 import sys
+# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 4 
+# 5 
+# 6 class DocFormatterToolProvider(ToolProviderBase):
+# 7     def _run(self, target: str, check: bool = False):
+# 8         cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
+# 9         if check:
+# 10             cmd.append("--check")
+# 11         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 12         if proc.stdout:
+# 13             self._log.debug(proc.stdout)
+# 14         if proc.stderr:
+# 15             self._log.error(proc.stderr)
+# 16         if proc.returncode != 0:
+# 17             raise RuntimeError(f"docformatter failed: {proc.stderr}")
+# 18         return proc
+
+
+# db\seeders\files\mypy_tool.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import subprocess
+# 4 import sys
+# 5 
+# 6 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 7 
+# 8 
+# 9 class MypyToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str):
+# 11         cmd = [sys.executable, "-m", "mypy", target]
+# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 13         if proc.stdout:
+# 14             self._log.debug(proc.stdout)
+# 15         if proc.stderr:
+# 16             self._log.error(proc.stderr)
+# 17         if proc.returncode not in (0, 1):  #  mypy returns 1 if it finds issues
+# 18             raise RuntimeError(f"mypy execution error: {proc.stderr}")
+# 19         return proc
+
+
+# db\seeders\files\radon_tool.py
+
+# 1 from __future__ import annotations
+# 2 import subprocess
+# 3 import sys
+# 4 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 5 
+# 6 
+# 7 class RadonToolProvider(ToolProviderBase):
+# 8     def _run(self, target: str):
+# 9         #  Call radon via -m so it returns a CompletedProcess
+# 10         cmd = [sys.executable, "-m", "radon", "cc", target]
+# 11         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 12 
+# 13         if proc.stdout:
+# 14             self._log.debug(proc.stdout)
+# 15         if proc.stderr:
+# 16             self._log.error(proc.stderr)
+# 17 
+# 18         if proc.returncode != 0:
+# 19             raise RuntimeError(f"radon failed: {proc.stderr.strip()}")
+# 20 
+# 21         return proc
+
+
+# db\seeders\files\ruff_tool.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 import subprocess
+# 4 import sys
+# 5 
+# 6 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 7 
+# 8 
+# 9 class RuffToolProvider(ToolProviderBase):
+# 10     def _run(self, target: str):
+# 11         cmd = [sys.executable, "-m", "ruff", "check", target]
+# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 13         if proc.stdout:
+# 14             self._log.debug(proc.stdout)
+# 15         if proc.stderr:
+# 16             self._log.error(proc.stderr)
+# 17         if proc.returncode != 0:
+# 18             raise RuntimeError(f"ruff failed: {proc.stderr}")
+# 19         return proc
+
+
+# db\seeders\files\sonarcloud_tool.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
+# 4 
+# 5 
+# 6 class SonarCloudToolProvider(ToolProviderBase):
+# 7     def _run(self, project_key: str, organization: str, token: str):
+# 8         self._log.info(
+# 9             "SonarCloud stub executed for project '%s' in organization '%s'.",
+# 10             project_key,
+# 11             organization,
+# 12         )
+# 13         return {
+# 14             "status": "success",
+# 15             "project_key": project_key,
+# 16             "organization": organization,
+# 17             "analysis_url": "https://sonarcloud.io/dashboard?id=" + project_key,
+# 18         }
+
+
+# db\seeders\seed_prompts.py
+
+# 1 from pathlib import Path
+# 2 import shutil
+# 3 from sqlalchemy.orm import Session
+# 4 from uuid import uuid4
+# 5 from app.db.models import AgentPrompt, SystemPrompt
+# 6 
+# 7 #  Define paths relative to this script's file location explicitly
+# 8 CURRENT_DIR = Path(__file__).resolve().parent
+# 9 SEED_FILES_DIR = CURRENT_DIR / "files"
+# 10 PROJECT_ROOT = CURRENT_DIR.parent.parent.parent  #  adjust based on your actual folder structure
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 def seed_prompts(db_session: Session):
+# 14     #  Ensure extensions directory exists explicitly
+# 15     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 16 
+# 17     #  Seed AgentPrompt
+# 18     agent_guid = str(uuid4())
+# 19     agent_source_file = SEED_FILES_DIR / "basic_agent_prompt.txt"
+# 20     agent_dest_file = EXTENSIONS_DIR / f"{agent_guid}.txt"
+# 21 
+# 22     #  Explicit check for source file existence
+# 23     if not agent_source_file.exists():
+# 24         raise FileNotFoundError(f"Agent source file not found: {agent_source_file}")
+# 25 
+# 26     shutil.copy(agent_source_file, agent_dest_file)
+# 27 
+# 28     agent_prompt = AgentPrompt(
+# 29         guid=agent_guid,
+# 30         name="generate",
+# 31         description="Prompt for basic code generation.",
+# 32         artifact_path=str(agent_dest_file),
+# 33         tags=["linting", "generation"]
+# 34     )
+# 35 
+# 36     #  Seed SystemPrompt
+# 37     system_guid = str(uuid4())
+# 38     system_source_file = SEED_FILES_DIR / "default_system_prompt.txt"
+# 39     system_dest_file = EXTENSIONS_DIR / f"{system_guid}.txt"
+# 40 
+# 41     #  Explicit check for system source file existence
+# 42     if not system_source_file.exists():
+# 43         raise FileNotFoundError(f"System source file not found: {system_source_file}")
+# 44 
+# 45     shutil.copy(system_source_file, system_dest_file)
+# 46 
+# 47     system_prompt = SystemPrompt(
+# 48         guid=system_guid,
+# 49         name="format",
+# 50         description="Default prompt for formatting tasks.",
+# 51         artifact_path=str(system_dest_file),
+# 52         tags=["formatting", "default"]
+# 53     )
+# 54 
+# 55     #  Insert into database
+# 56     db_session.add(agent_prompt)
+# 57     db_session.add(system_prompt)
+# 58     db_session.commit()
+# 59 
+# 60     print(f"Seeded AgentPrompt GUID: {agent_guid}")
+# 61     print(f"Seeded SystemPrompt GUID: {system_guid}")
+
+
+# db\seeders\seed_tools.py
+
+# 1 from uuid import uuid4
+# 2 from pathlib import Path
+# 3 import shutil
+# 4 from sqlalchemy.orm import Session
+# 5 
+# 6 from app.db.models import ToolConfig
+# 7 
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files"
+# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 TOOLS = [
+# 14     ("black_tool.py", "Black Formatter", "Formats Python code using Black.", {}),
+# 15     ("sonarcloud_tool.py", "SonarCloud Analyzer", "Static analysis via SonarCloud.", {}),
+# 16     ("ruff_tool.py", "Ruff Linter", "Python linting with Ruff.", {}),
+# 17     ("radon_tool.py", "Radon Analyzer", "Analyzes Python code complexity.", {}),
+# 18     ("mypy_tool.py", "Mypy Type Checker", "Static type checking with mypy.", {}),
+# 19     ("docformatter_tool.py", "Docformatter Formatter", "Static type checking with mypy.", {}),
+# 20 ]
+# 21 
+# 22 def seed_tools(db_session: Session):
+# 23     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 24 
+# 25     for filename, name, description, config in TOOLS:
+# 26         guid = str(uuid4())
+# 27         source_file = SEED_FILES_DIR / filename
+# 28         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 29 
+# 30         if not source_file.exists():
+# 31             raise FileNotFoundError(f"Tool script not found: {source_file}")
+# 32 
+# 33         shutil.copy(source_file, dest_file)
+# 34 
+# 35         tool = ToolConfig(
+# 36             guid=guid,
+# 37             name=name,
+# 38             description=description,
+# 39             config=config,
+# 40             artifact_path=str(dest_file)
+# 41         )
+# 42 
+# 43         db_session.add(tool)
+# 44 
+# 45     db_session.commit()
+# 46     print("Seeded tool configurations successfully.")
 
 
 # enums\__init__.py
@@ -1892,7 +2326,7 @@
 # 3 from datetime import datetime, timezone
 # 4 
 # 5 from app.factories.logging_provider import LoggingMixin, LoggingProvider
-# 6 from app.utilities.metadata.logging.log_schemas import ExperimentLog
+# 6 from app.utilities.metadata.logging.log_schemas import ExperimentLog, SystemEventLog
 # 7 
 # 8 
 # 9 class ExperimentProvider(LoggingMixin):
@@ -1922,44 +2356,38 @@
 # 33         self.evaluator_name = evaluator_name
 # 34         self.evaluator_version = evaluator_version
 # 35         self.start_time = datetime.now(timezone.utc)
-# 36         self.logger.log_experiment(
-# 37             ExperimentLog(
+# 36         self.logger.log_system_event(
+# 37             SystemEventLog(
 # 38                 experiment_id=experiment_id,
-# 39                 description=description,
-# 40                 mode=mode,
-# 41                 variant=variant,
-# 42                 max_iterations=max_iterations,
-# 43                 stop_threshold=stop_threshold,
-# 44                 model_engine=model_engine,
-# 45                 evaluator_name=evaluator_name,
-# 46                 evaluator_version=evaluator_version,
-# 47                 final_score=0.0,
-# 48                 passed=False,
-# 49                 reason_for_stop="",
-# 50                 start=self.start_time,
-# 51                 stop=None,
-# 52             )
-# 53         )
-# 54 
-# 55     def complete(self, final_score: float, passed: bool, reason: str) -> None:
-# 56         self.logger.log_experiment(
-# 57             ExperimentLog(
-# 58                 experiment_id=self.experiment_id,
-# 59                 description=self.description,
-# 60                 mode=self.mode,
-# 61                 variant=self.variant,
-# 62                 max_iterations=self.max_iterations,
-# 63                 stop_threshold=self.stop_threshold,
-# 64                 model_engine=self.model_engine,
-# 65                 evaluator_name=self.evaluator_name,
-# 66                 evaluator_version=self.evaluator_version,
-# 67                 final_score=final_score,
-# 68                 passed=passed,
-# 69                 reason_for_stop=reason,
-# 70                 start=self.start_time,
-# 71                 stop=datetime.now(timezone.utc),
-# 72             )
-# 73         )
+# 39                 round=0,
+# 40                 system_id=self.__class__.__name__,
+# 41                 event="start",
+# 42                 details="",
+# 43                 success=True,
+# 44                 error_message=None,
+# 45                 timestamp=self.start_time,
+# 46             )
+# 47         )
+# 48 
+# 49     def complete(self, final_score: float, passed: bool, reason: str) -> None:
+# 50         self.logger.log_experiment(
+# 51             ExperimentLog(
+# 52                 experiment_id=self.experiment_id,
+# 53                 description=self.description,
+# 54                 mode=self.mode,
+# 55                 variant=self.variant,
+# 56                 max_iterations=self.max_iterations,
+# 57                 stop_threshold=self.stop_threshold,
+# 58                 model_engine=self.model_engine,
+# 59                 evaluator_name=self.evaluator_name,
+# 60                 evaluator_version=self.evaluator_version,
+# 61                 final_score=final_score,
+# 62                 passed=passed,
+# 63                 reason_for_stop=reason,
+# 64                 start=self.start_time,
+# 65                 stop=datetime.now(timezone.utc),
+# 66             )
+# 67         )
 
 
 # extensions\prompt_generators\__init__.py
@@ -2428,54 +2856,6 @@
 # 23 ]
 
 
-# extensions\tool_providers\black_runner.py
-
-# 1 from __future__ import annotations
-# 2 import subprocess
-# 3 import sys
-# 4 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 5 
-# 6 
-# 7 class BlackToolProvider(ToolProviderBase):
-# 8     def _run(self, target: str, check: bool = False):
-# 9         #  Use quiet mode to suppress emojis and extra output on Windows
-# 10         cmd = [sys.executable, "-m", "black", "--quiet", target]
-# 11         if check:
-# 12             cmd.append("--check")
-# 13         proc = subprocess.run(
-# 14             cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
-# 15         )
-# 16         if proc.stdout:
-# 17             self._log.debug(proc.stdout)
-# 18         if proc.stderr:
-# 19             self._log.error(proc.stderr)
-# 20         if proc.returncode != 0:
-# 21             raise RuntimeError(f"black failed: {proc.stderr}")
-# 22         return proc
-
-
-# extensions\tool_providers\docformatter_runner.py
-
-# 1 import subprocess
-# 2 import sys
-# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
-# 4 
-# 5 
-# 6 class DocFormatterToolProvider(ToolProviderBase):
-# 7     def _run(self, target: str, check: bool = False):
-# 8         cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
-# 9         if check:
-# 10             cmd.append("--check")
-# 11         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 12         if proc.stdout:
-# 13             self._log.debug(proc.stdout)
-# 14         if proc.stderr:
-# 15             self._log.error(proc.stderr)
-# 16         if proc.returncode != 0:
-# 17             raise RuntimeError(f"docformatter failed: {proc.stderr}")
-# 18         return proc
-
-
 # extensions\tool_providers\dummy_tool_provider.py
 
 # 1 from ...abstract_classes.tool_provider_base import ToolProviderBase
@@ -2485,99 +2865,6 @@
 # 5     def _run(self, *args, **kwargs):
 # 6         self._log.info("Dummy tool run")
 # 7         return True
-
-
-# extensions\tool_providers\mypy_runner.py
-
-# 1 from __future__ import annotations
-# 2 
-# 3 import subprocess
-# 4 import sys
-# 5 
-# 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 7 
-# 8 
-# 9 class MypyToolProvider(ToolProviderBase):
-# 10     def _run(self, target: str):
-# 11         cmd = [sys.executable, "-m", "mypy", target]
-# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 13         if proc.stdout:
-# 14             self._log.debug(proc.stdout)
-# 15         if proc.stderr:
-# 16             self._log.error(proc.stderr)
-# 17         if proc.returncode not in (0, 1):  #  mypy returns 1 if it finds issues
-# 18             raise RuntimeError(f"mypy execution error: {proc.stderr}")
-# 19         return proc
-
-
-# extensions\tool_providers\radon_runner.py
-
-# 1 from __future__ import annotations
-# 2 import subprocess
-# 3 import sys
-# 4 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 5 
-# 6 
-# 7 class RadonToolProvider(ToolProviderBase):
-# 8     def _run(self, target: str):
-# 9         #  Call radon via -m so it returns a CompletedProcess
-# 10         cmd = [sys.executable, "-m", "radon", "cc", target]
-# 11         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 12 
-# 13         if proc.stdout:
-# 14             self._log.debug(proc.stdout)
-# 15         if proc.stderr:
-# 16             self._log.error(proc.stderr)
-# 17 
-# 18         if proc.returncode != 0:
-# 19             raise RuntimeError(f"radon failed: {proc.stderr.strip()}")
-# 20 
-# 21         return proc
-
-
-# extensions\tool_providers\ruff_runner.py
-
-# 1 from __future__ import annotations
-# 2 
-# 3 import subprocess
-# 4 import sys
-# 5 
-# 6 from ...abstract_classes.tool_provider_base import ToolProviderBase
-# 7 
-# 8 
-# 9 class RuffToolProvider(ToolProviderBase):
-# 10     def _run(self, target: str):
-# 11         cmd = [sys.executable, "-m", "ruff", "check", target]
-# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 13         if proc.stdout:
-# 14             self._log.debug(proc.stdout)
-# 15         if proc.stderr:
-# 16             self._log.error(proc.stderr)
-# 17         if proc.returncode != 0:
-# 18             raise RuntimeError(f"ruff failed: {proc.stderr}")
-# 19         return proc
-
-
-# extensions\tool_providers\sonarcloud_runner.py
-
-# 1 from __future__ import annotations
-# 2 
-# 3 from app.abstract_classes.tool_provider_base import ToolProviderBase
-# 4 
-# 5 
-# 6 class SonarCloudToolProvider(ToolProviderBase):
-# 7     def _run(self, project_key: str, organization: str, token: str):
-# 8         self._log.info(
-# 9             "SonarCloud stub executed for project '%s' in organization '%s'.",
-# 10             project_key,
-# 11             organization,
-# 12         )
-# 13         return {
-# 14             "status": "success",
-# 15             "project_key": project_key,
-# 16             "organization": organization,
-# 17             "analysis_url": "https://sonarcloud.io/dashboard?id=" + project_key,
-# 18         }
 
 
 # extensions\tools\__init__.py
@@ -2672,7 +2959,7 @@
 # 10 from typing import Any, ClassVar, Iterable
 # 11 
 # 12 from app.enums.logging_enums import LogType
-# 13 from ..utilities.metadata.logging.log_schemas import (
+# 13 from app.utilities.metadata.logging.log_schemas import (
 # 14     PromptGenerationLog,
 # 15     ContextRetrievalLog,
 # 16     ToolInvocationLog,
@@ -2689,7 +2976,7 @@
 # 27     RecommendationLog,
 # 28     FeedbackLog,
 # 29 )
-# 30 from ..utilities.feedback import FeedbackRepository
+# 30 from app.utilities.feedback import FeedbackRepository
 # 31 
 # 32 
 # 33 LOG_MODEL_MAP = {
@@ -2728,166 +3015,171 @@
 # 66         connection: sqlite3.Connection | None = None,
 # 67     ) -> None:
 # 68         if getattr(self, "_initialized", False):
-# 69             return
-# 70 
-# 71         self.db_path = Path(db_path)
-# 72         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-# 73 
-# 74         from app.utilities.db import get_connection, init_db
+# 69             if connection is not None:
+# 70                 self.conn = connection
+# 71                 from app.utilities.db import init_db
+# 72 
+# 73                 init_db(conn=self.conn)
+# 74             return
 # 75 
-# 76         if connection:
-# 77             self.conn = connection
-# 78             init_db(conn=self.conn)  #  Fix applied here
-# 79         else:
-# 80             self.conn = get_connection()
-# 81             init_db(conn=self.conn)  #  Fix applied here
-# 82 
-# 83         self.output_path = Path(output_path) if output_path else None
-# 84         if self.output_path:
-# 85             self.output_path.parent.mkdir(parents=True, exist_ok=True)
-# 86 
-# 87         self._initialized = True
-# 88 
-# 89     def _serialize(self, obj: Any) -> dict:
-# 90         def _safe(v: Any) -> Any:
-# 91             if isinstance(v, (Enum, Path)):
-# 92                 return str(v)
-# 93             elif isinstance(v, datetime):
-# 94                 return v.isoformat()
-# 95             elif isinstance(v, list):
-# 96                 return [_safe(i) for i in v]
-# 97             elif isinstance(v, dict):
-# 98                 return {k: _safe(val) for k, val in v.items()}
-# 99             return v
-# 100 
-# 101         if not is_dataclass(obj) or isinstance(obj, type):
-# 102             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 103         return _safe(asdict(obj))
-# 104 
-# 105     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 106         items = list(items)
-# 107         if not items:
-# 108             return
-# 109         keys = list(items[0].keys())
-# 110         cols = ",".join(keys)
-# 111         placeholders = ",".join(["?"] * len(keys))
-# 112         values = [tuple(i[k] for k in keys) for i in items]
-# 113         cur = self.conn.cursor()
-# 114         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 115         self.conn.commit()
-# 116         if self.output_path:
-# 117             with self.output_path.open("a", encoding="utf-8") as fh:
-# 118                 for item in items:
-# 119                     fh.write(json.dumps(item) + "\n")
-# 120 
-# 121     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 122         if not isinstance(entries, list):
-# 123             entries = [entries]
-# 124         model_cls = LOG_MODEL_MAP.get(log_type)
-# 125         if model_cls is None:
-# 126             raise ValueError(f"Unsupported log type: {log_type}")
-# 127         for entry in entries:
-# 128             if not isinstance(entry, model_cls):
-# 129                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
-# 130         serialized = [self._serialize(e) for e in entries]
-# 131         self._insert_many(log_type.value + "_log", serialized)
-# 132 
-# 133     #  Convenience wrappers
-# 134     def log_state(self, log: StateLog) -> None:
-# 135         self.write(LogType.STATE, log)
-# 136 
-# 137     def log_transition(self, log: StateTransitionLog) -> None:
-# 138         self.write(LogType.STATE_TRANSITION, log)
-# 139 
-# 140     def log_prompt(self, log: PromptLog) -> None:
-# 141         self.write(LogType.PROMPT, log)
-# 142 
-# 143     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 144         self.write(LogType.CODE_QUALITY, log)
-# 145 
-# 146     def log_error(self, log: ErrorLog) -> None:
-# 147         self.write(LogType.ERROR, log)
-# 148 
-# 149     def log_scoring(self, log: ScoringLog) -> None:
-# 150         self.write(LogType.SCORING, log)
-# 151 
-# 152     def log_conversation(self, log: ConversationLog) -> None:
-# 153         self.write(LogType.CONVERSATION, log)
-# 154 
-# 155     def log_experiment(self, log: ExperimentLog) -> None:
-# 156         self.write(LogType.EXPERIMENT, log)
-# 157 
-# 158     def log_recommendation(self, log: RecommendationLog) -> None:
-# 159         self.write(LogType.RECOMMENDATION, log)
-# 160 
-# 161     def log_feedback(self, log: FeedbackLog) -> None:
-# 162         self.write(LogType.FEEDBACK, log)
-# 163         FeedbackRepository.add_feedback(log)
-# 164 
-# 165     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
-# 166         self.write(LogType.CONTEXT_RETRIEVAL, log)
-# 167 
-# 168     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
-# 169         self.write(LogType.TOOL_INVOCATION, log)
-# 170 
-# 171     def log_agent_action(self, log: AgentActionLog) -> None:
-# 172         self.write(LogType.AGENT_ACTION, log)
-# 173 
-# 174     def log_system_event(self, log: SystemEventLog) -> None:
-# 175         self.write(LogType.SYSTEM_EVENT, log)
-# 176 
-# 177     def close(self) -> None:
-# 178         self.conn.close()
-# 179 
-# 180 
-# 181 class LoggingMixin:
-# 182     """Mixin to provide access to a shared LoggingProvider instance."""
-# 183 
-# 184     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 185         self.logger = logger or LoggingProvider()
-# 186         self._log = logging.getLogger(self.__class__.__name__)
-# 187 
-# 188     def log_state(self, log: StateLog) -> None:
-# 189         self.logger.log_state(log)
-# 190 
-# 191     def log_transition(self, log: StateTransitionLog) -> None:
-# 192         self.logger.log_transition(log)
-# 193 
-# 194     def log_prompt(self, log: PromptLog) -> None:
-# 195         self.logger.log_prompt(log)
-# 196 
-# 197     def log_code_quality(self, log: CodeQualityLog) -> None:
-# 198         self.logger.log_code_quality(log)
-# 199 
-# 200     def log_error(self, log: ErrorLog) -> None:
-# 201         self.logger.log_error(log)
-# 202 
-# 203     def log_scoring(self, log: ScoringLog) -> None:
-# 204         self.logger.log_scoring(log)
-# 205 
-# 206     def log_conversation(self, log: ConversationLog) -> None:
-# 207         self.logger.log_conversation(log)
-# 208 
-# 209     def log_experiment(self, log: ExperimentLog) -> None:
-# 210         self.logger.log_experiment(log)
-# 211 
-# 212     def log_recommendation(self, log: RecommendationLog) -> None:
-# 213         self.logger.log_recommendation(log)
-# 214 
-# 215     def log_feedback(self, log: FeedbackLog) -> None:
-# 216         self.logger.log_feedback(log)
-# 217 
-# 218     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
-# 219         self.logger.log_context_retrieval(log)
-# 220 
-# 221     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
-# 222         self.logger.log_tool_invocation(log)
-# 223 
-# 224     def log_agent_action(self, log: AgentActionLog) -> None:
-# 225         self.logger.log_agent_action(log)
-# 226 
-# 227     def log_system_event(self, log: SystemEventLog) -> None:
-# 228         self.logger.log_system_event(log)
+# 76         self.db_path = Path(db_path)
+# 77         self.db_path.parent.mkdir(exist_ok=True, parents=True)
+# 78 
+# 79         from app.utilities.db import get_connection, init_db
+# 80 
+# 81         if connection:
+# 82             self.conn = connection
+# 83             init_db(conn=self.conn)  #  Fix applied here
+# 84         else:
+# 85             self.conn = get_connection()
+# 86             init_db(conn=self.conn)  #  Fix applied here
+# 87 
+# 88         self.output_path = Path(output_path) if output_path else None
+# 89         if self.output_path:
+# 90             self.output_path.parent.mkdir(parents=True, exist_ok=True)
+# 91 
+# 92         self._initialized = True
+# 93 
+# 94     def _serialize(self, obj: Any) -> dict:
+# 95         def _safe(v: Any) -> Any:
+# 96             if isinstance(v, (Enum, Path)):
+# 97                 return str(v)
+# 98             elif isinstance(v, datetime):
+# 99                 return v.isoformat()
+# 100             elif isinstance(v, list):
+# 101                 return [_safe(i) for i in v]
+# 102             elif isinstance(v, dict):
+# 103                 return {k: _safe(val) for k, val in v.items()}
+# 104             return v
+# 105 
+# 106         if not is_dataclass(obj) or isinstance(obj, type):
+# 107             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 108         return _safe(asdict(obj))
+# 109 
+# 110     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 111         items = list(items)
+# 112         if not items:
+# 113             return
+# 114         keys = list(items[0].keys())
+# 115         cols = ",".join(keys)
+# 116         placeholders = ",".join(["?"] * len(keys))
+# 117         values = [tuple(i[k] for k in keys) for i in items]
+# 118         cur = self.conn.cursor()
+# 119         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 120         self.conn.commit()
+# 121         if self.output_path:
+# 122             with self.output_path.open("a", encoding="utf-8") as fh:
+# 123                 for item in items:
+# 124                     fh.write(json.dumps(item) + "\n")
+# 125 
+# 126     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 127         if not isinstance(entries, list):
+# 128             entries = [entries]
+# 129         model_cls = LOG_MODEL_MAP.get(log_type)
+# 130         if model_cls is None:
+# 131             raise ValueError(f"Unsupported log type: {log_type}")
+# 132         for entry in entries:
+# 133             if not isinstance(entry, model_cls):
+# 134                 raise TypeError(f"Expected {model_cls.__name__}, got {type(entry)}")
+# 135         serialized = [self._serialize(e) for e in entries]
+# 136         self._insert_many(log_type.value + "_log", serialized)
+# 137 
+# 138     #  Convenience wrappers
+# 139     def log_state(self, log: StateLog) -> None:
+# 140         self.write(LogType.STATE, log)
+# 141 
+# 142     def log_transition(self, log: StateTransitionLog) -> None:
+# 143         self.write(LogType.STATE_TRANSITION, log)
+# 144 
+# 145     def log_prompt(self, log: PromptLog) -> None:
+# 146         self.write(LogType.PROMPT, log)
+# 147 
+# 148     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 149         self.write(LogType.CODE_QUALITY, log)
+# 150 
+# 151     def log_error(self, log: ErrorLog) -> None:
+# 152         self.write(LogType.ERROR, log)
+# 153 
+# 154     def log_scoring(self, log: ScoringLog) -> None:
+# 155         self.write(LogType.SCORING, log)
+# 156 
+# 157     def log_conversation(self, log: ConversationLog) -> None:
+# 158         self.write(LogType.CONVERSATION, log)
+# 159 
+# 160     def log_experiment(self, log: ExperimentLog) -> None:
+# 161         self.write(LogType.EXPERIMENT, log)
+# 162 
+# 163     def log_recommendation(self, log: RecommendationLog) -> None:
+# 164         self.write(LogType.RECOMMENDATION, log)
+# 165 
+# 166     def log_feedback(self, log: FeedbackLog) -> None:
+# 167         self.write(LogType.FEEDBACK, log)
+# 168         FeedbackRepository.add_feedback(log)
+# 169 
+# 170     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+# 171         self.write(LogType.CONTEXT_RETRIEVAL, log)
+# 172 
+# 173     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+# 174         self.write(LogType.TOOL_INVOCATION, log)
+# 175 
+# 176     def log_agent_action(self, log: AgentActionLog) -> None:
+# 177         self.write(LogType.AGENT_ACTION, log)
+# 178 
+# 179     def log_system_event(self, log: SystemEventLog) -> None:
+# 180         self.write(LogType.SYSTEM_EVENT, log)
+# 181 
+# 182     def close(self) -> None:
+# 183         self.conn.close()
+# 184 
+# 185 
+# 186 class LoggingMixin:
+# 187     """Mixin to provide access to a shared LoggingProvider instance."""
+# 188 
+# 189     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 190         self.logger = logger or LoggingProvider()
+# 191         self._log = logging.getLogger(self.__class__.__name__)
+# 192 
+# 193     def log_state(self, log: StateLog) -> None:
+# 194         self.logger.log_state(log)
+# 195 
+# 196     def log_transition(self, log: StateTransitionLog) -> None:
+# 197         self.logger.log_transition(log)
+# 198 
+# 199     def log_prompt(self, log: PromptLog) -> None:
+# 200         self.logger.log_prompt(log)
+# 201 
+# 202     def log_code_quality(self, log: CodeQualityLog) -> None:
+# 203         self.logger.log_code_quality(log)
+# 204 
+# 205     def log_error(self, log: ErrorLog) -> None:
+# 206         self.logger.log_error(log)
+# 207 
+# 208     def log_scoring(self, log: ScoringLog) -> None:
+# 209         self.logger.log_scoring(log)
+# 210 
+# 211     def log_conversation(self, log: ConversationLog) -> None:
+# 212         self.logger.log_conversation(log)
+# 213 
+# 214     def log_experiment(self, log: ExperimentLog) -> None:
+# 215         self.logger.log_experiment(log)
+# 216 
+# 217     def log_recommendation(self, log: RecommendationLog) -> None:
+# 218         self.logger.log_recommendation(log)
+# 219 
+# 220     def log_feedback(self, log: FeedbackLog) -> None:
+# 221         self.logger.log_feedback(log)
+# 222 
+# 223     def log_context_retrieval(self, log: ContextRetrievalLog) -> None:
+# 224         self.logger.log_context_retrieval(log)
+# 225 
+# 226     def log_tool_invocation(self, log: ToolInvocationLog) -> None:
+# 227         self.logger.log_tool_invocation(log)
+# 228 
+# 229     def log_agent_action(self, log: AgentActionLog) -> None:
+# 230         self.logger.log_agent_action(log)
+# 231 
+# 232     def log_system_event(self, log: SystemEventLog) -> None:
+# 233         self.logger.log_system_event(log)
 
 
 # factories\prompt_manager.py
@@ -3242,35 +3534,38 @@
 # 2 
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
-# 6 from pydantic import BaseModel
-# 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
-# 10 class AgentPrompt(BaseModel):
-# 11     """Schema for the agent_prompt table."""
-# 12 
-# 13     id: Optional[int] = None
-# 14     name: str
-# 15     description: Optional[str] = None
-# 16     agent_role: Optional[str] = None
-# 17     system_type: Optional[str] = None
-# 18     artifact_path: Optional[Path] = None
-# 19 
-# 20     table_name: str = "agent_prompt"
-# 21 
-# 22     @field_validator("artifact_path")
-# 23     @classmethod
-# 24     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 25         if v is None:
-# 26             return v
-# 27         p = Path(v)
-# 28         if not p.is_absolute() and ".." in p.parts:
-# 29             raise ValueError("artifact_path must be absolute or project relative")
-# 30         return p
-# 31 
-# 32     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
-# 33         return super().model_dump(**kwargs)  #  type: ignore[misc]
+# 5 from uuid import UUID, uuid4
+# 6 
+# 7 from pydantic import BaseModel, Field
+# 8 from app.enums.system_enums import SystemType
+# 9 from app.utilities.pydantic_compat import field_validator
+# 10 
+# 11 
+# 12 class AgentPrompt(BaseModel):
+# 13     """Schema for the agent_prompt table."""
+# 14 
+# 15     id: Optional[int] = None
+# 16     guid: UUID = Field(default_factory=uuid4)
+# 17     name: str
+# 18     description: Optional[str] = None
+# 19     agent_role: str
+# 20     system_type: SystemType
+# 21     artifact_path: Path
+# 22     
+# 23     table_name: str = "agent_prompt"
+# 24 
+# 25     @field_validator("artifact_path")
+# 26     @classmethod
+# 27     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 28         if v is None:
+# 29             return v
+# 30         p = Path(v)
+# 31         if not p.is_absolute() and ".." in p.parts:
+# 32             raise ValueError("artifact_path must be absolute or project relative")
+# 33         return p
+# 34 
+# 35     def model_dump(self, **kwargs) -> dict:
+# 36         return super().model_dump(**kwargs)
 
 
 # schemas\context_provider_schema.py
@@ -3581,34 +3876,37 @@
 # 2 
 # 3 from pathlib import Path
 # 4 from typing import Optional
-# 5 
-# 6 from pydantic import BaseModel
-# 7 from app.utilities.pydantic_compat import field_validator
-# 8 
-# 9 
-# 10 class SystemPrompt(BaseModel):
-# 11     """Schema for the system_prompt table."""
-# 12 
-# 13     id: Optional[int] = None
-# 14     name: str
-# 15     description: Optional[str] = None
-# 16     system_type: Optional[str] = None
-# 17     artifact_path: Optional[Path] = None
-# 18 
-# 19     table_name: str = "system_prompt"
-# 20 
-# 21     @field_validator("artifact_path")
-# 22     @classmethod
-# 23     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 24         if v is None:
-# 25             return v
-# 26         p = Path(v)
-# 27         if not p.is_absolute() and ".." in p.parts:
-# 28             raise ValueError("artifact_path must be absolute or project relative")
-# 29         return p
-# 30 
-# 31     def model_dump(self, **kwargs) -> dict:  #  type: ignore[misc]
-# 32         return super().model_dump(**kwargs)  #  type: ignore[misc]
+# 5 from uuid import UUID, uuid4
+# 6 
+# 7 from pydantic import BaseModel, Field
+# 8 from app.enums.system_enums import SystemType
+# 9 from app.utilities.pydantic_compat import field_validator
+# 10 
+# 11 
+# 12 class SystemPrompt(BaseModel):
+# 13     """Schema for the system_prompt table."""
+# 14 
+# 15     id: Optional[int] = None
+# 16     guid: UUID = Field(default_factory=uuid4)
+# 17     name: str
+# 18     description: Optional[str] = None
+# 19     system_type: SystemType
+# 20     artifact_path: Path
+# 21 
+# 22     table_name: str = "system_prompt"
+# 23 
+# 24     @field_validator("artifact_path")
+# 25     @classmethod
+# 26     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 27         if v is None:
+# 28             return v
+# 29         p = Path(v)
+# 30         if not p.is_absolute() and ".." in p.parts:
+# 31             raise ValueError("artifact_path must be absolute or project relative")
+# 32         return p
+# 33 
+# 34     def model_dump(self, **kwargs) -> dict:
+# 35         return super().model_dump(**kwargs)
 
 
 # schemas\tooling_provider_schema.py
@@ -3697,195 +3995,218 @@
 # 43         conn = get_connection()
 # 44     cur = conn.cursor()
 # 45 
-# 46     cur.execute(
-# 47         """CREATE TABLE IF NOT EXISTS state_log (
-# 48             experiment_id TEXT,
-# 49             system TEXT,
-# 50             round INTEGER,
-# 51             state TEXT,
-# 52             action TEXT,
-# 53             score REAL,
-# 54             details TEXT,
-# 55             timestamp TEXT
-# 56         )"""
-# 57     )
-# 58 
-# 59     cur.execute(
-# 60         """CREATE TABLE IF NOT EXISTS state_transition_log (
-# 61             experiment_id TEXT,
-# 62             round INTEGER,
-# 63             from_state TEXT,
-# 64             to_state TEXT,
-# 65             reason TEXT,
-# 66             timestamp TEXT
-# 67         )"""
-# 68     )
-# 69 
-# 70     cur.execute(
-# 71         """CREATE TABLE IF NOT EXISTS prompt_log (
-# 72             experiment_id TEXT,
-# 73             round INTEGER,
-# 74             system TEXT,
-# 75             agent_id TEXT,
-# 76             agent_role TEXT,
-# 77             agent_engine TEXT,
-# 78             symbol TEXT,
-# 79             prompt TEXT,
-# 80             response TEXT,
-# 81             attempt_number INTEGER,
-# 82             agent_action_outcome TEXT,
-# 83             start TEXT,
-# 84             stop TEXT
-# 85         )"""
-# 86     )
-# 87 
-# 88     cur.execute(
-# 89         """CREATE TABLE IF NOT EXISTS code_quality_log (
-# 90             experiment_id TEXT,
-# 91             round INTEGER,
-# 92             symbol TEXT,
-# 93             lines_of_code INTEGER,
-# 94             cyclomatic_complexity REAL,
-# 95             maintainability_index REAL,
-# 96             lint_errors INTEGER,
-# 97             timestamp TEXT
-# 98         )"""
-# 99     )
-# 100 
-# 101     cur.execute(
-# 102         """CREATE TABLE IF NOT EXISTS scoring_log (
-# 103             experiment_id TEXT,
-# 104             round INTEGER,
-# 105             metric TEXT,
-# 106             value REAL,
-# 107             timestamp TEXT
-# 108         )"""
-# 109     )
-# 110 
-# 111     cur.execute(
-# 112         """CREATE TABLE IF NOT EXISTS error_log (
-# 113             experiment_id TEXT,
-# 114             round INTEGER,
-# 115             error_type TEXT,
-# 116             message TEXT,
-# 117             file_path TEXT,
-# 118             timestamp TEXT
-# 119         )"""
-# 120     )
-# 121 
-# 122     cur.execute(
-# 123         """CREATE TABLE IF NOT EXISTS prompt_generation_log (
-# 124             experiment_id TEXT,
-# 125             round INTEGER,
-# 126             generator_name TEXT,
-# 127             context_provider_name TEXT,
-# 128             agent_config TEXT,
-# 129             system_config TEXT,
-# 130             generated_prompt TEXT,
-# 131             success INTEGER,
-# 132             error_message TEXT,
-# 133             timestamp TEXT
-# 134         )"""
-# 135     )
-# 136 
-# 137     cur.execute(
-# 138         """CREATE TABLE IF NOT EXISTS context_retrieval_log (
-# 139             experiment_id TEXT,
-# 140             round INTEGER,
-# 141             context_provider_name TEXT,
-# 142             context_parameters TEXT,
-# 143             retrieved_context TEXT,
-# 144             success INTEGER,
-# 145             error_message TEXT,
-# 146             timestamp TEXT
-# 147         )"""
-# 148     )
-# 149 
-# 150     cur.execute(
-# 151         """CREATE TABLE IF NOT EXISTS tool_invocation_log (
-# 152             experiment_id TEXT,
-# 153             round INTEGER,
-# 154             tool_provider_name TEXT,
-# 155             invocation_parameters TEXT,
-# 156             stdout TEXT,
-# 157             stderr TEXT,
-# 158             return_code INTEGER,
-# 159             success INTEGER,
-# 160             error_message TEXT,
-# 161             timestamp TEXT
-# 162         )"""
-# 163     )
-# 164 
-# 165     cur.execute(
-# 166         """CREATE TABLE IF NOT EXISTS agent_action_log (
-# 167             experiment_id TEXT,
-# 168             round INTEGER,
-# 169             agent_id TEXT,
-# 170             agent_role TEXT,
-# 171             action TEXT,
-# 172             parameters TEXT,
-# 173             response TEXT,
-# 174             success INTEGER,
-# 175             error_message TEXT,
-# 176             timestamp TEXT
-# 177         )"""
-# 178     )
-# 179 
-# 180     cur.execute(
-# 181         """CREATE TABLE IF NOT EXISTS system_event_log (
-# 182             experiment_id TEXT,
-# 183             round INTEGER,
-# 184             system_id TEXT,
-# 185             event TEXT,
-# 186             details TEXT,
-# 187             success INTEGER,
-# 188             error_message TEXT,
-# 189             timestamp TEXT
-# 190         )"""
-# 191     )
-# 192 
-# 193     #  ✅ Add this missing table definition
-# 194     cur.execute(
-# 195         """CREATE TABLE IF NOT EXISTS conversation_log (
-# 196             experiment_id TEXT,
-# 197             round INTEGER,
-# 198             agent_role TEXT,
-# 199             target TEXT,
-# 200             content TEXT,
-# 201             originating_agent TEXT,
-# 202             intervention INTEGER,
-# 203             intervention_type TEXT,
-# 204             intervention_reason TEXT,
-# 205             timestamp TEXT
-# 206         )"""
-# 207     )
-# 208 
-# 209     cur.execute(
-# 210         """CREATE TABLE IF NOT EXISTS recommendation_log (
-# 211             experiment_id TEXT,
-# 212             round INTEGER,
-# 213             symbol TEXT,
-# 214             file_path TEXT,
-# 215             line_start INTEGER,
-# 216             line_end INTEGER,
-# 217             recommendation TEXT,
-# 218             context TEXT,
-# 219             timestamp TEXT
-# 220         )"""
-# 221     )
-# 222 
-# 223     cur.execute(
-# 224         """CREATE TABLE IF NOT EXISTS feedback_log (
-# 225             experiment_id TEXT,
-# 226             round INTEGER,
-# 227             source TEXT,
-# 228             feedback TEXT,
-# 229             timestamp TEXT
-# 230         )"""
-# 231     )
-# 232 
-# 233     conn.commit()
-# 234     return conn
+# 46     #  TESTED
+# 47 
+# 48     cur.execute(
+# 49         """CREATE TABLE IF NOT EXISTS prompt_generation_log (
+# 50             experiment_id TEXT,
+# 51             round INTEGER,
+# 52             generator_name TEXT,
+# 53             context_provider_name TEXT,
+# 54             agent_config TEXT,
+# 55             system_config TEXT,
+# 56             generated_prompt TEXT,
+# 57             success INTEGER,
+# 58             error_message TEXT,
+# 59             timestamp TEXT
+# 60         )"""
+# 61     )
+# 62 
+# 63     cur.execute(
+# 64         """CREATE TABLE IF NOT EXISTS experiment_log (
+# 65             experiment_id TEXT,
+# 66             description TEXT,
+# 67             mode TEXT,
+# 68             variant TEXT,
+# 69             max_iterations INTEGER,
+# 70             stop_threshold REAL,
+# 71             model_engine TEXT,
+# 72             evaluator_name TEXT,
+# 73             evaluator_version TEXT,
+# 74             final_score REAL,
+# 75             passed INTEGER,
+# 76             reason_for_stop TEXT,
+# 77             start TEXT,
+# 78             stop TEXT
+# 79         )"""
+# 80     )
+# 81 
+# 82     #  UNTESTED
+# 83 
+# 84     cur.execute(
+# 85         """CREATE TABLE IF NOT EXISTS state_log (
+# 86             experiment_id TEXT,
+# 87             system TEXT,
+# 88             round INTEGER,
+# 89             state TEXT,
+# 90             action TEXT,
+# 91             score REAL,
+# 92             details TEXT,
+# 93             timestamp TEXT
+# 94         )"""
+# 95     )
+# 96 
+# 97     cur.execute(
+# 98         """CREATE TABLE IF NOT EXISTS state_transition_log (
+# 99             experiment_id TEXT,
+# 100             round INTEGER,
+# 101             from_state TEXT,
+# 102             to_state TEXT,
+# 103             reason TEXT,
+# 104             timestamp TEXT
+# 105         )"""
+# 106     )
+# 107 
+# 108     cur.execute(
+# 109         """CREATE TABLE IF NOT EXISTS prompt_log (
+# 110             experiment_id TEXT,
+# 111             round INTEGER,
+# 112             system TEXT,
+# 113             agent_id TEXT,
+# 114             agent_role TEXT,
+# 115             agent_engine TEXT,
+# 116             symbol TEXT,
+# 117             prompt TEXT,
+# 118             response TEXT,
+# 119             attempt_number INTEGER,
+# 120             agent_action_outcome TEXT,
+# 121             start TEXT,
+# 122             stop TEXT
+# 123         )"""
+# 124     )
+# 125 
+# 126     cur.execute(
+# 127         """CREATE TABLE IF NOT EXISTS code_quality_log (
+# 128             experiment_id TEXT,
+# 129             round INTEGER,
+# 130             symbol TEXT,
+# 131             lines_of_code INTEGER,
+# 132             cyclomatic_complexity REAL,
+# 133             maintainability_index REAL,
+# 134             lint_errors INTEGER,
+# 135             timestamp TEXT
+# 136         )"""
+# 137     )
+# 138 
+# 139     cur.execute(
+# 140         """CREATE TABLE IF NOT EXISTS scoring_log (
+# 141             experiment_id TEXT,
+# 142             round INTEGER,
+# 143             metric TEXT,
+# 144             value REAL,
+# 145             timestamp TEXT
+# 146         )"""
+# 147     )
+# 148 
+# 149     cur.execute(
+# 150         """CREATE TABLE IF NOT EXISTS error_log (
+# 151             experiment_id TEXT,
+# 152             round INTEGER,
+# 153             error_type TEXT,
+# 154             message TEXT,
+# 155             file_path TEXT,
+# 156             timestamp TEXT
+# 157         )"""
+# 158     )
+# 159 
+# 160     cur.execute(
+# 161         """CREATE TABLE IF NOT EXISTS context_retrieval_log (
+# 162             experiment_id TEXT,
+# 163             round INTEGER,
+# 164             context_provider_name TEXT,
+# 165             context_parameters TEXT,
+# 166             retrieved_context TEXT,
+# 167             success INTEGER,
+# 168             error_message TEXT,
+# 169             timestamp TEXT
+# 170         )"""
+# 171     )
+# 172 
+# 173     cur.execute(
+# 174         """CREATE TABLE IF NOT EXISTS tool_invocation_log (
+# 175             experiment_id TEXT,
+# 176             round INTEGER,
+# 177             tool_provider_name TEXT,
+# 178             tool_provider_guid TEXT,
+# 179             invocation_parameters TEXT,
+# 180             stdout TEXT,
+# 181             stderr TEXT,
+# 182             return_code INTEGER,
+# 183             success INTEGER,
+# 184             error_message TEXT,
+# 185             timestamp TEXT
+# 186         )"""
+# 187     )
+# 188 
+# 189     cur.execute(
+# 190         """CREATE TABLE IF NOT EXISTS agent_action_log (
+# 191             experiment_id TEXT,
+# 192             round INTEGER,
+# 193             agent_id TEXT,
+# 194             agent_role TEXT,
+# 195             action TEXT,
+# 196             parameters TEXT,
+# 197             response TEXT,
+# 198             success INTEGER,
+# 199             error_message TEXT,
+# 200             timestamp TEXT
+# 201         )"""
+# 202     )
+# 203 
+# 204     cur.execute(
+# 205         """CREATE TABLE IF NOT EXISTS system_event_log (
+# 206             experiment_id TEXT,
+# 207             round INTEGER,
+# 208             system_id TEXT,
+# 209             event TEXT,
+# 210             details TEXT,
+# 211             success INTEGER,
+# 212             error_message TEXT,
+# 213             timestamp TEXT
+# 214         )"""
+# 215     )
+# 216 
+# 217     cur.execute(
+# 218         """CREATE TABLE IF NOT EXISTS conversation_log (
+# 219             experiment_id TEXT,
+# 220             round INTEGER,
+# 221             agent_role TEXT,
+# 222             target TEXT,
+# 223             content TEXT,
+# 224             originating_agent TEXT,
+# 225             intervention INTEGER,
+# 226             intervention_type TEXT,
+# 227             intervention_reason TEXT,
+# 228             timestamp TEXT
+# 229         )"""
+# 230     )
+# 231 
+# 232     cur.execute(
+# 233         """CREATE TABLE IF NOT EXISTS recommendation_log (
+# 234             experiment_id TEXT,
+# 235             round INTEGER,
+# 236             symbol TEXT,
+# 237             file_path TEXT,
+# 238             line_start INTEGER,
+# 239             line_end INTEGER,
+# 240             recommendation TEXT,
+# 241             context TEXT,
+# 242             timestamp TEXT
+# 243         )"""
+# 244     )
+# 245 
+# 246     cur.execute(
+# 247         """CREATE TABLE IF NOT EXISTS feedback_log (
+# 248             experiment_id TEXT,
+# 249             round INTEGER,
+# 250             source TEXT,
+# 251             feedback TEXT,
+# 252             timestamp TEXT
+# 253         )"""
+# 254     )
+# 255 
+# 256     conn.commit()
+# 257     return conn
 
 
 # utilities\feedback.py
@@ -4116,39 +4437,40 @@
 # 164     experiment_id: str
 # 165     round: int
 # 166     tool_provider_name: str
-# 167     invocation_parameters: str
-# 168     stdout: str
-# 169     stderr: str
-# 170     return_code: int
-# 171     success: bool
-# 172     error_message: str | None = None
-# 173     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 174 
+# 167     tool_provider_guid: str
+# 168     invocation_parameters: str
+# 169     stdout: str
+# 170     stderr: str
+# 171     return_code: int
+# 172     success: bool
+# 173     error_message: str | None = None
+# 174     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 # 175 
-# 176 @dataclass
-# 177 class AgentActionLog:
-# 178     experiment_id: str
-# 179     round: int
-# 180     agent_id: str
-# 181     agent_role: str
-# 182     action: str
-# 183     parameters: str
-# 184     response: str
-# 185     success: bool
-# 186     error_message: str | None = None
-# 187     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 188 
+# 176 
+# 177 @dataclass
+# 178 class AgentActionLog:
+# 179     experiment_id: str
+# 180     round: int
+# 181     agent_id: str
+# 182     agent_role: str
+# 183     action: str
+# 184     parameters: str
+# 185     response: str
+# 186     success: bool
+# 187     error_message: str | None = None
+# 188     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 # 189 
-# 190 @dataclass
-# 191 class SystemEventLog:
-# 192     experiment_id: str
-# 193     round: int
-# 194     system_id: str
-# 195     event: str
-# 196     details: str
-# 197     success: bool
-# 198     error_message: str | None = None
-# 199     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 190 
+# 191 @dataclass
+# 192 class SystemEventLog:
+# 193     experiment_id: str
+# 194     round: int
+# 195     system_id: str
+# 196     event: str
+# 197     details: str
+# 198     success: bool
+# 199     error_message: str | None = None
+# 200     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # utilities\metadata\snapshots\__init__.py
@@ -4267,6 +4589,90 @@
 # 108 
 # 109     logger.info("Metrics computed: %s", metrics)
 # 110     return metrics
+
+
+# utilities\pandas_stub.py
+
+# 1 class DataFrame:
+# 2     def __init__(self, rows=None):
+# 3         self.rows = list(rows or [])
+# 4 
+# 5     @property
+# 6     def empty(self):
+# 7         return len(self.rows) == 0
+# 8 
+# 9     def __len__(self):
+# 10         return len(self.rows)
+# 11 
+# 12     def __getitem__(self, key):
+# 13         return [row[key] for row in self.rows]
+# 14 
+# 15     def groupby(self, key):
+# 16         return _GroupBy(self.rows, key)
+# 17 
+# 18     def reset_index(self, name=None):
+# 19         if name:
+# 20             return DataFrame(
+# 21                 [
+# 22                     {name if k == "size" else k: v for k, v in row.items()}
+# 23                     for row in self.rows
+# 24                 ]
+# 25             )
+# 26         return DataFrame(self.rows)
+# 27 
+# 28 
+# 29 class _GroupBy:
+# 30     def __init__(self, rows, key):
+# 31         self.rows = rows
+# 32         self.key = key
+# 33 
+# 34     def size(self):
+# 35         counts = {}
+# 36         for row in self.rows:
+# 37             counts[row[self.key]] = counts.get(row[self.key], 0) + 1
+# 38         return DataFrame([{self.key: k, "size": v} for k, v in counts.items()])
+# 39 
+# 40 
+# 41 def read_sql_query(query, conn):
+# 42     cur = conn.cursor()
+# 43     rows = cur.execute(query).fetchall()
+# 44     columns = [desc[0] for desc in cur.description]
+# 45     return DataFrame([dict(zip(columns, row)) for row in rows])
+# 46 
+# 47 
+# 48 def unique(seq):
+# 49     seen = []
+# 50     for item in seq:
+# 51         if item not in seen:
+# 52             seen.append(item)
+# 53     return seen
+# 54 
+# 55 
+# 56 def concat(arrays):
+# 57     result = []
+# 58     for arr in arrays:
+# 59         result.extend(list(arr))
+# 60     return result
+
+
+# utilities\plotly_stub.py
+
+# 1 class Figure:
+# 2     def __init__(self, *data):
+# 3         self.data = list(data)
+# 4 
+# 5 
+# 6 class Sankey:
+# 7     def __init__(self, **kwargs):
+# 8         self.kwargs = kwargs
+# 9 
+# 10 
+# 11 def line(df, x=None, y=None, color=None):
+# 12     return Figure({"type": "line", "x": x, "y": y, "color": color})
+# 13 
+# 14 
+# 15 def bar(df, x=None, y=None):
+# 16     return Figure({"type": "bar", "x": x, "y": y})
 
 
 # utilities\pydantic_compat.py
@@ -4580,69 +4986,87 @@
 # 4 from pathlib import Path
 # 5 from typing import Dict
 # 6 
-# 7 import pandas as pd
-# 8 import plotly.express as px
-# 9 import plotly.graph_objects as go
-# 10 
+# 7 try:  #  pragma: no cover - prefer real deps
+# 8     import pandas as pd  #  type: ignore
+# 9 except Exception:  #  pragma: no cover - fallback for limited envs
+# 10     from app.utilities import pandas_stub as pd  #  type: ignore
 # 11 
-# 12 _LOG_TABLES = {
-# 13     "state": "state_log",
-# 14     "transition": "state_transition_log",
-# 15     "prompt": "prompt_log",
-# 16     "scoring": "scoring_log",
-# 17     "recommendation": "recommendation_log",
-# 18 }
+# 12 try:  #  pragma: no cover - prefer real deps
+# 13     import plotly.express as px
+# 14     import plotly.graph_objects as go
+# 15 except Exception:  #  pragma: no cover - fallback for limited envs
+# 16     from app.utilities import plotly_stub as px  #  type: ignore
+# 17     from app.utilities import plotly_stub as go  #  type: ignore
+# 18 
 # 19 
-# 20 
-# 21 def load_logs(db_path: str | Path) -> Dict[str, pd.DataFrame]:
-# 22     """Load structured logs from the experiment database."""
-# 23     path = Path(db_path)
-# 24     if not path.exists():
-# 25         raise FileNotFoundError(path)
-# 26     conn = sqlite3.connect(path)
-# 27     logs: Dict[str, pd.DataFrame] = {}
-# 28     for key, table in _LOG_TABLES.items():
-# 29         try:
-# 30             df = pd.read_sql_query(f"SELECT * FROM {table}", conn)
-# 31         except Exception:
-# 32             df = pd.DataFrame()
-# 33         logs[key] = df
-# 34     conn.close()
-# 35     return logs
-# 36 
-# 37 
-# 38 def build_state_transition_sankey(df: pd.DataFrame) -> go.Figure:
-# 39     """Return a Sankey diagram for state transitions."""
-# 40     if df.empty:
-# 41         return go.Figure()
-# 42     states = pd.unique(pd.concat([df["from_state"], df["to_state"]]))
-# 43     indices = {state: i for i, state in enumerate(states)}
-# 44     source = [indices[s] for s in df["from_state"]]
-# 45     target = [indices[t] for t in df["to_state"]]
-# 46     value = [1] * len(df)
-# 47     return go.Figure(
-# 48         go.Sankey(
-# 49             node={"label": list(states)},
-# 50             link={"source": source, "target": target, "value": value},
-# 51         )
-# 52     )
-# 53 
-# 54 
-# 55 def build_scoring_line_plot(df: pd.DataFrame) -> go.Figure:
-# 56     """Return a line chart for scoring metrics over rounds."""
-# 57     if df.empty:
-# 58         return go.Figure()
-# 59     return px.line(df, x="round", y="value", color="metric")
-# 60 
+# 20 _LOG_TABLES = {
+# 21     "state": "state_log",
+# 22     "transition": "state_transition_log",
+# 23     "prompt": "prompt_log",
+# 24     "scoring": "scoring_log",
+# 25     "recommendation": "recommendation_log",
+# 26 }
+# 27 
+# 28 
+# 29 def load_logs(db_path: str | Path) -> Dict[str, pd.DataFrame]:
+# 30     """Load structured logs from the experiment database."""
+# 31     path = Path(db_path)
+# 32     if not path.exists():
+# 33         raise FileNotFoundError(path)
+# 34     conn = sqlite3.connect(path)
+# 35     logs: Dict[str, pd.DataFrame] = {}
+# 36     for key, table in _LOG_TABLES.items():
+# 37         try:
+# 38             df = pd.read_sql_query(f"SELECT * FROM {table}", conn)
+# 39         except Exception:
+# 40             df = pd.DataFrame()
+# 41         logs[key] = df
+# 42     conn.close()
+# 43     return logs
+# 44 
+# 45 
+# 46 def build_state_transition_sankey(df: pd.DataFrame) -> go.Figure:
+# 47     """Return a Sankey diagram for state transitions."""
+# 48     if df.empty:
+# 49         return go.Figure()
+# 50     states = pd.unique(pd.concat([df["from_state"], df["to_state"]]))
+# 51     indices = {state: i for i, state in enumerate(states)}
+# 52     source = [indices[s] for s in df["from_state"]]
+# 53     target = [indices[t] for t in df["to_state"]]
+# 54     value = [1] * len(df)
+# 55     return go.Figure(
+# 56         go.Sankey(
+# 57             node={"label": list(states)},
+# 58             link={"source": source, "target": target, "value": value},
+# 59         )
+# 60     )
 # 61 
-# 62 def build_recommendation_bar_plot(df: pd.DataFrame) -> go.Figure:
-# 63     """Return a bar plot summarizing recommendation counts per symbol."""
-# 64     if df.empty:
-# 65         return go.Figure()
-# 66     counts = df.groupby("symbol").size().reset_index(name="count")
-# 67     return px.bar(counts, x="symbol", y="count")
+# 62 
+# 63 def build_scoring_line_plot(df: pd.DataFrame) -> go.Figure:
+# 64     """Return a line chart for scoring metrics over rounds."""
+# 65     if df.empty:
+# 66         return go.Figure()
+# 67     return px.line(df, x="round", y="value", color="metric")
+# 68 
+# 69 
+# 70 def build_recommendation_bar_plot(df: pd.DataFrame) -> go.Figure:
+# 71     """Return a bar plot summarizing recommendation counts per symbol."""
+# 72     if df.empty:
+# 73         return go.Figure()
+# 74     counts = df.groupby("symbol").size().reset_index(name="count")
+# 75     return px.bar(counts, x="symbol", y="count")
 
 
 
 # === NON-PYTHON FILES ===
+
+# db\seeders\files\basic_agent_prompt.txt
+
+# 1 You are a code generation agent that produces basic, clean, formatted Python code snippets based on given instructions.
+
+
+# db\seeders\files\default_system_prompt.txt
+
+# 1 You are the default formatting system. Your task is to ensure all provided Python code strictly adheres to PEP8 standards.
+
 

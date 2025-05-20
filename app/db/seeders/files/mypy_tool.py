@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 
-from ...abstract_classes.tool_provider_base import ToolProviderBase
+from app.abstract_classes.tool_provider_base import ToolProviderBase
 
 
 class MypyToolProvider(ToolProviderBase):

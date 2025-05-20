@@ -24,6 +24,27 @@ codecritic
          - system_manager_base.py
          - tool_provider_base.py
       - bootstrap.py
+      - db
+         - __init__.py
+         - base.py
+         - connection.py
+         - models.py
+         - schemas.py
+         - seed.py
+         - seeders
+            - __init__.py
+            - files
+               - __init__.py
+               - basic_agent_prompt.txt
+               - black_tool.py
+               - default_system_prompt.txt
+               - docformatter_tool.py
+               - mypy_tool.py
+               - radon_tool.py
+               - ruff_tool.py
+               - sonarcloud_tool.py
+            - seed_prompts.py
+            - seed_tools.py
       - enums
          - __init__.py
          - agent_enums.py
@@ -71,13 +92,7 @@ codecritic
             - __init__.py
          - tool_providers
             - __init__.py
-            - black_runner.py
-            - docformatter_runner.py
             - dummy_tool_provider.py
-            - mypy_runner.py
-            - radon_runner.py
-            - ruff_runner.py
-            - sonarcloud_runner.py
          - tools
             - __init__.py
       - factories
@@ -147,6 +162,8 @@ codecritic
             - snapshots
                - __init__.py
          - metrics.py
+         - pandas_stub.py
+         - plotly_stub.py
          - pydantic_compat.py
          - schema
             - __init__.py
@@ -202,6 +219,63 @@ codecritic
             - system_prompt.json
             - tooling_provider.json
       - demo_logs.jsonl
+   - extensions
+      - 0476701c-8818-47bf-ac17-a9a89f634c01.py
+      - 110d2cf8-3a21-49c0-b5f7-a10baa54bf14.py
+      - 1720f525-ae28-403c-85a1-e1158afb8843.py
+      - 23be40db-31f2-43d3-b0fa-e17055193521.txt
+      - 271cf0ee-034b-4362-a3ca-42c68b2d410e.py
+      - 277e3bc2-6cf5-4257-a2d6-cc7059047fe5.py
+      - 2c03e1d3-04c1-4baf-aeee-6c7b9fb9f20d.py
+      - 2c2324ec-b9b2-4de8-815c-22b35082d147.py
+      - 2e42d89b-e906-49b3-a71e-e257d4da00cb.txt
+      - 365affa4-2d25-4bbf-9ce3-673c68582b02.py
+      - 4177bcbd-a0ac-46ef-b370-57cc35aa5bef.py
+      - 420b5615-6539-4af8-8f70-4c7ddd3ce325.py
+      - 4293a4a1-f9dc-435d-aaa3-829663e356bb.txt
+      - 48a08767-855e-4544-9f74-a4b2be081960.py
+      - 4dc64cd4-faa6-44dc-a64d-93baf040d291.py
+      - 507f9288-916a-4897-91f1-8814a15302f4.py
+      - 5302d2be-d0d2-4f93-bd39-ebbfac739af2.py
+      - 579b0cb1-e343-40ad-b76c-8e620afadc62.py
+      - 59c2cb6c-dfdf-4177-8e05-9cb54e55c21f.txt
+      - 5b006b19-0cb6-4b65-89d6-dcd041b16f31.txt
+      - 5e32de16-0ec1-409a-b6e5-0b3a94e545f9.txt
+      - 5fe087dd-edda-42f2-a5bd-73f0a3a4c6d5.txt
+      - 619a7398-3ad8-4317-8f6f-3f0dfd913465.py
+      - 643bebab-7ef2-4edb-ba1d-2f51798930cb.py
+      - 6754dd1a-89eb-47a0-acb0-2fa4c506870e.txt
+      - 6d46a27d-ad6f-49de-8fbc-5ba7d05479f9.py
+      - 6ea9e072-dac2-40b2-8f78-cdd750d95651.py
+      - 7b7c3949-7fbd-4182-a5e9-60263a9e7d87.py
+      - 7c0062a9-85bd-44e0-9273-9d2ecc6fe80d.txt
+      - 835e4c98-7e51-40e4-b445-a971d5fa00fa.py
+      - 83e45319-2874-4a14-90b3-b6bb4d41d205.py
+      - 88bf6434-fa05-42bc-82fe-4e5984702b66.py
+      - 9476a194-f737-43b0-96f6-91c8b21d7581.py
+      - 9972a128-3bf9-4729-9376-e8ea80766b91.py
+      - 9ade615b-62a0-4d86-9847-1b5856d6d8c2.txt
+      - a56199a5-850b-4479-9ced-76d9b1c2f358.py
+      - a6bbce69-cfc2-448a-be6b-4bd9ae5f1f5b.py
+      - acf00257-841c-41a0-912a-1d937e65a8e4.py
+      - adc52aea-8725-4eea-97b6-a1091dd41bda.py
+      - c4229128-2ac3-4e85-a6b9-5f38a8546ded.py
+      - ccef1312-4ca2-41ed-a1bf-1c95c6ffa403.py
+      - cf696056-e41d-4c1b-8ea4-aa849f8b2e53.py
+      - d0c018a2-12d4-402b-a704-c4fc246fbb30.py
+      - d61ae3f4-cb4a-448a-b359-bc1c15fbef95.txt
+      - d66b5fcc-cedb-4266-978c-45b2814509b1.txt
+      - db3c2168-d95a-452b-afa9-748f5466bb38.py
+      - e036d386-d017-4dec-bf98-dd8ca6c12cb8.py
+      - e1007b3c-95e7-4f12-b702-a74093e2796d.py
+      - e2c9c693-7388-4ec6-a7ff-ebe70564e732.py
+      - ebd9ce70-c89d-4f1d-a932-840ccff80a9f.txt
+      - eda4e6c2-b519-4b32-be4b-f0390ad171a8.py
+      - f244908e-bf67-40d5-8a85-eb2e38a26086.py
+      - f43097d6-744c-475a-8f73-811df5fcf7b7.py
+      - fb1aaef5-ff09-4bdf-9600-4b287316155e.txt
+      - fe9cdbf5-4cf9-4919-a7a3-bfd08da1fa98.py
+      - ffb989ab-4c1a-41e3-a96a-aa3ad359d65b.py
    - htmlcov
    - mypy.ini
    - pytest
@@ -218,6 +292,7 @@ codecritic
    - test-runner.ps1
    - tests
       - __init__.py
+      - example.py
       - notebooks
          - .mypy_cache
          - __init__.py
@@ -245,6 +320,12 @@ codecritic
                - snapshots
             - codecritic.sqlite3
          - functional_testing_phase
+            - .mypy_cache
+            - database_tests.ipynb
+            - experiments
+               - codecritic.sqlite3
+            - extensions
+            - tool_tests.ipynb
          - linting_system_build_up.ipynb
          - prompt_generation_and_configuration.ipynb
          - structured_logging_demo.ipynb

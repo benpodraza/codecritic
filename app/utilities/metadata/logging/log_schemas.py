@@ -164,6 +164,7 @@ class ToolInvocationLog:
     experiment_id: str
     round: int
     tool_provider_name: str
+    tool_provider_guid: str
     invocation_parameters: str
     stdout: str
     stderr: str

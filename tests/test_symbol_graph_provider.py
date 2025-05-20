@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 from unittest.mock import patch
 
-from app.extensions.context_providers.symbol_graph_provider import SymbolGraphProvider
+from app.db.seeders.files.symbol_graph import SymbolGraphProvider
 
 
 class SymbolGraphProviderTests(unittest.TestCase):

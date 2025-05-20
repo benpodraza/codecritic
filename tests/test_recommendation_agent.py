@@ -14,7 +14,7 @@ from app.factories.logging_provider import (
 )
 from app.enums.scoring_enums import ScoringMetric
 from app.utilities.snapshots.snapshot_writer import SnapshotWriter
-from app.extensions.context_providers.symbol_graph_provider import SymbolGraphProvider
+from app.db.seeders.files.symbol_graph import SymbolGraphProvider
 
 
 class RecommendationAgentTests(unittest.TestCase):

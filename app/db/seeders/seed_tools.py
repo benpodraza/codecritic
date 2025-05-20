@@ -17,6 +17,7 @@ TOOLS = [
     ("radon_tool.py", "Radon Analyzer", "Analyzes Python code complexity.", {}),
     ("mypy_tool.py", "Mypy Type Checker", "Static type checking with mypy.", {}),
     ("docformatter_tool.py", "Docformatter Formatter", "Static type checking with mypy.", {}),
+    ("symbol_graph.py", "Symbol Graph Analyzer", "Extracts and analyzes Python symbols into structured graphs.", {}),
 ]
 
 def seed_tools(db_session: Session):

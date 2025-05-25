@@ -208,7 +208,7 @@
 # 200 
 # 201 system_type TEXT,
 # 202 
-# 203 tooling_provider_id INTEGER
+# 203 tool_provider_id INTEGER
 # 204 
 # 205 );
 # 206 
@@ -238,7 +238,7 @@
 # 230 
 # 231 );
 # 232 
-# 233 CREATE TABLE tooling_provider (
+# 233 CREATE TABLE tool_provider (
 # 234 
 # 235 id INTEGER PRIMARY KEY,
 # 236 
@@ -570,7 +570,7 @@
 # 562 
 # 563 * `agent_engine`
 # 564 * `agent_prompt`, `system_prompt`
-# 565 * `context_provider`, `tooling_provider`, `file_path`
+# 565 * `context_provider`, `tool_provider`, `file_path`
 # 566 * `agent_config`, `prompt_generator`, `scoring_provider`
 # 567 * `state_manager`, `system_config`, `experiment_config`, `series`
 # 568 
@@ -603,7 +603,7 @@
 # 595 - Seed files in `experiments/config/seed/*.json` are automatically loaded and type-checked.
 # 596 - Schema files have been confirmed present and validated for:
 # 597   - `agent_engine`, `agent_prompt`, `system_prompt`
-# 598   - `context_provider`, `tooling_provider`, `file_path`
+# 598   - `context_provider`, `tool_provider`, `file_path`
 # 599   - `agent_config`, `prompt_generator`, `scoring_provider`
 # 600   - `state_manager`, `system_config`, `experiment_config`, `series`
 # 601 

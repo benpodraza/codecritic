@@ -3,10 +3,11 @@ import shutil
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from app.db.models import AgentPrompt, SystemPrompt
+from app.enums.system_enums import SystemType
 
 # Define paths relative to this script's file location explicitly
 CURRENT_DIR = Path(__file__).resolve().parent
-SEED_FILES_DIR = CURRENT_DIR / "files"
+SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
 PROJECT_ROOT = CURRENT_DIR.parent.parent.parent  # adjust based on your actual folder structure
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
@@ -47,6 +48,7 @@ def seed_prompts(db_session: Session):
     system_prompt = SystemPrompt(
         guid=system_guid,
         name="format",
+        system_type=SystemType.LINTING,
         description="Default prompt for formatting tasks.",
         artifact_path=str(system_dest_file),
         tags=["formatting", "default"]

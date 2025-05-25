@@ -12,18 +12,6 @@ codecritic
    - README.md
    - app
       - __init__.py
-      - abstract_classes
-         - __init__.py
-         - agent_base.py
-         - context_provider_base.py
-         - experiment.py
-         - prompt_generator_base.py
-         - scoring_model_base.py
-         - scoring_provider_base.py
-         - state_manager_base.py
-         - system_manager_base.py
-         - tool_provider_base.py
-      - bootstrap.py
       - db
          - __init__.py
          - base.py
@@ -35,16 +23,54 @@ codecritic
             - __init__.py
             - files
                - __init__.py
-               - basic_agent_prompt.txt
-               - black_tool.py
-               - default_system_prompt.txt
-               - docformatter_tool.py
-               - mypy_tool.py
-               - radon_tool.py
-               - ruff_tool.py
-               - sonarcloud_tool.py
-               - symbol_graph.py
+               - agent_engine_providers
+                  - __init__.py
+                  - basic_agent_engine_provider.py
+               - agent_providers
+                  - __init__.py
+                  - basic_agent_provider.py
+               - context_providers
+                  - __init__.py
+                  - basic_context_provider.py
+               - orchestrator_providers
+                  - __init__.py
+                  - basic_orchestrator_provider.py
+               - program_providers
+                  - __init__.py
+                  - basic_program_provider.py
+               - prompt_providers
+                  - __init__.py
+                  - basic_agent_prompt.txt
+                  - basic_prompt_provider.py
+                  - default_system_prompt.txt
+               - score_providers
+                  - __init__.py
+                  - lint_score.py
+               - state_providers
+                  - __init__.py
+                  - basic_state_provider.py
+               - system_providers
+                  - __init__.py
+                  - basic_system_provider.py
+               - tool_providers
+                  - __init__.py
+                  - black_tool.py
+                  - docformatter_tool.py
+                  - mypy_tool.py
+                  - radon_tool.py
+                  - ruff_tool.py
+                  - sonarcloud_tool.py
+                  - symbol_graph.py
+            - seed_agent_engine_providers.py
+            - seed_agent_providers.py
+            - seed_context_providers.py
+            - seed_orchestrator_provider.py
+            - seed_program_provider.py
+            - seed_prompt_providers.py
             - seed_prompts.py
+            - seed_scores.py
+            - seed_state_providers.py
+            - seed_system_providers.py
             - seed_tools.py
       - enums
          - __init__.py
@@ -52,103 +78,35 @@ codecritic
          - logging_enums.py
          - scoring_enums.py
          - system_enums.py
-      - extensions
-         - __init__.py
-         - agent_prompts
-            - __init__.py
-         - agents
-            - __init__.py
-            - dummy_agent.py
-            - evaluator_agent.py
-            - generator_agent.py
-            - mediator_agent.py
-            - patch_agent.py
-            - recommendation_agent.py
-         - context_providers
-            - __init__.py
-            - dummy_context_provider.py
-         - experiment_provider.py
-         - prompt_generators
-            - __init__.py
-            - basic_prompt_generator.py
-            - dummy_prompt_generator.py
-         - scoring_models
-            - __init__.py
-            - adaptive_scoring_provider.py
-            - advanced_scoring_provider.py
-            - basic_scoring_provider.py
-            - code_quality_scorer.py
-            - dummy_scoring_provider.py
-            - recommendation_quality_scorer.py
-         - state_managers
-            - __init__.py
-            - dummy_state_manager.py
-            - state_manager.py
-         - system_managers
-            - __init__.py
-            - dummy_system_manager.py
-            - system_manager.py
-         - system_prompts
-            - __init__.py
-         - tool_providers
-            - __init__.py
-            - dummy_tool_provider.py
-         - tools
-            - __init__.py
       - factories
          - __init__.py
-         - agent.py
-         - context_provider.py
-         - experiment_config_provider.py
-         - logging_provider.py
-         - prompt_manager.py
-         - scoring_provider.py
-         - state_manager.py
-         - system_config_provider.py
-         - system_manager.py
-         - tool_provider.py
-      - registries
+         - agent_engine_provider_factory.py
+         - agent_provider_factory.py
+         - base_provider_factory.py
+         - context_provider_factory.py
+         - orchestrator_provider_factory.py
+         - program_provider_factory.py
+         - prompt_provider_factory.py
+         - score_provider_factory.py
+         - state_provider_factory.py
+         - system_provider_factory.py
+         - tool_provider_factory.py
+      - providers
          - __init__.py
-         - agent_engines
-            - __init__.py
-         - agent_prompts
-            - __init__.py
-         - agents
-            - __init__.py
-         - context_providers
-            - __init__.py
-         - prompt_generators
-            - __init__.py
-         - scoring_models
-            - __init__.py
-         - state_managers
-            - __init__.py
-         - system_managers
-            - __init__.py
-         - system_prompts
-            - __init__.py
-         - tool_providers
-            - __init__.py
-         - tools
-            - __init__.py
-      - schemas
-         - __init__.py
-         - agent_config_schema.py
-         - agent_engine_schema.py
-         - agent_prompt_schema.py
-         - context_provider_schema.py
-         - experiment_config_schema.py
-         - file_path_schema.py
-         - prompt_generator_schema.py
-         - scoring_provider_schema.py
-         - series_schema.py
-         - state_manager_schema.py
-         - system_config_schema.py
-         - system_prompt_schema.py
-         - tooling_provider_schema.py
+         - agent_engine_provider_base.py
+         - agent_provider_base.py
+         - base_provider.py
+         - context_provider_base.py
+         - orchestrator_provider_base.py
+         - program_provider_base.py
+         - prompt_provider_base.py
+         - score_provider_base.py
+         - state_provider_base.py
+         - system_provider_base.py
+         - tool_provider_base.py
       - utilities
          - __init__.py
-         - db.py
+         - extension_loader.py
          - feedback.py
          - file_management
             - __init__.py
@@ -158,33 +116,14 @@ codecritic
                - __init__.py
             - logging
                - __init__.py
-               - log_schemas.py
+               - logging_provider.py
             - snapshots
                - __init__.py
-         - metrics.py
-         - pandas_stub.py
-         - plotly_stub.py
+               - snapshot_writer.py
          - pydantic_compat.py
          - schema
             - __init__.py
             - create_schema.py
-         - snapshots
-            - __init__.py
-            - snapshot_writer.py
-         - tools
-            - __init__.py
-            - black_runner.py
-            - doc_formatter.py
-            - mypy_runner.py
-            - radon_runner.py
-            - ruff_runner.py
-            - sonarcloud_runner.py
-      - visualization
-         - __init__.py
-         - dashboard.py
-   - coverage_output.txt
-   - demo_eval.py
-   - demo_patch.py
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
@@ -220,24 +159,6 @@ codecritic
             - tooling_provider.json
       - demo_logs.jsonl
    - extensions
-      - 004afeef-ca93-4e8c-a159-c570b405331a.py
-      - 06508c2d-a353-4cb6-b211-5e60af9a2d0f.txt
-      - 15bd6cb6-7e96-4e36-ab15-b25054da350b.py
-      - 2f7ab4e5-0947-4e9c-9097-ca9812493e21.py
-      - 30414fb2-3cfc-48c9-9ee9-0c8bdfe5441d.py
-      - 31195f93-2778-4dbc-8d3b-500700348b41.py
-      - 4fa05cca-32a9-40e6-9667-71ce1143911c.py
-      - 5a09dcaf-6c3f-40e0-8fbc-8584d3d25f24.py
-      - 5c9532e0-682e-475c-a61e-dc25bb6dfe77.py
-      - 6cf04e37-0d7a-4f8a-b2de-d5f33353ef80.py
-      - 7410970c-5871-4d6e-8036-c52fe8d5056a.txt
-      - 76d089ad-3b6d-40b7-acbc-f192d7a5ebfc.txt
-      - 8dc43df4-eae5-4d42-8159-109e9bcd1b6e.py
-      - 964cadeb-da93-4816-afaa-02d8e809005a.py
-      - a58fc81b-bd07-40e5-b0fa-332bed2ba06d.py
-      - c98a1180-5096-4c41-ae50-33fb390d0167.py
-      - d09831aa-f0fe-461d-bf73-38d68306c7de.txt
-      - f750110f-75a7-4094-b653-44dbb8fa14de.py
    - htmlcov
    - mypy.ini
    - pytest
@@ -245,17 +166,15 @@ codecritic
    - references
       - file_manifest.txt
       - flattened_app.txt
+      - flattened_db.txt
       - flattened_docs.txt
       - flattened_experiments.txt
       - flattened_tests.txt
    - requirements.txt
-   - sample_module.py
    - setup.sh
-   - symbol_graph_provider_demo.ipynb
    - test-runner.ps1
    - tests
       - __init__.py
-      - example.py
       - notebooks
          - .mypy_cache
          - __init__.py
@@ -282,29 +201,15 @@ codecritic
             - artifacts
                - snapshots
             - codecritic.sqlite3
-         - functional_testing_phase
+         - functional_tests
             - .mypy_cache
+            - agent_engine_provider_test.ipynb
+            - agent_provider_test.ipynb
+            - context_provider_tests.ipynb
             - database_tests.ipynb
-            - experiments
-               - codecritic.sqlite3
-            - extensions
+            - prompt_provider_tests.ipynb
+            - provider_test_and_log.ipynb
+            - score_provider_tests.ipynb
             - symbol_library_validation.ipynb
-            - tool_tests.ipynb
-         - linting_system_build_up.ipynb
-         - prompt_generation_and_configuration.ipynb
-         - structured_logging_demo.ipynb
-      - test_agents.py
-      - test_bootstrap.py
-      - test_dashboard.py
-      - test_factories.py
-      - test_feedback.py
-      - test_integration.py
-      - test_mediator_agent.py
-      - test_patch_agent.py
-      - test_recommendation_agent.py
-      - test_structured_logging.py
-      - test_symbol_graph_provider.py
-      - test_system_state_management.py
-      - test_tool_providers.py
-   - tmp_demo.py
+            - tool_provider_tests.ipynb
    - utilities.ipynb

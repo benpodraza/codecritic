@@ -3,11 +3,12 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 
-from app.db.models import ToolConfig
+from app.db.models import ToolProviderConfig
 
 
-SEED_FILES_DIR = Path(__file__).resolve().parent / "files"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent
+CURRENT_DIR = Path(__file__).resolve().parent
+SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
+PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 TOOLS = [
@@ -20,7 +21,7 @@ TOOLS = [
     ("symbol_graph.py", "Symbol Graph Analyzer", "Extracts and analyzes Python symbols into structured graphs.", {}),
 ]
 
-def seed_tools(db_session: Session):
+def seed_tool_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
     for filename, name, description, config in TOOLS:
@@ -33,12 +34,12 @@ def seed_tools(db_session: Session):
 
         shutil.copy(source_file, dest_file)
 
-        tool = ToolConfig(
+        tool = ToolProviderConfig(
             guid=guid,
             name=name,
             description=description,
             config=config,
-            artifact_path=str(dest_file)
+            artifact_path=guid
         )
 
         db_session.add(tool)

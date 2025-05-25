@@ -3,7 +3,7 @@
     "id": 1,
     "name": "default_system",
     "description": "System prompt",
-    "system_type": "default",
+    "system_type": "linting",
     "artifact_path": "prompts/system.txt"
   }
 ]

@@ -42,10 +42,9 @@
 # 4     "name": "default_agent",
 # 5     "description": "Agent prompt",
 # 6     "agent_role": "generator",
-# 7     "system_type": "default",
-# 8     "artifact_path": "prompts/agent.txt"
-# 9   }
-# 10 ]
+# 7     "artifact_path": "prompts/agent.txt"
+# 8   }
+# 9 ]
 
 
 # config\seed\context_provider.json
@@ -56,7 +55,7 @@
 # 4     "name": "basic_context",
 # 5     "description": "Provides context",
 # 6     "system_type": "default",
-# 7     "tooling_provider_id": 1
+# 7     "tool_provider_id": 1
 # 8   }
 # 9 ]
 
@@ -147,7 +146,7 @@
 # 3     "id": 1,
 # 4     "name": "default_system",
 # 5     "description": "System prompt",
-# 6     "system_type": "default",
+# 6     "system_type": "linting",
 # 7     "artifact_path": "prompts/system.txt"
 # 8   }
 # 9 ]

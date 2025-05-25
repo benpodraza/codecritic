@@ -66,25 +66,25 @@ class SystemType(str, Enum):
     CONTEXT_FILTERING = "context_filtering"
 
 
-class SystemState(Enum):
-    """Finite state machine states for the CodeCritic system."""
+# class SystemState(Enum):
+#     """Finite state machine states for the CodeCritic system."""
 
-    START = "start"
-    GENERATE = "generate"
-    DISCRIMINATE = "discriminate"
-    MEDIATE = "mediate"
-    PATCH = "patch"
-    EVALUATE = "evaluate"
-    END = "end"
+#     START = "start"
+#     GENERATE = "generate"
+#     DISCRIMINATE = "discriminate"
+#     MEDIATE = "mediate"
+#     PATCH = "patch"
+#     EVALUATE = "evaluate"
+#     END = "end"
 
 
-class StateTransitionReason(str, Enum):
-    FIRST_ROUND = "first_round"
-    MAX_ITERATIONS_REACHED = "max_iterations_reached"
-    SCORE_THRESHOLD_MET = "score_threshold_met"
-    SCORE_STAGNATION = "score_stagnation"
-    AGENT_FAILURE = "agent_failure"
-    MEDIATOR_OVERRIDE = "mediator_override"
-    PATCH_RETRY = "patch_retry"
-    CUSTOM_RULE = "custom_rule"
-    END_REACHED = "end_reached"
+# class StateTransitionReason(str, Enum):
+#     FIRST_ROUND = "first_round"
+#     MAX_ITERATIONS_REACHED = "max_iterations_reached"
+#     SCORE_THRESHOLD_MET = "score_threshold_met"
+#     SCORE_STAGNATION = "score_stagnation"
+#     AGENT_FAILURE = "agent_failure"
+#     MEDIATOR_OVERRIDE = "mediator_override"
+#     PATCH_RETRY = "patch_retry"
+#     CUSTOM_RULE = "custom_rule"
+#     END_REACHED = "end_reached"

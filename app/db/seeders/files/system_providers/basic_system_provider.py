@@ -1,0 +1,16 @@
+from app.providers.system_provider_base import SystemProviderBase
+
+class BasicSystemProvider(SystemProviderBase):
+    def _run(self, input: dict) -> str:
+        state = input.get("state")
+        return f"Running system state: {state}"
+
+    def _transition(self, state: dict) -> dict:
+        current = state.get("state")
+        states = self.config.config.get("states", [])
+        if current not in states:
+            raise ValueError(f"Invalid state: {current}")
+
+        idx = states.index(current)
+        next_state = states[idx + 1] if idx + 1 < len(states) else states[-1]
+        return {**state, "state": next_state}

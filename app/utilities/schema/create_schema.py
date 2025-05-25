@@ -1,125 +1,80 @@
-from __future__ import annotations
+# from pydantic import BaseModel, Field
+# from pathlib import Path
+# from typing import Dict, List, Optional, ClassVar
+# from uuid import UUID, uuid4
+# from app.enums.system_enums import SystemType
+# from app.utilities.pydantic_compat import field_validator
 
-import json
-import sqlite3
-from pathlib import Path
-from typing import Type, Any, Union, get_origin, get_args
-from enum import Enum
+# class AgentPromptSchema(BaseModel):
+#     id: Optional[int]
+#     guid: UUID = Field(default_factory=uuid4)
+#     name: str
+#     description: Optional[str]
+#     artifact_path: Path
+#     tags: Optional[List[str]] = None
 
-from app.schemas import (
-    AgentEngine,
-    AgentPrompt,
-    SystemPrompt,
-    ContextProvider,
-    ToolingProvider,
-    FilePath,
-    AgentConfig,
-    PromptGenerator,
-    ScoringProvider,
-    StateManager,
-    SystemConfig,
-    ExperimentConfig,
-    Series,
-)
-from app.utilities import db
+#     table_name: ClassVar[str] = "agent_prompt"
 
-SCHEMAS = {
-    "agent_engine": AgentEngine,
-    "agent_prompt": AgentPrompt,
-    "system_prompt": SystemPrompt,
-    "context_provider": ContextProvider,
-    "tooling_provider": ToolingProvider,
-    "file_path": FilePath,
-    "agent_config": AgentConfig,
-    "prompt_generator": PromptGenerator,
-    "scoring_provider": ScoringProvider,
-    "state_manager": StateManager,
-    "system_config": SystemConfig,
-    "experiment_config": ExperimentConfig,
-    "series": Series,
-}
+#     @field_validator("artifact_path")
+#     @classmethod
+#     def _check_path(cls, v: Path) -> Path:
+#         if not v.is_absolute() and ".." in v.parts:
+#             raise ValueError("Invalid artifact path")
+#         return v
 
-_TYPE_MAP = {
-    int: "INTEGER",
-    str: "TEXT",
-    float: "REAL",
-    Path: "TEXT",
-}
+# class SystemPromptSchema(BaseModel):
+#     id: Optional[int]
+#     guid: UUID = Field(default_factory=uuid4)
+#     name: str
+#     system_type: SystemType
+#     description: Optional[str]
+#     artifact_path: Path
+#     tags: Optional[List[str]] = None
 
+#     table_name: ClassVar[str] = "system_prompt"
 
-def _sqlite_type(py_type: Type) -> str:
-    origin = get_origin(py_type)
-    if origin is Union:
-        py_type = get_args(py_type)[0]
-    return _TYPE_MAP.get(py_type, "TEXT")
+#     @field_validator("artifact_path")
+#     @classmethod
+#     def _check_path(cls, v: Path) -> Path:
+#         if not v.is_absolute() and ".." in v.parts:
+#             raise ValueError("Invalid artifact path")
+#         return v
 
+# class ToolConfig(BaseModel):
+#     id: Optional[int] = None
+#     guid: UUID = Field(default_factory=uuid4)
+#     name: str
+#     description: Optional[str] = None
+#     config: Optional[Dict] = None
+#     artifact_path: Path
 
-def _is_optional(annotation: Any) -> bool:
-    return get_origin(annotation) is Union and type(None) in get_args(annotation)
+#     table_name: ClassVar[str] = "tool_config"
 
+#     @field_validator("artifact_path")
+#     @classmethod
+#     def _check_path(cls, v: Path) -> Path:
+#         if not v.is_absolute() and ".." in v.parts:
+#             raise ValueError("Invalid artifact path")
+#         return v
 
-def create_tables(conn: sqlite3.Connection) -> None:
-    cur = conn.cursor()
-    for table_name, model_cls in SCHEMAS.items():
-        fields = model_cls.__annotations__
-        columns = []
-        for name, annotation in fields.items():
-            col_type = _sqlite_type(annotation)
-            if name == "id" and _is_optional(annotation):
-                columns.append(f"{name} INTEGER PRIMARY KEY")
-            else:
-                columns.append(f"{name} {col_type}")
-        col_sql = ", ".join(columns)
-        cur.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({col_sql})")
-    conn.commit()
+# class ScoreProvider(BaseModel):
+#     id: Optional[int] = None
+#     guid: UUID = Field(default_factory=uuid4)
+#     name: str
+#     description: Optional[str] = None
+#     artifact_path: Optional[Path] = None
 
+#     table_name: ClassVar[str] = "score_provider"
 
-def load_seed_data(
-    conn: sqlite3.Connection, seed_dir: Path | str = "experiments/config/seed"
-) -> None:
-    seed_path = Path(seed_dir)
-    if not seed_path.exists():
-        return
-    cur = conn.cursor()
-    for file in seed_path.glob("*.json"):
-        table_name = file.stem
-        model = SCHEMAS.get(table_name)
-        if model is None:
-            continue
-        entries = json.loads(file.read_text())
-        if isinstance(entries, dict):
-            entries = [entries]
-        for entry in entries:
-            obj = model(**entry)
-            data = obj.model_dump()
-            # Convert enums and paths to strings
-            data = {
-                k: str(v) if isinstance(v, (Path, Enum)) else v for k, v in data.items()
-            }
-            cols = ",".join(data.keys())
-            placeholders = ",".join(["?"] * len(data))
-            cur.execute(
-                f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})",
-                list(data.values()),
-            )
-    conn.commit()
+#     @field_validator("artifact_path")
+#     @classmethod
+#     def _check_path(cls, v: Optional[Path]) -> Optional[Path]:
+#         if v is None:
+#             return v
+#         p = Path(v)
+#         if not p.is_absolute() and ".." in p.parts:
+#             raise ValueError("artifact_path must be absolute or project relative")
+#         return p
 
-
-def initialize_database(reset: bool = False) -> sqlite3.Connection:
-    """
-    Initialize (and optionally reset) the experiment database.
-    If reset=True, closes any open connection and deletes the existing file.
-    Then re-creates tables (and loads seed data, if any).
-    """
-    if reset and db.DB_PATH.exists():
-        db.close_connection()  # close the global connection if it’s open
-        db.DB_PATH.unlink()  # now safe to delete the file
-
-    conn = db.get_connection()
-    create_tables(conn)
-    load_seed_data(conn)  # uncomment if you have seed data
-    return conn
-
-
-if __name__ == "__main__":
-    initialize_database()
+#     def model_dump(self, **kwargs) -> dict:
+#         return super().model_dump(**kwargs)

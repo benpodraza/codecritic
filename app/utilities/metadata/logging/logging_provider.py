@@ -77,6 +77,7 @@ class LoggingProvider:
         items = list(items)
         if not items:
             return
+
         keys = list(items[0].keys())
         cols = ",".join(keys)
         placeholders = ",".join(["?"] * len(keys))
@@ -100,9 +101,14 @@ class LoggingProvider:
         schema_cls = config["schema"]
         table_name = config["table"]
 
+        # Log and allow class name mismatches as a warning (helpful for shadowed classes)
         for entry in entries:
-            if not isinstance(entry, schema_cls):
-                raise TypeError(f"Expected {schema_cls.__name__}, got {type(entry)}")
+            if not is_dataclass(entry):
+                raise TypeError(f"Expected a dataclass instance, got {type(entry)}")
+            if entry.__class__.__name__ != schema_cls.__name__:
+                logging.getLogger("LoggingProvider").warning(
+                    f"⚠️ Log schema mismatch: expected {schema_cls.__name__}, got {entry.__class__.__name__}"
+                )
 
         serialized = [self._serialize(e) for e in entries]
         self._insert_many(table_name, serialized)

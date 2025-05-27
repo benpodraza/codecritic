@@ -10,6 +10,8 @@ EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 STATE_PROVIDERS = [
     ("basic_state_provider.py", "Basic State Provider", "Simple FSM for agent progression.", ["default"], {"states": ["start", "review", "approve"]}),
+    ("linting_generator_state_provider.py", "linting_generator_state_provider", "Runs the linting generator agent state.", ["linting", "generator"], {"states": ["start", "linting_generator_agent", "end"]}),
+    ("linting_discriminator_state_provider.py", "linting_discriminator_state_provider", "Runs the linting discriminator and conditionally promotes snapshot.", ["linting", "discriminator"], {"states": ["linting_generator_state_provider", "linting_discriminator_state_provider", "end"]}),
 ]
 
 def seed_state_providers(db_session: Session):

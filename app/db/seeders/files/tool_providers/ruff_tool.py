@@ -15,13 +15,20 @@ class RuffToolProvider(ToolProviderBase):
         if proc.stderr:
             self._log.error(proc.stderr)
 
+        # Interpret output
         result = {
             "stdout": proc.stdout,
             "stderr": proc.stderr,
-            "return_code": proc.returncode
+            "return_code": proc.returncode,
         }
 
-        if proc.returncode != 0:
-            raise RuntimeError(f"ruff failed: {proc.stderr}")
+        # Only raise if ruff failed due to actual error (not rule violations)
+        if proc.returncode > 1:
+            self._log.error(f"❌ Ruff failed: {proc.stderr or proc.stdout or 'unknown error'}")
+            raise RuntimeError(f"ruff execution error: {proc.stderr or proc.stdout or 'unknown error'}")
+
+        # Log structured info for visibility
+        self._log.debug(f"✅ Ruff completed with return code {proc.returncode}")
+        self._log.debug(json.dumps(result, indent=2))
 
         return json.dumps(result)

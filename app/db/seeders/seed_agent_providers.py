@@ -9,8 +9,11 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 AGENT_PROVIDERS = [
-    ("basic_agent_provider.py", "Basic Agent Provider", "Returns a test response.", ["default"]),
+    ("basic_agent_provider.py", "basic_agent_provider", "Returns a hardcoded result.", ["test"]),
+    ("linting_generator_agent_provider.py", "linting_generator_agent_provider", "Runs GPT-4o to generate linting corrections.", ["linting", "generator"]),
+    ("linting_discriminator_agent_provider.py", "linting_discriminator_agent_provider", "Evaluates generator output for acceptance.", ["linting", "discriminator"])
 ]
+
 
 def seed_agent_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

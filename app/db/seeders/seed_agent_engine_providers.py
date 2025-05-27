@@ -9,7 +9,8 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 AGENT_ENGINES = [
-    ("basic_agent_engine_provider.py", "Basic Agent Engine Provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
+    ("basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
+    ("openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"])
 ]
 
 def seed_agent_engine_providers(db_session: Session):

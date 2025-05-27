@@ -11,12 +11,15 @@ from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 class BaseProvider(LoggingMixin):
     """Base class for all providers using unified provider log."""
 
-    def __init__(self, config=None) -> None:
+    def __init__(self, config=None, engine=None) -> None:
         super().__init__()
         self.config = config
+        self._engine = engine
 
     def run(self, input: dict, session_id: str) -> str:
         self._log.debug("Run started")
+        self._session_id = session_id
+        self._system = input.get("system", "unknown")
         output = None
 
         try:
@@ -27,8 +30,6 @@ class BaseProvider(LoggingMixin):
                 session_id=session_id,
                 error_type=type(exc).__name__,
                 message=str(exc),
-                provider_id=self.config.id if self.config else None,
-                provider_type=self.__class__.__name__,
                 file_path=str(Path(__file__).relative_to(Path.cwd())),
             ))
             raise
@@ -42,8 +43,8 @@ class BaseProvider(LoggingMixin):
                     if base.__name__.endswith("ProviderBase") and base is not object
                 ),
                 input=json.dumps(input),
-                output=json.dumps(output) if output is not None else None,
-                file_path=self.config.config.get("file_path") if self.config and self.config.config else None,
+                output=json.dumps(output.model_dump()) if hasattr(output, "model_dump") else json.dumps(output),
+                file_path = getattr(self.config, "artifact_path", None),
                 timestamp=datetime.now(timezone.utc)
             )
             self.logger.write(LogType.PROVIDER, log)

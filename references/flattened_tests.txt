@@ -9,6 +9,31 @@
 
 
 
+# notebooks\system_development\bad_code.py
+
+# 1 import sys, os
+# 2 
+# 3 
+# 4 def add(a, b):
+# 5     result = a + b
+# 6     return result
+# 7 
+# 8 
+# 9 def unused_function():
+# 10     print("I am never called")
+# 11 
+# 12 
+# 13 class myClass:
+# 14     def __init__(self, value):
+# 15         self.Value = value
+# 16 
+# 17     def printvalue(self):
+# 18         print(self.Value)
+# 19 
+# 20 
+# 21 add(1, 2)
+
+
 
 # === NON-PYTHON FILES ===
 

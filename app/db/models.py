@@ -185,8 +185,9 @@ class AgentConversationLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, nullable=False)
-    state_id = Column(String, nullable=False)
-    role = Column(String, nullable=False)
+    system = Column(String, nullable=False)
+    agent_provider_config_id = Column(Integer, nullable=False)  
+    agent_name = Column(String, nullable=False)
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
 

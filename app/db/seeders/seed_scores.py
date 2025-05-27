@@ -10,7 +10,7 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 SCORES = [
-    ("lint_score.py", "Lint Score Provider", "Scores lint compliance.", {}),
+    ("linting_score_provider.py", "linting_score_provider", "Scores lint compliance.", {}),
 ]
 
 def seed_score_providers(db_session: Session):

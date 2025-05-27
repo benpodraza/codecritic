@@ -10,14 +10,15 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
-GENERATORS = [
-    ("basic_prompt_provider.py", "Basic Prompt Provider", "Returns a simple prompt response.", ["default"]),
+PROVIDERS = [
+    ("basic_prompt_provider.py", "basic_prompt_provider", "Returns a simple prompt response.", ["default"]),
+    ("linting_prompt_provider.py", "linting_prompt_provider", "Combines linting system and agent prompts.", ["linting", "codequality"]),
 ]
 
 def seed_prompt_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for filename, name, description, tags in GENERATORS:
+    for filename, name, description, tags in PROVIDERS:
         guid = str(uuid4())
         source_file = SEED_FILES_DIR / filename
         dest_file = EXTENSIONS_DIR / f"{guid}.py"

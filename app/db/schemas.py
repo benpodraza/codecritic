@@ -39,6 +39,21 @@ class SystemPromptSchema(BaseModel):
             raise ValueError("Invalid artifact path")
         return v
 
+class PromptProviderConfig(BaseModel):
+    id: Optional[int] = None
+    guid: UUID = Field(default_factory=uuid4)
+    name: str
+    description: Optional[str] = None
+    artifact_path: Path
+    tags: Optional[List[str]] = Field(default_factory=list)
+
+    @field_validator("artifact_path")
+    @classmethod
+    def validate_artifact_path(cls, v: Path) -> Path:
+        if not v.is_absolute() and ".." in v.parts:
+            raise ValueError("Invalid artifact path")
+        return v
+
 class ToolProviderConfig(BaseModel):
     id: Optional[int] = None
     guid: UUID = Field(default_factory=uuid4)
@@ -54,11 +69,19 @@ class ToolProviderConfig(BaseModel):
             raise ValueError("Invalid artifact path")
         return v
 
-class ScoreContext(BaseModel):
-    experiment_id: str
-    round: int
-    file_path: Path
-    source_code: str
+# class ScoreContext(BaseModel):
+#     experiment_id: str
+#     round: int
+#     file_path: Path
+#     source_code: str
+
+class ScoreOutputSchema(BaseModel):
+    name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
+    value: float = Field(..., description="The final weighted score, normalized to a 0.0–1.0 scale.")
+    components: Dict[str, float] = Field(
+        ...,
+        description="Component scores used to compute the overall score. Keys should match tool names."
+    )
 
 class ScoreProviderConfig(BaseModel):
     id: Optional[int] = None
@@ -206,16 +229,16 @@ class StateTransitionLogSchema:
 @dataclass
 class AgentConversationLogSchema:
     session_id: str
-    state_id: str
-    role: str
+    system: str
+    agent_provider_config_id: int
+    agent_name: str
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 @dataclass
 class ErrorLogSchema:
-    experiment_id: str
-    round: int
-    error_type: str
-    message: str
-    file_path: str | None = None
+    session_id: str             
+    error_type: str                   
+    message: str                    
+    file_path: str | None = None       
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

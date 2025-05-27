@@ -9,8 +9,10 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 CONTEXT_PROVIDERS = [
-    ("basic_context_provider.py", "Basic Context Provider", "Returns static context for testing.", ["default"]),
+    ("basic_context_provider.py", "basic_context_provider", "Returns static context for testing.", ["default"]),
+    ("linting_context_provider.py", "linting_context_provider", "Generates context for the linting system.", ["linting", "score-aware"]),
 ]
+
 
 def seed_context_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

@@ -39,6 +39,6 @@ class BaseProviderFactory:
             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
 
         # Step 3: Instantiate and wire dependencies
-        instance = provider_class(config=config)
+        instance = provider_class(config=config, engine=kwargs.get("engine"))
         instance.resolve_dependencies(**kwargs)
         return instance

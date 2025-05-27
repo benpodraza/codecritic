@@ -26,12 +26,16 @@ codecritic
                - agent_engine_providers
                   - __init__.py
                   - basic_agent_engine_provider.py
+                  - openai_gpt4o_agent_engine_provider.py
                - agent_providers
                   - __init__.py
                   - basic_agent_provider.py
+                  - linting_discriminator_agent_provider.py
+                  - linting_generator_agent_provider.py
                - context_providers
                   - __init__.py
                   - basic_context_provider.py
+                  - linting_context_provider.py
                - orchestrator_providers
                   - __init__.py
                   - basic_orchestrator_provider.py
@@ -40,15 +44,22 @@ codecritic
                   - basic_program_provider.py
                - prompt_providers
                   - __init__.py
-                  - basic_agent_prompt.txt
                   - basic_prompt_provider.py
+                  - linting_prompt_provider.py
+               - prompts
+                  - __init__.py
+                  - basic_agent_prompt.txt
                   - default_system_prompt.txt
+                  - linting_generator_agent_prompt.txt
+                  - linting_system_prompt.txt
                - score_providers
                   - __init__.py
-                  - lint_score.py
+                  - linting_score_provider.py
                - state_providers
                   - __init__.py
                   - basic_state_provider.py
+                  - linting_discriminator_state_provider.py
+                  - linting_generator_state_provider.py
                - system_providers
                   - __init__.py
                   - basic_system_provider.py
@@ -106,19 +117,22 @@ codecritic
          - tool_provider_base.py
       - utilities
          - __init__.py
+         - diff_utils.py
          - extension_loader.py
-         - feedback.py
          - file_management
             - __init__.py
          - metadata
             - __init__.py
             - footer
                - __init__.py
+               - code_annnotation_utils.py
             - logging
                - __init__.py
+               - conversation_log.py
                - logging_provider.py
             - snapshots
                - __init__.py
+               - snapshot_reader.py
                - snapshot_writer.py
          - pydantic_compat.py
          - schema
@@ -128,37 +142,327 @@ codecritic
       - CodeCritic - Specification - 5-17-2025.md
    - env
    - experiments
-      - artifacts
-         - snapshots
-            - context
-               - 0
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.after
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.before
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.meta
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.after
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.before
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.meta
-            - exp
-               - 0
-                  - demo.py.20250518T161412312521Z.after
-                  - demo.py.20250518T161412312521Z.before
-                  - demo.py.20250518T161412312521Z.meta
-      - config
-         - seed
-            - agent_config.json
-            - agent_engine.json
-            - agent_prompt.json
-            - context_provider.json
-            - experiment_config.json
-            - prompt_generator.json
-            - scoring_provider.json
-            - series.json
-            - state_manager.json
-            - system_config.json
-            - system_prompt.json
-            - tooling_provider.json
-      - demo_logs.jsonl
+      - snapshots
+         - notebook-dev-session
+            - 2fa23b82-df14-4e1d-bf32-a5dfaf66e4ec.after
+            - 2fa23b82-df14-4e1d-bf32-a5dfaf66e4ec.before
+            - b3af8383-8e2d-41b7-891c-f59928cfee6a.after
+            - b3af8383-8e2d-41b7-891c-f59928cfee6a.before
+            - dedca074-a05d-46f2-9dd4-e0a556669a37.after
+            - dedca074-a05d-46f2-9dd4-e0a556669a37.before
    - extensions
+      - 007e640c-5f87-4d77-a471-002c5e08b637.py
+      - 00ca00ec-c980-4215-b3ec-17a280db3ae3.py
+      - 00e4ab29-e1db-4030-8e03-b298473b56ee.py
+      - 01458e25-18fc-41c5-b9f7-9470c06fce60.py
+      - 01d062db-2025-4608-bf12-784add852565.py
+      - 024c6ecb-77a7-4050-a5c4-5aa3b8de3a70.py
+      - 0384564a-eee7-42f6-ba2e-dfda89663912.py
+      - 03e17925-b7e4-462f-954c-b09a7e0bcfd7.txt
+      - 04471866-a77a-4512-898e-8996f1dbcd5c.txt
+      - 065627a9-6c20-471a-8116-a44635a35ca9.py
+      - 07c77d59-f5e5-49b9-9bb9-374715855e16.py
+      - 081ce71f-9dfc-4df3-be88-6bc92b1dc318.py
+      - 086bfb40-f709-48ff-9289-9f228af80333.py
+      - 09013f83-43b5-4cba-967c-ceca7142197b.txt
+      - 091882b8-d32b-4451-8b22-c6ae777d4209.py
+      - 092239cf-db0c-41bd-92a2-0cf7e4943931.py
+      - 0b5c4ebf-a747-4fb5-a0ab-e6e08f24acff.py
+      - 0d58995d-b5ec-4aeb-801c-7ec95c9f0b7f.txt
+      - 0dc5a005-ae76-4231-9a30-d74a203ab5a8.py
+      - 0f2d9261-2537-4d73-95ef-20b5baffa8f2.py
+      - 11b065c7-e460-45da-82e9-8662ac259f70.py
+      - 11b3a1f2-fe27-4f4c-aa9b-55e43d8b4305.py
+      - 13de45da-186c-442f-b652-b805876a57be.py
+      - 1417b021-1391-4a08-bd24-3180b6a27b70.py
+      - 14cb0a33-a212-465f-bd6d-9475d2542b2b.py
+      - 14d10cdd-d76a-45fc-8d16-b12614062bf2.py
+      - 1522843f-04a1-4224-9161-478cdcac26fb.py
+      - 15765911-646e-4628-a8fc-a0228cd81b44.py
+      - 15c73d3e-94e2-43cc-9c5d-674512e2fa45.py
+      - 16c32d71-e9a4-4b44-a50f-c033810cb52f.py
+      - 1765612b-e8d5-43ba-98eb-9e08e527a734.py
+      - 17a831c1-df93-4fa0-abcd-ab76b08b7197.py
+      - 1858e86b-c1ec-450f-813a-666f850542d9.py
+      - 18b5c2d0-fae4-4a83-b98f-df4604858ad9.py
+      - 18fbe4cc-9707-41d7-8154-19849f4d18ff.py
+      - 1959309b-131a-4c0d-9927-e2e380bc5c3c.py
+      - 1e1df7fc-e3b2-4b3b-b25c-2d1903fae7cd.txt
+      - 1e6c9ad5-37d3-47f7-8c25-bc685a580c54.py
+      - 1ea87ff1-d142-4f81-a612-e5dd37991f32.py
+      - 1ea9d8bd-0a5d-408f-a25e-56864e05ab08.py
+      - 1fe61e80-b3a5-4174-896c-563a1ecfb010.py
+      - 24f9a138-4ca1-4f8e-b2d2-5ca0272dcb64.txt
+      - 258b70d0-ca54-4839-8720-2e85e56477e9.py
+      - 25cf23de-a680-4941-820f-da8de03767c5.py
+      - 2671c791-84ff-4bba-b421-495410580b21.py
+      - 27c394b1-4d31-4b57-8887-2e2aa74da966.py
+      - 284ffc01-30f7-4508-a22a-64d46571ba35.py
+      - 2883ca57-ff9d-41dc-9699-37459fdfb9b9.py
+      - 28c9aba7-c88f-4337-9d8d-e136d89bcd18.txt
+      - 295d37c6-d2fe-490d-92ea-345c838401ba.py
+      - 29d4cd08-b976-4592-8911-1714e8232a36.py
+      - 29e26124-f26f-470a-8c06-6f1151d27be2.py
+      - 2ab922c3-d32f-4fb7-b052-b1aa1309b172.py
+      - 2c669311-04c4-447a-a07a-9f6ee3deafd9.py
+      - 2d17c1c0-a369-458a-8720-5bcbd0b7d832.py
+      - 2dc71c82-8d34-4484-a419-35dc0229eb79.py
+      - 2ea73538-66df-4617-ad80-0046a8297a89.py
+      - 2f21740e-2ca9-41c4-9246-9efb7fedc158.py
+      - 2f671dcf-82d2-4806-9a8f-8710a132c9cb.py
+      - 2f8547bf-7563-439e-ace8-d2d97ef17508.txt
+      - 30cad070-d3c3-4d07-bcb1-0ad70ed6a203.txt
+      - 31ae6050-9088-4cf5-8d17-97f2c08a6a64.py
+      - 34776e9e-b00a-4f6c-9b0b-fdfb05deb993.py
+      - 349411bf-cf4c-490f-b83f-57994a272998.py
+      - 36e9c78b-d22f-4702-ba68-dc71c50af71f.py
+      - 386474cd-c9f5-4c4d-a43c-2b907e72c63e.py
+      - 3932a6ff-0481-48eb-bb15-dce8064caf41.py
+      - 3bbee300-970c-4146-8e92-a190c9a70d59.py
+      - 3d3c8d71-eaf4-4d52-8ced-b6597f4c9f9d.py
+      - 3e45b376-7200-4a72-bdae-650b8fe1c67f.py
+      - 3e8e3e58-3a17-4366-ac3a-a74244394664.py
+      - 3ff704c6-488e-4a18-bfab-b9581d1b272b.py
+      - 41664f48-0da5-4d09-ad6f-2b6d6d216764.py
+      - 41886493-b739-4af7-b42b-28523a151dbb.py
+      - 44f72796-ce76-4c73-9d4f-9d7e92aeebb4.py
+      - 458afd93-c07d-4a14-b1e7-e353342c4ab2.py
+      - 45a94e25-e41c-479b-9b69-9f5beef4ce5d.py
+      - 48e8d527-1f19-4e8a-8643-ee15a20bc165.py
+      - 49028e60-7a88-4c00-ab3d-73b112d7adeb.py
+      - 4a95810e-70da-4e3c-a602-48974039277c.py
+      - 4d75554d-6252-43f5-bd9d-85d0c22a8513.py
+      - 4dc48dce-5b39-4367-a750-83f0717edb57.py
+      - 4eda6f1b-9146-4983-ac45-da8e11f6b085.py
+      - 4ff4f9c5-c80a-40b2-897d-74ffed0cfd5c.py
+      - 50b4af31-e00a-40a5-8965-139e86c52406.py
+      - 51c5bded-af46-4913-866c-270d8a6a83e2.py
+      - 524458da-069c-44f7-bccd-94c7c00d2555.py
+      - 52dffed3-7317-436c-9b9d-54a6859c22d0.py
+      - 52ecc605-146a-4330-a1e2-9266885da742.txt
+      - 53b01c9a-fd15-4699-bc30-87463d1a9af1.txt
+      - 5487ec48-20dd-477b-9ca6-e75ab4fe1599.py
+      - 549423ac-f19c-4730-9cec-1469bf22be81.py
+      - 54c478d2-0e78-4e97-8e84-a92efe043224.py
+      - 559dc93a-c9a7-4772-ab99-9edd143f9add.py
+      - 559def3b-7fb6-427f-b3f3-f9c4ed48d2f4.py
+      - 56feeb34-b9f3-46a8-a760-5772743ed8e1.py
+      - 58c4aa81-e262-47af-882b-9e03d46ce437.py
+      - 590b56a9-f7ca-418f-852d-2cf10ed3c871.py
+      - 5959b1a9-6061-4c5a-b1f6-e4abf9ff8fd5.py
+      - 5b67f44d-7b03-4d60-be17-19a5c7794bc8.py
+      - 5bf0cfce-1982-4f04-9de6-f9d621433567.py
+      - 5d63ab4b-e75e-40f7-ba11-72e6c150c315.py
+      - 5d76d766-bcd6-47c9-b10c-bc60fc6e2b97.txt
+      - 5e0bba2e-5446-434b-98c4-2b06bca2d8f8.py
+      - 5e72b063-7fd9-4e25-aaa8-86ac45a4444e.py
+      - 5fbf737a-2c68-4b53-b8ec-99479f947eb4.txt
+      - 60b620be-cf93-40d3-835d-886cfa2dda2c.py
+      - 6153a5c8-07c3-4c4a-b308-bd74c50d4c00.py
+      - 61eee50d-8e34-434d-b81e-f5d8d32462fa.txt
+      - 6375a115-5bcb-4e63-91fb-6b30d7203c63.py
+      - 6827fb05-2ba3-4916-8364-cfc853917731.py
+      - 68efea51-f0fd-43f9-a752-7f0032bcd9a4.py
+      - 69a19dd1-806c-4cdf-bf7b-00299bc781b7.py
+      - 69a85ae5-645f-4a54-b6e3-11895bcf4785.py
+      - 69e2190d-f9c8-43ed-bf2f-de5803921f25.py
+      - 6a4bf64e-2522-47b5-9231-5a233f8178c6.py
+      - 6b556fd9-dd89-4b3c-82c1-104d354f6bbb.py
+      - 6c1e2dc0-d502-4919-b504-3be793fc1d85.py
+      - 6c311595-1462-4059-99f4-eb33425fa288.py
+      - 6e00b1f2-4516-473c-adeb-ffc606b9a813.py
+      - 6e3778c7-0ba6-4e0f-9e2b-ec201a0d91a0.py
+      - 6ec8b423-46e8-4118-b16a-58b0e3fe2fa9.py
+      - 6f2c2e75-13a5-40dd-96fd-5797720d4153.txt
+      - 6f88d9c4-c776-4dd2-b212-107e11422b66.py
+      - 705b6769-f4ec-4e40-a565-f1247e98990b.py
+      - 70d77a6c-5547-4de7-8da0-471f9ea89946.txt
+      - 71ec1fc5-0fe2-4e3f-ae95-5225f7558536.py
+      - 72d58b1d-ac8b-43d6-baa4-dfd120285cf8.py
+      - 74408010-9656-4a0d-bb9a-87bea7137aee.py
+      - 7475a01d-3cf4-488d-bf16-0b68f7544c4a.txt
+      - 75f5e663-82a3-4a1c-b809-b8ce2a842c91.py
+      - 76a50f9a-d513-43fe-9efa-3d49893e5059.py
+      - 76e744d8-8c45-4603-b66c-f2dd2d78c9f8.py
+      - 77474d3d-897c-4cdb-8905-59846cc084c1.py
+      - 780051f6-3e7a-4b57-beb9-f5c696a3c0e6.py
+      - 78db1eeb-6070-4f34-9406-b99256b6fb49.py
+      - 7905b05e-6d24-4b1d-a699-0b76a3975573.txt
+      - 790717b8-4529-42b5-82fb-34778bb8acd0.py
+      - 7a42f674-1f25-499a-9b57-e319c924b5b2.py
+      - 7bd44c5a-8c94-48c3-b0da-514ccb53ae26.txt
+      - 7cc4a383-b9e3-4dd3-a08a-ff4165b08edc.py
+      - 7d37a057-1d58-40f7-b47c-3a06db5d8d0c.py
+      - 7de5f0d2-b939-44c4-9c32-4923e4043b84.py
+      - 7eb93e90-97cc-4358-bc2b-9a35bc70a264.py
+      - 7f80030c-e433-4b9f-93b9-e00f8af7abfd.py
+      - 7f9b933b-58a0-41e7-9a7c-b7ed5d430c31.txt
+      - 811f40b2-86f3-4a3d-8b41-0b5f816d8928.py
+      - 825692d8-8dc8-4ae6-871e-0e77c974a665.py
+      - 827107c3-5d64-45e6-878c-d83ee1eefaca.py
+      - 82a3fc79-4971-46d6-8232-7cac4e96b2fb.py
+      - 82cb25e0-050b-4fda-a5e2-13726e8f82da.py
+      - 83b9bdd5-1771-43d9-a4dc-72dfa6583111.py
+      - 8440cfbd-e230-4856-801d-a3a10f9825d6.py
+      - 85c14056-ec3a-4d2b-abbd-6e2a0001934c.py
+      - 8675da87-4dae-4fea-9925-c51a64367767.py
+      - 878b79b0-d173-4ddf-95ff-86ae12cdb9d6.txt
+      - 87eb6eac-fff5-4722-a5db-88bf1d7af543.py
+      - 8830760d-29fb-41d2-884c-1d4a607d7249.py
+      - 8ae3c5f9-377a-4b6e-b881-7ce0f755b274.py
+      - 8b549d3c-9040-4dc3-87c0-5673e68f702f.py
+      - 8c5b915a-0552-44c7-944a-4fbd5405add0.py
+      - 8d1616c3-ef07-45c8-95d1-0ae550f8d6c2.txt
+      - 8d653d0e-c68a-4a08-bc10-2e79a88fc698.txt
+      - 8ea9cb90-7b3e-4016-a7ca-55ed786062f6.py
+      - 8ec7e90c-7dd4-4ecf-8cfa-e8ced50bf438.py
+      - 9068059b-ce21-417e-aa23-f42b66f8402f.py
+      - 90f89625-5371-47bd-9be5-bf0c406c3cad.txt
+      - 91154a2f-2299-4968-9ef0-fcd041eb9688.py
+      - 912f9e29-ea6d-479c-b318-903f94e6e0c6.py
+      - 91a676a5-96f1-41d8-850d-1a95f11e7081.py
+      - 91ed9099-e432-4101-9e0b-5818bb777f79.txt
+      - 9279998d-64ef-4fa0-af1b-67730ffe7cc4.py
+      - 92827486-49fc-4d19-ae9e-c3c8d45a5c80.txt
+      - 92d9f6a5-4a8f-4ef7-a5f1-6e1c44903db4.py
+      - 931b7dd4-0028-4b3e-abf0-6c596f92c5c7.txt
+      - 93226804-2b0c-4098-beb1-b8c85d562d73.py
+      - 93fce9e4-9904-4039-b99f-22070ca4ad68.py
+      - 94d8416c-472b-46ae-adcc-468c74b7ebc6.py
+      - 9715d86f-527a-4c90-a448-ad4538ff62f4.txt
+      - 97320ac8-247a-4b5a-af0a-ef87d770daf9.txt
+      - 97802b90-35bb-4de7-a643-a3a9676bab34.py
+      - 97819a96-9de2-4557-ba74-867337e337a2.txt
+      - 97c54b61-a5c8-465e-ab3a-76fcacbf74b2.py
+      - 97e4593a-a317-4bdf-b580-dd62f6688772.txt
+      - 99145e4a-f8ff-47b1-98a6-d63f266d2da0.txt
+      - 9ac85a26-3a49-450b-998d-093208b33d69.py
+      - 9ba77dda-9a94-4e76-9db0-b3df597ac11d.py
+      - 9bafbd5a-891d-4d90-80e2-dc44e2d9bf76.py
+      - 9be2a740-42fd-4baa-87ab-ea2fdfd7c647.py
+      - 9d1349cc-3861-47c2-895e-cc24ae1c8946.py
+      - 9d29a8b1-8ddc-4092-8848-0e32f4e31ef3.py
+      - 9d2adab1-90c4-401f-a2f1-13f74d5b6c22.txt
+      - 9d65d238-37f1-438f-9b8d-32e1cc1b36bc.py
+      - 9d7eef85-5340-46a0-a20d-313be90d4e2a.py
+      - 9da3dd5a-a9bb-45d9-8de8-e053645a5c58.py
+      - 9e6df501-c775-4ecf-81dd-7674b12c2d7b.py
+      - 9e749b96-adb3-463a-8f4c-31846629e50a.py
+      - 9f4e183a-6a63-4135-bd8c-e977f5328180.py
+      - a023cfc5-5a9d-40e2-8c02-e31ac1f1180a.py
+      - a025ef9a-0c77-4335-9f6b-cf4ce4f456b9.py
+      - a1356b04-f357-4d94-b18f-8a789ebf95b1.py
+      - a140b2c5-17db-4d05-9b59-1ffd8ffb3ad8.py
+      - a146a486-8078-4399-a775-271b2534d3e7.py
+      - a17dce80-a82e-489e-8d98-1af9649d6bfe.py
+      - a2cadac6-251e-48a9-a2ae-84b1c7edf5b4.py
+      - a35a43d1-63b6-4177-9dcb-8b771e1573b6.py
+      - a41d75ef-7880-465a-90da-f27d0e58953a.py
+      - a4db2b74-e232-45f5-a054-59315b64907f.py
+      - a6934dac-3d06-4fa2-ad6f-7847fca99c13.py
+      - a794c7c8-5340-416e-9cca-e1bdfc40e62e.py
+      - a88986f8-afa9-4bef-82fd-8e217431347a.py
+      - a8dc70ce-0188-4637-97eb-dbed14347c14.py
+      - a95357b6-602b-412d-9aa4-61b6230d8707.txt
+      - a9ca4d4c-febf-4cec-b789-629dcff9c729.txt
+      - abe7910b-1560-460c-8562-d64c38ec9dc4.py
+      - ac7d222a-2a02-49ad-942e-5ca3b55d70bc.py
+      - ad70b993-2526-473a-90af-82d336aa1da2.py
+      - afc342f2-c5c9-472e-8cf4-5a9eedf5137b.py
+      - b0241326-2f08-4641-977e-664b968d889c.py
+      - b0d14df7-1d0c-4a3a-83c5-31848c0bcc21.py
+      - b1262d99-1966-46c5-96c7-b754fe86733d.py
+      - b395c38f-4830-46c6-8398-3014701643d8.py
+      - b3c46396-0adb-4090-b1b3-d8e3ee46d745.py
+      - b3eaf6c5-80ac-4098-9ed5-c55f6e9c18f9.py
+      - b41d9953-9849-45ee-9dd6-5f48c2d83c74.txt
+      - b4951447-4c61-4670-b59d-347d2aede893.py
+      - b49662a1-b619-49aa-a57a-22829a75d399.py
+      - b4ee78f1-4369-4d28-8b71-9fd381f63ae7.txt
+      - b6791974-0c57-496c-b39e-9094492ce820.py
+      - b8b9f0f6-286e-46c9-8946-aa8c9d4b783d.py
+      - b918cbdb-fc3c-4242-bc36-3f98f317316a.py
+      - bc3fde9a-cdfb-4dbb-9a0d-f2a0b88587b7.txt
+      - bca3be57-8d8e-4dea-86cb-f08c0d095f4e.py
+      - bd0b0450-145b-41f1-9f33-99849a561a47.py
+      - bd2cc234-3df5-4dc0-9e98-6dc7b9db2e15.py
+      - bd3a0f47-7a9e-40c5-b46d-dd2f58aa17a9.py
+      - bdc6a5a2-6e47-4b2b-98c4-a526f7d8e770.txt
+      - bde0bda5-f94d-402d-9bf1-c144cd8f45e0.py
+      - be2d2cb6-a04d-4100-91b0-c5d45b8634de.py
+      - c316e0ac-b5a9-4fb2-8b46-f16cdafa677c.py
+      - c458a684-2ecb-4bbf-a57e-ce947bef60f9.py
+      - c4977d83-889e-4372-9906-f9bb3a2aa497.py
+      - c500d1f7-58c6-44f1-93fa-86efe1d000a5.py
+      - c560b687-d253-416c-829a-f5fc34da457a.py
+      - c6a2bd90-d7a0-4244-8e1c-27a5e1df7d7a.py
+      - c6af9af8-1e26-4371-aa9d-1565bdfd03de.txt
+      - c78fbf2d-e109-40b1-9e3f-68855ed36ee1.py
+      - c9d91d69-20f2-45a3-8531-215c468fa8d4.py
+      - ca2a9563-bb47-4f9a-adc2-b5103befbd40.py
+      - cc94a1a5-9a1a-46ac-9043-5137da7e8560.py
+      - cd40ff3c-a330-4568-a6cb-f2dfc3a3c3c4.txt
+      - ce4c18f2-f0d3-4dd7-be55-cec7eec43ac8.py
+      - d0baa876-3e21-4c27-90c9-a6d6f1134158.py
+      - d1543a7d-e9df-4f52-8d1d-8c015156e408.py
+      - d280dad4-60dc-48b2-a9a5-6dffecfe3254.py
+      - d29f0c5f-dffb-4dc4-9ba8-89f2e5908555.py
+      - d2bb4e92-14ce-4dc2-81a0-6320677090fa.py
+      - d3b0186a-4c79-442e-9596-1d9aeb4124ce.txt
+      - d5ea94ea-fd64-4b98-9a9c-4e4de18d3200.py
+      - d7cfe3a4-24e9-44ac-92f0-c07b5d49a3a3.txt
+      - db13f84b-2433-4825-aacb-d722e67850ee.py
+      - db8b1666-de41-4c3c-a492-7b2d1365c57e.py
+      - db95d203-0298-4467-aad5-177f27d0445f.py
+      - dc60f029-bfcd-478a-9b17-057dacfdea6e.py
+      - de08a4b7-7aed-4b0e-bb09-16c6c01a4f7c.txt
+      - e052f9e0-bc62-4405-9dad-7f1fb107b4eb.py
+      - e0579ed6-f5d6-4cb9-90b1-bb98f3e493ee.py
+      - e0584f1e-1144-4881-9f49-0d1b9f7638aa.py
+      - e072a5c8-82e7-47ad-bff6-345cccfca7ce.py
+      - e176b859-798c-4714-94e7-f67ed3adfe74.py
+      - e1be7db1-2329-4119-ae02-d76b85ab6361.py
+      - e27ef06b-1148-4350-aea9-3cac871fdc8a.py
+      - e31d5f8a-14f6-43ae-beba-0a8e5b34c9e9.py
+      - e43b2380-3804-43e8-a77f-31cb96396787.py
+      - e45b37db-314d-4642-9644-c21af66ac9c4.py
+      - e5dddbd4-ff05-411f-a801-f4d3b1487dc7.py
+      - e6258ec0-15b8-42b5-9fb6-02d9c40dfbcc.py
+      - e6bcfd7b-63ee-4113-b3c8-82922be99b9d.py
+      - e7109ea3-1bbb-47d9-bca5-83259f5a44b4.py
+      - e9af03e6-6ba7-4d97-a63b-bad0b416aebe.txt
+      - e9b3811b-b531-4116-844a-120a8165e27b.txt
+      - ea9375c8-f342-41b6-b8a6-6964efe53885.py
+      - ea9ba175-1801-4c1f-acdf-762658e8641b.py
+      - eb3461ec-1d61-4975-bb24-f842667cf902.py
+      - eb93c0b7-6ced-4bdd-927f-1fbba855ca3e.py
+      - ec10b37d-4520-4d9b-b131-536af8c0e083.py
+      - ecc8ab87-968f-4f21-bcff-d8e8bfcefbd2.py
+      - ed2d20be-415c-4022-b250-845483297c42.py
+      - ee832f4c-1e93-4dd2-97a2-d36c7aa42086.py
+      - f0dd13d9-b076-4be5-bc2b-b827985b2a13.txt
+      - f0e1ad86-47e8-4902-afb1-2b1ca90ff303.py
+      - f14d8ac3-bcaa-4675-addd-baa195120253.txt
+      - f159621f-ffd6-437f-a964-e229ac3d3e90.py
+      - f36341c7-83fe-44ef-a3d6-88a7521ddede.py
+      - f4798847-d1fc-4002-93a4-5e61233d8cb9.py
+      - f53896f1-756f-4848-b6d3-716c49bdf6d1.txt
+      - f53b2417-6ed9-4b6c-a491-695fa553003b.py
+      - f56d961b-327b-45b5-b767-edb251d20364.py
+      - f5d27f2b-27cc-4a0c-b600-facdcb3ea475.py
+      - f7ffde12-c2d7-4f1a-a8f2-aba74dbcaaa0.py
+      - f8f9e521-e979-4752-87ab-9b67125d1531.txt
+      - fa091b0d-9f21-4ee4-9374-e383f1c3f123.py
+      - fa792e1b-d707-4cdb-a167-c9cd95902b09.py
+      - fb852332-09b2-41a7-af70-ffcf236c814b.py
+      - fb852fd6-46b8-4a51-ba8e-505a708fb266.py
+      - fc39c2c3-fefb-40df-a7f9-fe3dba235206.py
+      - fc73b525-3d7a-40a6-a298-332127c93d03.txt
+      - fd67a098-95d7-4cc8-9689-4ade416a4b6a.txt
+      - fd6b0f1e-740e-4622-bee9-6b66a04cf80f.py
+      - fe8b8074-552c-4409-8def-f6de0ed699e5.py
+      - ff7dbe8d-6adf-4112-92c3-221f6b63fcd9.py
+      - ffbaa33d-767a-4aa1-94ea-0f4eda8179de.py
    - htmlcov
    - mypy.ini
    - pytest
@@ -178,25 +482,6 @@ codecritic
       - notebooks
          - .mypy_cache
          - __init__.py
-         - development_phase
-            - advanced_scoring_demo.ipynb
-            - context_recommendation_agent_demo.ipynb
-            - evaluation_session_runner.ipynb
-            - evaluator_agent_demo.ipynb
-            - feedback_loop_demo.ipynb
-            - mediator_agent_demo.ipynb
-            - patch_agent_demo.ipynb
-            - phase1_tests.ipynb
-            - phase2_validation.ipynb
-            - phase3_validation.ipynb
-            - phase4_validation.ipynb
-            - phase5_validation.ipynb
-            - phase6_validation.ipynb
-            - phase8_validation.ipynb
-            - phase9_validation.ipynb
-            - recommendation_agent_demo.ipynb
-            - schema_demo.ipynb
-            - symbol_graph_provider_demo.ipynb
          - experiments
             - artifacts
                - snapshots
@@ -212,4 +497,7 @@ codecritic
             - score_provider_tests.ipynb
             - symbol_library_validation.ipynb
             - tool_provider_tests.ipynb
+         - system_development
+            - bad_code.py
+            - linting_system.ipynb
    - utilities.ipynb

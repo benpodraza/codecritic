@@ -12,13 +12,13 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 TOOLS = [
-    ("black_tool.py", "Black Formatter", "Formats Python code using Black.", {}),
-    ("sonarcloud_tool.py", "SonarCloud Analyzer", "Static analysis via SonarCloud.", {}),
-    ("ruff_tool.py", "Ruff Linter", "Python linting with Ruff.", {}),
-    ("radon_tool.py", "Radon Analyzer", "Analyzes Python code complexity.", {}),
-    ("mypy_tool.py", "Mypy Type Checker", "Static type checking with mypy.", {}),
-    ("docformatter_tool.py", "Docformatter Formatter", "Static type checking with mypy.", {}),
-    ("symbol_graph.py", "Symbol Graph Analyzer", "Extracts and analyzes Python symbols into structured graphs.", {}),
+    ("black_tool.py", "black", "Formats Python code using Black.", {}),
+    ("sonarcloud_tool.py", "sonarcloud", "Static analysis via SonarCloud.", {}),
+    ("ruff_tool.py", "ruff", "Python linting with Ruff.", {}),
+    ("radon_tool.py", "radon", "Analyzes Python code complexity.", {}),
+    ("mypy_tool.py", "mypy", "Static type checking with mypy.", {}),
+    ("docformatter_tool.py", "docformatter", "Static type checking with mypy.", {}),
+    ("symbol_graph.py", "symbol_graph", "Extracts and analyzes Python symbols into structured graphs.", {}),
 ]
 
 def seed_tool_providers(db_session: Session):

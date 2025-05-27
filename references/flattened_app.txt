@@ -257,22 +257,23 @@
 # 185 
 # 186     id = Column(Integer, primary_key=True, index=True)
 # 187     session_id = Column(String, nullable=False)
-# 188     state_id = Column(String, nullable=False)
-# 189     role = Column(String, nullable=False)
-# 190     content = Column(String, nullable=False)
-# 191     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 192 
-# 193 class ErrorLog(Base):
-# 194     __tablename__ = "error_log"
-# 195 
-# 196     id = Column(Integer, primary_key=True, index=True)
-# 197     session_id = Column(String, nullable=False)
-# 198     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 199     provider_id = Column(Integer, nullable=True)
-# 200     provider_type = Column(String, nullable=True)
-# 201     error_type = Column(String, nullable=False)
-# 202     message = Column(String, nullable=False)
-# 203     file_path = Column(String, nullable=True)
+# 188     system = Column(String, nullable=False)
+# 189     agent_provider_config_id = Column(Integer, nullable=False)  
+# 190     agent_name = Column(String, nullable=False)
+# 191     content = Column(String, nullable=False)
+# 192     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 193 
+# 194 class ErrorLog(Base):
+# 195     __tablename__ = "error_log"
+# 196 
+# 197     id = Column(Integer, primary_key=True, index=True)
+# 198     session_id = Column(String, nullable=False)
+# 199     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 200     provider_id = Column(Integer, nullable=True)
+# 201     provider_type = Column(String, nullable=True)
+# 202     error_type = Column(String, nullable=False)
+# 203     message = Column(String, nullable=False)
+# 204     file_path = Column(String, nullable=True)
 
 
 # db\schemas.py
@@ -318,13 +319,13 @@
 # 39             raise ValueError("Invalid artifact path")
 # 40         return v
 # 41 
-# 42 class ToolProviderConfig(BaseModel):
+# 42 class PromptProviderConfig(BaseModel):
 # 43     id: Optional[int] = None
 # 44     guid: UUID = Field(default_factory=uuid4)
 # 45     name: str
 # 46     description: Optional[str] = None
-# 47     config: Optional[Dict[str, Any]] = None
-# 48     artifact_path: Path
+# 47     artifact_path: Path
+# 48     tags: Optional[List[str]] = Field(default_factory=list)
 # 49 
 # 50     @field_validator("artifact_path")
 # 51     @classmethod
@@ -333,171 +334,194 @@
 # 54             raise ValueError("Invalid artifact path")
 # 55         return v
 # 56 
-# 57 class ScoreContext(BaseModel):
-# 58     experiment_id: str
-# 59     round: int
-# 60     file_path: Path
-# 61     source_code: str
-# 62 
-# 63 class ScoreProviderConfig(BaseModel):
-# 64     id: Optional[int] = None
-# 65     guid: UUID = Field(default_factory=uuid4)
-# 66     name: str
-# 67     description: Optional[str] = None
-# 68     artifact_path: Optional[Path] = None
-# 69     table_name: str = "score_provider"
-# 70 
-# 71     @field_validator("artifact_path")
-# 72     @classmethod
-# 73     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 74         if v is None:
-# 75             return v
-# 76         if not v.is_absolute() and ".." in v.parts:
-# 77             raise ValueError("Invalid artifact path")
-# 78         return v
-# 79         
-# 80 class AgentEngineProviderConfig(BaseModel):
-# 81     id: Optional[int] = None
-# 82     guid: UUID = Field(default_factory=uuid4)
-# 83     name: str
-# 84     description: Optional[str] = None
-# 85     model: str
-# 86     config: Optional[Dict[str, Any]] = None
-# 87     artifact_path: Path
-# 88 
-# 89     @field_validator("artifact_path")
-# 90     @classmethod
-# 91     def validate_artifact_path(cls, v: Path) -> Path:
-# 92         if not v.is_absolute() and ".." in v.parts:
-# 93             raise ValueError("Invalid artifact path")
-# 94         return v
-# 95 
-# 96 class AgentProviderConfigSchema(BaseModel):
-# 97     id: Optional[int] = None
-# 98     guid: UUID = Field(default_factory=uuid4)
-# 99     name: str
-# 100     description: Optional[str] = None
-# 101     config: Optional[Dict[str, Any]] = None
-# 102     artifact_path: Path
-# 103     tags: Optional[list[str]] = None
-# 104 
-# 105     @field_validator("artifact_path")
-# 106     @classmethod
-# 107     def validate_artifact_path(cls, v: Path) -> Path:
-# 108         if not v.is_absolute() and ".." in v.parts:
-# 109             raise ValueError("Invalid artifact path")
-# 110         return v
+# 57 class ToolProviderConfig(BaseModel):
+# 58     id: Optional[int] = None
+# 59     guid: UUID = Field(default_factory=uuid4)
+# 60     name: str
+# 61     description: Optional[str] = None
+# 62     config: Optional[Dict[str, Any]] = None
+# 63     artifact_path: Path
+# 64 
+# 65     @field_validator("artifact_path")
+# 66     @classmethod
+# 67     def validate_artifact_path(cls, v: Path) -> Path:
+# 68         if not v.is_absolute() and ".." in v.parts:
+# 69             raise ValueError("Invalid artifact path")
+# 70         return v
+# 71 
+# 72 #  class ScoreContext(BaseModel):
+# 73 #      experiment_id: str
+# 74 #      round: int
+# 75 #      file_path: Path
+# 76 #      source_code: str
+# 77 
+# 78 class ScoreOutputSchema(BaseModel):
+# 79     name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
+# 80     value: float = Field(..., description="The final weighted score, normalized to a 0.0–1.0 scale.")
+# 81     components: Dict[str, float] = Field(
+# 82         ...,
+# 83         description="Component scores used to compute the overall score. Keys should match tool names."
+# 84     )
+# 85 
+# 86 class ScoreProviderConfig(BaseModel):
+# 87     id: Optional[int] = None
+# 88     guid: UUID = Field(default_factory=uuid4)
+# 89     name: str
+# 90     description: Optional[str] = None
+# 91     artifact_path: Optional[Path] = None
+# 92     table_name: str = "score_provider"
+# 93 
+# 94     @field_validator("artifact_path")
+# 95     @classmethod
+# 96     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 97         if v is None:
+# 98             return v
+# 99         if not v.is_absolute() and ".." in v.parts:
+# 100             raise ValueError("Invalid artifact path")
+# 101         return v
+# 102         
+# 103 class AgentEngineProviderConfig(BaseModel):
+# 104     id: Optional[int] = None
+# 105     guid: UUID = Field(default_factory=uuid4)
+# 106     name: str
+# 107     description: Optional[str] = None
+# 108     model: str
+# 109     config: Optional[Dict[str, Any]] = None
+# 110     artifact_path: Path
 # 111 
-# 112 class StateProviderConfigSchema(BaseModel):
-# 113     id: Optional[int] = None
-# 114     guid: UUID = Field(default_factory=uuid4)
-# 115     name: str
-# 116     description: Optional[str] = None
-# 117     config: Optional[Dict[str, Any]] = None
-# 118     artifact_path: Path
-# 119     tags: Optional[list[str]] = None
-# 120 
-# 121     @classmethod
-# 122     def validate_artifact_path(cls, v: Path) -> Path:
-# 123         if not v.is_absolute() and ".." in v.parts:
-# 124             raise ValueError("Invalid artifact path")
-# 125         return v
-# 126 
-# 127 class SystemProviderConfigSchema(BaseModel):
-# 128     id: Optional[int] = None
-# 129     guid: UUID = Field(default_factory=uuid4)
-# 130     name: str
-# 131     description: Optional[str] = None
-# 132     config: Optional[Dict[str, Any]] = None
-# 133     artifact_path: Path
-# 134     tags: Optional[list[str]] = None
-# 135 
-# 136     @classmethod
-# 137     def validate_artifact_path(cls, v: Path) -> Path:
-# 138         if not v.is_absolute() and ".." in v.parts:
-# 139             raise ValueError("Invalid artifact path")
-# 140         return v
-# 141 
-# 142 class OrchestratorProviderConfigSchema(BaseModel):
-# 143     id: Optional[int] = None
-# 144     guid: UUID = Field(default_factory=uuid4)
-# 145     name: str
-# 146     description: Optional[str] = None
-# 147     config: Optional[Dict[str, Any]] = None
-# 148     artifact_path: Path
-# 149     tags: Optional[List[str]] = None
-# 150 
-# 151     @classmethod
-# 152     def validate_artifact_path(cls, v: Path) -> Path:
-# 153         if not v.is_absolute() and ".." in v.parts:
-# 154             raise ValueError("Invalid artifact path")
-# 155         return v
-# 156 
-# 157 class ProgramProviderConfigSchema(BaseModel):
-# 158     id: Optional[int] = None
-# 159     guid: UUID = Field(default_factory=uuid4)
-# 160     name: str
-# 161     description: Optional[str] = None
-# 162     config: Optional[Dict[str, Any]] = None
-# 163     artifact_path: Path
-# 164     tags: Optional[List[str]] = None
-# 165 
-# 166     @classmethod
-# 167     def validate_artifact_path(cls, v: Path) -> Path:
-# 168         if not v.is_absolute() and ".." in v.parts:
-# 169             raise ValueError("Invalid artifact path")
-# 170         return v
-# 171 
-# 172 class SessionConfigSchema(BaseModel):
-# 173     id: Optional[int] = None
-# 174     session_id: str
-# 175     name: str
-# 176     description: Optional[str] = None
-# 177     environment_type: str  #  e.g., "experiment", "live", "staging"
-# 178     config: Optional[Dict[str, Any]] = None
-# 179     tags: Optional[List[str]] = None
-# 180     
-# 181 
-# 182 #  LOGS
-# 183 
-# 184 @dataclass
-# 185 class ProviderLogSchema:
-# 186     session_id: str
-# 187     provider_id: int
-# 188     provider_type: str
-# 189     input: Optional[str] = None
-# 190     output: Optional[str] = None
-# 191     snapshot_id: Optional[str] = None
-# 192     file_path: Optional[str] = None
-# 193     transition_from: Optional[str] = None
-# 194     transition_to: Optional[str] = None
-# 195     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 196 
-# 197 @dataclass
-# 198 class StateTransitionLogSchema:
-# 199     session_id: str
-# 200     entity_type: str
-# 201     entity_id: int
-# 202     from_state: str
-# 203     to_state: str
-# 204     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 205 
-# 206 @dataclass
-# 207 class AgentConversationLogSchema:
-# 208     session_id: str
-# 209     state_id: str
-# 210     role: str
-# 211     content: str
-# 212     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 213 
-# 214 @dataclass
-# 215 class ErrorLogSchema:
-# 216     experiment_id: str
-# 217     round: int
-# 218     error_type: str
-# 219     message: str
-# 220     file_path: str | None = None
-# 221     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 112     @field_validator("artifact_path")
+# 113     @classmethod
+# 114     def validate_artifact_path(cls, v: Path) -> Path:
+# 115         if not v.is_absolute() and ".." in v.parts:
+# 116             raise ValueError("Invalid artifact path")
+# 117         return v
+# 118 
+# 119 class AgentProviderConfigSchema(BaseModel):
+# 120     id: Optional[int] = None
+# 121     guid: UUID = Field(default_factory=uuid4)
+# 122     name: str
+# 123     description: Optional[str] = None
+# 124     config: Optional[Dict[str, Any]] = None
+# 125     artifact_path: Path
+# 126     tags: Optional[list[str]] = None
+# 127 
+# 128     @field_validator("artifact_path")
+# 129     @classmethod
+# 130     def validate_artifact_path(cls, v: Path) -> Path:
+# 131         if not v.is_absolute() and ".." in v.parts:
+# 132             raise ValueError("Invalid artifact path")
+# 133         return v
+# 134 
+# 135 class StateProviderConfigSchema(BaseModel):
+# 136     id: Optional[int] = None
+# 137     guid: UUID = Field(default_factory=uuid4)
+# 138     name: str
+# 139     description: Optional[str] = None
+# 140     config: Optional[Dict[str, Any]] = None
+# 141     artifact_path: Path
+# 142     tags: Optional[list[str]] = None
+# 143 
+# 144     @classmethod
+# 145     def validate_artifact_path(cls, v: Path) -> Path:
+# 146         if not v.is_absolute() and ".." in v.parts:
+# 147             raise ValueError("Invalid artifact path")
+# 148         return v
+# 149 
+# 150 class SystemProviderConfigSchema(BaseModel):
+# 151     id: Optional[int] = None
+# 152     guid: UUID = Field(default_factory=uuid4)
+# 153     name: str
+# 154     description: Optional[str] = None
+# 155     config: Optional[Dict[str, Any]] = None
+# 156     artifact_path: Path
+# 157     tags: Optional[list[str]] = None
+# 158 
+# 159     @classmethod
+# 160     def validate_artifact_path(cls, v: Path) -> Path:
+# 161         if not v.is_absolute() and ".." in v.parts:
+# 162             raise ValueError("Invalid artifact path")
+# 163         return v
+# 164 
+# 165 class OrchestratorProviderConfigSchema(BaseModel):
+# 166     id: Optional[int] = None
+# 167     guid: UUID = Field(default_factory=uuid4)
+# 168     name: str
+# 169     description: Optional[str] = None
+# 170     config: Optional[Dict[str, Any]] = None
+# 171     artifact_path: Path
+# 172     tags: Optional[List[str]] = None
+# 173 
+# 174     @classmethod
+# 175     def validate_artifact_path(cls, v: Path) -> Path:
+# 176         if not v.is_absolute() and ".." in v.parts:
+# 177             raise ValueError("Invalid artifact path")
+# 178         return v
+# 179 
+# 180 class ProgramProviderConfigSchema(BaseModel):
+# 181     id: Optional[int] = None
+# 182     guid: UUID = Field(default_factory=uuid4)
+# 183     name: str
+# 184     description: Optional[str] = None
+# 185     config: Optional[Dict[str, Any]] = None
+# 186     artifact_path: Path
+# 187     tags: Optional[List[str]] = None
+# 188 
+# 189     @classmethod
+# 190     def validate_artifact_path(cls, v: Path) -> Path:
+# 191         if not v.is_absolute() and ".." in v.parts:
+# 192             raise ValueError("Invalid artifact path")
+# 193         return v
+# 194 
+# 195 class SessionConfigSchema(BaseModel):
+# 196     id: Optional[int] = None
+# 197     session_id: str
+# 198     name: str
+# 199     description: Optional[str] = None
+# 200     environment_type: str  #  e.g., "experiment", "live", "staging"
+# 201     config: Optional[Dict[str, Any]] = None
+# 202     tags: Optional[List[str]] = None
+# 203     
+# 204 
+# 205 #  LOGS
+# 206 
+# 207 @dataclass
+# 208 class ProviderLogSchema:
+# 209     session_id: str
+# 210     provider_id: int
+# 211     provider_type: str
+# 212     input: Optional[str] = None
+# 213     output: Optional[str] = None
+# 214     snapshot_id: Optional[str] = None
+# 215     file_path: Optional[str] = None
+# 216     transition_from: Optional[str] = None
+# 217     transition_to: Optional[str] = None
+# 218     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 219 
+# 220 @dataclass
+# 221 class StateTransitionLogSchema:
+# 222     session_id: str
+# 223     entity_type: str
+# 224     entity_id: int
+# 225     from_state: str
+# 226     to_state: str
+# 227     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 228 
+# 229 @dataclass
+# 230 class AgentConversationLogSchema:
+# 231     session_id: str
+# 232     system: str
+# 233     agent_provider_config_id: int
+# 234     agent_name: str
+# 235     content: str
+# 236     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 237 
+# 238 @dataclass
+# 239 class ErrorLogSchema:
+# 240     session_id: str             
+# 241     error_type: str                   
+# 242     message: str                    
+# 243     file_path: str | None = None       
+# 244     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # db\seed.py
@@ -559,6 +583,35 @@
 # 6         return f"[Basic Response] You said: {prompt}"
 
 
+# db\seeders\files\agent_engine_providers\openai_gpt4o_agent_engine_provider.py
+
+# 1 import os
+# 2 from openai import OpenAI
+# 3 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
+# 4 
+# 5 class OpenAIGPT4oAgentEngineProvider(AgentEngineProviderBase):
+# 6     def _run(self, input: dict) -> str:
+# 7         prompt = input["prompt"]
+# 8         api_key = os.getenv("OPENAI_API_KEY")
+# 9 
+# 10         if not api_key:
+# 11             raise EnvironmentError("OPENAI_API_KEY is not set in the environment.")
+# 12 
+# 13         client = OpenAI(api_key=api_key)
+# 14 
+# 15         response = client.chat.completions.create(
+# 16             model="gpt-4o",
+# 17             messages=[
+# 18                 {"role": "system", "content": "You are a high-precision agent executing structured code refinement tasks."},
+# 19                 {"role": "user", "content": prompt}
+# 20             ],
+# 21             temperature=0.2,
+# 22             max_tokens=2048,
+# 23         )
+# 24 
+# 25         return response.choices[0].message.content.strip()
+
+
 # db\seeders\files\agent_providers\__init__.py
 
 
@@ -570,6 +623,86 @@
 # 3 class BasicAgentProvider(AgentProviderBase):
 # 4     def _run(self, agent_config: dict) -> str:
 # 5         return f"[Agent] Executed with config: {agent_config}"
+
+
+# db\seeders\files\agent_providers\linting_discriminator_agent_provider.py
+
+# 1 from app.providers.agent_provider_base import AgentProviderBase
+# 2 from app.utilities.metadata.snapshots.snapshot_reader import read_latest_snapshot
+# 3 from app.utilities.diff_utils import summarize_diff
+# 4 
+# 5 class LintingDiscriminatorAgentProvider(AgentProviderBase):
+# 6     def _run(self, input: dict) -> str:
+# 7         snapshot = read_latest_snapshot(session_id=self._session_id)  #  ✅ session-aware
+# 8         if not snapshot:
+# 9             return "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\nNo snapshot found.\n[/CONVERSATION_LOG_ENTRY]"
+# 10 
+# 11         before, after = snapshot["before"], snapshot["after"]
+# 12         if before == after:
+# 13             return "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\nNo meaningful change.\n[/CONVERSATION_LOG_ENTRY]"
+# 14 
+# 15         diff_summary = summarize_diff(before, after)
+# 16 
+# 17         decision = "accept" if diff_summary else "reject"
+# 18 
+# 19         return f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\n{diff_summary}\n[/CONVERSATION_LOG_ENTRY]"
+
+
+# db\seeders\files\agent_providers\linting_generator_agent_provider.py
+
+# 1 from app.providers.agent_provider_base import AgentProviderBase
+# 2 from pathlib import Path
+# 3 from sqlalchemy import create_engine
+# 4 from sqlalchemy.orm import Session
+# 5 from app.db.connection import DB_PATH
+# 6 from app.db.models import (
+# 7     PromptProviderConfig,
+# 8     AgentEngineProviderConfig,
+# 9     AgentPrompt,
+# 10     SystemPrompt
+# 11 )
+# 12 from app.factories.prompt_provider_factory import PromptProviderFactory
+# 13 from app.factories.agent_engine_provider_factory import AgentEngineProviderFactory
+# 14 
+# 15 class LintingGeneratorAgentProvider(AgentProviderBase):
+# 16     """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
+# 17 
+# 18     def _run(self, input: dict) -> str:
+# 19         session_id = self._session_id
+# 20         file_path = input["file_path"]
+# 21         context = input["context"]
+# 22 
+# 23         #  🔌 Local engine
+# 24         engine = create_engine(f"sqlite:///{DB_PATH}")
+# 25 
+# 26         #  📦 Load config objects from DB
+# 27         with Session(bind=engine) as session:
+# 28             prompt_row = session.query(PromptProviderConfig).filter_by(name="linting_prompt_provider").first()
+# 29             engine_row = session.query(AgentEngineProviderConfig).filter_by(name="openai_gpt_4o_agent_engine").first()
+# 30             agent_prompt = session.query(AgentPrompt).filter_by(name="linting_generator_agent").first()
+# 31             system_prompt = session.query(SystemPrompt).filter_by(name="linting_system").first()
+# 32 
+# 33         #  🧠 Build prompt
+# 34         prompt_provider = PromptProviderFactory.create(prompt_row.id)
+# 35         final_prompt = prompt_provider.run(
+# 36             input={
+# 37                 "agent_prompt_path": agent_prompt.artifact_path,
+# 38                 "system_prompt_path": system_prompt.artifact_path,
+# 39                 "context": context
+# 40             },
+# 41             session_id=session_id
+# 42         )
+# 43 
+# 44         #  🤖 Run LLM engine
+# 45         engine_provider = AgentEngineProviderFactory.create(
+# 46             engine_row.id,
+# 47             config_override={"before": str(Path(file_path).resolve())}
+# 48         )
+# 49 
+# 50         return engine_provider.run(
+# 51             input={"prompt": final_prompt, "before": str(file_path)},
+# 52             session_id=session_id
+# 53         )
 
 
 # db\seeders\files\context_providers\__init__.py
@@ -587,6 +720,45 @@
 # 7             "file_path": "tests/example.py",
 # 8             "source_code": "def example():\n    pass\n"
 # 9         })
+
+
+# db\seeders\files\context_providers\linting_context_provider.py
+
+# 1 from __future__ import annotations
+# 2 from pathlib import Path
+# 3 import json
+# 4 
+# 5 from sqlalchemy.orm import Session
+# 6 from app.providers.context_provider_base import ContextProviderBase
+# 7 from app.utilities.metadata.logging.conversation_log import get_conversation_log
+# 8 
+# 9 class LintingContextProvider(ContextProviderBase):
+# 10     def _run(self, input: dict) -> str:
+# 11         file_path = Path(input["file_path"]).resolve()
+# 12         session_id = input["session_id"]
+# 13         system = input["system"]
+# 14 
+# 15         if not file_path.exists():
+# 16             raise FileNotFoundError(f"❌ File not found: {file_path}")
+# 17 
+# 18         source_code = file_path.read_text(encoding="utf-8")
+# 19 
+# 20         score_result = self.score_provider.run(
+# 21             input={"file_path": str(file_path)},
+# 22             session_id=session_id
+# 23         )
+# 24 
+# 25         with Session(bind=self._engine) as session:
+# 26             convo_log = get_conversation_log(session, session_id=session_id, system=system)
+# 27 
+# 28         context = {
+# 29             "file_path": str(file_path),
+# 30             "source_code": source_code,
+# 31             "score": score_result.model_dump(),
+# 32             "conversation_log": convo_log
+# 33         }
+# 34 
+# 35         return json.dumps(context, indent=2)
 
 
 # db\seeders\files\orchestrator_providers\__init__.py
@@ -653,55 +825,126 @@
 # 8         return f"User: {agent_config.get('input', 'No input provided')}\nSystem: Response mode: {system_config.get('setting', 'default')}"
 
 
+# db\seeders\files\prompt_providers\linting_prompt_provider.py
+
+# 1 from __future__ import annotations
+# 2 from pathlib import Path
+# 3 from app.providers.prompt_provider_base import PromptProviderBase
+# 4 import textwrap
+# 5 
+# 6 class LintingPromptProvider(PromptProviderBase):
+# 7     def _run(self, input: dict) -> str:
+# 8         context = input.get("context", {})
+# 9         score = context.get("score", {}).get("value", "unknown")
+# 10         convo_log = context.get("conversation_log", [])
+# 11         source_code = context.get("source_code", "")
+# 12 
+# 13         agent_prompt_path = Path(input.get("agent_prompt_path", "")).resolve()
+# 14         system_prompt_path = Path(input.get("system_prompt_path", "")).resolve()
+# 15 
+# 16         if not agent_prompt_path.exists():
+# 17             raise FileNotFoundError(f"Agent prompt not found: {agent_prompt_path}")
+# 18         if not system_prompt_path.exists():
+# 19             raise FileNotFoundError(f"System prompt not found: {system_prompt_path}")
+# 20 
+# 21         agent_text = agent_prompt_path.read_text(encoding="utf-8").strip()
+# 22         system_text = system_prompt_path.read_text(encoding="utf-8").strip()
+# 23 
+# 24         convo_section = "\n".join(convo_log) if convo_log else "(none)"
+# 25 
+# 26         return textwrap.dedent(f"""\
+# 27             {agent_text}
+# 28 
+# 29             ---
+# 30 
+# 31             {system_text}
+# 32 
+# 33             ---
+# 34 
+# 35             Score: {score}
+# 36             Conversation Log:
+# 37             {convo_section}
+# 38 
+# 39             ---
+# 40 
+# 41             [SOURCE_CODE]
+# 42             {source_code.rstrip()}
+# 43             [/SOURCE_CODE]
+# 44         """)
+
+
+# db\seeders\files\prompts\__init__.py
+
+
+
 # db\seeders\files\score_providers\__init__.py
 
 
 
-# db\seeders\files\score_providers\lint_score.py
+# db\seeders\files\score_providers\linting_score_provider.py
 
-# 1 from typing import Dict
+# 1 import json
 # 2 from app.providers.score_provider_base import ScoreProviderBase
-# 3 import json
-# 4 
-# 5 class LintScoreProvider(ScoreProviderBase):
-# 6     def _run(self, input: dict) -> str:
-# 7         source_code = input["source_code"]
-# 8         file_path = input["file_path"]
-# 9         experiment_id = input["session_id"]
-# 10 
-# 11         tool_results = {
-# 12             name: provider.run({"target": file_path, "session_id": experiment_id})
-# 13             for name, provider in self.tool_providers.items()
-# 14         }
-# 15 
-# 16         total_lines = source_code.count("\n") + 1
+# 3 from app.db.schemas import ScoreOutputSchema
+# 4 from app.factories.tool_provider_factory import ToolProviderFactory
+# 5 
+# 6 class LintingScoreProvider(ScoreProviderBase):
+# 7     """Instantiates tool providers by ID and computes weighted linting score."""
+# 8 
+# 9     def _run(self, input: dict) -> ScoreOutputSchema:
+# 10         file_path = input["file_path"]
+# 11         tool_ids = self.config.config.get("tool_ids", {})
+# 12 
+# 13         required = ["ruff", "mypy", "black", "radon"]
+# 14         missing = [k for k in required if k not in tool_ids]
+# 15         if missing:
+# 16             raise ValueError(f"Missing required tool IDs in config: {missing}")
 # 17 
-# 18         formatted_lines = total_lines
-# 19         if "BlackToolProvider" in tool_results:
-# 20             formatted_lines = total_lines - len(
-# 21                 tool_results["BlackToolProvider"].stdout.strip().splitlines()
-# 22             )
+# 18         #  Load providers
+# 19         tool_providers = {
+# 20             name: ToolProviderFactory.create(tool_id)
+# 21             for name, tool_id in tool_ids.items()
+# 22         }
 # 23 
-# 24         lint_errors = len(tool_results["RuffToolProvider"].stdout.strip().splitlines()) if "RuffToolProvider" in tool_results else 0
-# 25         type_errors = len(tool_results["MypyToolProvider"].stdout.strip().splitlines()) if "MypyToolProvider" in tool_results else 0
-# 26 
-# 27         complexity = maintainability = 0.0
-# 28         if "RadonToolProvider" in tool_results:
-# 29             radon_output = tool_results["RadonToolProvider"].stdout.strip()
-# 30             complexity, maintainability = self._parse_radon_output(radon_output)
-# 31 
-# 32         scores = {
-# 33             "formatting_compliance": (formatted_lines / total_lines) * 100,
-# 34             "lint_error_count": lint_errors,
-# 35             "type_error_count": type_errors,
-# 36             "average_complexity": complexity,
-# 37             "maintainability_index": maintainability,
-# 38         }
+# 24         #  Helper to extract violation count
+# 25         def parse_output(output: str, fallback_score: float = 1.0) -> float:
+# 26             try:
+# 27                 result = json.loads(output)
+# 28                 violations = result["stdout"].count("\n")
+# 29                 return max(0.0, 1.0 - (violations / 20))  #  normalize: 0–1
+# 30             except Exception:
+# 31                 return fallback_score  #  If result can't be parsed, assume OK
+# 32 
+# 33         #  Run and parse scores
+# 34         ruff_raw = tool_providers["ruff"].run({"target": file_path}, session_id=self._session_id)
+# 35         ruff_score = parse_output(ruff_raw)
+# 36 
+# 37         mypy_raw = tool_providers["mypy"].run({"target": file_path}, session_id=self._session_id)
+# 38         mypy_score = parse_output(mypy_raw)
 # 39 
-# 40         return json.dumps(scores)
-# 41 
-# 42     def _parse_radon_output(self, output: str) -> tuple[float, float]:
-# 43         return 0.0, 0.0  #  stub for now
+# 40         black_raw = tool_providers["black"].run({"target": file_path}, session_id=self._session_id)
+# 41         black_score = parse_output(black_raw)
+# 42 
+# 43         radon_raw = tool_providers["radon"].run({"target": file_path}, session_id=self._session_id)
+# 44         radon_score = parse_output(radon_raw)
+# 45 
+# 46         weighted_score = round(
+# 47             ruff_score * 0.4 +
+# 48             mypy_score * 0.3 +
+# 49             black_score * 0.2 +
+# 50             radon_score * 0.1, 3
+# 51         )
+# 52 
+# 53         return ScoreOutputSchema(
+# 54             name="linting_score",
+# 55             value=weighted_score,
+# 56             components={
+# 57                 "ruff": ruff_score,
+# 58                 "mypy": mypy_score,
+# 59                 "black": black_score,
+# 60                 "radon": radon_score
+# 61             }
+# 62         )
 
 
 # db\seeders\files\state_providers\__init__.py
@@ -717,6 +960,158 @@
 # 5 class StateProviderFactory(BaseProviderFactory):
 # 6     config_model = StateProviderConfig
 # 7     base_class = StateProviderBase
+
+
+# db\seeders\files\state_providers\linting_discriminator_state_provider.py
+
+# 1 from app.providers.state_provider_base import StateProviderBase
+# 2 from app.factories.agent_provider_factory import AgentProviderFactory
+# 3 from app.db.models import AgentProviderConfig
+# 4 from sqlalchemy import create_engine
+# 5 from sqlalchemy.orm import Session
+# 6 from app.db.connection import DB_PATH
+# 7 from pathlib import Path
+# 8 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
+# 9 
+# 10 class LintingGeneratorStateProvider(StateProviderBase):
+# 11     """FSM state that invokes the linting generator agent."""
+# 12 
+# 13     def _run(self, input: dict) -> str:
+# 14         file_path = Path(input["file_path"])
+# 15         context = input["context"]
+# 16         session_id = self._session_id
+# 17 
+# 18         #  Explicitly load BEFORE content
+# 19         before_content = file_path.read_text(encoding="utf-8")
+# 20 
+# 21         engine = create_engine(f"sqlite:///{DB_PATH}")
+# 22         with Session(bind=engine) as session:
+# 23             row = session.query(AgentProviderConfig).filter_by(
+# 24                 name="linting_generator_agent_provider"
+# 25             ).first()
+# 26             assert row, "❌ Agent provider not found"
+# 27             agent = AgentProviderFactory.create(row.id)
+# 28 
+# 29         #  Run the agent explicitly
+# 30         agent_output = agent.run(
+# 31             input={"context": context, "file_path": str(file_path)},
+# 32             session_id=session_id
+# 33         )
+# 34 
+# 35         #  Extract generated code from the agent's output
+# 36         after_content = self.extract_code_block(agent_output)
+# 37 
+# 38         #  Write snapshot explicitly
+# 39         snapshot_writer = SnapshotWriter()
+# 40         snapshot_id = snapshot_writer.write_snapshot(
+# 41             before=before_content,
+# 42             after=after_content,
+# 43             session_id=session_id
+# 44         )
+# 45 
+# 46         self._log.debug(f"Snapshot ID created: {snapshot_id}")
+# 47 
+# 48         #  CRITICAL FIX: Set self._output here explicitly
+# 49         self._output = agent_output
+# 50 
+# 51         return agent_output
+# 52 
+# 53     @staticmethod
+# 54     def extract_code_block(output: str) -> str:
+# 55         start = output.find("[CODE]")
+# 56         end = output.find("[/CODE]")
+# 57         if start == -1 or end == -1:
+# 58             raise ValueError("❌ No code block found in agent output.")
+# 59         return output[start + 6 : end].strip()
+# 60 
+# 61     def _transition(self, state: dict) -> dict:
+# 62         #  ✅ CRITICAL: Call _run() explicitly to ensure _output is set.
+# 63         self._run(state)
+# 64 
+# 65         return {**state, "state": "end", "output": self._output}
+
+
+# db\seeders\files\state_providers\linting_generator_state_provider.py
+
+# 1 from app.providers.state_provider_base import StateProviderBase
+# 2 from app.factories.agent_provider_factory import AgentProviderFactory
+# 3 from app.db.models import AgentProviderConfig
+# 4 from sqlalchemy import create_engine
+# 5 from sqlalchemy.orm import Session
+# 6 from app.db.connection import DB_PATH
+# 7 from pathlib import Path
+# 8 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
+# 9 
+# 10 class LintingGeneratorStateProvider(StateProviderBase):
+# 11     """FSM state that invokes the linting generator agent."""
+# 12 
+# 13     def _run(self, input: dict) -> str:
+# 14         file_path = Path(input["file_path"])
+# 15         context = input["context"]
+# 16         session_id = self._session_id  #  Now correctly set in transition()
+# 17 
+# 18         before_content = file_path.read_text(encoding="utf-8")
+# 19 
+# 20         engine = create_engine(f"sqlite:///{DB_PATH}")
+# 21         with Session(bind=engine) as session:
+# 22             row = session.query(AgentProviderConfig).filter_by(
+# 23                 name="linting_generator_agent_provider"
+# 24             ).first()
+# 25             assert row, "❌ Agent provider not found"
+# 26             agent = AgentProviderFactory.create(row.id)
+# 27 
+# 28         agent_output = agent.run(
+# 29             input={"context": context, "file_path": str(file_path)},
+# 30             session_id=session_id
+# 31         )
+# 32 
+# 33         after_content = self.extract_code_block(agent_output)
+# 34 
+# 35         snapshot_writer = SnapshotWriter()
+# 36         snapshot_id = snapshot_writer.write_snapshot(
+# 37             before=before_content,
+# 38             after=after_content,
+# 39             session_id=session_id
+# 40         )
+# 41 
+# 42         self._log.debug(f"Snapshot ID created: {snapshot_id}")
+# 43 
+# 44         #  Explicitly set the output
+# 45         self._output = agent_output
+# 46 
+# 47         return agent_output
+# 48 
+# 49     @staticmethod
+# 50     def extract_code_block(output: str) -> str:
+# 51         start = output.find("[CODE]")
+# 52         end = output.find("[/CODE]")
+# 53 
+# 54         if start == -1 or end == -1:
+# 55             raise ValueError(f"❌ No code block found in agent output:\n{output}")
+# 56 
+# 57         return output[start + len("[CODE]"):end].strip()
+# 58 
+# 59 
+# 60 
+# 61     def _transition(self, state: dict) -> dict:
+# 62         #  Ensure we have a valid session_id
+# 63         session_id = state.get("session_id", "notebook-dev-session")
+# 64 
+# 65         #  Explicitly call the base provider's run method to ensure proper initialization
+# 66         self.run(
+# 67             input={
+# 68                 "context": state.get("context"),
+# 69                 "file_path": state.get("file_path"),
+# 70                 "system": "linting"
+# 71             },
+# 72             session_id=session_id
+# 73         )
+# 74 
+# 75         return {
+# 76             **state,
+# 77             "state": "end",
+# 78             "output": getattr(self, "_output", "")
+# 79         }
 
 
 # db\seeders\files\system_providers\__init__.py
@@ -902,16 +1297,23 @@
 # 15         if proc.stderr:
 # 16             self._log.error(proc.stderr)
 # 17 
-# 18         result = {
-# 19             "stdout": proc.stdout,
-# 20             "stderr": proc.stderr,
-# 21             "return_code": proc.returncode
-# 22         }
-# 23 
-# 24         if proc.returncode != 0:
-# 25             raise RuntimeError(f"ruff failed: {proc.stderr}")
-# 26 
-# 27         return json.dumps(result)
+# 18         #  Interpret output
+# 19         result = {
+# 20             "stdout": proc.stdout,
+# 21             "stderr": proc.stderr,
+# 22             "return_code": proc.returncode,
+# 23         }
+# 24 
+# 25         #  Only raise if ruff failed due to actual error (not rule violations)
+# 26         if proc.returncode > 1:
+# 27             self._log.error(f"❌ Ruff failed: {proc.stderr or proc.stdout or 'unknown error'}")
+# 28             raise RuntimeError(f"ruff execution error: {proc.stderr or proc.stdout or 'unknown error'}")
+# 29 
+# 30         #  Log structured info for visibility
+# 31         self._log.debug(f"✅ Ruff completed with return code {proc.returncode}")
+# 32         self._log.debug(json.dumps(result, indent=2))
+# 33 
+# 34         return json.dumps(result)
 
 
 # db\seeders\files\tool_providers\sonarcloud_tool.py
@@ -1080,36 +1482,37 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 AGENT_ENGINES = [
-# 12     ("basic_agent_engine_provider.py", "Basic Agent Engine Provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
-# 13 ]
-# 14 
-# 15 def seed_agent_engine_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, model, tags in AGENT_ENGINES:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22 
-# 23         if not source_file.exists():
-# 24             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
-# 25 
-# 26         shutil.copy(source_file, dest_file)
-# 27 
-# 28         config = AgentEngineProviderConfig(
-# 29             guid=guid,
-# 30             name=name,
-# 31             description=description,
-# 32             model=model,
-# 33             config={},
-# 34             artifact_path=guid,
-# 35             tags=tags,
-# 36         )
-# 37 
-# 38         db_session.add(config)
-# 39 
-# 40     db_session.commit()
-# 41     print("Seeded agent engine configurations successfully.")
+# 12     ("basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
+# 13     ("openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"])
+# 14 ]
+# 15 
+# 16 def seed_agent_engine_providers(db_session: Session):
+# 17     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 18 
+# 19     for filename, name, description, model, tags in AGENT_ENGINES:
+# 20         guid = str(uuid4())
+# 21         source_file = SEED_FILES_DIR / filename
+# 22         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 23 
+# 24         if not source_file.exists():
+# 25             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
+# 26 
+# 27         shutil.copy(source_file, dest_file)
+# 28 
+# 29         config = AgentEngineProviderConfig(
+# 30             guid=guid,
+# 31             name=name,
+# 32             description=description,
+# 33             model=model,
+# 34             config={},
+# 35             artifact_path=guid,
+# 36             tags=tags,
+# 37         )
+# 38 
+# 39         db_session.add(config)
+# 40 
+# 41     db_session.commit()
+# 42     print("Seeded agent engine configurations successfully.")
 
 
 # db\seeders\seed_agent_providers.py
@@ -1125,35 +1528,38 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 AGENT_PROVIDERS = [
-# 12     ("basic_agent_provider.py", "Basic Agent Provider", "Returns a test response.", ["default"]),
-# 13 ]
-# 14 
-# 15 def seed_agent_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 12     ("basic_agent_provider.py", "basic_agent_provider", "Returns a hardcoded result.", ["test"]),
+# 13     ("linting_generator_agent_provider.py", "linting_generator_agent_provider", "Runs GPT-4o to generate linting corrections.", ["linting", "generator"]),
+# 14     ("linting_discriminator_agent_provider.py", "linting_discriminator_agent_provider", "Evaluates generator output for acceptance.", ["linting", "discriminator"])
+# 15 ]
+# 16 
 # 17 
-# 18     for filename, name, description, tags in AGENT_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22 
-# 23         if not source_file.exists():
-# 24             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
+# 18 def seed_agent_providers(db_session: Session):
+# 19     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 20 
+# 21     for filename, name, description, tags in AGENT_PROVIDERS:
+# 22         guid = str(uuid4())
+# 23         source_file = SEED_FILES_DIR / filename
+# 24         dest_file = EXTENSIONS_DIR / f"{guid}.py"
 # 25 
-# 26         shutil.copy(source_file, dest_file)
-# 27 
-# 28         config = AgentProviderConfig(
-# 29             guid=guid,
-# 30             name=name,
-# 31             description=description,
-# 32             config={},
-# 33             artifact_path=guid,
-# 34             tags=tags,
-# 35         )
-# 36 
-# 37         db_session.add(config)
-# 38 
-# 39     db_session.commit()
-# 40     print("Seeded agent provider configurations successfully.")
+# 26         if not source_file.exists():
+# 27             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
+# 28 
+# 29         shutil.copy(source_file, dest_file)
+# 30 
+# 31         config = AgentProviderConfig(
+# 32             guid=guid,
+# 33             name=name,
+# 34             description=description,
+# 35             config={},
+# 36             artifact_path=guid,
+# 37             tags=tags,
+# 38         )
+# 39 
+# 40         db_session.add(config)
+# 41 
+# 42     db_session.commit()
+# 43     print("Seeded agent provider configurations successfully.")
 
 
 # db\seeders\seed_context_providers.py
@@ -1169,34 +1575,36 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 CONTEXT_PROVIDERS = [
-# 12     ("basic_context_provider.py", "Basic Context Provider", "Returns static context for testing.", ["default"]),
-# 13 ]
-# 14 
-# 15 def seed_context_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, tags in CONTEXT_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22 
-# 23         if not source_file.exists():
-# 24             raise FileNotFoundError(f"Context provider script not found: {source_file}")
-# 25 
-# 26         shutil.copy(source_file, dest_file)
+# 12     ("basic_context_provider.py", "basic_context_provider", "Returns static context for testing.", ["default"]),
+# 13     ("linting_context_provider.py", "linting_context_provider", "Generates context for the linting system.", ["linting", "score-aware"]),
+# 14 ]
+# 15 
+# 16 
+# 17 def seed_context_providers(db_session: Session):
+# 18     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 19 
+# 20     for filename, name, description, tags in CONTEXT_PROVIDERS:
+# 21         guid = str(uuid4())
+# 22         source_file = SEED_FILES_DIR / filename
+# 23         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 24 
+# 25         if not source_file.exists():
+# 26             raise FileNotFoundError(f"Context provider script not found: {source_file}")
 # 27 
-# 28         config = ContextProviderConfig(
-# 29             guid=guid,
-# 30             name=name,
-# 31             description=description,
-# 32             artifact_path=guid,
-# 33             tags=tags
-# 34         )
-# 35 
-# 36         db_session.add(config)
+# 28         shutil.copy(source_file, dest_file)
+# 29 
+# 30         config = ContextProviderConfig(
+# 31             guid=guid,
+# 32             name=name,
+# 33             description=description,
+# 34             artifact_path=guid,
+# 35             tags=tags
+# 36         )
 # 37 
-# 38     db_session.commit()
-# 39     print("Seeded context provider configurations successfully.")
+# 38         db_session.add(config)
+# 39 
+# 40     db_session.commit()
+# 41     print("Seeded context provider configurations successfully.")
 
 
 # db\seeders\seed_orchestrator_provider.py
@@ -1293,35 +1701,36 @@
 # 10 
 # 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 12 
-# 13 GENERATORS = [
-# 14     ("basic_prompt_provider.py", "Basic Prompt Provider", "Returns a simple prompt response.", ["default"]),
-# 15 ]
-# 16 
-# 17 def seed_prompt_providers(db_session: Session):
-# 18     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 19 
-# 20     for filename, name, description, tags in GENERATORS:
-# 21         guid = str(uuid4())
-# 22         source_file = SEED_FILES_DIR / filename
-# 23         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 24 
-# 25         if not source_file.exists():
-# 26             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
-# 27 
-# 28         shutil.copy(source_file, dest_file)
-# 29 
-# 30         config = PromptProviderConfig(
-# 31             guid=guid,
-# 32             name=name,
-# 33             description=description,
-# 34             artifact_path=guid,
-# 35             tags=tags
-# 36         )
-# 37 
-# 38         db_session.add(config)
-# 39 
-# 40     db_session.commit()
-# 41     print("Seeded prompt provider configurations successfully.")
+# 13 PROVIDERS = [
+# 14     ("basic_prompt_provider.py", "basic_prompt_provider", "Returns a simple prompt response.", ["default"]),
+# 15     ("linting_prompt_provider.py", "linting_prompt_provider", "Combines linting system and agent prompts.", ["linting", "codequality"]),
+# 16 ]
+# 17 
+# 18 def seed_prompt_providers(db_session: Session):
+# 19     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 20 
+# 21     for filename, name, description, tags in PROVIDERS:
+# 22         guid = str(uuid4())
+# 23         source_file = SEED_FILES_DIR / filename
+# 24         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 25 
+# 26         if not source_file.exists():
+# 27             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
+# 28 
+# 29         shutil.copy(source_file, dest_file)
+# 30 
+# 31         config = PromptProviderConfig(
+# 32             guid=guid,
+# 33             name=name,
+# 34             description=description,
+# 35             artifact_path=guid,
+# 36             tags=tags
+# 37         )
+# 38 
+# 39         db_session.add(config)
+# 40 
+# 41     db_session.commit()
+# 42     print("Seeded prompt provider configurations successfully.")
 
 
 # db\seeders\seed_prompts.py
@@ -1335,60 +1744,86 @@
 # 7 
 # 8 #  Define paths relative to this script's file location explicitly
 # 9 CURRENT_DIR = Path(__file__).resolve().parent
-# 10 SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
-# 11 PROJECT_ROOT = CURRENT_DIR.parent.parent.parent  #  adjust based on your actual folder structure
+# 10 SEED_FILES_DIR = CURRENT_DIR / "files/prompts"
+# 11 PROJECT_ROOT = CURRENT_DIR.parent.parent.parent
 # 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 13 
-# 14 def seed_prompts(db_session: Session):
-# 15     #  Ensure extensions directory exists explicitly
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     #  Seed AgentPrompt
-# 19     agent_guid = str(uuid4())
-# 20     agent_source_file = SEED_FILES_DIR / "basic_agent_prompt.txt"
-# 21     agent_dest_file = EXTENSIONS_DIR / f"{agent_guid}.txt"
-# 22 
-# 23     #  Explicit check for source file existence
-# 24     if not agent_source_file.exists():
-# 25         raise FileNotFoundError(f"Agent source file not found: {agent_source_file}")
-# 26 
-# 27     shutil.copy(agent_source_file, agent_dest_file)
-# 28 
-# 29     agent_prompt = AgentPrompt(
-# 30         guid=agent_guid,
-# 31         name="generate",
-# 32         description="Prompt for basic code generation.",
-# 33         artifact_path=str(agent_dest_file),
-# 34         tags=["linting", "generation"]
-# 35     )
-# 36 
-# 37     #  Seed SystemPrompt
-# 38     system_guid = str(uuid4())
-# 39     system_source_file = SEED_FILES_DIR / "default_system_prompt.txt"
-# 40     system_dest_file = EXTENSIONS_DIR / f"{system_guid}.txt"
-# 41 
-# 42     #  Explicit check for system source file existence
-# 43     if not system_source_file.exists():
-# 44         raise FileNotFoundError(f"System source file not found: {system_source_file}")
-# 45 
-# 46     shutil.copy(system_source_file, system_dest_file)
-# 47 
-# 48     system_prompt = SystemPrompt(
-# 49         guid=system_guid,
-# 50         name="format",
-# 51         system_type=SystemType.LINTING,
-# 52         description="Default prompt for formatting tasks.",
-# 53         artifact_path=str(system_dest_file),
-# 54         tags=["formatting", "default"]
-# 55     )
-# 56 
-# 57     #  Insert into database
-# 58     db_session.add(agent_prompt)
-# 59     db_session.add(system_prompt)
-# 60     db_session.commit()
-# 61 
-# 62     print(f"Seeded AgentPrompt GUID: {agent_guid}")
-# 63     print(f"Seeded SystemPrompt GUID: {system_guid}")
+# 14 #  Define new prompt files to seed
+# 15 AGENT_PROMPT_FILES = [
+# 16     {
+# 17         "name": "generate",
+# 18         "filename": "basic_agent_prompt.txt",
+# 19         "description": "Prompt for basic code generation.",
+# 20         "tags": ["linting", "generator"]
+# 21     },
+# 22     {
+# 23         "name": "linting_generator_agent",
+# 24         "filename": "linting_generator_agent_prompt.txt",
+# 25         "description": "Prompt for linting generator agent.",
+# 26         "tags": ["linting", "generator"]
+# 27     }
+# 28 ]
+# 29 
+# 30 SYSTEM_PROMPT_FILES = [
+# 31     {
+# 32         "name": "format",
+# 33         "filename": "default_system_prompt.txt",
+# 34         "system_type": SystemType.LINTING,
+# 35         "description": "Default prompt for formatting tasks.",
+# 36         "tags": ["formatting", "default"]
+# 37     },
+# 38     {
+# 39         "name": "linting_system",
+# 40         "filename": "linting_system_prompt.txt",
+# 41         "system_type": SystemType.LINTING,
+# 42         "description": "System prompt governing the linting subsystem.",
+# 43         "tags": ["linting", "system"]
+# 44     }
+# 45 ]
+# 46 
+# 47 def seed_prompts(db_session: Session):
+# 48     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 49 
+# 50     for entry in AGENT_PROMPT_FILES:
+# 51         source_file = SEED_FILES_DIR / entry["filename"]
+# 52         if not source_file.exists():
+# 53             raise FileNotFoundError(f"Agent prompt source file not found: {source_file}")
+# 54 
+# 55         guid = str(uuid4())
+# 56         dest_file = EXTENSIONS_DIR / f"{guid}.txt"
+# 57         shutil.copy(source_file, dest_file)
+# 58 
+# 59         prompt = AgentPrompt(
+# 60             guid=guid,
+# 61             name=entry["name"],
+# 62             description=entry["description"],
+# 63             artifact_path=str(dest_file),
+# 64             tags=entry["tags"]
+# 65         )
+# 66         db_session.add(prompt)
+# 67         print(f"Seeded AgentPrompt '{entry['name']}' with GUID: {guid}")
+# 68 
+# 69     for entry in SYSTEM_PROMPT_FILES:
+# 70         source_file = SEED_FILES_DIR / entry["filename"]
+# 71         if not source_file.exists():
+# 72             raise FileNotFoundError(f"System prompt source file not found: {source_file}")
+# 73 
+# 74         guid = str(uuid4())
+# 75         dest_file = EXTENSIONS_DIR / f"{guid}.txt"
+# 76         shutil.copy(source_file, dest_file)
+# 77 
+# 78         prompt = SystemPrompt(
+# 79             guid=guid,
+# 80             name=entry["name"],
+# 81             system_type=entry["system_type"],
+# 82             description=entry["description"],
+# 83             artifact_path=str(dest_file),
+# 84             tags=entry["tags"]
+# 85         )
+# 86         db_session.add(prompt)
+# 87         print(f"Seeded SystemPrompt '{entry['name']}' with GUID: {guid}")
+# 88 
+# 89     db_session.commit()
 
 
 # db\seeders\seed_scores.py
@@ -1405,7 +1840,7 @@
 # 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 11 
 # 12 SCORES = [
-# 13     ("lint_score.py", "Lint Score Provider", "Scores lint compliance.", {}),
+# 13     ("linting_score_provider.py", "linting_score_provider", "Scores lint compliance.", {}),
 # 14 ]
 # 15 
 # 16 def seed_score_providers(db_session: Session):
@@ -1448,34 +1883,36 @@
 # 10 
 # 11 STATE_PROVIDERS = [
 # 12     ("basic_state_provider.py", "Basic State Provider", "Simple FSM for agent progression.", ["default"], {"states": ["start", "review", "approve"]}),
-# 13 ]
-# 14 
-# 15 def seed_state_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, tags, config in STATE_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22 
-# 23         if not source_file.exists():
-# 24             raise FileNotFoundError(f"State provider script not found: {source_file}")
-# 25 
-# 26         shutil.copy(source_file, dest_file)
+# 13     ("linting_generator_state_provider.py", "linting_generator_state_provider", "Runs the linting generator agent state.", ["linting", "generator"], {"states": ["start", "linting_generator_agent", "end"]}),
+# 14     ("linting_discriminator_state_provider.py", "linting_discriminator_state_provider", "Runs the linting discriminator and conditionally promotes snapshot.", ["linting", "discriminator"], {"states": ["linting_generator_state_provider", "linting_discriminator_state_provider", "end"]}),
+# 15 ]
+# 16 
+# 17 def seed_state_providers(db_session: Session):
+# 18     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 19 
+# 20     for filename, name, description, tags, config in STATE_PROVIDERS:
+# 21         guid = str(uuid4())
+# 22         source_file = SEED_FILES_DIR / filename
+# 23         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 24 
+# 25         if not source_file.exists():
+# 26             raise FileNotFoundError(f"State provider script not found: {source_file}")
 # 27 
-# 28         record = StateProviderConfig(
-# 29             guid=guid,
-# 30             name=name,
-# 31             description=description,
-# 32             config=config,
-# 33             artifact_path=guid,
-# 34             tags=tags,
-# 35         )
-# 36 
-# 37         db_session.add(record)
+# 28         shutil.copy(source_file, dest_file)
+# 29 
+# 30         record = StateProviderConfig(
+# 31             guid=guid,
+# 32             name=name,
+# 33             description=description,
+# 34             config=config,
+# 35             artifact_path=guid,
+# 36             tags=tags,
+# 37         )
 # 38 
-# 39     db_session.commit()
-# 40     print("Seeded state provider configurations successfully.")
+# 39         db_session.add(record)
+# 40 
+# 41     db_session.commit()
+# 42     print("Seeded state provider configurations successfully.")
 
 
 # db\seeders\seed_system_providers.py
@@ -1538,13 +1975,13 @@
 # 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 13 
 # 14 TOOLS = [
-# 15     ("black_tool.py", "Black Formatter", "Formats Python code using Black.", {}),
-# 16     ("sonarcloud_tool.py", "SonarCloud Analyzer", "Static analysis via SonarCloud.", {}),
-# 17     ("ruff_tool.py", "Ruff Linter", "Python linting with Ruff.", {}),
-# 18     ("radon_tool.py", "Radon Analyzer", "Analyzes Python code complexity.", {}),
-# 19     ("mypy_tool.py", "Mypy Type Checker", "Static type checking with mypy.", {}),
-# 20     ("docformatter_tool.py", "Docformatter Formatter", "Static type checking with mypy.", {}),
-# 21     ("symbol_graph.py", "Symbol Graph Analyzer", "Extracts and analyzes Python symbols into structured graphs.", {}),
+# 15     ("black_tool.py", "black", "Formats Python code using Black.", {}),
+# 16     ("sonarcloud_tool.py", "sonarcloud", "Static analysis via SonarCloud.", {}),
+# 17     ("ruff_tool.py", "ruff", "Python linting with Ruff.", {}),
+# 18     ("radon_tool.py", "radon", "Analyzes Python code complexity.", {}),
+# 19     ("mypy_tool.py", "mypy", "Static type checking with mypy.", {}),
+# 20     ("docformatter_tool.py", "docformatter", "Static type checking with mypy.", {}),
+# 21     ("symbol_graph.py", "symbol_graph", "Extracts and analyzes Python symbols into structured graphs.", {}),
 # 22 ]
 # 23 
 # 24 def seed_tool_providers(db_session: Session):
@@ -1605,10 +2042,10 @@
 # 1 from enum import Enum
 # 2 
 # 3 class LogType(str, Enum):
-# 4     ERROR = "error"
-# 5     PROVIDER = "provider"
-# 6     STATE_TRANSITION = "state_transition"
-# 7     AGENT_CONVERSATION = "agent_conversation"
+# 4     ERROR = "error_log"
+# 5     PROVIDER = "provider_log"
+# 6     STATE_TRANSITION = "state_transition_log"
+# 7     AGENT_CONVERSATION = "agent_conversation_log"
 
 
 # enums\scoring_enums.py
@@ -1793,7 +2230,7 @@
 # 39             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
 # 40 
 # 41         #  Step 3: Instantiate and wire dependencies
-# 42         instance = provider_class(config=config)
+# 42         instance = provider_class(config=config, engine=kwargs.get("engine"))
 # 43         instance.resolve_dependencies(**kwargs)
 # 44         return instance
 
@@ -1899,45 +2336,103 @@
 # providers\agent_engine_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 from abc import abstractmethod
-# 4 from app.providers.base_provider import BaseProvider
-# 5 
-# 6 class AgentEngineProviderBase(BaseProvider):
-# 7     """Base class for agent engine providers (e.g., OpenAI, Anthropic, etc.)."""
-# 8 
-# 9     def _run_provider(self, input: dict) -> str:
+# 2 from abc import abstractmethod
+# 3 from app.providers.base_provider import BaseProvider
+# 4 
+# 5 class AgentEngineProviderBase(BaseProvider):
+# 6     """Base class for agent engines that return raw LLM output."""
+# 7 
+# 8     def _run_provider(self, input: dict) -> str:
+# 9         #  Only responsible for calling the underlying engine
 # 10         return self._run(input)
 # 11 
 # 12     @abstractmethod
 # 13     def _run(self, input: dict) -> str:
-# 14         raise NotImplementedError
+# 14         """Implement this to call the actual LLM engine (e.g., OpenAI GPT-4o)."""
+# 15         raise NotImplementedError
 
 
 # providers\agent_provider_base.py
 
-# 1 from __future__ import annotations
+# 1 #  app/providers/agent_provider_base.py
 # 2 
-# 3 from abc import abstractmethod
-# 4 
-# 5 from app.providers.base_provider import BaseProvider
-# 6 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-# 7 
-# 8 class AgentProviderBase(BaseProvider):
-# 9     """Agent provider that wraps _run with snapshot logic."""
-# 10 
-# 11     def _run_provider(self, input: dict) -> str:
-# 12         output = self._run(input)
-# 13         if "before" in (self.config.config or {}):
-# 14             self._snapshot_id = SnapshotWriter().write_snapshot(
-# 15                 before=self.config.config.get("before"),
-# 16                 after=output
-# 17             )
-# 18         return output
+# 3 from datetime import datetime, timezone
+# 4 from pathlib import Path
+# 5 from abc import abstractmethod
+# 6 
+# 7 from app.enums.logging_enums import LogType
+# 8 from app.providers.base_provider import BaseProvider
+# 9 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
+# 10 from app.db.schemas import AgentConversationLogSchema
+# 11 
+# 12 class AgentProviderBase(BaseProvider):
+# 13     """Agent provider that wraps _run with snapshot and structured log logic."""
+# 14 
+# 15     def _run_provider(self, input: dict) -> str:
+# 16         output = self._run(input)
+# 17 
+# 18         self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
 # 19 
-# 20     @abstractmethod
-# 21     def _run(self, input: dict) -> str:
-# 22         raise NotImplementedError
+# 20         code_block = None
+# 21         log_content = None
+# 22 
+# 23         #   Extract [CODE] block if present
+# 24         code_start = output.find("[CODE]")
+# 25         code_end = output.find("[/CODE]")
+# 26         if code_start != -1 and code_end != -1 and code_start < code_end:
+# 27             code_block = output[code_start + 6 : code_end].strip()
+# 28         #   FALLBACK: if we have a 'before' path, treat the whole output as the code
+# 29         elif input.get("before"):
+# 30             code_block = output.strip()
+# 31 
+# 32         #   Extract [CONVERSATION_LOG_ENTRY] if present
+# 33         log_start = output.find("[CONVERSATION_LOG_ENTRY]")
+# 34         log_end   = output.find("[/CONVERSATION_LOG_ENTRY]")
+# 35         if log_start != -1 and log_end != -1 and log_start < log_end:
+# 36             log_content = output[log_start + 24 : log_end].strip()
+# 37 
+# 38         #   Determine the file to snapshot
+# 39         file_path = input.get("before") or (self.config.config or {}).get("before")
+# 40 
+# 41         #   Write snapshot if we have both a before-file and produced code
+# 42         if file_path and code_block:
+# 43             before_path = Path(file_path)
+# 44             if not before_path.is_absolute():
+# 45                 before_path = Path.cwd() / before_path
+# 46 
+# 47             print(f"📄 Final BEFORE PATH: {before_path}")
+# 48 
+# 49             if before_path.exists():
+# 50                 snapshot_path = SnapshotWriter().write_snapshot(
+# 51                     before=before_path.read_text(encoding="utf-8"),
+# 52                     after=code_block,
+# 53                     session_id=self._session_id,
+# 54                     agent_name=self.config.name,
+# 55                     file_path=str(before_path),
+# 56                 )
+# 57                 self._snapshot_id = snapshot_path
+# 58                 self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
+# 59             else:
+# 60                 self._log.warning(f"❌ Snapshot skipped: input file does not exist → {before_path}")
+# 61 
+# 62         #   Always log any conversation log entry
+# 63         if log_content:
+# 64             log = AgentConversationLogSchema(
+# 65                 session_id=self._session_id,
+# 66                 system=self._system,
+# 67                 agent_provider_config_id=self.config.id if self.config else -1,
+# 68                 agent_name=self.config.name if self.config else "unknown",
+# 69                 content=log_content,
+# 70                 timestamp=datetime.now(timezone.utc)
+# 71             )
+# 72             self.logger.write(LogType.AGENT_CONVERSATION, log)
+# 73             self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 74 
+# 75         return output
+# 76 
+# 77     @abstractmethod
+# 78     def _run(self, input: dict) -> str:
+# 79         raise NotImplementedError
 
 
 # providers\base_provider.py
@@ -1955,70 +2450,71 @@
 # 11 class BaseProvider(LoggingMixin):
 # 12     """Base class for all providers using unified provider log."""
 # 13 
-# 14     def __init__(self, config=None) -> None:
+# 14     def __init__(self, config=None, engine=None) -> None:
 # 15         super().__init__()
 # 16         self.config = config
-# 17 
-# 18     def run(self, input: dict, session_id: str) -> str:
-# 19         self._log.debug("Run started")
-# 20         output = None
-# 21 
-# 22         try:
-# 23             output = self._run_provider(input)
-# 24             return output
-# 25         except Exception as exc:
-# 26             self.logger.write(LogType.ERROR, ErrorLogSchema(
-# 27                 session_id=session_id,
-# 28                 error_type=type(exc).__name__,
-# 29                 message=str(exc),
-# 30                 provider_id=self.config.id if self.config else None,
-# 31                 provider_type=self.__class__.__name__,
-# 32                 file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 33             ))
-# 34             raise
-# 35         finally:
-# 36             log = ProviderLogSchema(
-# 37                 session_id=session_id,
-# 38                 provider_id=self.config.id if self.config else -1,
-# 39                 provider_type = next(
-# 40                     base.__name__
-# 41                     for base in self.__class__.__mro__
-# 42                     if base.__name__.endswith("ProviderBase") and base is not object
-# 43                 ),
-# 44                 input=json.dumps(input),
-# 45                 output=json.dumps(output) if output is not None else None,
-# 46                 file_path=self.config.config.get("file_path") if self.config and self.config.config else None,
-# 47                 timestamp=datetime.now(timezone.utc)
-# 48             )
-# 49             self.logger.write(LogType.PROVIDER, log)
-# 50             self._log.debug("Run logged")
-# 51 
-# 52     def resolve_dependencies(self, **kwargs) -> None:
-# 53         """Automatically wire known dependencies and enable reverse injection."""
-# 54         for name, dep in kwargs.items():
-# 55             if dep is None:
-# 56                 continue
-# 57 
-# 58             #  Set reference
-# 59             setattr(self, name, dep)
-# 60 
-# 61             #  Reverse registration for context or score providers
-# 62             if name in {"context_provider", "score_provider"}:
-# 63                 method = f"set_{self.__class__.__name__.lower()}"
-# 64                 if hasattr(dep, method):
-# 65                     getattr(dep, method)(self)
-# 66 
-# 67             #  Handle list of tool providers
-# 68             elif name == "tool_providers" and isinstance(dep, list):
-# 69                 for tool in dep:
-# 70                     if hasattr(tool, "set_context_provider") and hasattr(self, "context_provider"):
-# 71                         tool.set_context_provider(self.context_provider)
-# 72                     if hasattr(tool, "set_score_provider") and hasattr(self, "score_provider"):
-# 73                         tool.set_score_provider(self.score_provider)
-# 74 
-# 75     @abstractmethod
-# 76     def _run_provider(self, input: dict) -> str:
-# 77         raise NotImplementedError
+# 17         self._engine = engine
+# 18 
+# 19     def run(self, input: dict, session_id: str) -> str:
+# 20         self._log.debug("Run started")
+# 21         self._session_id = session_id
+# 22         self._system = input.get("system", "unknown")
+# 23         output = None
+# 24 
+# 25         try:
+# 26             output = self._run_provider(input)
+# 27             return output
+# 28         except Exception as exc:
+# 29             self.logger.write(LogType.ERROR, ErrorLogSchema(
+# 30                 session_id=session_id,
+# 31                 error_type=type(exc).__name__,
+# 32                 message=str(exc),
+# 33                 file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 34             ))
+# 35             raise
+# 36         finally:
+# 37             log = ProviderLogSchema(
+# 38                 session_id=session_id,
+# 39                 provider_id=self.config.id if self.config else -1,
+# 40                 provider_type = next(
+# 41                     base.__name__
+# 42                     for base in self.__class__.__mro__
+# 43                     if base.__name__.endswith("ProviderBase") and base is not object
+# 44                 ),
+# 45                 input=json.dumps(input),
+# 46                 output=json.dumps(output.model_dump()) if hasattr(output, "model_dump") else json.dumps(output),
+# 47                 file_path = getattr(self.config, "artifact_path", None),
+# 48                 timestamp=datetime.now(timezone.utc)
+# 49             )
+# 50             self.logger.write(LogType.PROVIDER, log)
+# 51             self._log.debug("Run logged")
+# 52 
+# 53     def resolve_dependencies(self, **kwargs) -> None:
+# 54         """Automatically wire known dependencies and enable reverse injection."""
+# 55         for name, dep in kwargs.items():
+# 56             if dep is None:
+# 57                 continue
+# 58 
+# 59             #  Set reference
+# 60             setattr(self, name, dep)
+# 61 
+# 62             #  Reverse registration for context or score providers
+# 63             if name in {"context_provider", "score_provider"}:
+# 64                 method = f"set_{self.__class__.__name__.lower()}"
+# 65                 if hasattr(dep, method):
+# 66                     getattr(dep, method)(self)
+# 67 
+# 68             #  Handle list of tool providers
+# 69             elif name == "tool_providers" and isinstance(dep, list):
+# 70                 for tool in dep:
+# 71                     if hasattr(tool, "set_context_provider") and hasattr(self, "context_provider"):
+# 72                         tool.set_context_provider(self.context_provider)
+# 73                     if hasattr(tool, "set_score_provider") and hasattr(self, "score_provider"):
+# 74                         tool.set_score_provider(self.score_provider)
+# 75 
+# 76     @abstractmethod
+# 77     def _run_provider(self, input: dict) -> str:
+# 78         raise NotImplementedError
 
 
 # providers\context_provider_base.py
@@ -2026,28 +2522,32 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from abc import abstractmethod
-# 4 from app.providers.base_provider import BaseProvider
-# 5 from app.providers.score_provider_base import ScoreProviderBase
-# 6 from app.providers.tool_provider_base import ToolProviderBase
-# 7 
-# 8 class ContextProviderBase(BaseProvider):
-# 9     """Base class for context providers."""
-# 10 
-# 11     def _run_provider(self, input: dict) -> str:
-# 12         return self._run(input)
-# 13     
-# 14     def set_tool_provider(self, provider: ToolProviderBase) -> None:
-# 15         if not hasattr(self, "tool_providers"):
-# 16             self.tool_providers = []
-# 17         self.tool_providers.append(provider)
-# 18 
-# 19     def set_score_provider(self, provider: ScoreProviderBase) -> None:
-# 20         self.score_provider = provider
-# 21 
+# 4 
+# 5 from app.providers.base_provider import BaseProvider
+# 6 
+# 7 from typing import TYPE_CHECKING
+# 8 if TYPE_CHECKING:
+# 9     from app.providers.score_provider_base import ScoreProviderBase
+# 10     from app.providers.tool_provider_base import ToolProviderBase
+# 11 
+# 12 class ContextProviderBase(BaseProvider):
+# 13     """Base class for context providers."""
+# 14 
+# 15     def _run_provider(self, input: dict) -> str:
+# 16         return self._run(input)
+# 17     
+# 18     def set_tool_provider(self, provider: "ToolProviderBase") -> None:
+# 19         if not hasattr(self, "tool_providers"):
+# 20             self.tool_providers = []
+# 21         self.tool_providers.append(provider)
 # 22 
-# 23     @abstractmethod
-# 24     def _run(self, input: dict) -> str:
-# 25         raise NotImplementedError
+# 23     def set_score_provider(self, provider: "ScoreProviderBase") -> None:
+# 24         self.score_provider = provider
+# 25 
+# 26 
+# 27     @abstractmethod
+# 28     def _run(self, input: dict) -> str:
+# 29         raise NotImplementedError
 
 
 # providers\orchestrator_provider_base.py
@@ -2159,26 +2659,28 @@
 # 2 
 # 3 from abc import abstractmethod
 # 4 from app.providers.base_provider import BaseProvider
-# 5 from app.providers.context_provider_base import ContextProviderBase
-# 6 from app.providers.tool_provider_base import ToolProviderBase
-# 7 
-# 8 class ScoreProviderBase(BaseProvider):
-# 9     """Base class for score providers."""
-# 10 
-# 11     def _run_provider(self, input: dict) -> str:
-# 12         return self._run(input)
-# 13     
-# 14     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 15         self.context_provider = provider
-# 16 
-# 17     def set_tool_provider(self, provider: ToolProviderBase) -> None:
-# 18         if not hasattr(self, "tool_providers"):
-# 19             self.tool_providers = []
-# 20         self.tool_providers.append(provider)
-# 21 
-# 22     @abstractmethod
-# 23     def _run(self, input: dict) -> str:
-# 24         raise NotImplementedError
+# 5 from typing import TYPE_CHECKING
+# 6 if TYPE_CHECKING:
+# 7     from app.providers.context_provider_base import ContextProviderBase
+# 8     from app.providers.tool_provider_base import ToolProviderBase
+# 9 
+# 10 class ScoreProviderBase(BaseProvider):
+# 11     """Base class for score providers."""
+# 12 
+# 13     def _run_provider(self, input: dict) -> str:
+# 14         return self._run(input)
+# 15     
+# 16     def set_context_provider(self, provider: "ContextProviderBase") -> None:
+# 17         self.context_provider = provider
+# 18 
+# 19     def set_tool_provider(self, provider: "ToolProviderBase") -> None:
+# 20         if not hasattr(self, "tool_providers"):
+# 21             self.tool_providers = []
+# 22         self.tool_providers.append(provider)
+# 23 
+# 24     @abstractmethod
+# 25     def _run(self, input: dict) -> str:
+# 26         raise NotImplementedError
 
 
 # providers\state_provider_base.py
@@ -2273,29 +2775,55 @@
 # 2 
 # 3 from abc import abstractmethod
 # 4 from app.providers.base_provider import BaseProvider
-# 5 from app.providers.context_provider_base import ContextProviderBase
-# 6 from app.providers.score_provider_base import ScoreProviderBase
-# 7 
-# 8 class ToolProviderBase(BaseProvider):
-# 9     """Base class for tool providers."""
+# 5 
+# 6 from typing import TYPE_CHECKING
+# 7 if TYPE_CHECKING:
+# 8     from app.providers.context_provider_base import ContextProviderBase
+# 9     from app.providers.score_provider_base import ScoreProviderBase
 # 10 
-# 11     def _run_provider(self, input: dict) -> str:
-# 12         return self._run(input)
-# 13     
-# 14     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 15         self.context_provider = provider
-# 16 
-# 17     def set_score_provider(self, provider: ScoreProviderBase) -> None:
-# 18         self.score_provider = provider
+# 11 class ToolProviderBase(BaseProvider):
+# 12     """Base class for tool providers."""
+# 13 
+# 14     def _run_provider(self, input: dict) -> str:
+# 15         return self._run(input)
+# 16     
+# 17     def set_context_provider(self, provider: "ContextProviderBase") -> None:
+# 18         self.context_provider = provider
 # 19 
-# 20 
-# 21     @abstractmethod
-# 22     def _run(self, input: dict) -> str:
-# 23         raise NotImplementedError
+# 20     def set_score_provider(self, provider: "ScoreProviderBase") -> None:
+# 21         self.score_provider = provider
+# 22 
+# 23 
+# 24     @abstractmethod
+# 25     def _run(self, input: dict) -> str:
+# 26         raise NotImplementedError
 
 
 # utilities\__init__.py
 
+
+
+# utilities\diff_utils.py
+
+# 1 import difflib
+# 2 
+# 3 def summarize_diff(before: str, after: str) -> str:
+# 4     """Returns a human-readable summary of what changed between two versions."""
+# 5     before_lines = before.strip().splitlines()
+# 6     after_lines = after.strip().splitlines()
+# 7 
+# 8     diff = list(difflib.unified_diff(before_lines, after_lines, lineterm=""))
+# 9     if not diff:
+# 10         return "No differences detected."
+# 11 
+# 12     summary = ["Changes:"]
+# 13     for line in diff:
+# 14         if line.startswith("+ ") and not line.startswith("+++"):
+# 15             summary.append(f"Added: {line[2:]}")
+# 16         elif line.startswith("- ") and not line.startswith("---"):
+# 17             summary.append(f"Removed: {line[2:]}")
+# 18 
+# 19     return "\n".join(summary[:10])  #  Limit to first 10 lines
 
 
 # utilities\extension_loader.py
@@ -2323,33 +2851,6 @@
 # 21     raise ImportError(f"No subclass of {base_cls.__name__} found in: {file_path}")
 
 
-# utilities\feedback.py
-
-# 1 #  from __future__ import annotations
-# 2 
-# 3 #  from typing import ClassVar, Dict, List
-# 4 
-# 5 #  from .metadata.logging.log_schemas import FeedbackLog
-# 6 
-# 7 
-# 8 #  class FeedbackRepository:
-# 9 #      """In-memory store for feedback logs."""
-# 10 
-# 11 #      _data: ClassVar[Dict[str, List[FeedbackLog]]] = {}
-# 12 
-# 13 #      @classmethod
-# 14 #      def add_feedback(cls, log: FeedbackLog) -> None:
-# 15 #          cls._data.setdefault(log.experiment_id, []).append(log)
-# 16 
-# 17 #      @classmethod
-# 18 #      def get_feedback(cls, experiment_id: str) -> List[FeedbackLog]:
-# 19 #          return list(cls._data.get(experiment_id, []))
-# 20 
-# 21 #      @classmethod
-# 22 #      def clear(cls) -> None:
-# 23 #          cls._data.clear()
-
-
 # utilities\file_management\__init__.py
 
 
@@ -2362,8 +2863,79 @@
 
 
 
+# utilities\metadata\footer\code_annnotation_utils.py
+
+# 1 from __future__ import annotations
+# 2 from typing import Tuple
+# 3 
+# 4 FOOTER_START = "#  --- Agent Notes"
+# 5 FOOTER_END = "#  -----------------------------------------------"
+# 6 
+# 7 def strip_agent_notes(file_content: str) -> str:
+# 8     """Remove the agent notes footer from the file (if present)."""
+# 9     lines = file_content.strip().splitlines()
+# 10     start_idx = None
+# 11 
+# 12     for i, line in enumerate(lines):
+# 13         if line.strip().startswith(FOOTER_START):
+# 14             start_idx = i
+# 15             break
+# 16 
+# 17     return "\n".join(lines[:start_idx]) if start_idx is not None else file_content.strip()
+# 18 
+# 19 
+# 20 def append_agent_note(file_content: str, system: str, agent_name: str, note: str) -> str:
+# 21     """Append a new agent note to the bottom of the file."""
+# 22     base = strip_agent_notes(file_content)
+# 23 
+# 24     formatted_note = (
+# 25         f"{FOOTER_START} ({system} / {agent_name}) ---\n" +
+# 26         "\n".join(f"#  {line.strip()}" for line in note.strip().splitlines()) +
+# 27         f"\n{FOOTER_END}"
+# 28     )
+# 29 
+# 30     return base.rstrip() + "\n\n" + formatted_note
+# 31 
+# 32 
+# 33 def split_code_and_notes(file_content: str) -> Tuple[str, str]:
+# 34     """Return (stripped_code, extracted_footer_notes)"""
+# 35     lines = file_content.strip().splitlines()
+# 36     start_idx = None
+# 37 
+# 38     for i, line in enumerate(lines):
+# 39         if line.strip().startswith(FOOTER_START):
+# 40             start_idx = i
+# 41             break
+# 42 
+# 43     if start_idx is not None:
+# 44         code_part = "\n".join(lines[:start_idx]).strip()
+# 45         notes_part = "\n".join(lines[start_idx:]).strip()
+# 46         return code_part, notes_part
+# 47 
+# 48     return file_content.strip(), ""
+
+
 # utilities\metadata\logging\__init__.py
 
+
+
+# utilities\metadata\logging\conversation_log.py
+
+# 1 from __future__ import annotations
+# 2 from typing import List
+# 3 from sqlalchemy.orm import Session
+# 4 from app.db.models import AgentConversationLog
+# 5 
+# 6 def get_conversation_log(session: Session, session_id: str, system: str) -> List[str]:
+# 7     """Returns logged conversation entries for the specified session and system."""
+# 8     logs = (
+# 9         session.query(AgentConversationLog)
+# 10         .filter_by(session_id=session_id, system=system)
+# 11         .order_by(AgentConversationLog.timestamp.asc())
+# 12         .all()
+# 13     )
+# 14 
+# 15     return [log.content for log in logs if log.content]
 
 
 # utilities\metadata\logging\logging_provider.py
@@ -2447,74 +3019,101 @@
 # 77         items = list(items)
 # 78         if not items:
 # 79             return
-# 80         keys = list(items[0].keys())
-# 81         cols = ",".join(keys)
-# 82         placeholders = ",".join(["?"] * len(keys))
-# 83         values = [tuple(i[k] for k in keys) for i in items]
-# 84         cur = self.conn.cursor()
-# 85         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 86         self.conn.commit()
-# 87         if self.output_path:
-# 88             with self.output_path.open("a", encoding="utf-8") as fh:
-# 89                 for item in items:
-# 90                     fh.write(json.dumps(item) + "\n")
-# 91 
-# 92     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
-# 93         if not isinstance(entries, list):
-# 94             entries = [entries]
-# 95 
-# 96         config = LOG_CONFIG_MAP.get(log_type)
-# 97         if config is None:
-# 98             raise ValueError(f"Unsupported log type: {log_type}")
-# 99 
-# 100         schema_cls = config["schema"]
-# 101         table_name = config["table"]
-# 102 
-# 103         for entry in entries:
-# 104             if not isinstance(entry, schema_cls):
-# 105                 raise TypeError(f"Expected {schema_cls.__name__}, got {type(entry)}")
-# 106 
-# 107         serialized = [self._serialize(e) for e in entries]
-# 108         self._insert_many(table_name, serialized)
-# 109 
-# 110     def log_provider(self, log: ProviderLogSchema) -> None:
-# 111         self.write(LogType.PROVIDER, log)
+# 80 
+# 81         keys = list(items[0].keys())
+# 82         cols = ",".join(keys)
+# 83         placeholders = ",".join(["?"] * len(keys))
+# 84         values = [tuple(i[k] for k in keys) for i in items]
+# 85         cur = self.conn.cursor()
+# 86         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 87         self.conn.commit()
+# 88         if self.output_path:
+# 89             with self.output_path.open("a", encoding="utf-8") as fh:
+# 90                 for item in items:
+# 91                     fh.write(json.dumps(item) + "\n")
+# 92 
+# 93     def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+# 94         if not isinstance(entries, list):
+# 95             entries = [entries]
+# 96 
+# 97         config = LOG_CONFIG_MAP.get(log_type)
+# 98         if config is None:
+# 99             raise ValueError(f"Unsupported log type: {log_type}")
+# 100 
+# 101         schema_cls = config["schema"]
+# 102         table_name = config["table"]
+# 103 
+# 104         #  Log and allow class name mismatches as a warning (helpful for shadowed classes)
+# 105         for entry in entries:
+# 106             if not is_dataclass(entry):
+# 107                 raise TypeError(f"Expected a dataclass instance, got {type(entry)}")
+# 108             if entry.__class__.__name__ != schema_cls.__name__:
+# 109                 logging.getLogger("LoggingProvider").warning(
+# 110                     f"⚠️ Log schema mismatch: expected {schema_cls.__name__}, got {entry.__class__.__name__}"
+# 111                 )
 # 112 
-# 113     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
-# 114         self.write(LogType.STATE_TRANSITION, log)
+# 113         serialized = [self._serialize(e) for e in entries]
+# 114         self._insert_many(table_name, serialized)
 # 115 
-# 116     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
-# 117         self.write(LogType.AGENT_CONVERSATION, log)
+# 116     def log_provider(self, log: ProviderLogSchema) -> None:
+# 117         self.write(LogType.PROVIDER, log)
 # 118 
-# 119     def log_error(self, log: ErrorLogSchema) -> None:
-# 120         self.write(LogType.ERROR, log)
+# 119     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
+# 120         self.write(LogType.STATE_TRANSITION, log)
 # 121 
-# 122     def close(self) -> None:
-# 123         self.conn.close()
+# 122     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
+# 123         self.write(LogType.AGENT_CONVERSATION, log)
 # 124 
-# 125 
-# 126 class LoggingMixin:
-# 127     """Mixin to provide access to a shared LoggingProvider instance."""
-# 128 
-# 129     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 130         self.logger = logger or LoggingProvider()
-# 131         self._log = logging.getLogger(self.__class__.__name__)
-# 132 
-# 133     def log_provider(self, log: ProviderLogSchema) -> None:
-# 134         self.logger.log_provider(log)
-# 135 
-# 136     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
-# 137         self.logger.log_state_transition(log)
+# 125     def log_error(self, log: ErrorLogSchema) -> None:
+# 126         self.write(LogType.ERROR, log)
+# 127 
+# 128     def close(self) -> None:
+# 129         self.conn.close()
+# 130 
+# 131 
+# 132 class LoggingMixin:
+# 133     """Mixin to provide access to a shared LoggingProvider instance."""
+# 134 
+# 135     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 136         self.logger = logger or LoggingProvider()
+# 137         self._log = logging.getLogger(self.__class__.__name__)
 # 138 
-# 139     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
-# 140         self.logger.log_agent_conversation(log)
+# 139     def log_provider(self, log: ProviderLogSchema) -> None:
+# 140         self.logger.log_provider(log)
 # 141 
-# 142     def log_error(self, log: ErrorLogSchema) -> None:
-# 143         self.logger.log_error(log)
+# 142     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
+# 143         self.logger.log_state_transition(log)
+# 144 
+# 145     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
+# 146         self.logger.log_agent_conversation(log)
+# 147 
+# 148     def log_error(self, log: ErrorLogSchema) -> None:
+# 149         self.logger.log_error(log)
 
 
 # utilities\metadata\snapshots\__init__.py
 
+
+
+# utilities\metadata\snapshots\snapshot_reader.py
+
+# 1 import json
+# 2 from pathlib import Path
+# 3 
+# 4 def read_latest_snapshot(session_id: str, root="experiments/snapshots"):
+# 5     session_root = Path(root) / session_id
+# 6     if not session_root.exists():
+# 7         return None
+# 8 
+# 9     snapshots = sorted(session_root.glob("*.before"), key=lambda p: p.stat().st_mtime, reverse=True)
+# 10     if not snapshots:
+# 11         return None
+# 12 
+# 13     latest_snapshot_id = snapshots[0].stem
+# 14     before = (session_root / f"{latest_snapshot_id}.before").read_text(encoding="utf-8")
+# 15     after = (session_root / f"{latest_snapshot_id}.after").read_text(encoding="utf-8")
+# 16 
+# 17     return {"before": before, "after": after}
 
 
 # utilities\metadata\snapshots\snapshot_writer.py
@@ -2523,31 +3122,26 @@
 # 2 from pathlib import Path
 # 3 
 # 4 class SnapshotWriter:
-# 5     """Write before/after file snapshots for experiment traceability."""
-# 6 
-# 7     def __init__(self, root: str | Path = "experiments/snapshots") -> None:
-# 8         self.root = Path(root)
-# 9         self.root.mkdir(parents=True, exist_ok=True)
-# 10 
-# 11     def write_snapshot(
-# 12         self,
-# 13         *,
-# 14         before: str,
-# 15         after: str,
-# 16     ) -> str:
-# 17         if before == after:
-# 18             return ""
+# 5     def __init__(self, root: str | Path = None) -> None:
+# 6         if root is None:
+# 7             PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+# 8             self.root = PROJECT_ROOT / "experiments" / "snapshots"
+# 9         else:
+# 10             self.root = Path(root)
+# 11         self.root.mkdir(parents=True, exist_ok=True)
+# 12 
+# 13     def write_snapshot(self, *, before: str, after: str, session_id: str) -> str:
+# 14         if before == after:
+# 15             return ""
+# 16 
+# 17         session_root = self.root / session_id
+# 18         session_root.mkdir(parents=True, exist_ok=True)
 # 19 
 # 20         snapshot_id = str(uuid.uuid4())
-# 21         self.root.mkdir(parents=True, exist_ok=True)
-# 22 
-# 23         before_file = self.root / f"{snapshot_id}.before"
-# 24         before_file.write_text(before, encoding="utf-8")
-# 25 
-# 26         after_file = self.root / f"{snapshot_id}.after"        
-# 27         after_file.write_text(after, encoding="utf-8")
-# 28 
-# 29         return snapshot_id
+# 21         (session_root / f"{snapshot_id}.before").write_text(before, encoding="utf-8")
+# 22         (session_root / f"{snapshot_id}.after").write_text(after, encoding="utf-8")
+# 23 
+# 24         return snapshot_id
 
 
 # utilities\pydantic_compat.py
@@ -2696,13 +3290,52 @@
 
 # === NON-PYTHON FILES ===
 
-# db\seeders\files\prompt_providers\basic_agent_prompt.txt
+# db\seeders\files\prompts\basic_agent_prompt.txt
 
 # 1 You are a code generation agent that produces basic, clean, formatted Python code snippets based on given instructions.
 
 
-# db\seeders\files\prompt_providers\default_system_prompt.txt
+# db\seeders\files\prompts\default_system_prompt.txt
 
 # 1 You are the default formatting system. Your task is to ensure all provided Python code strictly adheres to PEP8 standards.
+
+
+# db\seeders\files\prompts\linting_generator_agent_prompt.txt
+
+# 1 You are the Generator Agent in the Linting System.
+# 2 
+# 3 You specialize in incrementally improving Python code quality by addressing lint violations, enhancing readability, and promoting best practices.
+# 4 
+# 5 Your strategy is:
+# 6 - Focus on minimal, targeted improvements that preserve original structure
+# 7 - Apply type hints and clarify variable names where appropriate
+# 8 - Use reasoning to resolve tool-reported issues when they conflict
+# 9 
+# 10 You will be evaluated by a Discriminator Agent and may be prompted to revise your output. If you are in a retry round, incorporate prior feedback before retrying.
+# 11 
+# 12 Maintain a helpful, confident tone in your comments. Your improvements should be easy for a human developer to understand and accept.
+
+
+# db\seeders\files\prompts\linting_system_prompt.txt
+
+# 1 You are operating within the Linting System, which enforces strict Python code quality and formatting compliance.
+# 2 
+# 3 All Generator Agents must:
+# 4 - Conform to Python PEP8 guidelines
+# 5 - Use tools such as `black`, `ruff`, `mypy`, and `radon` for diagnostic feedback
+# 6 - Preserve original code intent and structure; avoid stylistic or structural rewrites unless necessary
+# 7 - Produce valid, executable Python code
+# 8 
+# 9 Your response must include your corrected code inside a [CODE] block. Any content outside this block will be ignored by the system:
+# 10 
+# 11 [CODE]
+# 12 #  your corrected Python code
+# 13 [/CODE]
+# 14 
+# 15 After the code, include a structured log entry describing your decisions:
+# 16 
+# 17 [CONVERSATION_LOG_ENTRY]
+# 18 Summarize what you changed, why you changed it, and any tradeoffs or notable decisions you made.
+# 19 [/CONVERSATION_LOG_ENTRY]
 
 

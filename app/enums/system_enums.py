@@ -66,6 +66,13 @@ class SystemType(str, Enum):
     CONTEXT_FILTERING = "context_filtering"
 
 
+class Decision(str, Enum):
+    initial = "initial"
+    improved = "improved"
+    rollback = "rollback"
+    final = "final"
+
+
 # class SystemState(Enum):
 #     """Finite state machine states for the CodeCritic system."""
 

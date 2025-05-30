@@ -110,170 +110,172 @@
 # 38     name = Column(String, nullable=False)
 # 39     description = Column(String, nullable=True)
 # 40     artifact_path = Column(String, nullable=False)
-# 41     tags = Column(JSON, nullable=True)
-# 42 
-# 43 class ToolProviderConfig(Base):
-# 44     __tablename__ = "tool_provider_config"
-# 45     id = Column(Integer, primary_key=True)
-# 46     guid = Column(String, unique=True, nullable=False)
-# 47     name = Column(String, nullable=False)
-# 48     description = Column(String, nullable=True)
-# 49     config = Column(JSON, nullable=True)
-# 50     artifact_path = Column(String, nullable=False)
-# 51     tags = Column(JSON, nullable=True)
-# 52 
-# 53 class ScoreProviderConfig(Base):
-# 54     __tablename__ = "score_provider_config" 
-# 55     id = Column(Integer, primary_key=True)
-# 56     guid = Column(String, unique=True, nullable=False)
-# 57     name = Column(String, nullable=False)
-# 58     description = Column(String, nullable=True)
-# 59     config = Column(JSON, nullable=True)
-# 60     artifact_path = Column(String, nullable=False)
-# 61     tags = Column(JSON, nullable=True)
-# 62 
-# 63 class ContextProviderConfig(Base):
-# 64     __tablename__ = "context_provider_config" 
-# 65     id = Column(Integer, primary_key=True)
-# 66     guid = Column(String, unique=True, nullable=False)
-# 67     name = Column(String, nullable=False)
-# 68     description = Column(String, nullable=True)
-# 69     config = Column(JSON, nullable=True)
-# 70     artifact_path = Column(String, nullable=False)
-# 71     tags = Column(JSON, nullable=True)
-# 72 
-# 73 class AgentEngineProviderConfig(Base):
-# 74     __tablename__ = "agent_engine_provider_config" 
-# 75 
-# 76     id = Column(Integer, primary_key=True)
-# 77     guid = Column(String, unique=True, nullable=False)
-# 78     name = Column(String, nullable=False)
-# 79     description = Column(String, nullable=True)
-# 80     model= Column(String, nullable=False)
-# 81     config = Column(JSON, nullable=True)
-# 82     artifact_path = Column(String, nullable=False)
-# 83     tags = Column(JSON, nullable=True)
-# 84 
+# 41     config = Column(JSON, nullable=False) 
+# 42     tags = Column(JSON, nullable=True)
+# 43 
+# 44 class ToolProviderConfig(Base):
+# 45     __tablename__ = "tool_provider_config"
+# 46     id = Column(Integer, primary_key=True)
+# 47     guid = Column(String, unique=True, nullable=False)
+# 48     name = Column(String, nullable=False)
+# 49     description = Column(String, nullable=True)
+# 50     config = Column(JSON, nullable=True)
+# 51     artifact_path = Column(String, nullable=False)
+# 52     tags = Column(JSON, nullable=True)
+# 53 
+# 54 class ScoreProviderConfig(Base):
+# 55     __tablename__ = "score_provider_config" 
+# 56     id = Column(Integer, primary_key=True)
+# 57     guid = Column(String, unique=True, nullable=False)
+# 58     name = Column(String, nullable=False)
+# 59     description = Column(String, nullable=True)
+# 60     config = Column(JSON, nullable=True)
+# 61     artifact_path = Column(String, nullable=False)
+# 62     tags = Column(JSON, nullable=True)
+# 63 
+# 64 class ContextProviderConfig(Base):
+# 65     __tablename__ = "context_provider_config" 
+# 66     id = Column(Integer, primary_key=True)
+# 67     guid = Column(String, unique=True, nullable=False)
+# 68     name = Column(String, nullable=False)
+# 69     description = Column(String, nullable=True)
+# 70     config = Column(JSON, nullable=True)
+# 71     artifact_path = Column(String, nullable=False)
+# 72     tags = Column(JSON, nullable=True)
+# 73 
+# 74 class AgentEngineProviderConfig(Base):
+# 75     __tablename__ = "agent_engine_provider_config" 
+# 76 
+# 77     id = Column(Integer, primary_key=True)
+# 78     guid = Column(String, unique=True, nullable=False)
+# 79     name = Column(String, nullable=False)
+# 80     description = Column(String, nullable=True)
+# 81     model= Column(String, nullable=False)
+# 82     config = Column(JSON, nullable=True)
+# 83     artifact_path = Column(String, nullable=False)
+# 84     tags = Column(JSON, nullable=True)
 # 85 
-# 86 class AgentProviderConfig(Base):
-# 87     __tablename__ = "agent_provider_config" 
-# 88 
-# 89     id = Column(Integer, primary_key=True)
-# 90     guid = Column(String, unique=True, nullable=False)
-# 91     name = Column(String, nullable=False)
-# 92     description = Column(String, nullable=True)
-# 93     config = Column(JSON, nullable=True)
-# 94     artifact_path = Column(String, nullable=False)
-# 95     tags = Column(JSON, nullable=True)
-# 96 
-# 97 class StateProviderConfig(Base):
-# 98     __tablename__ = "state_provider_config"
-# 99 
-# 100     id = Column(Integer, primary_key=True)
-# 101     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 102     name = Column(String, nullable=False)
-# 103     description = Column(String, nullable=True)
-# 104     config = Column(JSON, nullable=True)
-# 105     artifact_path = Column(String, nullable=False)
-# 106     tags = Column(JSON, nullable=True)
-# 107 
-# 108 class SystemProviderConfig(Base):
-# 109     __tablename__ = "system_provider_config"
-# 110 
-# 111     id = Column(Integer, primary_key=True)
-# 112     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 113     name = Column(String, nullable=False)
-# 114     description = Column(String, nullable=True)
-# 115     config = Column(JSON, nullable=True)
-# 116     artifact_path = Column(String, nullable=False)
-# 117     tags = Column(JSON, nullable=True)
-# 118 
-# 119 class OrchestratorProviderConfig(Base):
-# 120     __tablename__ = "orchestrator_provider_config"
-# 121 
-# 122     id = Column(Integer, primary_key=True)
-# 123     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 124     name = Column(String, nullable=False)
-# 125     description = Column(String, nullable=True)
-# 126     config = Column(JSON, nullable=True)
-# 127     artifact_path = Column(String, nullable=False)
-# 128     tags = Column(JSON, nullable=True)
-# 129 
-# 130 class ProgramProviderConfig(Base):
-# 131     __tablename__ = "program_provider_config"
-# 132 
-# 133     id = Column(Integer, primary_key=True)
-# 134     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 135     name = Column(String, nullable=False)
-# 136     description = Column(String, nullable=True)
-# 137     config = Column(JSON, nullable=True)
-# 138     artifact_path = Column(String, nullable=False)
-# 139     tags = Column(JSON, nullable=True)
-# 140 
-# 141 class SessionConfig(Base):
-# 142     __tablename__ = "session_config"
-# 143 
-# 144     id = Column(Integer, primary_key=True)
-# 145     session_id = Column(String, unique=True, nullable=False)
-# 146     name = Column(String, nullable=False)
-# 147     description = Column(String, nullable=True)
-# 148     environment_type = Column(String, nullable=False)  #  e.g., "experiment", "live", "staging"
-# 149     config = Column(JSON, nullable=True)
-# 150     tags = Column(JSON, nullable=True)
-# 151 
+# 86 
+# 87 class AgentProviderConfig(Base):
+# 88     __tablename__ = "agent_provider_config" 
+# 89 
+# 90     id = Column(Integer, primary_key=True)
+# 91     guid = Column(String, unique=True, nullable=False)
+# 92     name = Column(String, nullable=False)
+# 93     description = Column(String, nullable=True)
+# 94     config = Column(JSON, nullable=True)
+# 95     artifact_path = Column(String, nullable=False)
+# 96     tags = Column(JSON, nullable=True)
+# 97 
+# 98 class StateProviderConfig(Base):
+# 99     __tablename__ = "state_provider_config"
+# 100 
+# 101     id = Column(Integer, primary_key=True)
+# 102     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 103     name = Column(String, nullable=False)
+# 104     description = Column(String, nullable=True)
+# 105     config = Column(JSON, nullable=True)
+# 106     artifact_path = Column(String, nullable=False)
+# 107     tags = Column(JSON, nullable=True)
+# 108 
+# 109 class SystemProviderConfig(Base):
+# 110     __tablename__ = "system_provider_config"
+# 111 
+# 112     id = Column(Integer, primary_key=True)
+# 113     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 114     name = Column(String, nullable=False)
+# 115     description = Column(String, nullable=True)
+# 116     config = Column(JSON, nullable=True)
+# 117     artifact_path = Column(String, nullable=False)
+# 118     tags = Column(JSON, nullable=True)
+# 119 
+# 120 class ControllerProviderConfig(Base):
+# 121     __tablename__ = "controller_provider_config"
+# 122 
+# 123     id = Column(Integer, primary_key=True)
+# 124     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 125     name = Column(String, nullable=False)
+# 126     description = Column(String, nullable=True)
+# 127     config = Column(JSON, nullable=True)        #  expects {"systems": {"name": id, …}, …}
+# 128     artifact_path = Column(String, nullable=False)
+# 129     tags = Column(JSON, nullable=True)
+# 130 
+# 131 
+# 132 class ProgramProviderConfig(Base):
+# 133     __tablename__ = "program_provider_config"
+# 134 
+# 135     id = Column(Integer, primary_key=True)
+# 136     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 137     name = Column(String, nullable=False)
+# 138     description = Column(String, nullable=True)
+# 139     config = Column(JSON, nullable=True)
+# 140     artifact_path = Column(String, nullable=False)
+# 141     tags = Column(JSON, nullable=True)
+# 142 
+# 143 class SessionConfig(Base):
+# 144     __tablename__ = "session_config"
+# 145 
+# 146     id = Column(Integer, primary_key=True)
+# 147     program_provider_id = Column(String, unique=True, nullable=False)
+# 148     name = Column(String, nullable=False)
+# 149     description = Column(String, nullable=True)
+# 150     environment_type = Column(String, nullable=False)  #  e.g., "experiment", "live", "staging"
+# 151     tags = Column(JSON, nullable=True)
 # 152 
-# 153 # #  LOGS
-# 154 
-# 155 class ProviderLog(Base):
-# 156     __tablename__ = "provider_log"
-# 157 
-# 158     id = Column(Integer, primary_key=True, index=True)
-# 159     session_id = Column(String, nullable=False)
-# 160     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 161     provider_id = Column(Integer, nullable=False)
-# 162     provider_type = Column(String, nullable=False)
-# 163     input = Column(String, nullable=True)
-# 164     output = Column(String, nullable=True)
-# 165     snapshot_id = Column(String, nullable=True)
-# 166     file_path = Column(String, nullable=True)
-# 167     transition_from = Column(String, nullable=True)
-# 168     transition_to = Column(String, nullable=True)
-# 169     
-# 170 class StateTransitionLog(Base):
-# 171     __tablename__ = "state_transition_log"
-# 172 
-# 173     id = Column(Integer, primary_key=True, index=True)
-# 174     session_id = Column(String, nullable=False)
-# 175     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 176     entity_type = Column(String, nullable=False)
-# 177     entity_id = Column(Integer, nullable=False)
-# 178     from_state = Column(String, nullable=False)
-# 179     to_state = Column(String, nullable=False)
-# 180     input_snapshot_id = Column(String, nullable=True)
-# 181     output_snapshot_id = Column(String, nullable=True)
-# 182 
-# 183 class AgentConversationLog(Base):
-# 184     __tablename__ = "agent_conversation_log"
-# 185 
-# 186     id = Column(Integer, primary_key=True, index=True)
-# 187     session_id = Column(String, nullable=False)
-# 188     system = Column(String, nullable=False)
-# 189     agent_provider_config_id = Column(Integer, nullable=False)  
-# 190     agent_name = Column(String, nullable=False)
-# 191     content = Column(String, nullable=False)
-# 192     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 193 
-# 194 class ErrorLog(Base):
-# 195     __tablename__ = "error_log"
-# 196 
-# 197     id = Column(Integer, primary_key=True, index=True)
-# 198     session_id = Column(String, nullable=False)
-# 199     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 200     provider_id = Column(Integer, nullable=True)
-# 201     provider_type = Column(String, nullable=True)
-# 202     error_type = Column(String, nullable=False)
-# 203     message = Column(String, nullable=False)
-# 204     file_path = Column(String, nullable=True)
+# 153 
+# 154 # #  LOGS
+# 155 
+# 156 class ProviderLog(Base):
+# 157     __tablename__ = "provider_log"
+# 158 
+# 159     id = Column(Integer, primary_key=True, index=True)
+# 160     session_id = Column(String, nullable=False)
+# 161     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 162     provider_id = Column(Integer, nullable=False)
+# 163     provider_type = Column(String, nullable=False)
+# 164     input = Column(String, nullable=True)
+# 165     output = Column(String, nullable=True)
+# 166     snapshot_id = Column(String, nullable=True)
+# 167     file_path = Column(String, nullable=True)
+# 168     transition_from = Column(String, nullable=True)
+# 169     transition_to = Column(String, nullable=True)
+# 170     
+# 171 class StateTransitionLog(Base):
+# 172     __tablename__ = "state_transition_log"
+# 173 
+# 174     id = Column(Integer, primary_key=True, index=True)
+# 175     session_id = Column(String, nullable=False)
+# 176     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 177     entity_type = Column(String, nullable=False)
+# 178     entity_id = Column(Integer, nullable=False)
+# 179     from_state = Column(String, nullable=False)
+# 180     to_state = Column(String, nullable=False)
+# 181     reason = Column(String, nullable=True)
+# 182     input_snapshot_id = Column(String, nullable=True)
+# 183     output_snapshot_id = Column(String, nullable=True)
+# 184 
+# 185 class AgentConversationLog(Base):
+# 186     __tablename__ = "agent_conversation_log"
+# 187 
+# 188     id = Column(Integer, primary_key=True, index=True)
+# 189     session_id = Column(String, nullable=False)
+# 190     system = Column(String, nullable=False)
+# 191     agent_provider_config_id = Column(Integer, nullable=False)  
+# 192     agent_name = Column(String, nullable=False)
+# 193     content = Column(String, nullable=False)
+# 194     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 195 
+# 196 class ErrorLog(Base):
+# 197     __tablename__ = "error_log"
+# 198 
+# 199     id = Column(Integer, primary_key=True, index=True)
+# 200     session_id = Column(String, nullable=False)
+# 201     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 202     provider_id = Column(Integer, nullable=True)
+# 203     provider_type = Column(String, nullable=True)
+# 204     error_type = Column(String, nullable=False)
+# 205     message = Column(String, nullable=False)
+# 206     file_path = Column(String, nullable=True)
 
 
 # db\schemas.py
@@ -285,7 +287,7 @@
 # 5 from uuid import UUID, uuid4
 # 6 from pydantic import BaseModel, Field, field_validator
 # 7 from app.enums.agent_enums import AgentRole
-# 8 from app.enums.system_enums import SystemType
+# 8 from app.enums.system_enums import Decision, SystemType
 # 9 
 # 10 
 # 11 class AgentPromptSchema(BaseModel):
@@ -325,203 +327,215 @@
 # 45     name: str
 # 46     description: Optional[str] = None
 # 47     artifact_path: Path
-# 48     tags: Optional[List[str]] = Field(default_factory=list)
-# 49 
-# 50     @field_validator("artifact_path")
-# 51     @classmethod
-# 52     def validate_artifact_path(cls, v: Path) -> Path:
-# 53         if not v.is_absolute() and ".." in v.parts:
-# 54             raise ValueError("Invalid artifact path")
-# 55         return v
-# 56 
-# 57 class ToolProviderConfig(BaseModel):
-# 58     id: Optional[int] = None
-# 59     guid: UUID = Field(default_factory=uuid4)
-# 60     name: str
-# 61     description: Optional[str] = None
-# 62     config: Optional[Dict[str, Any]] = None
-# 63     artifact_path: Path
-# 64 
-# 65     @field_validator("artifact_path")
-# 66     @classmethod
-# 67     def validate_artifact_path(cls, v: Path) -> Path:
-# 68         if not v.is_absolute() and ".." in v.parts:
-# 69             raise ValueError("Invalid artifact path")
-# 70         return v
-# 71 
-# 72 #  class ScoreContext(BaseModel):
-# 73 #      experiment_id: str
-# 74 #      round: int
-# 75 #      file_path: Path
-# 76 #      source_code: str
-# 77 
-# 78 class ScoreOutputSchema(BaseModel):
-# 79     name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
-# 80     value: float = Field(..., description="The final weighted score, normalized to a 0.0–1.0 scale.")
-# 81     components: Dict[str, float] = Field(
-# 82         ...,
-# 83         description="Component scores used to compute the overall score. Keys should match tool names."
-# 84     )
-# 85 
-# 86 class ScoreProviderConfig(BaseModel):
-# 87     id: Optional[int] = None
-# 88     guid: UUID = Field(default_factory=uuid4)
-# 89     name: str
-# 90     description: Optional[str] = None
-# 91     artifact_path: Optional[Path] = None
-# 92     table_name: str = "score_provider"
-# 93 
-# 94     @field_validator("artifact_path")
-# 95     @classmethod
-# 96     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 97         if v is None:
-# 98             return v
-# 99         if not v.is_absolute() and ".." in v.parts:
-# 100             raise ValueError("Invalid artifact path")
-# 101         return v
-# 102         
-# 103 class AgentEngineProviderConfig(BaseModel):
-# 104     id: Optional[int] = None
-# 105     guid: UUID = Field(default_factory=uuid4)
-# 106     name: str
-# 107     description: Optional[str] = None
-# 108     model: str
-# 109     config: Optional[Dict[str, Any]] = None
-# 110     artifact_path: Path
-# 111 
-# 112     @field_validator("artifact_path")
-# 113     @classmethod
-# 114     def validate_artifact_path(cls, v: Path) -> Path:
-# 115         if not v.is_absolute() and ".." in v.parts:
-# 116             raise ValueError("Invalid artifact path")
-# 117         return v
-# 118 
-# 119 class AgentProviderConfigSchema(BaseModel):
-# 120     id: Optional[int] = None
-# 121     guid: UUID = Field(default_factory=uuid4)
-# 122     name: str
-# 123     description: Optional[str] = None
-# 124     config: Optional[Dict[str, Any]] = None
-# 125     artifact_path: Path
-# 126     tags: Optional[list[str]] = None
-# 127 
-# 128     @field_validator("artifact_path")
-# 129     @classmethod
-# 130     def validate_artifact_path(cls, v: Path) -> Path:
-# 131         if not v.is_absolute() and ".." in v.parts:
-# 132             raise ValueError("Invalid artifact path")
-# 133         return v
-# 134 
-# 135 class StateProviderConfigSchema(BaseModel):
-# 136     id: Optional[int] = None
-# 137     guid: UUID = Field(default_factory=uuid4)
-# 138     name: str
-# 139     description: Optional[str] = None
-# 140     config: Optional[Dict[str, Any]] = None
-# 141     artifact_path: Path
-# 142     tags: Optional[list[str]] = None
-# 143 
-# 144     @classmethod
-# 145     def validate_artifact_path(cls, v: Path) -> Path:
-# 146         if not v.is_absolute() and ".." in v.parts:
-# 147             raise ValueError("Invalid artifact path")
-# 148         return v
-# 149 
-# 150 class SystemProviderConfigSchema(BaseModel):
-# 151     id: Optional[int] = None
-# 152     guid: UUID = Field(default_factory=uuid4)
-# 153     name: str
-# 154     description: Optional[str] = None
-# 155     config: Optional[Dict[str, Any]] = None
-# 156     artifact_path: Path
-# 157     tags: Optional[list[str]] = None
-# 158 
-# 159     @classmethod
-# 160     def validate_artifact_path(cls, v: Path) -> Path:
-# 161         if not v.is_absolute() and ".." in v.parts:
-# 162             raise ValueError("Invalid artifact path")
-# 163         return v
-# 164 
-# 165 class OrchestratorProviderConfigSchema(BaseModel):
-# 166     id: Optional[int] = None
-# 167     guid: UUID = Field(default_factory=uuid4)
-# 168     name: str
-# 169     description: Optional[str] = None
-# 170     config: Optional[Dict[str, Any]] = None
-# 171     artifact_path: Path
-# 172     tags: Optional[List[str]] = None
-# 173 
-# 174     @classmethod
-# 175     def validate_artifact_path(cls, v: Path) -> Path:
-# 176         if not v.is_absolute() and ".." in v.parts:
-# 177             raise ValueError("Invalid artifact path")
-# 178         return v
-# 179 
-# 180 class ProgramProviderConfigSchema(BaseModel):
-# 181     id: Optional[int] = None
-# 182     guid: UUID = Field(default_factory=uuid4)
-# 183     name: str
-# 184     description: Optional[str] = None
-# 185     config: Optional[Dict[str, Any]] = None
-# 186     artifact_path: Path
-# 187     tags: Optional[List[str]] = None
-# 188 
-# 189     @classmethod
-# 190     def validate_artifact_path(cls, v: Path) -> Path:
-# 191         if not v.is_absolute() and ".." in v.parts:
-# 192             raise ValueError("Invalid artifact path")
-# 193         return v
-# 194 
-# 195 class SessionConfigSchema(BaseModel):
-# 196     id: Optional[int] = None
-# 197     session_id: str
-# 198     name: str
-# 199     description: Optional[str] = None
-# 200     environment_type: str  #  e.g., "experiment", "live", "staging"
-# 201     config: Optional[Dict[str, Any]] = None
-# 202     tags: Optional[List[str]] = None
-# 203     
-# 204 
-# 205 #  LOGS
-# 206 
-# 207 @dataclass
-# 208 class ProviderLogSchema:
-# 209     session_id: str
-# 210     provider_id: int
-# 211     provider_type: str
-# 212     input: Optional[str] = None
-# 213     output: Optional[str] = None
-# 214     snapshot_id: Optional[str] = None
-# 215     file_path: Optional[str] = None
-# 216     transition_from: Optional[str] = None
-# 217     transition_to: Optional[str] = None
-# 218     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 219 
-# 220 @dataclass
-# 221 class StateTransitionLogSchema:
-# 222     session_id: str
-# 223     entity_type: str
-# 224     entity_id: int
-# 225     from_state: str
-# 226     to_state: str
-# 227     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 228 
-# 229 @dataclass
-# 230 class AgentConversationLogSchema:
-# 231     session_id: str
-# 232     system: str
-# 233     agent_provider_config_id: int
-# 234     agent_name: str
-# 235     content: str
-# 236     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 237 
-# 238 @dataclass
-# 239 class ErrorLogSchema:
-# 240     session_id: str             
-# 241     error_type: str                   
-# 242     message: str                    
-# 243     file_path: str | None = None       
-# 244     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 48     config: Optional[Dict[str, Any]] = None
+# 49     tags: Optional[List[str]] = Field(default_factory=list)
+# 50 
+# 51     @field_validator("artifact_path")
+# 52     @classmethod
+# 53     def validate_artifact_path(cls, v: Path) -> Path:
+# 54         if not v.is_absolute() and ".." in v.parts:
+# 55             raise ValueError("Invalid artifact path")
+# 56         return v
+# 57 
+# 58 class ToolProviderConfig(BaseModel):
+# 59     id: Optional[int] = None
+# 60     guid: UUID = Field(default_factory=uuid4)
+# 61     name: str
+# 62     description: Optional[str] = None
+# 63     config: Optional[Dict[str, Any]] = None
+# 64     artifact_path: Path
+# 65 
+# 66     @field_validator("artifact_path")
+# 67     @classmethod
+# 68     def validate_artifact_path(cls, v: Path) -> Path:
+# 69         if not v.is_absolute() and ".." in v.parts:
+# 70             raise ValueError("Invalid artifact path")
+# 71         return v
+# 72 
+# 73 class ScoreOutputSchema(BaseModel):
+# 74     name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
+# 75     value: float = Field(..., description="The final weighted score, normalized to a 0.0–1.0 scale.")
+# 76     components: Dict[str, float] = Field(
+# 77         ...,
+# 78         description="Component scores used to compute the overall score. Keys should match tool names."
+# 79     )
+# 80 
+# 81 class ScoreProviderConfig(BaseModel):
+# 82     id: Optional[int] = None
+# 83     guid: UUID = Field(default_factory=uuid4)
+# 84     name: str
+# 85     description: Optional[str] = None
+# 86     artifact_path: Optional[Path] = None
+# 87     table_name: str = "score_provider"
+# 88 
+# 89     @field_validator("artifact_path")
+# 90     @classmethod
+# 91     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 92         if v is None:
+# 93             return v
+# 94         if not v.is_absolute() and ".." in v.parts:
+# 95             raise ValueError("Invalid artifact path")
+# 96         return v
+# 97         
+# 98 class AgentEngineProviderConfig(BaseModel):
+# 99     id: Optional[int] = None
+# 100     guid: UUID = Field(default_factory=uuid4)
+# 101     name: str
+# 102     description: Optional[str] = None
+# 103     model: str
+# 104     config: Optional[Dict[str, Any]] = None
+# 105     artifact_path: Path
+# 106 
+# 107     @field_validator("artifact_path")
+# 108     @classmethod
+# 109     def validate_artifact_path(cls, v: Path) -> Path:
+# 110         if not v.is_absolute() and ".." in v.parts:
+# 111             raise ValueError("Invalid artifact path")
+# 112         return v
+# 113 
+# 114 class AgentProviderConfigSchema(BaseModel):
+# 115     id: Optional[int] = None
+# 116     guid: UUID = Field(default_factory=uuid4)
+# 117     name: str
+# 118     description: Optional[str] = None
+# 119     config: Optional[Dict[str, Any]] = None
+# 120     artifact_path: Path
+# 121     tags: Optional[list[str]] = None
+# 122 
+# 123     @field_validator("artifact_path")
+# 124     @classmethod
+# 125     def validate_artifact_path(cls, v: Path) -> Path:
+# 126         if not v.is_absolute() and ".." in v.parts:
+# 127             raise ValueError("Invalid artifact path")
+# 128         return v
+# 129 
+# 130 class StateProviderConfigSchema(BaseModel):
+# 131     id: Optional[int] = None
+# 132     guid: UUID = Field(default_factory=uuid4)
+# 133     name: str
+# 134     description: Optional[str] = None
+# 135     config: Optional[Dict[str, Any]] = None
+# 136     artifact_path: Path
+# 137     tags: Optional[list[str]] = None
+# 138 
+# 139     @classmethod
+# 140     def validate_artifact_path(cls, v: Path) -> Path:
+# 141         if not v.is_absolute() and ".." in v.parts:
+# 142             raise ValueError("Invalid artifact path")
+# 143         return v
+# 144 
+# 145 class SystemProviderConfigSchema(BaseModel):
+# 146     id: Optional[int] = None
+# 147     guid: UUID = Field(default_factory=uuid4)
+# 148     name: str
+# 149     description: Optional[str] = None
+# 150     config: Optional[Dict[str, Any]] = None
+# 151     artifact_path: Path
+# 152     tags: Optional[list[str]] = None
+# 153 
+# 154     @classmethod
+# 155     def validate_artifact_path(cls, v: Path) -> Path:
+# 156         if not v.is_absolute() and ".." in v.parts:
+# 157             raise ValueError("Invalid artifact path")
+# 158         return v
+# 159 
+# 160 class ControllerProviderConfigSchema(BaseModel):
+# 161     id: Optional[int] = None
+# 162     guid: UUID = Field(default_factory=uuid4)
+# 163     name: str
+# 164     description: Optional[str] = None
+# 165     config: Optional[Dict[str, Any]] = None
+# 166     artifact_path: Path
+# 167     tags: Optional[list[str]] = None
+# 168 
+# 169     @classmethod
+# 170     def validate_artifact_path(cls, v: Path) -> Path:
+# 171         if not v.is_absolute() and ".." in v.parts:
+# 172             raise ValueError("Invalid artifact path")
+# 173         return v
+# 174 
+# 175 class ProgramProviderConfigSchema(BaseModel):
+# 176     id: Optional[int] = None
+# 177     guid: UUID = Field(default_factory=uuid4)
+# 178     name: str
+# 179     description: Optional[str] = None
+# 180     config: Optional[Dict[str, Any]] = None
+# 181     artifact_path: Path
+# 182     tags: Optional[List[str]] = None
+# 183 
+# 184     @classmethod
+# 185     def validate_artifact_path(cls, v: Path) -> Path:
+# 186         if not v.is_absolute() and ".." in v.parts:
+# 187             raise ValueError("Invalid artifact path")
+# 188         return v
+# 189 
+# 190 class SessionConfigSchema(BaseModel):
+# 191     id: Optional[int] = None
+# 192     session_id: str
+# 193     name: str
+# 194     description: Optional[str] = None
+# 195     environment_type: str  #  e.g., "experiment", "live", "staging"
+# 196     config: Optional[Dict[str, Any]] = None
+# 197     tags: Optional[List[str]] = None
+# 198     
+# 199 
+# 200 #  LOGS
+# 201 
+# 202 @dataclass
+# 203 class ProviderLogSchema:
+# 204     session_id: str
+# 205     provider_id: int
+# 206     provider_type: str
+# 207     input: Optional[str] = None
+# 208     output: Optional[str] = None
+# 209     snapshot_id: Optional[str] = None
+# 210     file_path: Optional[str] = None
+# 211     transition_from: Optional[str] = None
+# 212     transition_to: Optional[str] = None
+# 213     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 214 
+# 215 @dataclass
+# 216 class StateTransitionLogSchema:
+# 217     session_id: str
+# 218     entity_type: str
+# 219     entity_id: int
+# 220     from_state: str
+# 221     to_state: str
+# 222     reason: str | None = None
+# 223     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 224 
+# 225 @dataclass
+# 226 class AgentConversationLogSchema:
+# 227     session_id: str
+# 228     system: str
+# 229     agent_provider_config_id: int
+# 230     agent_name: str
+# 231     content: str
+# 232     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 233 
+# 234 @dataclass
+# 235 class ErrorLogSchema:
+# 236     session_id: str             
+# 237     error_type: str                   
+# 238     message: str                    
+# 239     file_path: str | None = None       
+# 240     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 241 
+# 242 #  DTOs
+# 243 
+# 244 class Snapshot(BaseModel):
+# 245     timestamp: datetime
+# 246     file: str
+# 247     score: float
+# 248     decision: Decision
+# 249 
+# 250 class SystemState(BaseModel):
+# 251     system: str
+# 252     file_path: str
+# 253     working_file: str
+# 254     final_file: Optional[str] = None
+# 255     snapshots: List[Snapshot]
+# 256     state: Optional[str] = "active"
 
 
 # db\seed.py
@@ -529,13 +543,13 @@
 # 1 from sqlalchemy.orm import Session
 # 2 from sqlalchemy import create_engine
 # 3 from pathlib import Path
-# 4 from app.db.seeders.seed_orchestrator_provider import seed_orchestrator_providers
+# 4 from app.db.seeders.seed_controller_providers import seed_orchestrator_providers
 # 5 from app.db.seeders.seed_state_providers import seed_state_providers
 # 6 from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers
 # 7 from app.db.seeders.seed_context_providers import seed_context_providers
 # 8 from app.db.seeders.seed_prompt_providers import seed_prompt_providers
-# 9 from app.db.seeders.seed_scores import seed_score_providers
-# 10 from app.db.seeders.seed_tools import seed_tool_providers
+# 9 from app.db.seeders.seed_score_providers import seed_score_providers
+# 10 from app.db.seeders.seed_tool_providers import seed_tool_providers
 # 11 from app.db.seeders.seed_prompts import seed_prompts
 # 12 
 # 13 #  Ensure your project root matches explicitly
@@ -632,77 +646,72 @@
 # 3 from app.utilities.diff_utils import summarize_diff
 # 4 
 # 5 class LintingDiscriminatorAgentProvider(AgentProviderBase):
-# 6     def _run(self, input: dict) -> str:
-# 7         snapshot = read_latest_snapshot(session_id=self._session_id)  #  ✅ session-aware
-# 8         if not snapshot:
-# 9             return "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\nNo snapshot found.\n[/CONVERSATION_LOG_ENTRY]"
-# 10 
-# 11         before, after = snapshot["before"], snapshot["after"]
-# 12         if before == after:
-# 13             return "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\nNo meaningful change.\n[/CONVERSATION_LOG_ENTRY]"
-# 14 
-# 15         diff_summary = summarize_diff(before, after)
+# 6     def __init__(self, config=None, engine=None, **kwargs):
+# 7         super().__init__(config=config, engine=engine, **kwargs)
+# 8 
+# 9     def _run(self, input: dict) -> str:
+# 10         snapshot = read_latest_snapshot(session_id=self._session_id)
+# 11         if not snapshot:
+# 12             return (
+# 13                 "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n"
+# 14                 "[CONVERSATION_LOG_ENTRY]\nNo snapshot found.\n[/CONVERSATION_LOG_ENTRY]"
+# 15             )
 # 16 
-# 17         decision = "accept" if diff_summary else "reject"
-# 18 
-# 19         return f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n\n[CONVERSATION_LOG_ENTRY]\n{diff_summary}\n[/CONVERSATION_LOG_ENTRY]"
+# 17         before, after = snapshot["before"], snapshot["after"]
+# 18         if before == after:
+# 19             return (
+# 20                 "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n"
+# 21                 "[CONVERSATION_LOG_ENTRY]\nNo meaningful change.\n[/CONVERSATION_LOG_ENTRY]"
+# 22             )
+# 23 
+# 24         summary = summarize_diff(before, after).strip()
+# 25         if not summary:
+# 26             return (
+# 27                 "[AGENT_DECISION]reject[/AGENT_DECISION]\n\n"
+# 28                 "[CONVERSATION_LOG_ENTRY]\nDiff could not be summarized.\n[/CONVERSATION_LOG_ENTRY]"
+# 29             )
+# 30 
+# 31         return (
+# 32             "[AGENT_DECISION]accept[/AGENT_DECISION]\n\n"
+# 33             f"[CONVERSATION_LOG_ENTRY]\n{summary}\n[/CONVERSATION_LOG_ENTRY]"
+# 34         )
 
 
 # db\seeders\files\agent_providers\linting_generator_agent_provider.py
 
 # 1 from app.providers.agent_provider_base import AgentProviderBase
-# 2 from pathlib import Path
-# 3 from sqlalchemy import create_engine
-# 4 from sqlalchemy.orm import Session
-# 5 from app.db.connection import DB_PATH
-# 6 from app.db.models import (
-# 7     PromptProviderConfig,
-# 8     AgentEngineProviderConfig,
-# 9     AgentPrompt,
-# 10     SystemPrompt
-# 11 )
-# 12 from app.factories.prompt_provider_factory import PromptProviderFactory
-# 13 from app.factories.agent_engine_provider_factory import AgentEngineProviderFactory
+# 2 import textwrap
+# 3 
+# 4 class LintingGeneratorAgentProvider(AgentProviderBase):
+# 5     """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
+# 6 
+# 7     def __init__(self, config=None, engine=None, **kwargs):
+# 8         super().__init__(config=config, engine=engine, **kwargs)
+# 9 
+# 10     def _run(self, input: dict) -> str:
+# 11         session_id = self._session_id
+# 12         file_path = input["file_path"]
+# 13         system = input.get("system", "linting")
 # 14 
-# 15 class LintingGeneratorAgentProvider(AgentProviderBase):
-# 16     """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
-# 17 
-# 18     def _run(self, input: dict) -> str:
-# 19         session_id = self._session_id
-# 20         file_path = input["file_path"]
-# 21         context = input["context"]
-# 22 
-# 23         #  🔌 Local engine
-# 24         engine = create_engine(f"sqlite:///{DB_PATH}")
+# 15         if not self._prompt_provider:
+# 16             raise ValueError("Prompt provider is not set")
+# 17         if not self._agent_engine:
+# 18             raise ValueError("Agent engine is not set")
+# 19 
+# 20         #  🧠 Build final prompt
+# 21         final_prompt = self._prompt_provider.run(
+# 22             input=input,  #  pass through exactly what was received
+# 23             session_id=session_id
+# 24         )
 # 25 
-# 26         #  📦 Load config objects from DB
-# 27         with Session(bind=engine) as session:
-# 28             prompt_row = session.query(PromptProviderConfig).filter_by(name="linting_prompt_provider").first()
-# 29             engine_row = session.query(AgentEngineProviderConfig).filter_by(name="openai_gpt_4o_agent_engine").first()
-# 30             agent_prompt = session.query(AgentPrompt).filter_by(name="linting_generator_agent").first()
-# 31             system_prompt = session.query(SystemPrompt).filter_by(name="linting_system").first()
-# 32 
-# 33         #  🧠 Build prompt
-# 34         prompt_provider = PromptProviderFactory.create(prompt_row.id)
-# 35         final_prompt = prompt_provider.run(
-# 36             input={
-# 37                 "agent_prompt_path": agent_prompt.artifact_path,
-# 38                 "system_prompt_path": system_prompt.artifact_path,
-# 39                 "context": context
-# 40             },
-# 41             session_id=session_id
-# 42         )
-# 43 
-# 44         #  🤖 Run LLM engine
-# 45         engine_provider = AgentEngineProviderFactory.create(
-# 46             engine_row.id,
-# 47             config_override={"before": str(Path(file_path).resolve())}
-# 48         )
-# 49 
-# 50         return engine_provider.run(
-# 51             input={"prompt": final_prompt, "before": str(file_path)},
-# 52             session_id=session_id
-# 53         )
+# 26         #  🤖 Run LLM engine
+# 27         return self._agent_engine.run(
+# 28             input={
+# 29                 "prompt": final_prompt,
+# 30                 "before": file_path
+# 31             },
+# 32             session_id=session_id
+# 33         )
 
 
 # db\seeders\files\context_providers\__init__.py
@@ -761,52 +770,42 @@
 # 35         return json.dumps(context, indent=2)
 
 
-# db\seeders\files\orchestrator_providers\__init__.py
+# db\seeders\files\controller_providers\__init__.py
 
 
 
-# db\seeders\files\orchestrator_providers\basic_orchestrator_provider.py
+# db\seeders\files\controller_providers\preprocessing_controller_provider.py
 
-# 1 from app.providers.orchestrator_provider_base import OrchestratorProviderBase
+# 1 from app.providers.controller_provider_base import ControllerProviderBase
 # 2 
-# 3 class BasicOrchestratorProvider(OrchestratorProviderBase):
-# 4     def _run(self, input: dict) -> str:
-# 5         state = input.get("state")
-# 6         return f"Running orchestrator state: {state}"
-# 7 
-# 8     def _transition(self, state: dict) -> dict:
-# 9         current = state.get("state")
-# 10         states = self.config.config.get("states", [])
-# 11         if current not in states:
-# 12             raise ValueError(f"Invalid state: {current}")
-# 13 
-# 14         idx = states.index(current)
-# 15         next_state = states[idx + 1] if idx + 1 < len(states) else states[-1]
-# 16         return {**state, "state": next_state}
+# 3 class PreprocessingControllerProvider(ControllerProviderBase):
+# 4     def _transition(self, state, sys_output):
+# 5         if state["state"] == "start":
+# 6             return {"state": "preprocess", "reason": "kickoff"}
+# 7         if state["state"] == "preprocess":
+# 8             return {"state": "end", "reason": "after preprocessing"}
+# 9         return {"state": "end", "reason": "fallback"}
 
 
 # db\seeders\files\program_providers\__init__.py
 
 
 
-# db\seeders\files\program_providers\basic_program_provider.py
+# db\seeders\files\program_providers\codecritic_program_provider.py
 
-# 1 from app.providers.program_provider_base import ProgramProviderBase
+# 1 #  extensions/codecritic_program_provider.py
 # 2 
-# 3 class BasicProgramProvider(ProgramProviderBase):
-# 4     def _run(self, input: dict) -> str:
-# 5         state = input.get("state")
-# 6         return f"Running program state: {state}"
-# 7 
-# 8     def _transition(self, state: dict) -> dict:
-# 9         current = state.get("state")
-# 10         states = self.config.config.get("states", [])
-# 11         if current not in states:
-# 12             raise ValueError(f"Invalid state: {current}")
-# 13 
-# 14         idx = states.index(current)
-# 15         next_state = states[idx + 1] if idx + 1 < len(states) else states[-1]
-# 16         return {**state, "state": next_state}
+# 3 from app.providers.program_provider_base import ProgramProviderBase
+# 4 
+# 5 class CodeCriticProgramProvider(ProgramProviderBase):
+# 6     def _transition(self, state, ctrl_output):
+# 7         if state["state"] == "start":
+# 8             return {"state": "preprocessing", "reason": "start of program"}
+# 9 
+# 10         if state["state"] == "preprocessing":
+# 11             return {"state": "end", "reason": "preprocessing complete"}
+# 12 
+# 13         return {"state": "end", "reason": "unexpected state"}
 
 
 # db\seeders\files\prompt_providers\__init__.py
@@ -831,46 +830,73 @@
 # 2 from pathlib import Path
 # 3 from app.providers.prompt_provider_base import PromptProviderBase
 # 4 import textwrap
-# 5 
-# 6 class LintingPromptProvider(PromptProviderBase):
-# 7     def _run(self, input: dict) -> str:
-# 8         context = input.get("context", {})
-# 9         score = context.get("score", {}).get("value", "unknown")
-# 10         convo_log = context.get("conversation_log", [])
-# 11         source_code = context.get("source_code", "")
+# 5 import json
+# 6 
+# 7 class LintingPromptProvider(PromptProviderBase):
+# 8     def __init__(self, config, engine=None):
+# 9         super().__init__(config=config, engine=engine)
+# 10 
+# 11         EXTENSIONS_DIR = Path(__file__).resolve().parent
 # 12 
-# 13         agent_prompt_path = Path(input.get("agent_prompt_path", "")).resolve()
-# 14         system_prompt_path = Path(input.get("system_prompt_path", "")).resolve()
-# 15 
-# 16         if not agent_prompt_path.exists():
-# 17             raise FileNotFoundError(f"Agent prompt not found: {agent_prompt_path}")
-# 18         if not system_prompt_path.exists():
-# 19             raise FileNotFoundError(f"System prompt not found: {system_prompt_path}")
-# 20 
-# 21         agent_text = agent_prompt_path.read_text(encoding="utf-8").strip()
-# 22         system_text = system_prompt_path.read_text(encoding="utf-8").strip()
-# 23 
-# 24         convo_section = "\n".join(convo_log) if convo_log else "(none)"
-# 25 
-# 26         return textwrap.dedent(f"""\
-# 27             {agent_text}
-# 28 
-# 29             ---
+# 13         if not self._agent_prompt:
+# 14             raise ValueError("PromptProvider is missing required AgentPrompt")
+# 15         if not self._system_prompt:
+# 16             raise ValueError("PromptProvider is missing required SystemPrompt")
+# 17         if not self._context_provider:
+# 18             raise ValueError("PromptProvider is missing required ContextProvider")
+# 19 
+# 20         self.agent_prompt_path = (EXTENSIONS_DIR / self._agent_prompt.artifact_path).resolve()
+# 21         self.system_prompt_path = (EXTENSIONS_DIR / self._system_prompt.artifact_path).resolve()
+# 22 
+# 23     def _run(self, input: dict) -> str:
+# 24         session_id = input.get("session_id")
+# 25         system = input.get("system", "unknown")
+# 26         file_path = input.get("file_path")
+# 27 
+# 28         if not session_id or not file_path:
+# 29             raise ValueError("PromptProvider requires both session_id and file_path")
 # 30 
-# 31             {system_text}
-# 32 
-# 33             ---
-# 34 
-# 35             Score: {score}
-# 36             Conversation Log:
-# 37             {convo_section}
-# 38 
-# 39             ---
-# 40 
-# 41             [SOURCE_CODE]
-# 42             {source_code.rstrip()}
-# 43             [/SOURCE_CODE]
-# 44         """)
+# 31         if not self.agent_prompt_path.exists():
+# 32             raise FileNotFoundError(f"Agent prompt not found: {self.agent_prompt_path}")
+# 33         if not self.system_prompt_path.exists():
+# 34             raise FileNotFoundError(f"System prompt not found: {self.system_prompt_path}")
+# 35 
+# 36         #  🎯 Build context using the injected context provider
+# 37         raw_context = self._context_provider.run(
+# 38             {
+# 39                 "file_path": file_path,
+# 40                 "session_id": session_id,
+# 41                 "system": system
+# 42             }
+# 43         )
+# 44         context = json.loads(raw_context)
+# 45 
+# 46         agent_text = self.agent_prompt_path.read_text(encoding="utf-8").strip()
+# 47         system_text = self.system_prompt_path.read_text(encoding="utf-8").strip()
+# 48         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
+# 49         score = context.get("score", {}).get("value", "unknown")
+# 50         source_code = context.get("source_code", "")
+# 51 
+# 52         return textwrap.dedent(f"""\
+# 53 
+# 54             {agent_text}
+# 55 
+# 56             ---
+# 57 
+# 58             {system_text}
+# 59 
+# 60             ---
+# 61 
+# 62             Score: {score}
+# 63             Conversation Log:
+# 64             {convo_section}
+# 65 
+# 66             ---
+# 67 
+# 68             [SOURCE_CODE]
+# 69             {source_code.rstrip()}
+# 70             [/SOURCE_CODE]
+# 71         """)
 
 
 # db\seeders\files\prompts\__init__.py
@@ -886,65 +912,59 @@
 # 1 import json
 # 2 from app.providers.score_provider_base import ScoreProviderBase
 # 3 from app.db.schemas import ScoreOutputSchema
-# 4 from app.factories.tool_provider_factory import ToolProviderFactory
+# 4 
 # 5 
 # 6 class LintingScoreProvider(ScoreProviderBase):
-# 7     """Instantiates tool providers by ID and computes weighted linting score."""
+# 7     """Computes weighted linting score using injected tool providers."""
 # 8 
 # 9     def _run(self, input: dict) -> ScoreOutputSchema:
 # 10         file_path = input["file_path"]
-# 11         tool_ids = self.config.config.get("tool_ids", {})
-# 12 
-# 13         required = ["ruff", "mypy", "black", "radon"]
-# 14         missing = [k for k in required if k not in tool_ids]
-# 15         if missing:
-# 16             raise ValueError(f"Missing required tool IDs in config: {missing}")
+# 11 
+# 12         required = ["ruff", "mypy", "black", "radon"]
+# 13         available = {
+# 14             tool.__class__.__name__.lower(): tool
+# 15             for tool in getattr(self, "tool_providers", [])
+# 16         }
 # 17 
-# 18         #  Load providers
-# 19         tool_providers = {
-# 20             name: ToolProviderFactory.create(tool_id)
-# 21             for name, tool_id in tool_ids.items()
-# 22         }
-# 23 
-# 24         #  Helper to extract violation count
-# 25         def parse_output(output: str, fallback_score: float = 1.0) -> float:
-# 26             try:
-# 27                 result = json.loads(output)
-# 28                 violations = result["stdout"].count("\n")
-# 29                 return max(0.0, 1.0 - (violations / 20))  #  normalize: 0–1
-# 30             except Exception:
-# 31                 return fallback_score  #  If result can't be parsed, assume OK
-# 32 
-# 33         #  Run and parse scores
-# 34         ruff_raw = tool_providers["ruff"].run({"target": file_path}, session_id=self._session_id)
-# 35         ruff_score = parse_output(ruff_raw)
-# 36 
-# 37         mypy_raw = tool_providers["mypy"].run({"target": file_path}, session_id=self._session_id)
-# 38         mypy_score = parse_output(mypy_raw)
+# 18         #  Simple normalization to lookup by config name
+# 19         resolved = {}
+# 20         for name in required:
+# 21             match = next((t for t in available.values() if name in t.__class__.__name__.lower()), None)
+# 22             if not match:
+# 23                 raise ValueError(f"Missing tool provider: {name}")
+# 24             resolved[name] = match
+# 25 
+# 26         def parse_output(output: str, fallback_score: float = 1.0) -> float:
+# 27             try:
+# 28                 result = json.loads(output)
+# 29                 violations = result["stdout"].count("\n")
+# 30                 return max(0.0, 1.0 - (violations / 20))
+# 31             except Exception:
+# 32                 return fallback_score
+# 33 
+# 34         #  Run each tool
+# 35         ruff_score = parse_output(resolved["ruff"].run({"target": file_path}, session_id=self._session_id))
+# 36         mypy_score = parse_output(resolved["mypy"].run({"target": file_path}, session_id=self._session_id))
+# 37         black_score = parse_output(resolved["black"].run({"target": file_path}, session_id=self._session_id))
+# 38         radon_score = parse_output(resolved["radon"].run({"target": file_path}, session_id=self._session_id))
 # 39 
-# 40         black_raw = tool_providers["black"].run({"target": file_path}, session_id=self._session_id)
-# 41         black_score = parse_output(black_raw)
-# 42 
-# 43         radon_raw = tool_providers["radon"].run({"target": file_path}, session_id=self._session_id)
-# 44         radon_score = parse_output(radon_raw)
-# 45 
-# 46         weighted_score = round(
-# 47             ruff_score * 0.4 +
-# 48             mypy_score * 0.3 +
-# 49             black_score * 0.2 +
-# 50             radon_score * 0.1, 3
-# 51         )
-# 52 
-# 53         return ScoreOutputSchema(
-# 54             name="linting_score",
-# 55             value=weighted_score,
-# 56             components={
-# 57                 "ruff": ruff_score,
-# 58                 "mypy": mypy_score,
-# 59                 "black": black_score,
-# 60                 "radon": radon_score
-# 61             }
-# 62         )
+# 40         weighted_score = round(
+# 41             ruff_score * 0.4 +
+# 42             mypy_score * 0.3 +
+# 43             black_score * 0.2 +
+# 44             radon_score * 0.1, 3
+# 45         )
+# 46 
+# 47         return ScoreOutputSchema(
+# 48             name="linting_score",
+# 49             value=weighted_score,
+# 50             components={
+# 51                 "ruff": ruff_score,
+# 52                 "mypy": mypy_score,
+# 53                 "black": black_score,
+# 54                 "radon": radon_score
+# 55             }
+# 56         )
 
 
 # db\seeders\files\state_providers\__init__.py
@@ -964,178 +984,50 @@
 
 # db\seeders\files\state_providers\linting_discriminator_state_provider.py
 
-# 1 from app.providers.state_provider_base import StateProviderBase
-# 2 from app.factories.agent_provider_factory import AgentProviderFactory
-# 3 from app.db.models import AgentProviderConfig
-# 4 from sqlalchemy import create_engine
-# 5 from sqlalchemy.orm import Session
-# 6 from app.db.connection import DB_PATH
-# 7 from pathlib import Path
-# 8 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-# 9 
-# 10 class LintingGeneratorStateProvider(StateProviderBase):
-# 11     """FSM state that invokes the linting generator agent."""
-# 12 
-# 13     def _run(self, input: dict) -> str:
-# 14         file_path = Path(input["file_path"])
-# 15         context = input["context"]
-# 16         session_id = self._session_id
-# 17 
-# 18         #  Explicitly load BEFORE content
-# 19         before_content = file_path.read_text(encoding="utf-8")
-# 20 
-# 21         engine = create_engine(f"sqlite:///{DB_PATH}")
-# 22         with Session(bind=engine) as session:
-# 23             row = session.query(AgentProviderConfig).filter_by(
-# 24                 name="linting_generator_agent_provider"
-# 25             ).first()
-# 26             assert row, "❌ Agent provider not found"
-# 27             agent = AgentProviderFactory.create(row.id)
-# 28 
-# 29         #  Run the agent explicitly
-# 30         agent_output = agent.run(
-# 31             input={"context": context, "file_path": str(file_path)},
-# 32             session_id=session_id
-# 33         )
-# 34 
-# 35         #  Extract generated code from the agent's output
-# 36         after_content = self.extract_code_block(agent_output)
-# 37 
-# 38         #  Write snapshot explicitly
-# 39         snapshot_writer = SnapshotWriter()
-# 40         snapshot_id = snapshot_writer.write_snapshot(
-# 41             before=before_content,
-# 42             after=after_content,
-# 43             session_id=session_id
-# 44         )
-# 45 
-# 46         self._log.debug(f"Snapshot ID created: {snapshot_id}")
-# 47 
-# 48         #  CRITICAL FIX: Set self._output here explicitly
-# 49         self._output = agent_output
-# 50 
-# 51         return agent_output
-# 52 
-# 53     @staticmethod
-# 54     def extract_code_block(output: str) -> str:
-# 55         start = output.find("[CODE]")
-# 56         end = output.find("[/CODE]")
-# 57         if start == -1 or end == -1:
-# 58             raise ValueError("❌ No code block found in agent output.")
-# 59         return output[start + 6 : end].strip()
-# 60 
-# 61     def _transition(self, state: dict) -> dict:
-# 62         #  ✅ CRITICAL: Call _run() explicitly to ensure _output is set.
-# 63         self._run(state)
-# 64 
-# 65         return {**state, "state": "end", "output": self._output}
+# 1 
+# 2 from app.providers.state_provider_base import StateProviderBase
+# 3 from app.factories.agent_provider_factory import AgentProviderFactory
+# 4 
+# 5 class LintingDiscriminatorStateProvider(StateProviderBase):
+# 6     def _transition(self, state: dict, agent_output: str | None) -> dict:
+# 7         if agent_output and "[AGENT_DECISION]accept" in agent_output:
+# 8             return {"state": "end", "reason": "discriminator accepted the change"}
+# 9         return {"state": "end", "reason": "discriminator rejected the change"}
 
 
 # db\seeders\files\state_providers\linting_generator_state_provider.py
 
 # 1 from app.providers.state_provider_base import StateProviderBase
-# 2 from app.factories.agent_provider_factory import AgentProviderFactory
-# 3 from app.db.models import AgentProviderConfig
-# 4 from sqlalchemy import create_engine
-# 5 from sqlalchemy.orm import Session
-# 6 from app.db.connection import DB_PATH
-# 7 from pathlib import Path
-# 8 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-# 9 
-# 10 class LintingGeneratorStateProvider(StateProviderBase):
-# 11     """FSM state that invokes the linting generator agent."""
-# 12 
-# 13     def _run(self, input: dict) -> str:
-# 14         file_path = Path(input["file_path"])
-# 15         context = input["context"]
-# 16         session_id = self._session_id  #  Now correctly set in transition()
-# 17 
-# 18         before_content = file_path.read_text(encoding="utf-8")
-# 19 
-# 20         engine = create_engine(f"sqlite:///{DB_PATH}")
-# 21         with Session(bind=engine) as session:
-# 22             row = session.query(AgentProviderConfig).filter_by(
-# 23                 name="linting_generator_agent_provider"
-# 24             ).first()
-# 25             assert row, "❌ Agent provider not found"
-# 26             agent = AgentProviderFactory.create(row.id)
-# 27 
-# 28         agent_output = agent.run(
-# 29             input={"context": context, "file_path": str(file_path)},
-# 30             session_id=session_id
-# 31         )
-# 32 
-# 33         after_content = self.extract_code_block(agent_output)
-# 34 
-# 35         snapshot_writer = SnapshotWriter()
-# 36         snapshot_id = snapshot_writer.write_snapshot(
-# 37             before=before_content,
-# 38             after=after_content,
-# 39             session_id=session_id
-# 40         )
-# 41 
-# 42         self._log.debug(f"Snapshot ID created: {snapshot_id}")
-# 43 
-# 44         #  Explicitly set the output
-# 45         self._output = agent_output
-# 46 
-# 47         return agent_output
-# 48 
-# 49     @staticmethod
-# 50     def extract_code_block(output: str) -> str:
-# 51         start = output.find("[CODE]")
-# 52         end = output.find("[/CODE]")
-# 53 
-# 54         if start == -1 or end == -1:
-# 55             raise ValueError(f"❌ No code block found in agent output:\n{output}")
-# 56 
-# 57         return output[start + len("[CODE]"):end].strip()
-# 58 
-# 59 
-# 60 
-# 61     def _transition(self, state: dict) -> dict:
-# 62         #  Ensure we have a valid session_id
-# 63         session_id = state.get("session_id", "notebook-dev-session")
-# 64 
-# 65         #  Explicitly call the base provider's run method to ensure proper initialization
-# 66         self.run(
-# 67             input={
-# 68                 "context": state.get("context"),
-# 69                 "file_path": state.get("file_path"),
-# 70                 "system": "linting"
-# 71             },
-# 72             session_id=session_id
-# 73         )
-# 74 
-# 75         return {
-# 76             **state,
-# 77             "state": "end",
-# 78             "output": getattr(self, "_output", "")
-# 79         }
+# 2 
+# 3 class LintingGeneratorStateProvider(StateProviderBase):
+# 4     def _transition(self, state: dict, agent_output: str | None) -> dict:
+# 5         return {"state": "end", "reason": "generation complete"}
 
 
 # db\seeders\files\system_providers\__init__.py
 
 
 
-# db\seeders\files\system_providers\basic_system_provider.py
+# db\seeders\files\system_providers\linting_system_provider.py
 
 # 1 from app.providers.system_provider_base import SystemProviderBase
-# 2 
-# 3 class BasicSystemProvider(SystemProviderBase):
-# 4     def _run(self, input: dict) -> str:
-# 5         state = input.get("state")
-# 6         return f"Running system state: {state}"
-# 7 
-# 8     def _transition(self, state: dict) -> dict:
-# 9         current = state.get("state")
-# 10         states = self.config.config.get("states", [])
-# 11         if current not in states:
-# 12             raise ValueError(f"Invalid state: {current}")
-# 13 
-# 14         idx = states.index(current)
-# 15         next_state = states[idx + 1] if idx + 1 < len(states) else states[-1]
-# 16         return {**state, "state": next_state}
+# 2 from app.enums.system_enums import Decision
+# 3 
+# 4 
+# 5 class LintingSystemProvider(SystemProviderBase):
+# 6     def _transition(self, state: dict, agent_output: str | None) -> dict:
+# 7         if state["state"] == "start":
+# 8             return {"state": "generate", "reason": "initial entry"}
+# 9 
+# 10         if state["state"] == "generate":
+# 11             return {"state": "discriminate", "reason": "completed generation"}
+# 12 
+# 13         if state["state"] == "discriminate":
+# 14             if agent_output and "[AGENT_DECISION]accept" in agent_output:
+# 15                 return {"state": "end", "reason": "accepted by discriminator"}
+# 16             return {"state": "generate", "reason": "rejected by discriminator, retrying generation"}
+# 17 
+# 18         return {"state": "end", "reason": "unknown state or fallback"}
 
 
 # db\seeders\files\tool_providers\__init__.py
@@ -1482,14 +1374,14 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 AGENT_ENGINES = [
-# 12     ("basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
-# 13     ("openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"])
+# 12     (1, "basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
+# 13     (2, "openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"])
 # 14 ]
 # 15 
 # 16 def seed_agent_engine_providers(db_session: Session):
 # 17     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 # 18 
-# 19     for filename, name, description, model, tags in AGENT_ENGINES:
+# 19     for id_, filename, name, description, model, tags in AGENT_ENGINES:
 # 20         guid = str(uuid4())
 # 21         source_file = SEED_FILES_DIR / filename
 # 22         dest_file = EXTENSIONS_DIR / f"{guid}.py"
@@ -1500,19 +1392,20 @@
 # 27         shutil.copy(source_file, dest_file)
 # 28 
 # 29         config = AgentEngineProviderConfig(
-# 30             guid=guid,
-# 31             name=name,
-# 32             description=description,
-# 33             model=model,
-# 34             config={},
-# 35             artifact_path=guid,
-# 36             tags=tags,
-# 37         )
-# 38 
-# 39         db_session.add(config)
-# 40 
-# 41     db_session.commit()
-# 42     print("Seeded agent engine configurations successfully.")
+# 30             id=id_,
+# 31             guid=guid,
+# 32             name=name,
+# 33             description=description,
+# 34             model=model,
+# 35             config={},
+# 36             artifact_path=str(dest_file),
+# 37             tags=tags,
+# 38         )
+# 39 
+# 40         db_session.add(config)
+# 41 
+# 42     db_session.commit()
+# 43     print("Seeded agent engine configurations successfully.")
 
 
 # db\seeders\seed_agent_providers.py
@@ -1528,38 +1421,73 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 AGENT_PROVIDERS = [
-# 12     ("basic_agent_provider.py", "basic_agent_provider", "Returns a hardcoded result.", ["test"]),
-# 13     ("linting_generator_agent_provider.py", "linting_generator_agent_provider", "Runs GPT-4o to generate linting corrections.", ["linting", "generator"]),
-# 14     ("linting_discriminator_agent_provider.py", "linting_discriminator_agent_provider", "Evaluates generator output for acceptance.", ["linting", "discriminator"])
-# 15 ]
-# 16 
-# 17 
-# 18 def seed_agent_providers(db_session: Session):
-# 19     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 20 
-# 21     for filename, name, description, tags in AGENT_PROVIDERS:
-# 22         guid = str(uuid4())
-# 23         source_file = SEED_FILES_DIR / filename
-# 24         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 25 
-# 26         if not source_file.exists():
-# 27             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
-# 28 
-# 29         shutil.copy(source_file, dest_file)
-# 30 
-# 31         config = AgentProviderConfig(
-# 32             guid=guid,
-# 33             name=name,
-# 34             description=description,
-# 35             config={},
-# 36             artifact_path=guid,
-# 37             tags=tags,
-# 38         )
-# 39 
-# 40         db_session.add(config)
-# 41 
-# 42     db_session.commit()
-# 43     print("Seeded agent provider configurations successfully.")
+# 12     {
+# 13         "id": 1,
+# 14         "filename": "basic_agent_provider.py",
+# 15         "name": "basic_agent_provider",
+# 16         "description": "Returns a hardcoded result.",
+# 17         "tags": ["test"],
+# 18         "config": {}
+# 19     },
+# 20     {
+# 21         "id": 2,
+# 22         "filename": "linting_generator_agent_provider.py",
+# 23         "name": "linting_generator_agent_provider",
+# 24         "description": "Runs GPT-4o to generate linting corrections.",
+# 25         "tags": ["linting", "generator"],
+# 26         "config": {
+# 27             "agent_engine_provider_id": 2,
+# 28             "prompt_provider_id": 2,
+# 29             "context_provider_id": 2,
+# 30             "score_provider_id": 1,
+# 31             "tool_provider_ids": {
+# 32                 "black": 1,
+# 33                 "ruff": 3,
+# 34                 "mypy": 5,
+# 35                 "radon": 4
+# 36             }
+# 37         }
+# 38     },
+# 39     {
+# 40         "id": 3,
+# 41         "filename": "linting_discriminator_agent_provider.py",
+# 42         "name": "linting_discriminator_agent_provider",
+# 43         "description": "Evaluates generator output for acceptance.",
+# 44         "tags": ["linting", "discriminator"],
+# 45         "config": {
+# 46             "score_provider_id": 1
+# 47         }
+# 48     }
+# 49 ]
+# 50 
+# 51 def seed_agent_providers(db_session: Session):
+# 52     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 53 
+# 54     for entry in AGENT_PROVIDERS:
+# 55         guid = str(uuid4())
+# 56         dest_filename = f"{guid}.py"
+# 57         source_file = SEED_FILES_DIR / entry["filename"]
+# 58         dest_file = EXTENSIONS_DIR / dest_filename
+# 59 
+# 60         if not source_file.exists():
+# 61             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
+# 62 
+# 63         shutil.copy(source_file, dest_file)
+# 64 
+# 65         config = AgentProviderConfig(
+# 66             id=entry["id"],
+# 67             guid=guid,
+# 68             name=entry["name"],
+# 69             description=entry["description"],
+# 70             artifact_path=dest_filename,
+# 71             tags=entry["tags"],
+# 72             config=entry["config"]
+# 73         )
+# 74 
+# 75         db_session.add(config)
+# 76 
+# 77     db_session.commit()
+# 78     print("Seeded agent provider configurations successfully.")
 
 
 # db\seeders\seed_context_providers.py
@@ -1575,116 +1503,165 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 CONTEXT_PROVIDERS = [
-# 12     ("basic_context_provider.py", "basic_context_provider", "Returns static context for testing.", ["default"]),
-# 13     ("linting_context_provider.py", "linting_context_provider", "Generates context for the linting system.", ["linting", "score-aware"]),
-# 14 ]
-# 15 
-# 16 
-# 17 def seed_context_providers(db_session: Session):
-# 18     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 19 
-# 20     for filename, name, description, tags in CONTEXT_PROVIDERS:
-# 21         guid = str(uuid4())
-# 22         source_file = SEED_FILES_DIR / filename
-# 23         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 24 
-# 25         if not source_file.exists():
-# 26             raise FileNotFoundError(f"Context provider script not found: {source_file}")
+# 12     {
+# 13         "id": 1,
+# 14         "filename": "basic_context_provider.py",
+# 15         "name": "basic_context_provider",
+# 16         "description": "Returns static context for testing.",
+# 17         "tags": ["default"],
+# 18         "config": {}
+# 19     },
+# 20     {
+# 21         "id": 2,
+# 22         "filename": "linting_context_provider.py",
+# 23         "name": "linting_context_provider",
+# 24         "description": "Generates context for the linting system.",
+# 25         "tags": ["linting", "score-aware"],
+# 26         "config": {
+# 27             "score_provider_id": 1,
+# 28             "tool_provider_ids": None
+# 29         }
+# 30     }
+# 31 ]
+# 32 
+# 33 def seed_context_providers(db_session: Session):
+# 34     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 35 
+# 36     for entry in CONTEXT_PROVIDERS:
+# 37         guid = str(uuid4())
+# 38         dest_filename = f"{guid}.py"
+# 39         source_file = SEED_FILES_DIR / entry["filename"]
+# 40         dest_file = EXTENSIONS_DIR / dest_filename
+# 41 
+# 42         if not source_file.exists():
+# 43             raise FileNotFoundError(f"Context provider script not found: {source_file}")
+# 44 
+# 45         shutil.copy(source_file, dest_file)
+# 46 
+# 47         config = ContextProviderConfig(
+# 48             id=entry["id"],
+# 49             guid=guid,
+# 50             name=entry["name"],
+# 51             description=entry["description"],
+# 52             artifact_path=dest_filename,
+# 53             tags=entry["tags"],
+# 54             config=entry["config"]
+# 55         )
+# 56 
+# 57         db_session.add(config)
+# 58 
+# 59     db_session.commit()
+# 60     print("Seeded context provider configurations successfully.")
+
+
+# db\seeders\seed_controller_providers.py
+
+# 1 #  app/db/seeders/seed_controller_providers.py
+# 2 
+# 3 from uuid import uuid4
+# 4 from pathlib import Path
+# 5 import shutil
+# 6 from sqlalchemy.orm import Session
+# 7 from app.db.models import ControllerProviderConfig
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
+# 10 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 CONTROLLER_PROVIDERS = [
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "preprocessing_controller_provider.py",
+# 17         "name": "preprocessing_controller",
+# 18         "description": "Runs only the preprocessing step (e.g. linting).",
+# 19         "tags": ["preprocessing", "controller"],
+# 20         "config": {
+# 21             "systems": {
+# 22                 "preprocess": 1   #  ID of your linting_system_provider
+# 23             }
+# 24         }
+# 25     }
+# 26 ]
 # 27 
-# 28         shutil.copy(source_file, dest_file)
-# 29 
-# 30         config = ContextProviderConfig(
-# 31             guid=guid,
-# 32             name=name,
-# 33             description=description,
-# 34             artifact_path=guid,
-# 35             tags=tags
-# 36         )
+# 28 def seed_controller_providers(db_session: Session):
+# 29     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 30     for entry in CONTROLLER_PROVIDERS:
+# 31         guid      = str(uuid4())
+# 32         src       = SEED_FILES_DIR / entry["filename"]
+# 33         dest      = EXTENSIONS_DIR / f"{guid}.py"
+# 34         if not src.exists():
+# 35             raise FileNotFoundError(f"Missing script: {src}")
+# 36         shutil.copy(src, dest)
 # 37 
-# 38         db_session.add(config)
-# 39 
-# 40     db_session.commit()
-# 41     print("Seeded context provider configurations successfully.")
-
-
-# db\seeders\seed_orchestrator_provider.py
-
-# 1 from uuid import uuid4
-# 2 from pathlib import Path
-# 3 import shutil
-# 4 from sqlalchemy.orm import Session
-# 5 from app.db.models import OrchestratorProviderConfig
-# 6 
-# 7 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/orchestrators"
-# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 ORCHESTRATOR_PROVIDERS = [
-# 12     ("basic_orchestrator_provider.py", "Basic Orchestrator Provider", "Simple FSM composed of systems.", ["default"], {"states": ["init", "train", "evaluate"]}),
-# 13 ]
-# 14 
-# 15 def seed_orchestrator_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, tags, config in ORCHESTRATOR_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22         if not source_file.exists():
-# 23             raise FileNotFoundError(f"Orchestrator provider script not found: {source_file}")
-# 24         shutil.copy(source_file, dest_file)
-# 25         record = OrchestratorProviderConfig(
-# 26             guid=guid,
-# 27             name=name,
-# 28             description=description,
-# 29             config=config,
-# 30             artifact_path=guid,
-# 31             tags=tags,
-# 32         )
-# 33         db_session.add(record)
-# 34 
-# 35     db_session.commit()
-# 36     print("Seeded orchestrator provider configurations successfully.")
+# 38         rec = ControllerProviderConfig(
+# 39             id            = entry["id"],
+# 40             guid          = guid,
+# 41             name          = entry["name"],
+# 42             description   = entry["description"],
+# 43             config        = entry["config"],
+# 44             artifact_path = dest.name,
+# 45             tags          = entry["tags"],
+# 46         )
+# 47         db_session.add(rec)
+# 48     db_session.commit()
+# 49     print("✅ Seeded controller providers")
 
 
 # db\seeders\seed_program_provider.py
 
-# 1 from uuid import uuid4
-# 2 from pathlib import Path
-# 3 import shutil
-# 4 from sqlalchemy.orm import Session
-# 5 from app.db.models import OrchestratorProviderConfig, ProgramProviderConfig
-# 6 
-# 7 SEED_PROGRAM_FILES_DIR = Path(__file__).resolve().parent / "files/programs"
-# 8 PROJECT_ROOT = SEED_PROGRAM_FILES_DIR.parent.parent.parent.parent.parent
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 PROGRAM_PROVIDERS = [
-# 12     ("basic_program_provider.py", "Basic Program Provider", "Simple FSM composed of orchestrators.", ["default"], {"states": ["start", "stage1", "stage2", "complete"]}),
-# 13 ]
-# 14 
-# 15 def seed_program_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, tags, config in PROGRAM_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_PROGRAM_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22         if not source_file.exists():
-# 23             raise FileNotFoundError(f"Program provider script not found: {source_file}")
-# 24         shutil.copy(source_file, dest_file)
-# 25         record = ProgramProviderConfig(
-# 26             guid=guid,
-# 27             name=name,
-# 28             description=description,
-# 29             config=config,
-# 30             artifact_path=guid,
-# 31             tags=tags,
-# 32         )
-# 33         db_session.add(record)
-# 34 
-# 35     db_session.commit()
-# 36     print("Seeded program provider configurations successfully.")
+# 1 #  app/db/seeders/seed_program_providers.py
+# 2 
+# 3 from uuid import uuid4
+# 4 from pathlib import Path
+# 5 import shutil
+# 6 from sqlalchemy.orm import Session
+# 7 from app.db.models import ProgramProviderConfig
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
+# 10 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 PROGRAM_PROVIDERS = [
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "codecritic_program_provider.py",
+# 17         "name": "codecritic_program",
+# 18         "description": "Top-level orchestration of all system controllers.",
+# 19         "tags": ["program", "codecritic"],
+# 20         "config": {
+# 21             "controllers": {
+# 22                 "preprocessing": 1
+# 23             }
+# 24         }
+# 25     }
+# 26 ]
+# 27 
+# 28 def seed_program_providers(db_session: Session):
+# 29     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 30 
+# 31     for entry in PROGRAM_PROVIDERS:
+# 32         guid = str(uuid4())
+# 33         src  = SEED_FILES_DIR / entry["filename"]
+# 34         dst  = EXTENSIONS_DIR / f"{guid}.py"
+# 35 
+# 36         if not src.exists():
+# 37             raise FileNotFoundError(f"❌ Missing file: {src}")
+# 38 
+# 39         shutil.copy(src, dst)
+# 40 
+# 41         record = ProgramProviderConfig(
+# 42             id            = entry["id"],
+# 43             guid          = guid,
+# 44             name          = entry["name"],
+# 45             description   = entry["description"],
+# 46             config        = entry["config"],
+# 47             artifact_path = dst.name,
+# 48             tags          = entry["tags"],
+# 49         )
+# 50         db_session.add(record)
+# 51 
+# 52     db_session.commit()
+# 53     print("✅ Seeded program providers")
 
 
 # db\seeders\seed_prompt_providers.py
@@ -1702,35 +1679,57 @@
 # 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 12 
 # 13 PROVIDERS = [
-# 14     ("basic_prompt_provider.py", "basic_prompt_provider", "Returns a simple prompt response.", ["default"]),
-# 15     ("linting_prompt_provider.py", "linting_prompt_provider", "Combines linting system and agent prompts.", ["linting", "codequality"]),
-# 16 ]
-# 17 
-# 18 def seed_prompt_providers(db_session: Session):
-# 19     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 20 
-# 21     for filename, name, description, tags in PROVIDERS:
-# 22         guid = str(uuid4())
-# 23         source_file = SEED_FILES_DIR / filename
-# 24         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 25 
-# 26         if not source_file.exists():
-# 27             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
-# 28 
-# 29         shutil.copy(source_file, dest_file)
-# 30 
-# 31         config = PromptProviderConfig(
-# 32             guid=guid,
-# 33             name=name,
-# 34             description=description,
-# 35             artifact_path=guid,
-# 36             tags=tags
-# 37         )
-# 38 
-# 39         db_session.add(config)
-# 40 
-# 41     db_session.commit()
-# 42     print("Seeded prompt provider configurations successfully.")
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "basic_prompt_provider.py",
+# 17         "name": "basic_prompt_provider",
+# 18         "description": "Returns a simple prompt response.",
+# 19         "tags": ["default"],
+# 20         "config": {}
+# 21     },
+# 22     {
+# 23         "id": 2,
+# 24         "filename": "linting_prompt_provider.py",
+# 25         "name": "linting_prompt_provider",
+# 26         "description": "Combines linting system and agent prompts.",
+# 27         "tags": ["linting", "codequality"],
+# 28         "config": {
+# 29             "agent_prompt_id": 2,
+# 30             "system_prompt_id": 2,
+# 31             "context_provider_id": 2
+# 32         }
+# 33     }
+# 34 ]
+# 35 
+# 36 
+# 37 def seed_prompt_providers(db_session: Session):
+# 38     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 39 
+# 40     for entry in PROVIDERS:
+# 41         guid = str(uuid4())
+# 42         dest_filename = f"{guid}.py"
+# 43         source_file = SEED_FILES_DIR / entry["filename"]
+# 44         dest_file = EXTENSIONS_DIR / dest_filename
+# 45 
+# 46         if not source_file.exists():
+# 47             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
+# 48 
+# 49         shutil.copy(source_file, dest_file)
+# 50 
+# 51         config = PromptProviderConfig(
+# 52             id=entry["id"],
+# 53             guid=guid,
+# 54             name=entry["name"],
+# 55             description=entry["description"],
+# 56             config=entry["config"],
+# 57             artifact_path=dest_filename,
+# 58             tags=entry["tags"]
+# 59         )
+# 60 
+# 61         db_session.add(config)
+# 62 
+# 63     db_session.commit()
+# 64     print("Seeded prompt provider configurations successfully.")
 
 
 # db\seeders\seed_prompts.py
@@ -1751,82 +1750,91 @@
 # 14 #  Define new prompt files to seed
 # 15 AGENT_PROMPT_FILES = [
 # 16     {
-# 17         "name": "generate",
-# 18         "filename": "basic_agent_prompt.txt",
-# 19         "description": "Prompt for basic code generation.",
-# 20         "tags": ["linting", "generator"]
-# 21     },
-# 22     {
-# 23         "name": "linting_generator_agent",
-# 24         "filename": "linting_generator_agent_prompt.txt",
-# 25         "description": "Prompt for linting generator agent.",
-# 26         "tags": ["linting", "generator"]
-# 27     }
-# 28 ]
-# 29 
-# 30 SYSTEM_PROMPT_FILES = [
-# 31     {
-# 32         "name": "format",
-# 33         "filename": "default_system_prompt.txt",
-# 34         "system_type": SystemType.LINTING,
-# 35         "description": "Default prompt for formatting tasks.",
-# 36         "tags": ["formatting", "default"]
-# 37     },
-# 38     {
-# 39         "name": "linting_system",
-# 40         "filename": "linting_system_prompt.txt",
-# 41         "system_type": SystemType.LINTING,
-# 42         "description": "System prompt governing the linting subsystem.",
-# 43         "tags": ["linting", "system"]
-# 44     }
-# 45 ]
-# 46 
-# 47 def seed_prompts(db_session: Session):
-# 48     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 49 
-# 50     for entry in AGENT_PROMPT_FILES:
-# 51         source_file = SEED_FILES_DIR / entry["filename"]
-# 52         if not source_file.exists():
-# 53             raise FileNotFoundError(f"Agent prompt source file not found: {source_file}")
+# 17         "id": 1,
+# 18         "name": "generate",
+# 19         "filename": "basic_agent_prompt.txt",
+# 20         "description": "Prompt for basic code generation.",
+# 21         "tags": ["linting", "generator"]
+# 22     },
+# 23     {
+# 24         "id": 2,
+# 25         "name": "linting_generator_agent",
+# 26         "filename": "linting_generator_agent_prompt.txt",
+# 27         "description": "Prompt for linting generator agent.",
+# 28         "tags": ["linting", "generator"]
+# 29     }
+# 30 ]
+# 31 
+# 32 SYSTEM_PROMPT_FILES = [
+# 33     {
+# 34         "id": 1,
+# 35         "name": "format",
+# 36         "filename": "default_system_prompt.txt",
+# 37         "system_type": SystemType.LINTING,
+# 38         "description": "Default prompt for formatting tasks.",
+# 39         "tags": ["formatting", "default"]
+# 40     },
+# 41     {
+# 42         "id": 2,
+# 43         "name": "linting_system",
+# 44         "filename": "linting_system_prompt.txt",
+# 45         "system_type": SystemType.LINTING,
+# 46         "description": "System prompt governing the linting subsystem.",
+# 47         "tags": ["linting", "system"]
+# 48     }
+# 49 ]
+# 50 
+# 51 
+# 52 def seed_prompts(db_session: Session):
+# 53     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 # 54 
-# 55         guid = str(uuid4())
-# 56         dest_file = EXTENSIONS_DIR / f"{guid}.txt"
-# 57         shutil.copy(source_file, dest_file)
-# 58 
-# 59         prompt = AgentPrompt(
-# 60             guid=guid,
-# 61             name=entry["name"],
-# 62             description=entry["description"],
-# 63             artifact_path=str(dest_file),
-# 64             tags=entry["tags"]
-# 65         )
-# 66         db_session.add(prompt)
-# 67         print(f"Seeded AgentPrompt '{entry['name']}' with GUID: {guid}")
-# 68 
-# 69     for entry in SYSTEM_PROMPT_FILES:
-# 70         source_file = SEED_FILES_DIR / entry["filename"]
-# 71         if not source_file.exists():
-# 72             raise FileNotFoundError(f"System prompt source file not found: {source_file}")
-# 73 
-# 74         guid = str(uuid4())
-# 75         dest_file = EXTENSIONS_DIR / f"{guid}.txt"
-# 76         shutil.copy(source_file, dest_file)
-# 77 
-# 78         prompt = SystemPrompt(
-# 79             guid=guid,
-# 80             name=entry["name"],
-# 81             system_type=entry["system_type"],
-# 82             description=entry["description"],
-# 83             artifact_path=str(dest_file),
-# 84             tags=entry["tags"]
-# 85         )
-# 86         db_session.add(prompt)
-# 87         print(f"Seeded SystemPrompt '{entry['name']}' with GUID: {guid}")
-# 88 
-# 89     db_session.commit()
+# 55     for entry in AGENT_PROMPT_FILES:
+# 56         source_file = SEED_FILES_DIR / entry["filename"]
+# 57         if not source_file.exists():
+# 58             raise FileNotFoundError(f"Agent prompt source file not found: {source_file}")
+# 59 
+# 60         guid = str(uuid4())
+# 61         dest_filename = f"{guid}.txt"
+# 62         dest_file = EXTENSIONS_DIR / dest_filename
+# 63         shutil.copy(source_file, dest_file)
+# 64 
+# 65         prompt = AgentPrompt(
+# 66             id=entry["id"],
+# 67             guid=guid,
+# 68             name=entry["name"],
+# 69             description=entry["description"],
+# 70             artifact_path=dest_filename,  #  Store relative path
+# 71             tags=entry["tags"]
+# 72         )
+# 73         db_session.add(prompt)
+# 74         print(f"Seeded AgentPrompt '{entry['name']}' with ID: {entry['id']} and GUID: {guid}")
+# 75 
+# 76     for entry in SYSTEM_PROMPT_FILES:
+# 77         source_file = SEED_FILES_DIR / entry["filename"]
+# 78         if not source_file.exists():
+# 79             raise FileNotFoundError(f"System prompt source file not found: {source_file}")
+# 80 
+# 81         guid = str(uuid4())
+# 82         dest_filename = f"{guid}.txt"
+# 83         dest_file = EXTENSIONS_DIR / dest_filename
+# 84         shutil.copy(source_file, dest_file)
+# 85 
+# 86         prompt = SystemPrompt(
+# 87             id=entry["id"],
+# 88             guid=guid,
+# 89             name=entry["name"],
+# 90             system_type=entry["system_type"],
+# 91             description=entry["description"],
+# 92             artifact_path=dest_filename,  #  Store relative path
+# 93             tags=entry["tags"]
+# 94         )
+# 95         db_session.add(prompt)
+# 96         print(f"Seeded SystemPrompt '{entry['name']}' with ID: {entry['id']} and GUID: {guid}")
+# 97 
+# 98     db_session.commit()
 
 
-# db\seeders\seed_scores.py
+# db\seeders\seed_score_providers.py
 
 # 1 from uuid import uuid4
 # 2 from pathlib import Path
@@ -1840,33 +1848,84 @@
 # 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 11 
 # 12 SCORES = [
-# 13     ("linting_score_provider.py", "linting_score_provider", "Scores lint compliance.", {}),
-# 14 ]
-# 15 
-# 16 def seed_score_providers(db_session: Session):
-# 17     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 18 
-# 19     for filename, name, description, _ in SCORES:
-# 20         guid = str(uuid4())
-# 21         source_file = SEED_FILES_DIR / filename
-# 22         dest_file = EXTENSIONS_DIR / f"{guid}.py" 
-# 23 
-# 24         if not source_file.exists():
-# 25             raise FileNotFoundError(f"Score provider script not found: {source_file}")
-# 26 
-# 27         shutil.copy(source_file, dest_file)
+# 13     {
+# 14         "id": 1,
+# 15         "filename": "linting_score_provider.py",
+# 16         "name": "linting_score_provider",
+# 17         "description": "Scores lint compliance.",
+# 18         "config": {
+# 19             "tool_provider_ids": {
+# 20                 "black": 1,
+# 21                 "ruff": 3,
+# 22                 "mypy": 5,
+# 23                 "radon": 4
+# 24             },
+# 25             "context_provider_id": None
+# 26         }
+# 27     }
+# 28 ]
+# 29 
+# 30 def seed_score_providers(db_session: Session):
+# 31     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 32 
+# 33     for entry in SCORES:
+# 34         guid = str(uuid4())
+# 35         dest_filename = f"{guid}.py"
+# 36         source_file = SEED_FILES_DIR / entry["filename"]
+# 37         dest_file = EXTENSIONS_DIR / dest_filename
+# 38 
+# 39         if not source_file.exists():
+# 40             raise FileNotFoundError(f"Score provider script not found: {source_file}")
+# 41 
+# 42         shutil.copy(source_file, dest_file)
+# 43 
+# 44         score = ScoreProviderConfig(
+# 45             id=entry["id"],
+# 46             guid=guid,
+# 47             name=entry["name"],
+# 48             description=entry["description"],
+# 49             config=entry["config"],
+# 50             artifact_path=dest_filename
+# 51         )
+# 52 
+# 53         db_session.add(score)
+# 54 
+# 55     db_session.commit()
+# 56     print("Seeded score providers successfully.")
+
+
+# db\seeders\seed_session_configs.py
+
+# 1 #  app/db/seeders/seed_session_configs.py
+# 2 
+# 3 from sqlalchemy.orm import Session
+# 4 from app.db.models import SessionConfig
+# 5 
+# 6 SESSION_CONFIGS = [
+# 7     {
+# 8         "id": 1,
+# 9         "program_provider_id": 1,
+# 10         "name": "codecritic_test_session",
+# 11         "description": "Test session for program 1",
+# 12         "environment_type": "experiment",
+# 13         "tags": ["test", "experiment"]
+# 14     }
+# 15 ]
+# 16 
+# 17 def seed_session_configs(db_session: Session):
+# 18     for sess in SESSION_CONFIGS:
+# 19         record = SessionConfig(
+# 20             id               = sess["id"],
+# 21             program_provider_id = sess["program_provider_id"],
+# 22             name             = sess["name"],
+# 23             description      = sess["description"],
+# 24             environment_type = sess["environment_type"],
+# 25             tags             = sess["tags"],
+# 26         )
+# 27         db_session.add(record)
 # 28 
-# 29         score = ScoreProviderConfig(
-# 30             guid=guid,
-# 31             name=name,
-# 32             description=description,
-# 33             artifact_path=guid 
-# 34         )
-# 35 
-# 36         db_session.add(score)
-# 37 
-# 38     db_session.commit()
-# 39     print("Seeded score providers successfully.")
+# 29     db_session.commit()
+# 30     print("✅ Seeded session configs")
 
 
 # db\seeders\seed_state_providers.py
@@ -1882,37 +1941,60 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 STATE_PROVIDERS = [
-# 12     ("basic_state_provider.py", "Basic State Provider", "Simple FSM for agent progression.", ["default"], {"states": ["start", "review", "approve"]}),
-# 13     ("linting_generator_state_provider.py", "linting_generator_state_provider", "Runs the linting generator agent state.", ["linting", "generator"], {"states": ["start", "linting_generator_agent", "end"]}),
-# 14     ("linting_discriminator_state_provider.py", "linting_discriminator_state_provider", "Runs the linting discriminator and conditionally promotes snapshot.", ["linting", "discriminator"], {"states": ["linting_generator_state_provider", "linting_discriminator_state_provider", "end"]}),
-# 15 ]
-# 16 
-# 17 def seed_state_providers(db_session: Session):
-# 18     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 19 
-# 20     for filename, name, description, tags, config in STATE_PROVIDERS:
-# 21         guid = str(uuid4())
-# 22         source_file = SEED_FILES_DIR / filename
-# 23         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 24 
-# 25         if not source_file.exists():
-# 26             raise FileNotFoundError(f"State provider script not found: {source_file}")
-# 27 
-# 28         shutil.copy(source_file, dest_file)
-# 29 
-# 30         record = StateProviderConfig(
-# 31             guid=guid,
-# 32             name=name,
-# 33             description=description,
-# 34             config=config,
-# 35             artifact_path=guid,
-# 36             tags=tags,
-# 37         )
-# 38 
-# 39         db_session.add(record)
+# 12     (
+# 13         1,
+# 14         "linting_generator_state_provider.py",
+# 15         "LintingGeneratorStateProvider",
+# 16         "Runs the generator agent in its own FSM wrapper.",
+# 17         ["linting", "generator"],
+# 18         {
+# 19             "agents": {
+# 20                 "generate": 2
+# 21             }
+# 22         }
+# 23     ),
+# 24     (
+# 25         2,
+# 26         "linting_discriminator_state_provider.py",
+# 27         "LintingDiscriminatorStateProvider",
+# 28         "Runs the discriminator agent in its own FSM wrapper.",
+# 29         ["linting", "discriminator"],
+# 30         {
+# 31             "agents": {
+# 32                 "discriminate": 3
+# 33             }
+# 34         }
+# 35     ),
+# 36 ]
+# 37 
+# 38 def seed_state_providers(db_session: Session):
+# 39     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 # 40 
-# 41     db_session.commit()
-# 42     print("Seeded state provider configurations successfully.")
+# 41     for id, filename, name, description, tags, config in STATE_PROVIDERS:
+# 42         guid = str(uuid4())
+# 43         source_file = SEED_FILES_DIR / filename
+# 44         dest_filename = f"{guid}.py"
+# 45         dest_file = EXTENSIONS_DIR / dest_filename
+# 46 
+# 47         if not source_file.exists():
+# 48             raise FileNotFoundError(f"State provider script not found: {source_file}")
+# 49 
+# 50         shutil.copy(source_file, dest_file)
+# 51 
+# 52         record = StateProviderConfig(
+# 53             id=id,
+# 54             guid=guid,
+# 55             name=name,
+# 56             description=description,
+# 57             config=config,
+# 58             artifact_path=dest_filename,
+# 59             tags=tags,
+# 60         )
+# 61 
+# 62         db_session.add(record)
+# 63 
+# 64     db_session.commit()
+# 65     print("✅ Seeded state provider configurations successfully.")
 
 
 # db\seeders\seed_system_providers.py
@@ -1924,91 +2006,147 @@
 # 5 from app.db.models import SystemProviderConfig
 # 6 
 # 7 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
-# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent
+# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 SYSTEM_PROVIDERS = [
-# 12     ("basic_system_provider.py", "Basic System Provider", "Simple FSM built on state providers.", ["default"], {"states": ["start", "validate", "complete"]}),
-# 13 ]
-# 14 
-# 15 def seed_system_providers(db_session: Session):
-# 16     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 17 
-# 18     for filename, name, description, tags, config in SYSTEM_PROVIDERS:
-# 19         guid = str(uuid4())
-# 20         source_file = SEED_FILES_DIR / filename
-# 21         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 22 
-# 23         if not source_file.exists():
-# 24             raise FileNotFoundError(f"System provider script not found: {source_file}")
-# 25 
-# 26         shutil.copy(source_file, dest_file)
-# 27 
-# 28         record = SystemProviderConfig(
-# 29             guid=guid,
-# 30             name=name,
-# 31             description=description,
-# 32             config=config,
-# 33             artifact_path=guid,
-# 34             tags=tags,
-# 35         )
-# 36 
-# 37         db_session.add(record)
+# 12     {
+# 13         "id": 1,
+# 14         "filename": "linting_system_provider.py",
+# 15         "name": "linting_system_provider",
+# 16         "description": "System to iteratively lint and evaluate Python code.",
+# 17         "tags": ["linting", "system"],
+# 18         "config": {
+# 19             "states": {
+# 20                 "generate": 1,     
+# 21                 "discriminate": 2  
+# 22             }
+# 23         }
+# 24     }
+# 25 ]
+# 26 
+# 27 def seed_system_providers(db_session: Session):
+# 28     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 29 
+# 30     for entry in SYSTEM_PROVIDERS:
+# 31         guid = str(uuid4())
+# 32         source_file = SEED_FILES_DIR / entry["filename"]
+# 33         dest_filename = f"{guid}.py"
+# 34         dest_file = EXTENSIONS_DIR / dest_filename
+# 35 
+# 36         if not source_file.exists():
+# 37             raise FileNotFoundError(f"System provider script not found: {source_file}")
 # 38 
-# 39     db_session.commit()
-# 40     print("Seeded system provider configurations successfully.")
+# 39         shutil.copy(source_file, dest_file)
+# 40 
+# 41         record = SystemProviderConfig(
+# 42             id=entry["id"],
+# 43             guid=guid,
+# 44             name=entry["name"],
+# 45             description=entry["description"],
+# 46             config=entry["config"],
+# 47             artifact_path=dest_filename,
+# 48             tags=entry["tags"],
+# 49         )
+# 50 
+# 51         db_session.add(record)
+# 52 
+# 53     db_session.commit()
+# 54     print("Seeded system provider configurations successfully.")
 
 
-# db\seeders\seed_tools.py
+# db\seeders\seed_tool_providers.py
 
 # 1 from uuid import uuid4
 # 2 from pathlib import Path
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
-# 5 
-# 6 from app.db.models import ToolProviderConfig
-# 7 
-# 8 
-# 9 CURRENT_DIR = Path(__file__).resolve().parent
-# 10 SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
-# 11 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 13 
-# 14 TOOLS = [
-# 15     ("black_tool.py", "black", "Formats Python code using Black.", {}),
-# 16     ("sonarcloud_tool.py", "sonarcloud", "Static analysis via SonarCloud.", {}),
-# 17     ("ruff_tool.py", "ruff", "Python linting with Ruff.", {}),
-# 18     ("radon_tool.py", "radon", "Analyzes Python code complexity.", {}),
-# 19     ("mypy_tool.py", "mypy", "Static type checking with mypy.", {}),
-# 20     ("docformatter_tool.py", "docformatter", "Static type checking with mypy.", {}),
-# 21     ("symbol_graph.py", "symbol_graph", "Extracts and analyzes Python symbols into structured graphs.", {}),
-# 22 ]
-# 23 
-# 24 def seed_tool_providers(db_session: Session):
-# 25     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 26 
-# 27     for filename, name, description, config in TOOLS:
-# 28         guid = str(uuid4())
-# 29         source_file = SEED_FILES_DIR / filename
-# 30         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 31 
-# 32         if not source_file.exists():
-# 33             raise FileNotFoundError(f"Tool script not found: {source_file}")
-# 34 
-# 35         shutil.copy(source_file, dest_file)
-# 36 
-# 37         tool = ToolProviderConfig(
-# 38             guid=guid,
-# 39             name=name,
-# 40             description=description,
-# 41             config=config,
-# 42             artifact_path=guid
-# 43         )
-# 44 
-# 45         db_session.add(tool)
-# 46 
-# 47     db_session.commit()
-# 48     print("Seeded tool configurations successfully.")
+# 5 from app.db.models import ToolProviderConfig
+# 6 
+# 7 CURRENT_DIR = Path(__file__).resolve().parent
+# 8 SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
+# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 TOOLS = [
+# 13     {
+# 14         "id": 1,
+# 15         "filename": "black_tool.py",
+# 16         "name": "black",
+# 17         "description": "Formats Python code using Black.",
+# 18         "config": {}
+# 19     },
+# 20     {
+# 21         "id": 2,
+# 22         "filename": "sonarcloud_tool.py",
+# 23         "name": "sonarcloud",
+# 24         "description": "Static analysis via SonarCloud.",
+# 25         "config": {}
+# 26     },
+# 27     {
+# 28         "id": 3,
+# 29         "filename": "ruff_tool.py",
+# 30         "name": "ruff",
+# 31         "description": "Python linting with Ruff.",
+# 32         "config": {}
+# 33     },
+# 34     {
+# 35         "id": 4,
+# 36         "filename": "radon_tool.py",
+# 37         "name": "radon",
+# 38         "description": "Analyzes Python code complexity.",
+# 39         "config": {}
+# 40     },
+# 41     {
+# 42         "id": 5,
+# 43         "filename": "mypy_tool.py",
+# 44         "name": "mypy",
+# 45         "description": "Static type checking with mypy.",
+# 46         "config": {}
+# 47     },
+# 48     {
+# 49         "id": 6,
+# 50         "filename": "docformatter_tool.py",
+# 51         "name": "docformatter",
+# 52         "description": "Formats docstrings using docformatter.",
+# 53         "config": {}
+# 54     },
+# 55     {
+# 56         "id": 7,
+# 57         "filename": "symbol_graph.py",
+# 58         "name": "symbol_graph",
+# 59         "description": "Extracts and analyzes Python symbols into structured graphs.",
+# 60         "config": {}
+# 61     }
+# 62 ]
+# 63 
+# 64 def seed_tool_providers(db_session: Session):
+# 65     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 66 
+# 67     for entry in TOOLS:
+# 68         guid = str(uuid4())
+# 69         dest_filename = f"{guid}.py"
+# 70         source_file = SEED_FILES_DIR / entry["filename"]
+# 71         dest_file = EXTENSIONS_DIR / dest_filename
+# 72 
+# 73         if not source_file.exists():
+# 74             raise FileNotFoundError(f"Tool script not found: {source_file}")
+# 75 
+# 76         shutil.copy(source_file, dest_file)
+# 77 
+# 78         tool = ToolProviderConfig(
+# 79             id=entry["id"],
+# 80             guid=guid,
+# 81             name=entry["name"],
+# 82             description=entry["description"],
+# 83             config=entry["config"],
+# 84             artifact_path=dest_filename
+# 85         )
+# 86 
+# 87         db_session.add(tool)
+# 88 
+# 89     db_session.commit()
+# 90     print("Seeded tool configurations successfully.")
 
 
 # enums\__init__.py
@@ -2035,6 +2173,38 @@
 # 16     INIT = "init"
 # 17     RUNNING = "running"
 # 18     COMPLETE = "complete"
+
+
+# enums\controller_enums.py
+
+# 1 
+# 2 
+# 3 from enum import Enum
+# 4 
+# 5 
+# 6 class ControllerType(str, Enum):
+# 7     """
+# 8     Enum of high-level controllers grouping related SystemTypes.
+# 9 
+# 10     - PREPROCESSING: Core code transformation systems (linting, formatting, docstrings, etc.)
+# 11     - TESTING: Unit, edge, integration tests and related fix generation
+# 12     - OBSERVABILITY: Logging injection, trace annotation, error handling
+# 13     - DOCUMENTATION: Inline comments, function/file/change summarization
+# 14     - REVIEW: Code review, static analysis, regression analysis, mediator reconciliation
+# 15     - PLANNING: Symbol graphs, dependency mapping, restructuring, function splitting
+# 16     - MLOPS: Data validation, metadata, model docs, pipeline testing, training config audits, feature traceability
+# 17     - SAFETY: Security checks, policy compliance, license audits
+# 18     - MISC: Patching, prompt refinement, agent recommendation, semantic diff, context filtering
+# 19     """
+# 20     PREPROCESSING = "preprocessing_controller"
+# 21     TESTING = "testing_controller"
+# 22     OBSERVABILITY = "observability_controller"
+# 23     DOCUMENTATION = "documentation_controller"
+# 24     REVIEW = "review_controller"
+# 25     PLANNING = "planning_controller"
+# 26     MLOPS = "mlops_controller"
+# 27     SAFETY = "safety_controller"
+# 28     MISC = "misc_controller"
 
 
 # enums\logging_enums.py
@@ -2135,28 +2305,35 @@
 # 66     CONTEXT_FILTERING = "context_filtering"
 # 67 
 # 68 
-# 69 #  class SystemState(Enum):
-# 70 #      """Finite state machine states for the CodeCritic system."""
-# 71 
-# 72 #      START = "start"
-# 73 #      GENERATE = "generate"
-# 74 #      DISCRIMINATE = "discriminate"
-# 75 #      MEDIATE = "mediate"
-# 76 #      PATCH = "patch"
-# 77 #      EVALUATE = "evaluate"
-# 78 #      END = "end"
-# 79 
-# 80 
-# 81 #  class StateTransitionReason(str, Enum):
-# 82 #      FIRST_ROUND = "first_round"
-# 83 #      MAX_ITERATIONS_REACHED = "max_iterations_reached"
-# 84 #      SCORE_THRESHOLD_MET = "score_threshold_met"
-# 85 #      SCORE_STAGNATION = "score_stagnation"
-# 86 #      AGENT_FAILURE = "agent_failure"
-# 87 #      MEDIATOR_OVERRIDE = "mediator_override"
-# 88 #      PATCH_RETRY = "patch_retry"
-# 89 #      CUSTOM_RULE = "custom_rule"
-# 90 #      END_REACHED = "end_reached"
+# 69 class Decision(str, Enum):
+# 70     initial = "initial"
+# 71     improved = "improved"
+# 72     rollback = "rollback"
+# 73     final = "final"
+# 74 
+# 75 
+# 76 #  class SystemState(Enum):
+# 77 #      """Finite state machine states for the CodeCritic system."""
+# 78 
+# 79 #      START = "start"
+# 80 #      GENERATE = "generate"
+# 81 #      DISCRIMINATE = "discriminate"
+# 82 #      MEDIATE = "mediate"
+# 83 #      PATCH = "patch"
+# 84 #      EVALUATE = "evaluate"
+# 85 #      END = "end"
+# 86 
+# 87 
+# 88 #  class StateTransitionReason(str, Enum):
+# 89 #      FIRST_ROUND = "first_round"
+# 90 #      MAX_ITERATIONS_REACHED = "max_iterations_reached"
+# 91 #      SCORE_THRESHOLD_MET = "score_threshold_met"
+# 92 #      SCORE_STAGNATION = "score_stagnation"
+# 93 #      AGENT_FAILURE = "agent_failure"
+# 94 #      MEDIATOR_OVERRIDE = "mediator_override"
+# 95 #      PATCH_RETRY = "patch_retry"
+# 96 #      CUSTOM_RULE = "custom_rule"
+# 97 #      END_REACHED = "end_reached"
 
 
 # factories\__init__.py
@@ -2177,62 +2354,109 @@
 
 # factories\agent_provider_factory.py
 
-# 1 from app.db.models import AgentProviderConfig
-# 2 from app.factories.base_provider_factory import BaseProviderFactory
+# 1 from app.factories.base_provider_factory import BaseProviderFactory
+# 2 from app.db.models import AgentProviderConfig
 # 3 from app.providers.agent_provider_base import AgentProviderBase
 # 4 
-# 5 
-# 6 class AgentProviderFactory(BaseProviderFactory):
-# 7     config_model = AgentProviderConfig
-# 8     base_class = AgentProviderBase
+# 5 class AgentProviderFactory(BaseProviderFactory):
+# 6     config_model = AgentProviderConfig
+# 7     base_class   = AgentProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> AgentProviderBase:
+# 11         #  delayed imports to avoid circular dependencies
+# 12         from app.factories.agent_engine_provider_factory import AgentEngineProviderFactory
+# 13         from app.factories.prompt_provider_factory      import PromptProviderFactory
+# 14         from app.factories.context_provider_factory     import ContextProviderFactory
+# 15         from app.factories.score_provider_factory       import ScoreProviderFactory
+# 16         from app.factories.tool_provider_factory        import ToolProviderFactory
+# 17 
+# 18         #  1) Preload via BaseProviderFactory (it will inject the DB engine for you)
+# 19         preload_instance = super().create(id)
+# 20         config           = preload_instance.config.config or {}
+# 21 
+# 22         #  2) Build each dependency exactly once
+# 23         agent_engine    = (
+# 24             AgentEngineProviderFactory.create(config["agent_engine_provider_id"])
+# 25             if config.get("agent_engine_provider_id") else None
+# 26         )
+# 27         prompt_provider = (
+# 28             PromptProviderFactory.create(config["prompt_provider_id"])
+# 29             if config.get("prompt_provider_id") else None
+# 30         )
+# 31         context_provider = (
+# 32             ContextProviderFactory.create(config["context_provider_id"])
+# 33             if config.get("context_provider_id") else None
+# 34         )
+# 35         score_provider  = (
+# 36             ScoreProviderFactory.create(config["score_provider_id"])
+# 37             if config.get("score_provider_id") else None
+# 38         )
+# 39         tool_providers  = [
+# 40             ToolProviderFactory.create(tid)
+# 41             for tid in (config.get("tool_provider_ids") or {}).values()
+# 42         ]
+# 43 
+# 44         #  3) Re-instantiate the actual subclass with all dependencies and the injected engine
+# 45         cls_type = type(preload_instance)
+# 46         return cls_type(
+# 47             config          = preload_instance.config,
+# 48             engine          = preload_instance._engine,
+# 49             agent_engine    = agent_engine,
+# 50             prompt_provider = prompt_provider,
+# 51             context_provider= context_provider,
+# 52             score_provider  = score_provider,
+# 53             tool_providers  = tool_providers,
+# 54         )
 
 
 # factories\base_provider_factory.py
 
 # 1 from sqlalchemy.orm import Session
-# 2 from sqlalchemy import create_engine
-# 3 from importlib.util import spec_from_file_location, module_from_spec
-# 4 from pathlib import Path
-# 5 
-# 6 from app.db.connection import DB_PATH
-# 7 from app.providers.base_provider import BaseProvider
-# 8 
+# 2 from importlib.util import spec_from_file_location, module_from_spec
+# 3 from pathlib import Path
+# 4 from app.db import init_db #  <-- global DB engine instance
+# 5 from app.providers.base_provider import BaseProvider
+# 6 
+# 7 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# 8 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 9 
-# 10 class BaseProviderFactory:
-# 11     config_model = None  
-# 12     base_class = BaseProvider  
-# 13 
-# 14     @classmethod
-# 15     def create(cls, id: int, **kwargs):
-# 16         #  Step 1: Load config from DB
-# 17         engine = create_engine(f"sqlite:///{DB_PATH}")
+# 10 engine = init_db(reset=False)
+# 11 
+# 12 class BaseProviderFactory:
+# 13     config_model = None  
+# 14     base_class = BaseProvider  
+# 15 
+# 16     @classmethod
+# 17     def create(cls, id: int, **kwargs):
 # 18         with Session(bind=engine) as session:
-# 19             config = session.get(cls.config_model, id)
+# 19             config = session.get(cls.config_model, int(id))
 # 20             if not config:
 # 21                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
 # 22 
-# 23         #  Step 2: Load extension
-# 24         ext_path = Path("extensions") / f"{config.artifact_path}.py"
-# 25         if not ext_path.exists():
-# 26             raise FileNotFoundError(f"Extension not found: {ext_path}")
-# 27 
-# 28         spec = spec_from_file_location("provider_extension", ext_path)
-# 29         module = module_from_spec(spec)
-# 30         spec.loader.exec_module(module)
-# 31 
-# 32         provider_class = None
-# 33         for obj in module.__dict__.values():
-# 34             if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class:
-# 35                 provider_class = obj
-# 36                 break
-# 37 
-# 38         if not provider_class:
-# 39             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
-# 40 
-# 41         #  Step 3: Instantiate and wire dependencies
-# 42         instance = provider_class(config=config, engine=kwargs.get("engine"))
-# 43         instance.resolve_dependencies(**kwargs)
-# 44         return instance
+# 23             ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
+# 24             if not ext_path.exists():
+# 25                 raise FileNotFoundError(f"Extension not found: {ext_path}")
+# 26 
+# 27         spec = spec_from_file_location(ext_path.stem, ext_path)
+# 28         if spec is None or spec.loader is None:
+# 29             raise ImportError(f"Cannot load module spec for {ext_path}")
+# 30 
+# 31         module = module_from_spec(spec)
+# 32         spec.loader.exec_module(module)
+# 33 
+# 34         provider_class = next(
+# 35             (obj for obj in vars(module).values()
+# 36              if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class),
+# 37             None
+# 38         )
+# 39 
+# 40         if provider_class is None:
+# 41             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
+# 42 
+# 43         #  Explicitly pass the global engine here
+# 44         instance = provider_class(config=config, engine=engine)
+# 45         return instance
 
 
 # factories\context_provider_factory.py
@@ -2241,22 +2465,72 @@
 # 2 from app.db.models import ContextProviderConfig
 # 3 from app.providers.context_provider_base import ContextProviderBase
 # 4 
-# 5 
-# 6 class ContextProviderFactory(BaseProviderFactory):
-# 7     config_model = ContextProviderConfig
-# 8     base_class = ContextProviderBase
+# 5 class ContextProviderFactory(BaseProviderFactory):
+# 6     config_model = ContextProviderConfig
+# 7     base_class = ContextProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> ContextProviderBase:
+# 11         instance = super().create(id, **kwargs)
+# 12         config = instance.config.config or {}
+# 13 
+# 14         #  ⏱️ Delayed imports to avoid circular dependencies
+# 15         if "score_provider_id" in config or "tool_provider_ids" in config:
+# 16             from app.factories.score_provider_factory import ScoreProviderFactory
+# 17             from app.factories.tool_provider_factory import ToolProviderFactory
+# 18 
+# 19             if (score_id := config.get("score_provider_id")):
+# 20                 if isinstance(score_id, int) and score_id > 0:
+# 21                     score = ScoreProviderFactory.create(score_id)
+# 22                     instance.set_score_provider(score)
+# 23 
+# 24             for _, tool_id in (config.get("tool_provider_ids") or {}).items():
+# 25                 tool = ToolProviderFactory.create(tool_id)
+# 26                 instance.set_tool_provider(tool)
+# 27 
+# 28         return instance
 
 
-# factories\orchestrator_provider_factory.py
+# factories\controller_provider_factory.py
 
 # 1 from app.factories.base_provider_factory import BaseProviderFactory
-# 2 from app.db.models import OrchestratorProviderConfig
-# 3 from app.providers.orchestrator_provider_base import OrchestratorProviderBase
+# 2 from app.db.models import ControllerProviderConfig
+# 3 from app.providers.controller_provider_base import ControllerProviderBase
 # 4 
-# 5 
-# 6 class OrchestratorProviderFactory(BaseProviderFactory):
-# 7     config_model = OrchestratorProviderConfig
-# 8     base_class = OrchestratorProviderBase
+# 5 class ControllerProviderFactory(BaseProviderFactory):
+# 6     config_model = ControllerProviderConfig
+# 7     base_class   = ControllerProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> ControllerProviderBase:
+# 11         from app.factories.context_provider_factory import ContextProviderFactory
+# 12         from app.factories.score_provider_factory   import ScoreProviderFactory
+# 13         from app.factories.tool_provider_factory    import ToolProviderFactory
+# 14 
+# 15         inst   = super().create(id)
+# 16         config = inst.config.config or {}
+# 17 
+# 18         ctx   = (
+# 19             ContextProviderFactory.create(config["context_provider_id"])
+# 20             if config.get("context_provider_id") else None
+# 21         )
+# 22         scr   = (
+# 23             ScoreProviderFactory.create(config["score_provider_id"])
+# 24             if config.get("score_provider_id") else None
+# 25         )
+# 26         tools = [
+# 27             ToolProviderFactory.create(tid)
+# 28             for tid in (config.get("tool_provider_ids") or {}).values()
+# 29         ]
+# 30 
+# 31         cls_type = type(inst)
+# 32         return cls_type(
+# 33             config           = inst.config,
+# 34             engine           = inst._engine,
+# 35             context_provider = ctx,
+# 36             score_provider   = scr,
+# 37             tool_providers   = tools,
+# 38         )
 
 
 # factories\program_provider_factory.py
@@ -2265,10 +2539,40 @@
 # 2 from app.db.models import ProgramProviderConfig
 # 3 from app.providers.program_provider_base import ProgramProviderBase
 # 4 
-# 5 
-# 6 class ProgramProviderFactory(BaseProviderFactory):
-# 7     config_model = ProgramProviderConfig
-# 8     base_class = ProgramProviderBase
+# 5 class ProgramProviderFactory(BaseProviderFactory):
+# 6     config_model = ProgramProviderConfig
+# 7     base_class   = ProgramProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> ProgramProviderBase:
+# 11         from app.factories.context_provider_factory import ContextProviderFactory
+# 12         from app.factories.score_provider_factory import ScoreProviderFactory
+# 13         from app.factories.tool_provider_factory import ToolProviderFactory
+# 14 
+# 15         inst   = super().create(id)
+# 16         config = inst.config.config or {}
+# 17 
+# 18         ctx = (
+# 19             ContextProviderFactory.create(config["context_provider_id"])
+# 20             if config.get("context_provider_id") else None
+# 21         )
+# 22         scr = (
+# 23             ScoreProviderFactory.create(config["score_provider_id"])
+# 24             if config.get("score_provider_id") else None
+# 25         )
+# 26         tools = [
+# 27             ToolProviderFactory.create(tid)
+# 28             for tid in (config.get("tool_provider_ids") or {}).values()
+# 29         ]
+# 30 
+# 31         cls_type = type(inst)
+# 32         return cls_type(
+# 33             config           = inst.config,
+# 34             engine           = inst._engine,
+# 35             context_provider = ctx,
+# 36             score_provider   = scr,
+# 37             tool_providers   = tools,
+# 38         )
 
 
 # factories\prompt_provider_factory.py
@@ -2289,10 +2593,31 @@
 # 2 from app.db.models import ScoreProviderConfig
 # 3 from app.providers.score_provider_base import ScoreProviderBase
 # 4 
-# 5 
-# 6 class ScoreProviderFactory(BaseProviderFactory):
-# 7     config_model = ScoreProviderConfig
-# 8     base_class = ScoreProviderBase
+# 5 class ScoreProviderFactory(BaseProviderFactory):
+# 6     config_model = ScoreProviderConfig
+# 7     base_class = ScoreProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> ScoreProviderBase:
+# 11         instance = super().create(id, **kwargs)
+# 12         config = instance.config.config or {}
+# 13 
+# 14         #  ⏱️ Delayed imports to prevent circular references
+# 15         if "tool_provider_ids" in config or "context_provider_id" in config:
+# 16             from app.factories.tool_provider_factory import ToolProviderFactory
+# 17             from app.factories.context_provider_factory import ContextProviderFactory
+# 18 
+# 19             if (ctx_id := config.get("context_provider_id")):
+# 20                 context = ContextProviderFactory.create(ctx_id)
+# 21                 instance.set_context_provider(context)
+# 22                 if hasattr(context, "set_score_provider"):
+# 23                     context.set_score_provider(instance)
+# 24 
+# 25             for _, tool_id in (config.get("tool_provider_ids") or {}).items():
+# 26                 tool = ToolProviderFactory.create(tool_id)
+# 27                 instance.set_tool_provider(tool)
+# 28 
+# 29         return instance
 
 
 # factories\state_provider_factory.py
@@ -2304,6 +2629,38 @@
 # 5 class StateProviderFactory(BaseProviderFactory):
 # 6     config_model = StateProviderConfig
 # 7     base_class = StateProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> StateProviderBase:
+# 11         #  Delayed imports to avoid circular dependencies
+# 12         from app.factories.agent_provider_factory import AgentProviderFactory
+# 13         from app.factories.context_provider_factory import ContextProviderFactory
+# 14         from app.factories.score_provider_factory import ScoreProviderFactory
+# 15         from app.factories.tool_provider_factory import ToolProviderFactory
+# 16 
+# 17         engine = kwargs.get("engine")
+# 18         preload_instance = super().create(id, engine=engine)
+# 19         config = preload_instance.config.config or {}
+# 20 
+# 21         #  Inject agents into a dict
+# 22         kwargs["agents"] = {
+# 23             name: AgentProviderFactory.create(agent_id)
+# 24             for name, agent_id in config.get("agents", {}).items()
+# 25         }
+# 26 
+# 27         #  Inject optional context/score/tools
+# 28         if "context_provider_id" in config:
+# 29             kwargs["context_provider"] = ContextProviderFactory.create(config["context_provider_id"])
+# 30 
+# 31         if "score_provider_id" in config:
+# 32             kwargs["score_provider"] = ScoreProviderFactory.create(config["score_provider_id"])
+# 33 
+# 34         kwargs["tool_providers"] = [
+# 35             ToolProviderFactory.create(tool_id)
+# 36             for _, tool_id in (config.get("tool_provider_ids") or {}).items()
+# 37         ]
+# 38 
+# 39         return super().create(id, **kwargs)
 
 
 # factories\system_provider_factory.py
@@ -2315,6 +2672,32 @@
 # 5 class SystemProviderFactory(BaseProviderFactory):
 # 6     config_model = SystemProviderConfig
 # 7     base_class = SystemProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> SystemProviderBase:
+# 11         #  ⏱️ Delayed imports to avoid circular dependencies
+# 12         from app.factories.state_provider_factory import StateProviderFactory
+# 13         from app.factories.context_provider_factory import ContextProviderFactory
+# 14         from app.factories.score_provider_factory import ScoreProviderFactory
+# 15         from app.factories.tool_provider_factory import ToolProviderFactory
+# 16 
+# 17         engine = kwargs.get("engine")
+# 18         preload_instance = super().create(id, engine=engine)
+# 19         config = preload_instance.config.config or {}
+# 20 
+# 21         #  Inject optional providers
+# 22         if "context_provider_id" in config:
+# 23             kwargs["context_provider"] = ContextProviderFactory.create(config["context_provider_id"])
+# 24 
+# 25         if "score_provider_id" in config:
+# 26             kwargs["score_provider"] = ScoreProviderFactory.create(config["score_provider_id"])
+# 27 
+# 28         kwargs["tool_providers"] = [
+# 29             ToolProviderFactory.create(tool_id)
+# 30             for _, tool_id in (config.get("tool_provider_ids") or {}).items()
+# 31         ]
+# 32 
+# 33         return super().create(id, **kwargs)
 
 
 # factories\tool_provider_factory.py
@@ -2323,10 +2706,34 @@
 # 2 from app.db.models import ToolProviderConfig
 # 3 from app.providers.tool_provider_base import ToolProviderBase
 # 4 
-# 5 
-# 6 class ToolProviderFactory(BaseProviderFactory):
-# 7     config_model = ToolProviderConfig
-# 8     base_class = ToolProviderBase
+# 5 class ToolProviderFactory(BaseProviderFactory):
+# 6     config_model = ToolProviderConfig
+# 7     base_class = ToolProviderBase
+# 8 
+# 9     @classmethod
+# 10     def create(cls, id: int, **kwargs) -> ToolProviderBase:
+# 11         instance = super().create(id, **kwargs)
+# 12         config = instance.config.config or {}
+# 13 
+# 14         #  ⏱️ Delayed imports to avoid circular dependencies
+# 15         if "context_provider_id" in config or "score_provider_id" in config:
+# 16             from app.factories.context_provider_factory import ContextProviderFactory
+# 17             from app.factories.score_provider_factory import ScoreProviderFactory
+# 18 
+# 19             if (ctx_id := config.get("context_provider_id")):
+# 20                 context = ContextProviderFactory.create(ctx_id)
+# 21                 instance.set_context_provider(context)
+# 22                 if hasattr(context, "set_tool_provider"):
+# 23                     context.set_tool_provider(instance)
+# 24 
+# 25             if (score_id := config.get("score_provider_id")):
+# 26                 if isinstance(score_id, int) and score_id > 0:
+# 27                     score = ScoreProviderFactory.create(score_id)
+# 28                     instance.set_score_provider(score)
+# 29                     if hasattr(score, "set_tool_provider"):
+# 30                         score.set_tool_provider(instance)
+# 31 
+# 32         return instance
 
 
 # providers\__init__.py
@@ -2354,167 +2761,143 @@
 
 # providers\agent_provider_base.py
 
-# 1 #  app/providers/agent_provider_base.py
-# 2 
-# 3 from datetime import datetime, timezone
-# 4 from pathlib import Path
-# 5 from abc import abstractmethod
-# 6 
-# 7 from app.enums.logging_enums import LogType
-# 8 from app.providers.base_provider import BaseProvider
-# 9 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-# 10 from app.db.schemas import AgentConversationLogSchema
-# 11 
-# 12 class AgentProviderBase(BaseProvider):
-# 13     """Agent provider that wraps _run with snapshot and structured log logic."""
-# 14 
-# 15     def _run_provider(self, input: dict) -> str:
-# 16         output = self._run(input)
-# 17 
-# 18         self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
-# 19 
-# 20         code_block = None
-# 21         log_content = None
-# 22 
-# 23         #   Extract [CODE] block if present
-# 24         code_start = output.find("[CODE]")
-# 25         code_end = output.find("[/CODE]")
-# 26         if code_start != -1 and code_end != -1 and code_start < code_end:
-# 27             code_block = output[code_start + 6 : code_end].strip()
-# 28         #   FALLBACK: if we have a 'before' path, treat the whole output as the code
-# 29         elif input.get("before"):
-# 30             code_block = output.strip()
-# 31 
-# 32         #   Extract [CONVERSATION_LOG_ENTRY] if present
-# 33         log_start = output.find("[CONVERSATION_LOG_ENTRY]")
-# 34         log_end   = output.find("[/CONVERSATION_LOG_ENTRY]")
-# 35         if log_start != -1 and log_end != -1 and log_start < log_end:
-# 36             log_content = output[log_start + 24 : log_end].strip()
-# 37 
-# 38         #   Determine the file to snapshot
-# 39         file_path = input.get("before") or (self.config.config or {}).get("before")
-# 40 
-# 41         #   Write snapshot if we have both a before-file and produced code
-# 42         if file_path and code_block:
-# 43             before_path = Path(file_path)
-# 44             if not before_path.is_absolute():
-# 45                 before_path = Path.cwd() / before_path
-# 46 
-# 47             print(f"📄 Final BEFORE PATH: {before_path}")
-# 48 
-# 49             if before_path.exists():
-# 50                 snapshot_path = SnapshotWriter().write_snapshot(
-# 51                     before=before_path.read_text(encoding="utf-8"),
-# 52                     after=code_block,
-# 53                     session_id=self._session_id,
-# 54                     agent_name=self.config.name,
-# 55                     file_path=str(before_path),
-# 56                 )
-# 57                 self._snapshot_id = snapshot_path
-# 58                 self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
-# 59             else:
-# 60                 self._log.warning(f"❌ Snapshot skipped: input file does not exist → {before_path}")
-# 61 
-# 62         #   Always log any conversation log entry
-# 63         if log_content:
-# 64             log = AgentConversationLogSchema(
-# 65                 session_id=self._session_id,
-# 66                 system=self._system,
-# 67                 agent_provider_config_id=self.config.id if self.config else -1,
-# 68                 agent_name=self.config.name if self.config else "unknown",
-# 69                 content=log_content,
-# 70                 timestamp=datetime.now(timezone.utc)
-# 71             )
-# 72             self.logger.write(LogType.AGENT_CONVERSATION, log)
-# 73             self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 1 from datetime import datetime, timezone
+# 2 from pathlib import Path
+# 3 from abc import abstractmethod
+# 4 
+# 5 from app.enums.logging_enums import LogType
+# 6 from app.providers.base_provider import BaseProvider
+# 7 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
+# 8 from app.db.schemas import AgentConversationLogSchema
+# 9 
+# 10 class AgentProviderBase(BaseProvider):
+# 11     def __init__(
+# 12         self,
+# 13         config=None,
+# 14         engine=None,
+# 15         agent_engine=None,
+# 16         prompt_provider=None,
+# 17         context_provider=None,
+# 18         score_provider=None,
+# 19         tool_providers=None,
+# 20     ):
+# 21         super().__init__(config=config, engine=engine)
+# 22         self._agent_engine = agent_engine
+# 23         self._prompt_provider = prompt_provider
+# 24         self._context_provider = context_provider
+# 25         self._score_provider = score_provider
+# 26         self._tool_providers = tool_providers or []
+# 27 
+# 28     def _run_provider(self, input: dict) -> str:
+# 29         output = self._run(input)
+# 30 
+# 31         self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
+# 32 
+# 33         #  === Extract structured blocks ===
+# 34         code_block = self._extract_block(output, "[CODE]", "[/CODE]") or (
+# 35             output.strip() if input.get("before") else None
+# 36         )
+# 37         log_content = self._extract_block(output, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 38 
+# 39         #  === Write snapshot ===
+# 40         file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
+# 41         if file_path and code_block:
+# 42             before_path = Path(file_path).resolve()
+# 43             if before_path.exists():
+# 44                 snapshot_path = SnapshotWriter().write_snapshot(
+# 45                     before=before_path.read_text(encoding="utf-8"),
+# 46                     after=code_block,
+# 47                     session_id=self._session_id,
+# 48                 )
+# 49                 self._snapshot_id = snapshot_path
+# 50                 self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
+# 51             else:
+# 52                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
+# 53 
+# 54         #  === Log conversation entry ===
+# 55         if log_content:
+# 56             self.logger.write(LogType.AGENT_CONVERSATION, AgentConversationLogSchema(
+# 57                 session_id=self._session_id,
+# 58                 system=self._system,
+# 59                 agent_provider_config_id=self.config.id if self.config else -1,
+# 60                 agent_name=self.config.name if self.config else "unknown",
+# 61                 content=log_content,
+# 62                 timestamp=datetime.now(timezone.utc),
+# 63             ))
+# 64             self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 65 
+# 66         return output
+# 67 
+# 68     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 69         start = text.find(start_tag)
+# 70         end = text.find(end_tag)
+# 71         if start != -1 and end != -1 and start < end:
+# 72             return text[start + len(start_tag):end].strip()
+# 73         return None
 # 74 
-# 75         return output
-# 76 
-# 77     @abstractmethod
-# 78     def _run(self, input: dict) -> str:
-# 79         raise NotImplementedError
+# 75     @abstractmethod
+# 76     def _run(self, input: dict) -> str:
+# 77         raise NotImplementedError
 
 
 # providers\base_provider.py
 
-# 1 from __future__ import annotations
-# 2 
-# 3 from abc import abstractmethod
-# 4 from datetime import datetime, timezone
-# 5 from pathlib import Path
-# 6 import json
-# 7 
-# 8 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LogType
-# 9 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
-# 10 
-# 11 class BaseProvider(LoggingMixin):
-# 12     """Base class for all providers using unified provider log."""
-# 13 
-# 14     def __init__(self, config=None, engine=None) -> None:
-# 15         super().__init__()
+# 1 #  base_provider.py
+# 2 from abc import abstractmethod
+# 3 from datetime import datetime, timezone
+# 4 from pathlib import Path
+# 5 import json
+# 6 
+# 7 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LogType
+# 8 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
+# 9 
+# 10 class BaseProvider(LoggingMixin):
+# 11     """Base class for all providers using unified provider log."""
+# 12 
+# 13     def __init__(self, config=None, engine=None) -> None:
+# 14         super().__init__()
+# 15         assert engine is not None, "🚨 engine must be injected into BaseProvider"
 # 16         self.config = config
 # 17         self._engine = engine
 # 18 
-# 19     def run(self, input: dict, session_id: str) -> str:
-# 20         self._log.debug("Run started")
-# 21         self._session_id = session_id
-# 22         self._system = input.get("system", "unknown")
-# 23         output = None
-# 24 
-# 25         try:
-# 26             output = self._run_provider(input)
-# 27             return output
-# 28         except Exception as exc:
-# 29             self.logger.write(LogType.ERROR, ErrorLogSchema(
-# 30                 session_id=session_id,
-# 31                 error_type=type(exc).__name__,
-# 32                 message=str(exc),
-# 33                 file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 34             ))
-# 35             raise
-# 36         finally:
-# 37             log = ProviderLogSchema(
-# 38                 session_id=session_id,
-# 39                 provider_id=self.config.id if self.config else -1,
-# 40                 provider_type = next(
-# 41                     base.__name__
-# 42                     for base in self.__class__.__mro__
-# 43                     if base.__name__.endswith("ProviderBase") and base is not object
-# 44                 ),
-# 45                 input=json.dumps(input),
-# 46                 output=json.dumps(output.model_dump()) if hasattr(output, "model_dump") else json.dumps(output),
-# 47                 file_path = getattr(self.config, "artifact_path", None),
-# 48                 timestamp=datetime.now(timezone.utc)
-# 49             )
-# 50             self.logger.write(LogType.PROVIDER, log)
-# 51             self._log.debug("Run logged")
-# 52 
-# 53     def resolve_dependencies(self, **kwargs) -> None:
-# 54         """Automatically wire known dependencies and enable reverse injection."""
-# 55         for name, dep in kwargs.items():
-# 56             if dep is None:
-# 57                 continue
-# 58 
-# 59             #  Set reference
-# 60             setattr(self, name, dep)
-# 61 
-# 62             #  Reverse registration for context or score providers
-# 63             if name in {"context_provider", "score_provider"}:
-# 64                 method = f"set_{self.__class__.__name__.lower()}"
-# 65                 if hasattr(dep, method):
-# 66                     getattr(dep, method)(self)
-# 67 
-# 68             #  Handle list of tool providers
-# 69             elif name == "tool_providers" and isinstance(dep, list):
-# 70                 for tool in dep:
-# 71                     if hasattr(tool, "set_context_provider") and hasattr(self, "context_provider"):
-# 72                         tool.set_context_provider(self.context_provider)
-# 73                     if hasattr(tool, "set_score_provider") and hasattr(self, "score_provider"):
-# 74                         tool.set_score_provider(self.score_provider)
-# 75 
-# 76     @abstractmethod
-# 77     def _run_provider(self, input: dict) -> str:
-# 78         raise NotImplementedError
+# 19     def run(self, input: dict | None = None, session_id: str = "") -> str:
+# 20         input = input or {}
+# 21         self._log.debug("Run started")
+# 22         self._session_id = session_id
+# 23         self._system = input.get("system", "unknown")
+# 24         output = None
+# 25 
+# 26         try:
+# 27             output = self._run_provider(input)
+# 28             return output
+# 29         except Exception as exc:
+# 30             self.logger.write(LogType.ERROR, ErrorLogSchema(
+# 31                 session_id=session_id,
+# 32                 error_type=type(exc).__name__,
+# 33                 message=str(exc),
+# 34                 file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 35             ))
+# 36             raise
+# 37         finally:
+# 38             log = ProviderLogSchema(
+# 39                 session_id=session_id,
+# 40                 provider_id=self.config.id if self.config else -1,
+# 41                 provider_type = next(
+# 42                     base.__name__
+# 43                     for base in self.__class__.__mro__
+# 44                     if base.__name__.endswith("ProviderBase") and base is not object
+# 45                 ),
+# 46                 input=json.dumps(input),
+# 47                 output=json.dumps(output.model_dump()) if hasattr(output, "model_dump") else json.dumps(output),
+# 48                 file_path = getattr(self.config, "artifact_path", None),
+# 49                 timestamp=datetime.now(timezone.utc)
+# 50             )
+# 51             self.logger.write(LogType.PROVIDER, log)
+# 52             self._log.debug("Run logged")
+# 53 
+# 54     @abstractmethod
+# 55     def _run_provider(self, input: dict) -> str:
+# 56         raise NotImplementedError
 
 
 # providers\context_provider_base.py
@@ -2550,46 +2933,103 @@
 # 29         raise NotImplementedError
 
 
-# providers\orchestrator_provider_base.py
+# providers\controller_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 from abc import abstractmethod
+# 2 from abc import abstractmethod
+# 3 from typing import Dict
 # 4 from datetime import datetime, timezone
-# 5 
-# 6 from app.providers.base_provider import BaseProvider
-# 7 from app.db.schemas import StateTransitionLogSchema
-# 8 from app.enums.logging_enums import LogType
-# 9 
-# 10 class OrchestratorProviderBase(BaseProvider):
-# 11     """Base class for orchestrator providers built on system FSMs."""
+# 5 from pathlib import Path
+# 6 import shutil, json
+# 7 
+# 8 from app.providers.base_provider import BaseProvider
+# 9 from app.factories.system_provider_factory import SystemProviderFactory
+# 10 from app.db.schemas import StateTransitionLogSchema, ProviderLogSchema
+# 11 from app.enums.logging_enums import LogType
 # 12 
-# 13     def _run_provider(self, input: dict) -> str:
-# 14         return self._run(input)
-# 15 
-# 16     def transition(self, state: dict, session_id: str) -> dict:
-# 17         from_state = state.get("state")
-# 18         new_state = self._transition(state)
-# 19         to_state = new_state.get("state")
-# 20 
-# 21         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
-# 22             session_id=session_id,
-# 23             entity_type=self.__class__.__name__,
-# 24             entity_id=self.config.id,
-# 25             from_state=from_state,
-# 26             to_state=to_state,
-# 27             timestamp=datetime.now(timezone.utc)
-# 28         ))
-# 29 
-# 30         return new_state
+# 13 class ControllerProviderBase(BaseProvider):
+# 14     def __init__(
+# 15         self,
+# 16         config=None,
+# 17         engine=None,
+# 18         context_provider=None,
+# 19         score_provider=None,
+# 20         tool_providers=None,
+# 21     ):
+# 22         super().__init__(config=config, engine=engine)
+# 23         self.context_provider = context_provider
+# 24         self.score_provider   = score_provider
+# 25         self.tool_providers   = tool_providers or []
+# 26 
+# 27         #  instantiate sub-systems
+# 28         self._systems: Dict[str, object] = {}
+# 29         for name, sys_id in (config.config or {}).get("systems", {}).items():
+# 30             self._systems[name] = SystemProviderFactory.create(sys_id)
 # 31 
-# 32     @abstractmethod
-# 33     def _run(self, input: dict) -> str:
-# 34         raise NotImplementedError
-# 35 
-# 36     @abstractmethod
-# 37     def _transition(self, state: dict) -> dict:
-# 38         raise NotImplementedError
+# 32     def _run_provider(self, input: dict) -> dict:
+# 33         sess = input.get("session_id")
+# 34         src  = Path(input["file_name"])
+# 35         self.working_file = src.with_name(f"{src.stem}_working{src.suffix}")
+# 36         shutil.copy(src, self.working_file)
+# 37 
+# 38         state = {
+# 39             "state":        "start",
+# 40             "file_path":    str(src),
+# 41             "working_file": str(self.working_file),
+# 42             **input,
+# 43         }
+# 44 
+# 45         while True:
+# 46             cur = state["state"]
+# 47             if cur == "end":
+# 48                 #  final provider log
+# 49                 self.logger.write(LogType.PROVIDER, ProviderLogSchema(
+# 50                     session_id=sess,
+# 51                     provider_id=self.config.id,
+# 52                     provider_type=self.__class__.__name__,
+# 53                     input=json.dumps(input),
+# 54                     output=json.dumps(state),
+# 55                     file_path=self.config.artifact_path,
+# 56                     timestamp=datetime.now(timezone.utc)
+# 57                 ))
+# 58                 return state
+# 59 
+# 60             if cur == "start":
+# 61                 nxt = self.transition(state, None)
+# 62                 state.update(nxt, _last_state="start")
+# 63                 continue
+# 64 
+# 65             #  call the named sub-system
+# 66             sysprov = self._systems.get(cur)
+# 67             if not sysprov:
+# 68                 raise ValueError(f"No system registered for state '{cur}'")
+# 69 
+# 70             #  pass through everything except the `state` key
+# 71             inp = {k: v for k,v in state.items() if k != "state"}
+# 72             out = sysprov.run(input=inp, session_id=sess)
+# 73 
+# 74             nxt = self.transition(state, out)
+# 75             flat_output = {k: v for k, v in out.items() if k != "output"}
+# 76             state.update(nxt, _last_state=cur, output=flat_output)
+# 77 
+# 78 
+# 79     def transition(self, state: dict, sys_output: str|None) -> dict:
+# 80         nxt = self._transition(state, sys_output)
+# 81         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
+# 82             session_id=state["session_id"],
+# 83             entity_type=self.__class__.__name__,
+# 84             entity_id=self.config.id,
+# 85             from_state=state["state"],
+# 86             to_state=nxt.get("state", "unknown"),
+# 87             reason=nxt.get("reason", "unspecified"),
+# 88             timestamp=datetime.now(timezone.utc)
+# 89         ))
+# 90         return nxt
+# 91 
+# 92     @abstractmethod
+# 93     def _transition(self, state: dict, sys_output: str|None) -> dict:
+# 94         """Implement your FSM logic in the extension."""
+# 95         ...
 
 
 # providers\program_provider_base.py
@@ -2597,60 +3037,149 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from abc import abstractmethod
-# 4 from datetime import datetime, timezone
-# 5 
-# 6 from app.providers.base_provider import BaseProvider
-# 7 from app.db.schemas import StateTransitionLogSchema
-# 8 from app.enums.logging_enums import LogType
+# 4 from typing import Dict
+# 5 from datetime import datetime, timezone
+# 6 from pathlib import Path
+# 7 import shutil
+# 8 import json
 # 9 
-# 10 
-# 11 class ProgramProviderBase(BaseProvider):
-# 12     """Base class for programs composed of orchestrators."""
-# 13 
-# 14     def _run_provider(self, input: dict) -> str:
-# 15         return self._run(input)
-# 16 
-# 17     def transition(self, state: dict, session_id: str) -> dict:
-# 18         from_state = state.get("state")
-# 19         new_state = self._transition(state)
-# 20         to_state = new_state.get("state")
-# 21 
-# 22         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
-# 23             session_id=session_id,
-# 24             entity_type=self.__class__.__name__,
-# 25             entity_id=self.config.id,
-# 26             from_state=from_state,
-# 27             to_state=to_state,
-# 28             timestamp=datetime.now(timezone.utc)
-# 29         ))
-# 30 
-# 31         return new_state
-# 32 
-# 33     @abstractmethod
-# 34     def _run(self, input: dict) -> str:
-# 35         raise NotImplementedError
-# 36 
-# 37     @abstractmethod
-# 38     def _transition(self, state: dict) -> dict:
-# 39         raise NotImplementedError
+# 10 from app.providers.base_provider import BaseProvider
+# 11 from app.factories.controller_provider_factory import ControllerProviderFactory
+# 12 from app.db.schemas import StateTransitionLogSchema, ProviderLogSchema
+# 13 from app.enums.logging_enums import LogType
+# 14 
+# 15 class ProgramProviderBase(BaseProvider):
+# 16     def __init__(
+# 17         self,
+# 18         config=None,
+# 19         engine=None,
+# 20         context_provider=None,
+# 21         score_provider=None,
+# 22         tool_providers=None,
+# 23     ):
+# 24         super().__init__(config=config, engine=engine)
+# 25         self.context_provider = context_provider
+# 26         self.score_provider = score_provider
+# 27         self.tool_providers = tool_providers or []
+# 28         self._controllers: Dict[str, object] = {}
+# 29 
+# 30         controller_cfg = config.config.get("controllers", {})
+# 31         for name, provider_id in controller_cfg.items():
+# 32             self._controllers[name] = ControllerProviderFactory.create(provider_id)
+# 33 
+# 34     def _run_provider(self, input: dict) -> dict:
+# 35         session_id = input.get("session_id")
+# 36         input_file = Path(input["file_name"])
+# 37         self.working_file = input_file.with_name(f"{input_file.stem}_working{input_file.suffix}")
+# 38         shutil.copy(input_file, self.working_file)
+# 39 
+# 40         state = {
+# 41             "state": "start",
+# 42             "file_name": str(input_file),
+# 43             "working_file": str(self.working_file),
+# 44             **input,
+# 45         }
+# 46 
+# 47         max_steps = 20
+# 48         step_count = 0
+# 49 
+# 50         while True:
+# 51             if step_count >= max_steps:
+# 52                 state["state"] = "end"
+# 53                 state["reason"] = f"max steps ({max_steps}) reached"
+# 54                 break
+# 55             step_count += 1
+# 56 
+# 57             current = state.get("state")
+# 58 
+# 59             if current == "end":
+# 60                 self.logger.write(LogType.PROVIDER, ProviderLogSchema(
+# 61                     session_id=session_id,
+# 62                     provider_id=self.config.id,
+# 63                     provider_type=self.__class__.__name__,
+# 64                     input=json.dumps(input),
+# 65                     output=json.dumps(state),
+# 66                     file_path=self.config.artifact_path,
+# 67                     timestamp=datetime.now(timezone.utc)
+# 68                 ))
+# 69                 return state
+# 70 
+# 71             if current == "start":
+# 72                 state = {**state, **self.transition(state, None), "_last_state": "start"}
+# 73                 continue
+# 74 
+# 75             controller = self._controllers.get(current)
+# 76             if not controller:
+# 77                 raise ValueError(f"No controller registered for state: {current}")
+# 78 
+# 79             controller_input = {k: v for k, v in state.items() if k != "state"}
+# 80             output = controller.run(input=controller_input, session_id=session_id)
+# 81 
+# 82             transition_result = self.transition(state, output)
+# 83             flat_output = {k: v for k, v in output.items() if k != "output"}
+# 84             state = {**state, **transition_result, "_last_state": current, "output": flat_output}
+# 85 
+# 86         return state
+# 87 
+# 88     def transition(self, state: dict, controller_output: dict | None) -> dict:
+# 89         next_state = self._transition(state, controller_output)
+# 90         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
+# 91             session_id=state.get("session_id"),
+# 92             entity_type=self.__class__.__name__,
+# 93             entity_id=self.config.id,
+# 94             from_state=state.get("state"),
+# 95             to_state=next_state.get("state", "unknown"),
+# 96             reason=next_state.get("reason", "unspecified"),
+# 97             timestamp=datetime.now(timezone.utc)
+# 98         ))
+# 99         return next_state
+# 100 
+# 101     @abstractmethod
+# 102     def _transition(self, state: dict, controller_output: dict | None) -> dict:
+# 103         raise NotImplementedError
 
 
 # providers\prompt_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 from abc import abstractmethod
-# 4 from app.providers.base_provider import BaseProvider
+# 2 from abc import abstractmethod
+# 3 from sqlalchemy.orm import Session
+# 4 from pathlib import Path
 # 5 
-# 6 class PromptProviderBase(BaseProvider):
-# 7     """Base class for prompt generators."""
-# 8 
-# 9     def _run_provider(self, input: dict) -> str:
-# 10         return self._run(input)
-# 11 
-# 12     @abstractmethod
-# 13     def _run(self, input: dict) -> str:
-# 14         raise NotImplementedError
+# 6 from app.db.models import AgentPrompt, SystemPrompt
+# 7 from app.providers.base_provider import BaseProvider
+# 8 from app.factories.context_provider_factory import ContextProviderFactory
+# 9 
+# 10 
+# 11 class PromptProviderBase(BaseProvider):
+# 12     """Base class for prompt generators with optional context/agent/system loading."""
+# 13 
+# 14     def __init__(self, config, engine=None):
+# 15         super().__init__(config=config, engine=engine)
+# 16 
+# 17         self._agent_prompt = None
+# 18         self._system_prompt = None
+# 19         self._context_provider = None
+# 20 
+# 21         if not self.config or not self._engine:
+# 22             return
+# 23 
+# 24         with Session(bind=self._engine) as session:
+# 25             if agent_id := self.config.config.get("agent_prompt_id"):
+# 26                 self._agent_prompt = session.get(AgentPrompt, agent_id)
+# 27 
+# 28             if system_id := self.config.config.get("system_prompt_id"):
+# 29                 self._system_prompt = session.get(SystemPrompt, system_id)
+# 30 
+# 31             if context_id := self.config.config.get("context_provider_id"):
+# 32                 self._context_provider = ContextProviderFactory.create(id=context_id)
+# 33 
+# 34     def _run_provider(self, input: dict) -> str:
+# 35         return self._run(input)
+# 36 
+# 37     @abstractmethod
+# 38     def _run(self, input: dict) -> str:
+# 39         raise NotImplementedError
 
 
 # providers\score_provider_base.py
@@ -2688,42 +3217,79 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from abc import abstractmethod
-# 4 from datetime import datetime, timezone
-# 5 import json
-# 6 
-# 7 from app.providers.base_provider import BaseProvider
-# 8 from app.db.schemas import StateTransitionLogSchema
-# 9 from app.enums.logging_enums import LogType
-# 10 
-# 11 class StateProviderBase(BaseProvider):
-# 12     """Base class for FSM-driven state providers."""
-# 13 
-# 14     def _run_provider(self, input: dict) -> str:
-# 15         return self._run(input)
-# 16 
-# 17     def transition(self, state: dict, session_id: str) -> dict:
-# 18         from_state = state.get("state")
-# 19         new_state = self._transition(state)
-# 20         to_state = new_state.get("state")
-# 21 
-# 22         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
-# 23             session_id=session_id,
-# 24             entity_type=self.__class__.__name__,
-# 25             entity_id=self.config.id,
-# 26             from_state=from_state,
-# 27             to_state=to_state,
-# 28             timestamp=datetime.now(timezone.utc)
-# 29         ))
+# 4 from typing import Dict
+# 5 from datetime import datetime, timezone
+# 6 import json
+# 7 
+# 8 from app.providers.base_provider import BaseProvider
+# 9 from app.db.schemas import StateTransitionLogSchema, ProviderLogSchema
+# 10 from app.enums.logging_enums import LogType
+# 11 
+# 12 
+# 13 class StateProviderBase(BaseProvider):
+# 14     """Base class for FSM-driven state providers."""
+# 15 
+# 16     def __init__(
+# 17         self,
+# 18         config=None,
+# 19         engine=None,
+# 20         agents: dict[str, object] = None,
+# 21         context_provider=None,
+# 22         score_provider=None,
+# 23         tool_providers=None
+# 24     ):
+# 25         super().__init__(config=config, engine=engine)
+# 26         self._agents = agents or {}
+# 27         self._context_provider = context_provider
+# 28         self._score_provider = score_provider
+# 29         self._tool_providers = tool_providers or []
 # 30 
-# 31         return new_state
-# 32 
-# 33     @abstractmethod
-# 34     def _run(self, input: dict) -> str:
-# 35         raise NotImplementedError
-# 36 
-# 37     @abstractmethod
-# 38     def _transition(self, state: dict) -> dict:
-# 39         raise NotImplementedError
+# 31     def _run_provider(self, input: dict) -> dict:
+# 32         session_id = input.get("session_id")
+# 33         state = {"state": "start", **input}
+# 34 
+# 35         while True:
+# 36             current = state.get("state")
+# 37 
+# 38             if current == "end":
+# 39                 self.logger.write(LogType.PROVIDER, ProviderLogSchema(
+# 40                     session_id=session_id,
+# 41                     provider_id=self.config.id,
+# 42                     provider_type=self.__class__.__name__,
+# 43                     input=json.dumps(input),
+# 44                     output=json.dumps(state),
+# 45                     file_path=self.config.artifact_path,
+# 46                     timestamp=datetime.now(timezone.utc)
+# 47                 ))
+# 48                 return state
+# 49 
+# 50             if current == "start":
+# 51                 state = {**state, **self.transition(state, None), "_last_state": "start"}
+# 52                 continue
+# 53 
+# 54             agent = self._agents.get(current)
+# 55             if not agent:
+# 56                 raise ValueError(f"No agent registered for state: {current}")
+# 57 
+# 58             output = agent.run(input=state, session_id=session_id)
+# 59             state = {**state, **self.transition(state, output), "_last_state": current, "output": output}
+# 60 
+# 61     def transition(self, state: dict, agent_output: str | None) -> dict:
+# 62         next_state = self._transition(state, agent_output)
+# 63         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
+# 64             session_id=state.get("session_id"),
+# 65             entity_type=self.__class__.__name__,
+# 66             entity_id=self.config.id,
+# 67             from_state=state.get("state"),
+# 68             to_state=next_state.get("state", "unknown"),
+# 69             reason=next_state.get("reason", "unspecified"),
+# 70             timestamp=datetime.now(timezone.utc)
+# 71         ))
+# 72         return next_state
+# 73 
+# 74     @abstractmethod
+# 75     def _transition(self, state: dict, agent_output: str | None) -> dict:
+# 76         raise NotImplementedError
 
 
 # providers\system_provider_base.py
@@ -2731,68 +3297,131 @@
 # 1 from __future__ import annotations
 # 2 
 # 3 from abc import abstractmethod
-# 4 from datetime import datetime, timezone
-# 5 import json
-# 6 
-# 7 from app.providers.base_provider import BaseProvider
-# 8 from app.db.schemas import StateTransitionLogSchema
-# 9 from app.enums.logging_enums import LogType
-# 10 
-# 11 class SystemProviderBase(BaseProvider):
-# 12     """Base class for FSM-driven system providers built on states."""
-# 13 
-# 14     def _run_provider(self, input: dict) -> str:
-# 15         return self._run(input)
-# 16 
-# 17     def transition(self, state: dict, session_id: str) -> dict:
-# 18         from_state = state.get("state")
-# 19         new_state = self._transition(state)
-# 20         to_state = new_state.get("state")
-# 21 
-# 22         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
-# 23             session_id=session_id,
-# 24             entity_type=self.__class__.__name__,
-# 25             entity_id=self.config.id,
-# 26             from_state=from_state,
-# 27             to_state=to_state,
-# 28             timestamp=datetime.now(timezone.utc)
-# 29         ))
-# 30 
-# 31         return new_state
-# 32 
-# 33     @abstractmethod
-# 34     def _run(self, input: dict) -> str:
-# 35         raise NotImplementedError
-# 36 
-# 37     @abstractmethod
-# 38     def _transition(self, state: dict) -> dict:
-# 39         raise NotImplementedError
+# 4 from typing import Dict
+# 5 from datetime import datetime, timezone
+# 6 from pathlib import Path
+# 7 import shutil
+# 8 import json
+# 9 
+# 10 from app.providers.base_provider import BaseProvider
+# 11 from app.factories.state_provider_factory import StateProviderFactory
+# 12 from app.db.schemas import StateTransitionLogSchema, ProviderLogSchema
+# 13 from app.enums.logging_enums import LogType
+# 14 
+# 15 
+# 16 class SystemProviderBase(BaseProvider):
+# 17     def __init__(self, config=None, engine=None, context_provider=None, score_provider=None, tool_providers=None):
+# 18         super().__init__(config=config, engine=engine)
+# 19         self.context_provider = context_provider
+# 20         self.score_provider = score_provider
+# 21         self.tool_providers = tool_providers or []
+# 22         self._states: Dict[str, object] = {}
+# 23         state_cfg = config.config.get("states", {})
+# 24 
+# 25         for name, provider_id in state_cfg.items():
+# 26             self._states[name] = StateProviderFactory.create(provider_id)
+# 27 
+# 28     def _run_provider(self, input: dict) -> dict:
+# 29         session_id = input.get("session_id")
+# 30         input_file = Path(input["file_path"])
+# 31         self.working_file = input_file.with_name(f"{input_file.stem}_working{input_file.suffix}")
+# 32         shutil.copy(input_file, self.working_file)
+# 33 
+# 34         state = {
+# 35             "state": "start",
+# 36             "input_file": str(input_file),
+# 37             "working_file": str(self.working_file),
+# 38             **input
+# 39         }
+# 40 
+# 41         max_steps = 20
+# 42         step_count = 0
+# 43 
+# 44         while True:
+# 45             if step_count >= max_steps:
+# 46                 state["state"] = "end"
+# 47                 state["reason"] = f"max steps ({max_steps}) reached"
+# 48                 break
+# 49             step_count += 1
+# 50 
+# 51             current = state.get("state")
+# 52 
+# 53             if current == "end":
+# 54                 self.logger.write(LogType.PROVIDER, ProviderLogSchema(
+# 55                     session_id=session_id,
+# 56                     provider_id=self.config.id,
+# 57                     provider_type=self.__class__.__name__,
+# 58                     input=json.dumps(input),
+# 59                     output=json.dumps(state),
+# 60                     file_path=self.config.artifact_path,
+# 61                     timestamp=datetime.now(timezone.utc)
+# 62                 ))
+# 63                 return state
+# 64 
+# 65             if current == "start":
+# 66                 state = {**state, **self.transition(state, None), "_last_state": "start"}
+# 67                 continue
+# 68 
+# 69             state_provider = self._states.get(current)
+# 70             if not state_provider:
+# 71                 raise ValueError(f"No state provider registered for state: {current}")
+# 72 
+# 73             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 74             output = state_provider.run(input=provider_input, session_id=session_id)
+# 75             transition_result = self.transition(state, output)
+# 76             state = {**state, **transition_result, "_last_state": current}
+# 77             if "output" not in output:
+# 78                 state["output"] = output
+# 79 
+# 80         return state
+# 81 
+# 82     def transition(self, state: dict, agent_output: str | None) -> dict:
+# 83         next_state = self._transition(state, agent_output)
+# 84         self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
+# 85             session_id=state.get("session_id"),
+# 86             entity_type=self.__class__.__name__,
+# 87             entity_id=self.config.id,
+# 88             from_state=state.get("state"),
+# 89             to_state=next_state.get("state", "unknown"),
+# 90             reason=next_state.get("reason", "unspecified"),
+# 91             timestamp=datetime.now(timezone.utc)
+# 92         ))
+# 93         return next_state
+# 94 
+# 95     def update_working_file_from_snapshot(self, snapshot_path: str):
+# 96         after_file = Path(f"experiments/snapshots/{snapshot_path}.after")
+# 97         if after_file.exists():
+# 98             Path(self.working_file).write_text(after_file.read_text(encoding="utf-8"), encoding="utf-8")
+# 99 
+# 100     @abstractmethod
+# 101     def _transition(self, state: dict, agent_output: str | None) -> dict:
+# 102         raise NotImplementedError
 
 
 # providers\tool_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 from abc import abstractmethod
-# 4 from app.providers.base_provider import BaseProvider
-# 5 
-# 6 from typing import TYPE_CHECKING
+# 2 from abc import abstractmethod
+# 3 from app.providers.base_provider import BaseProvider
+# 4 
+# 5 from typing import TYPE_CHECKING
+# 6 
 # 7 if TYPE_CHECKING:
 # 8     from app.providers.context_provider_base import ContextProviderBase
 # 9     from app.providers.score_provider_base import ScoreProviderBase
 # 10 
-# 11 class ToolProviderBase(BaseProvider):
-# 12     """Base class for tool providers."""
-# 13 
-# 14     def _run_provider(self, input: dict) -> str:
-# 15         return self._run(input)
-# 16     
-# 17     def set_context_provider(self, provider: "ContextProviderBase") -> None:
-# 18         self.context_provider = provider
-# 19 
-# 20     def set_score_provider(self, provider: "ScoreProviderBase") -> None:
-# 21         self.score_provider = provider
-# 22 
+# 11 
+# 12 class ToolProviderBase(BaseProvider):
+# 13     """Base class for tool providers with optional context/score wiring."""
+# 14 
+# 15     def _run_provider(self, input: dict) -> str:
+# 16         return self._run(input)
+# 17 
+# 18     def set_context_provider(self, provider: ContextProviderBase) -> None:
+# 19         self.context_provider = provider
+# 20 
+# 21     def set_score_provider(self, provider: ScoreProviderBase) -> None:
+# 22         self.score_provider = provider
 # 23 
 # 24     @abstractmethod
 # 25     def _run(self, input: dict) -> str:

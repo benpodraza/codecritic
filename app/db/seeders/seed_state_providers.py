@@ -9,18 +9,40 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 STATE_PROVIDERS = [
-    ("basic_state_provider.py", "Basic State Provider", "Simple FSM for agent progression.", ["default"], {"states": ["start", "review", "approve"]}),
-    ("linting_generator_state_provider.py", "linting_generator_state_provider", "Runs the linting generator agent state.", ["linting", "generator"], {"states": ["start", "linting_generator_agent", "end"]}),
-    ("linting_discriminator_state_provider.py", "linting_discriminator_state_provider", "Runs the linting discriminator and conditionally promotes snapshot.", ["linting", "discriminator"], {"states": ["linting_generator_state_provider", "linting_discriminator_state_provider", "end"]}),
+    (
+        1,
+        "linting_generator_state_provider.py",
+        "LintingGeneratorStateProvider",
+        "Runs the generator agent in its own FSM wrapper.",
+        ["linting", "generator"],
+        {
+            "agents": {
+                "generate": 2
+            }
+        }
+    ),
+    (
+        2,
+        "linting_discriminator_state_provider.py",
+        "LintingDiscriminatorStateProvider",
+        "Runs the discriminator agent in its own FSM wrapper.",
+        ["linting", "discriminator"],
+        {
+            "agents": {
+                "discriminate": 3
+            }
+        }
+    ),
 ]
 
 def seed_state_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for filename, name, description, tags, config in STATE_PROVIDERS:
+    for id, filename, name, description, tags, config in STATE_PROVIDERS:
         guid = str(uuid4())
         source_file = SEED_FILES_DIR / filename
-        dest_file = EXTENSIONS_DIR / f"{guid}.py"
+        dest_filename = f"{guid}.py"
+        dest_file = EXTENSIONS_DIR / dest_filename
 
         if not source_file.exists():
             raise FileNotFoundError(f"State provider script not found: {source_file}")
@@ -28,15 +50,16 @@ def seed_state_providers(db_session: Session):
         shutil.copy(source_file, dest_file)
 
         record = StateProviderConfig(
+            id=id,
             guid=guid,
             name=name,
             description=description,
             config=config,
-            artifact_path=guid,
+            artifact_path=dest_filename,
             tags=tags,
         )
 
         db_session.add(record)
 
     db_session.commit()
-    print("Seeded state provider configurations successfully.")
+    print("✅ Seeded state provider configurations successfully.")

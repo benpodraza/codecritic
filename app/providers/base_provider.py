@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+# base_provider.py
 from abc import abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,10 +12,12 @@ class BaseProvider(LoggingMixin):
 
     def __init__(self, config=None, engine=None) -> None:
         super().__init__()
+        assert engine is not None, "🚨 engine must be injected into BaseProvider"
         self.config = config
         self._engine = engine
 
-    def run(self, input: dict, session_id: str) -> str:
+    def run(self, input: dict | None = None, session_id: str = "") -> str:
+        input = input or {}
         self._log.debug("Run started")
         self._session_id = session_id
         self._system = input.get("system", "unknown")
@@ -49,29 +50,6 @@ class BaseProvider(LoggingMixin):
             )
             self.logger.write(LogType.PROVIDER, log)
             self._log.debug("Run logged")
-
-    def resolve_dependencies(self, **kwargs) -> None:
-        """Automatically wire known dependencies and enable reverse injection."""
-        for name, dep in kwargs.items():
-            if dep is None:
-                continue
-
-            # Set reference
-            setattr(self, name, dep)
-
-            # Reverse registration for context or score providers
-            if name in {"context_provider", "score_provider"}:
-                method = f"set_{self.__class__.__name__.lower()}"
-                if hasattr(dep, method):
-                    getattr(dep, method)(self)
-
-            # Handle list of tool providers
-            elif name == "tool_providers" and isinstance(dep, list):
-                for tool in dep:
-                    if hasattr(tool, "set_context_provider") and hasattr(self, "context_provider"):
-                        tool.set_context_provider(self.context_provider)
-                    if hasattr(tool, "set_score_provider") and hasattr(self, "score_provider"):
-                        tool.set_score_provider(self.score_provider)
 
     @abstractmethod
     def _run_provider(self, input: dict) -> str:

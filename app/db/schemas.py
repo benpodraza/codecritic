@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 from app.enums.agent_enums import AgentRole
-from app.enums.system_enums import SystemType
+from app.enums.system_enums import Decision, SystemType
 
 
 class AgentPromptSchema(BaseModel):
@@ -45,6 +45,7 @@ class PromptProviderConfig(BaseModel):
     name: str
     description: Optional[str] = None
     artifact_path: Path
+    config: Optional[Dict[str, Any]] = None
     tags: Optional[List[str]] = Field(default_factory=list)
 
     @field_validator("artifact_path")
@@ -68,12 +69,6 @@ class ToolProviderConfig(BaseModel):
         if not v.is_absolute() and ".." in v.parts:
             raise ValueError("Invalid artifact path")
         return v
-
-# class ScoreContext(BaseModel):
-#     experiment_id: str
-#     round: int
-#     file_path: Path
-#     source_code: str
 
 class ScoreOutputSchema(BaseModel):
     name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
@@ -162,14 +157,14 @@ class SystemProviderConfigSchema(BaseModel):
             raise ValueError("Invalid artifact path")
         return v
 
-class OrchestratorProviderConfigSchema(BaseModel):
+class ControllerProviderConfigSchema(BaseModel):
     id: Optional[int] = None
     guid: UUID = Field(default_factory=uuid4)
     name: str
     description: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:
@@ -224,6 +219,7 @@ class StateTransitionLogSchema:
     entity_id: int
     from_state: str
     to_state: str
+    reason: str | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 @dataclass
@@ -242,3 +238,19 @@ class ErrorLogSchema:
     message: str                    
     file_path: str | None = None       
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+# DTOs
+
+class Snapshot(BaseModel):
+    timestamp: datetime
+    file: str
+    score: float
+    decision: Decision
+
+class SystemState(BaseModel):
+    system: str
+    file_path: str
+    working_file: str
+    final_file: Optional[str] = None
+    snapshots: List[Snapshot]
+    state: Optional[str] = "active"

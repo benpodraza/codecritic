@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from pathlib import Path
-from app.db.seeders.seed_orchestrator_provider import seed_orchestrator_providers
+from app.db.seeders.seed_controller_providers import seed_orchestrator_providers
 from app.db.seeders.seed_state_providers import seed_state_providers
 from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers
 from app.db.seeders.seed_context_providers import seed_context_providers
 from app.db.seeders.seed_prompt_providers import seed_prompt_providers
-from app.db.seeders.seed_scores import seed_score_providers
-from app.db.seeders.seed_tools import seed_tool_providers
+from app.db.seeders.seed_score_providers import seed_score_providers
+from app.db.seeders.seed_tool_providers import seed_tool_providers
 from app.db.seeders.seed_prompts import seed_prompts
 
 # Ensure your project root matches explicitly

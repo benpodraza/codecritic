@@ -1,5 +1,3 @@
-# app/providers/agent_provider_base.py
-
 from datetime import datetime, timezone
 from pathlib import Path
 from abc import abstractmethod
@@ -10,69 +8,69 @@ from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
 from app.db.schemas import AgentConversationLogSchema
 
 class AgentProviderBase(BaseProvider):
-    """Agent provider that wraps _run with snapshot and structured log logic."""
+    def __init__(
+        self,
+        config=None,
+        engine=None,
+        agent_engine=None,
+        prompt_provider=None,
+        context_provider=None,
+        score_provider=None,
+        tool_providers=None,
+    ):
+        super().__init__(config=config, engine=engine)
+        self._agent_engine = agent_engine
+        self._prompt_provider = prompt_provider
+        self._context_provider = context_provider
+        self._score_provider = score_provider
+        self._tool_providers = tool_providers or []
 
     def _run_provider(self, input: dict) -> str:
         output = self._run(input)
 
         self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
 
-        code_block = None
-        log_content = None
+        # === Extract structured blocks ===
+        code_block = self._extract_block(output, "[CODE]", "[/CODE]") or (
+            output.strip() if input.get("before") else None
+        )
+        log_content = self._extract_block(output, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
 
-        #  Extract [CODE] block if present
-        code_start = output.find("[CODE]")
-        code_end = output.find("[/CODE]")
-        if code_start != -1 and code_end != -1 and code_start < code_end:
-            code_block = output[code_start + 6 : code_end].strip()
-        #  FALLBACK: if we have a 'before' path, treat the whole output as the code
-        elif input.get("before"):
-            code_block = output.strip()
-
-        #  Extract [CONVERSATION_LOG_ENTRY] if present
-        log_start = output.find("[CONVERSATION_LOG_ENTRY]")
-        log_end   = output.find("[/CONVERSATION_LOG_ENTRY]")
-        if log_start != -1 and log_end != -1 and log_start < log_end:
-            log_content = output[log_start + 24 : log_end].strip()
-
-        #  Determine the file to snapshot
-        file_path = input.get("before") or (self.config.config or {}).get("before")
-
-        #  Write snapshot if we have both a before-file and produced code
+        # === Write snapshot ===
+        file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
         if file_path and code_block:
-            before_path = Path(file_path)
-            if not before_path.is_absolute():
-                before_path = Path.cwd() / before_path
-
-            print(f"📄 Final BEFORE PATH: {before_path}")
-
+            before_path = Path(file_path).resolve()
             if before_path.exists():
                 snapshot_path = SnapshotWriter().write_snapshot(
                     before=before_path.read_text(encoding="utf-8"),
                     after=code_block,
                     session_id=self._session_id,
-                    agent_name=self.config.name,
-                    file_path=str(before_path),
                 )
                 self._snapshot_id = snapshot_path
                 self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
             else:
-                self._log.warning(f"❌ Snapshot skipped: input file does not exist → {before_path}")
+                self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
 
-        #  Always log any conversation log entry
+        # === Log conversation entry ===
         if log_content:
-            log = AgentConversationLogSchema(
+            self.logger.write(LogType.AGENT_CONVERSATION, AgentConversationLogSchema(
                 session_id=self._session_id,
                 system=self._system,
                 agent_provider_config_id=self.config.id if self.config else -1,
                 agent_name=self.config.name if self.config else "unknown",
                 content=log_content,
-                timestamp=datetime.now(timezone.utc)
-            )
-            self.logger.write(LogType.AGENT_CONVERSATION, log)
+                timestamp=datetime.now(timezone.utc),
+            ))
             self._log.debug("✅ AGENT_CONVERSATION log write complete")
 
         return output
+
+    def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+        start = text.find(start_tag)
+        end = text.find(end_tag)
+        if start != -1 and end != -1 and start < end:
+            return text[start + len(start_tag):end].strip()
+        return None
 
     @abstractmethod
     def _run(self, input: dict) -> str:

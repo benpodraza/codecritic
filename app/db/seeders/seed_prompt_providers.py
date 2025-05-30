@@ -11,17 +11,37 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 PROVIDERS = [
-    ("basic_prompt_provider.py", "basic_prompt_provider", "Returns a simple prompt response.", ["default"]),
-    ("linting_prompt_provider.py", "linting_prompt_provider", "Combines linting system and agent prompts.", ["linting", "codequality"]),
+    {
+        "id": 1,
+        "filename": "basic_prompt_provider.py",
+        "name": "basic_prompt_provider",
+        "description": "Returns a simple prompt response.",
+        "tags": ["default"],
+        "config": {}
+    },
+    {
+        "id": 2,
+        "filename": "linting_prompt_provider.py",
+        "name": "linting_prompt_provider",
+        "description": "Combines linting system and agent prompts.",
+        "tags": ["linting", "codequality"],
+        "config": {
+            "agent_prompt_id": 2,
+            "system_prompt_id": 2,
+            "context_provider_id": 2
+        }
+    }
 ]
+
 
 def seed_prompt_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for filename, name, description, tags in PROVIDERS:
+    for entry in PROVIDERS:
         guid = str(uuid4())
-        source_file = SEED_FILES_DIR / filename
-        dest_file = EXTENSIONS_DIR / f"{guid}.py"
+        dest_filename = f"{guid}.py"
+        source_file = SEED_FILES_DIR / entry["filename"]
+        dest_file = EXTENSIONS_DIR / dest_filename
 
         if not source_file.exists():
             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
@@ -29,11 +49,13 @@ def seed_prompt_providers(db_session: Session):
         shutil.copy(source_file, dest_file)
 
         config = PromptProviderConfig(
+            id=entry["id"],
             guid=guid,
-            name=name,
-            description=description,
-            artifact_path=guid,
-            tags=tags
+            name=entry["name"],
+            description=entry["description"],
+            config=entry["config"],
+            artifact_path=dest_filename,
+            tags=entry["tags"]
         )
 
         db_session.add(config)

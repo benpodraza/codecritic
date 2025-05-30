@@ -5,33 +5,112 @@
 
 
 
+# agent_generator_example.py
+
+# 1 def greet(name):
+# 2     return f"Hello, {name}!"
+
+
+# codecritic_program_example.py
+
+# 1 def add( x, y ):
+# 2  return x+y
+
+
+# codecritic_program_example_working.py
+
+# 1 def add( x, y ):
+# 2  return x+y
+
+
+# context_example.py
+
+# 1 def example(a, b):
+# 2     return a + b
+
+
+# example_black_target.py
+
+# 1 def add(a, b):
+# 2     return a + b
+
+
+# example_lint_target.py
+
+# 1 def lint_test(a, b):
+# 2     return a + b
+
+
 # notebooks\__init__.py
 
 
 
 # notebooks\system_development\bad_code.py
 
-# 1 import sys, os
-# 2 
+# 1 import sys
+# 2 import os
 # 3 
-# 4 def add(a, b):
-# 5     result = a + b
-# 6     return result
-# 7 
+# 4 
+# 5 def add(a: int, b: int) -> int:
+# 6     result = a + b
+# 7     return result
 # 8 
-# 9 def unused_function():
-# 10     print("I am never called")
-# 11 
-# 12 
-# 13 class myClass:
-# 14     def __init__(self, value):
-# 15         self.Value = value
+# 9 
+# 10 class MyClass:
+# 11     def __init__(self, value: int):
+# 12         self.value = value
+# 13 
+# 14     def print_value(self) -> None:
+# 15         print(self.value)
 # 16 
-# 17     def printvalue(self):
-# 18         print(self.Value)
-# 19 
-# 20 
-# 21 add(1, 2)
+# 17 
+# 18 add(1, 2)
+
+
+# preprocess_only.py
+
+# 1 def foo(): return 42
+
+
+# preprocess_only_working.py
+
+# 1 def foo(): return 42
+
+
+# prompt_context_example.py
+
+# 1 def greet(name):
+# 2     return f"Hello, {name}!"
+
+
+# session_linked_execution.py
+
+# 1 def ping( user ):
+# 2  return f"pong {user}"
+
+
+# session_linked_execution_working.py
+
+# 1 def ping( user ):
+# 2  return f"pong {user}"
+
+
+# state_generator_example.py
+
+# 1 def greet( name ):
+# 2  return f"Hello, {name}!"
+
+
+# system_linting_example.py
+
+# 1 def greet( name ):
+# 2  return f"Hello, {name}!"
+
+
+# system_linting_example_working.py
+
+# 1 def greet( name ):
+# 2  return f"Hello, {name}!"
 
 
 

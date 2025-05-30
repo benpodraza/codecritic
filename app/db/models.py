@@ -38,6 +38,7 @@ class PromptProviderConfig(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     artifact_path = Column(String, nullable=False)
+    config = Column(JSON, nullable=False) 
     tags = Column(JSON, nullable=True)
 
 class ToolProviderConfig(Base):
@@ -116,16 +117,17 @@ class SystemProviderConfig(Base):
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
 
-class OrchestratorProviderConfig(Base):
-    __tablename__ = "orchestrator_provider_config"
+class ControllerProviderConfig(Base):
+    __tablename__ = "controller_provider_config"
 
     id = Column(Integer, primary_key=True)
     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    config = Column(JSON, nullable=True)
+    config = Column(JSON, nullable=True)        # expects {"systems": {"name": id, …}, …}
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+
 
 class ProgramProviderConfig(Base):
     __tablename__ = "program_provider_config"
@@ -142,11 +144,10 @@ class SessionConfig(Base):
     __tablename__ = "session_config"
 
     id = Column(Integer, primary_key=True)
-    session_id = Column(String, unique=True, nullable=False)
+    program_provider_id = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     environment_type = Column(String, nullable=False)  # e.g., "experiment", "live", "staging"
-    config = Column(JSON, nullable=True)
     tags = Column(JSON, nullable=True)
 
 
@@ -177,6 +178,7 @@ class StateTransitionLog(Base):
     entity_id = Column(Integer, nullable=False)
     from_state = Column(String, nullable=False)
     to_state = Column(String, nullable=False)
+    reason = Column(String, nullable=True)
     input_snapshot_id = Column(String, nullable=True)
     output_snapshot_id = Column(String, nullable=True)
 

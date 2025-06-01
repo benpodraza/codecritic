@@ -33,6 +33,18 @@ STATE_PROVIDERS = [
             }
         }
     ),
+    (
+        3,
+        "code_stability_state_provider.py",
+        "CodeStabilityStateProvider",
+        "Gates code based on parse, compile, import, and static validation success.",
+        ["stability"],
+        {
+            "agents": {
+                "code_stability": 4  # Agent ID of CodeStabilityAgentProvider
+            }
+        }
+    )
 ]
 
 def seed_state_providers(db_session: Session):

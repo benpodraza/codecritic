@@ -18,7 +18,8 @@ SYSTEM_PROVIDERS = [
         "config": {
             "states": {
                 "generate": 1,     
-                "discriminate": 2  
+                "discriminate": 2,
+                "code_stability": 3  
             }
         }
     }

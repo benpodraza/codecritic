@@ -45,6 +45,16 @@ AGENT_PROVIDERS = [
         "config": {
             "score_provider_id": 1
         }
+    },
+    {
+        "id": 4,
+        "filename": "code_stability_agent_provider.py",
+        "name": "code_stability_agent_provider",
+        "description": "Rejects output if code is not parseable, importable, compilable, or type-valid.",
+        "tags": ["stability"],
+        "config": {
+            "score_provider_id": 2
+        }
     }
 ]
 

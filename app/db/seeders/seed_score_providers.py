@@ -23,7 +23,22 @@ SCORES = [
                 "radon": 4
             },
             "context_provider_id": None
-        }
+        },
+        "tags": ["linting"]
+    },
+    {
+        "id": 2,
+        "filename": "code_stability_score_provider.py",
+        "name": "code_stability_score_provider",
+        "description": "Ensures code is structurally and syntactically safe for downstream use.",
+        "config": {
+            "tool_provider_ids": {
+                "black": 1,
+                "mypy": 5,
+                "symbol_graph": 7
+            }
+        },
+        "tags": ["stability", "safety"]
     }
 ]
 

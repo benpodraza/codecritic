@@ -1,9 +1,13 @@
 from datetime import datetime, timezone
 from pathlib import Path
 from abc import abstractmethod
+from sqlalchemy.orm import Session
 
+from app.db.models import SnapshotMetrics
 from app.enums.logging_enums import LogType
 from app.providers.base_provider import BaseProvider
+from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
+from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
 from app.db.schemas import AgentConversationLogSchema
 
@@ -41,11 +45,60 @@ class AgentProviderBase(BaseProvider):
         if file_path and code_block:
             before_path = Path(file_path).resolve()
             if before_path.exists():
-                snapshot_path = SnapshotWriter().write_snapshot(
-                    before=before_path.read_text(encoding="utf-8"),
-                    after=code_block,
-                    session_id=self._session_id,
+                before_code = before_path.read_text(encoding="utf-8")
+                after_code = code_block
+
+                before_metrics = analyze_code(before_code)
+                after_metrics = analyze_code(after_code)
+                deltas = compute_deltas(before_metrics, after_metrics)
+
+                metadata = {
+                    "system": self._system,
+                    "agent": self.config.name if self.config else "unknown",
+                    "score": self._score_provider.run(
+                        {"file_path": str(before_path)}, session_id=self._session_id
+                    ).value if self._score_provider else None,
+                    "state": input.get("state_context", {}).get("state", "unknown"),
+                    "decision": "accept" if "[AGENT_DECISION]accept" in output else (
+                        "reject" if "[AGENT_DECISION]reject" in output else "unknown"
+                    ),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **{f"{k}_before": v for k, v in before_metrics.items()},
+                    **{f"{k}_after": v for k, v in after_metrics.items()},
+                    **deltas
+                }
+                
+                after_code = append_agent_note(
+                    file_content=after_code,
+                    system=self._system,
+                    agent_name=self.config.name if self.config else "unknown",
+                    note=log_content or "No log entry provided."
                 )
+
+                snapshot_path = SnapshotWriter().write_snapshot(
+                    before=before_code,
+                    after=after_code,
+                    session_id=self._session_id,
+                    metadata=metadata
+                )
+                with Session(bind=self._engine) as session:
+                    entry = SnapshotMetrics(
+                        session_id=self._session_id,
+                        snapshot_id=snapshot_path,
+                        system=self._system,
+                        agent=self.config.name,
+                        score=metadata.get("score"),
+                        state=metadata.get("state"),
+                        decision=metadata.get("decision"),
+                        timestamp=datetime.fromisoformat(metadata["timestamp"]),
+                        **{
+                            k: metadata.get(k)
+                            for k in SnapshotMetrics.__table__.columns.keys()
+                            if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
+                        }
+                    )
+                    session.add(entry)
+                    session.commit()
                 self._snapshot_id = snapshot_path
                 self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
             else:

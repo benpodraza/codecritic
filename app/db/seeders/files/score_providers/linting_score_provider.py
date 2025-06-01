@@ -1,56 +1,49 @@
-import json
 from app.providers.score_provider_base import ScoreProviderBase
 from app.db.schemas import ScoreOutputSchema
-
+import json
 
 class LintingScoreProvider(ScoreProviderBase):
-    """Computes weighted linting score using injected tool providers."""
-
     def _run(self, input: dict) -> ScoreOutputSchema:
         file_path = input["file_path"]
+        session_id = input.get("session_id", self._session_id)
+        available = {tool.config.name.lower(): tool for tool in self.tool_providers}
 
-        required = ["ruff", "mypy", "black", "radon"]
-        available = {
-            tool.__class__.__name__.lower(): tool
-            for tool in getattr(self, "tool_providers", [])
-        }
-
-        # Simple normalization to lookup by config name
-        resolved = {}
-        for name in required:
-            match = next((t for t in available.values() if name in t.__class__.__name__.lower()), None)
-            if not match:
-                raise ValueError(f"Missing tool provider: {name}")
-            resolved[name] = match
-
-        def parse_output(output: str, fallback_score: float = 1.0) -> float:
+        def safe_score(name):
             try:
-                result = json.loads(output)
-                violations = result["stdout"].count("\n")
-                return max(0.0, 1.0 - (violations / 20))
+                result = available[name].run({"target": file_path}, session_id=session_id)
+                return float(json.loads(result).get("score", 0.0))
             except Exception:
-                return fallback_score
+                return 0.0
 
-        # Run each tool
-        ruff_score = parse_output(resolved["ruff"].run({"target": file_path}, session_id=self._session_id))
-        mypy_score = parse_output(resolved["mypy"].run({"target": file_path}, session_id=self._session_id))
-        black_score = parse_output(resolved["black"].run({"target": file_path}, session_id=self._session_id))
-        radon_score = parse_output(resolved["radon"].run({"target": file_path}, session_id=self._session_id))
+        def safe_violations(name):
+            try:
+                result = available[name].run({"target": file_path}, session_id=session_id)
+                return json.loads(result).get("violations", [])
+            except Exception:
+                return []
+
+        ruff_score = safe_score("ruff")
+        ruff_codes = safe_violations("ruff")
+        black_score = safe_score("black")
+        mypy_score = safe_score("mypy")
 
         weighted_score = round(
-            ruff_score * 0.4 +
-            mypy_score * 0.3 +
+            ruff_score * 0.7 +
             black_score * 0.2 +
-            radon_score * 0.1, 3
+            mypy_score * 0.1, 3
         )
+
+        components = {
+            "ruff": ruff_score,
+            "black": black_score,
+            "mypy": mypy_score
+        }
+
+        top_violations = sorted(set(ruff_codes), key=ruff_codes.count, reverse=True)[:3]
+        self._log.debug(f"Top Ruff Violations: {top_violations}")
 
         return ScoreOutputSchema(
             name="linting_score",
             value=weighted_score,
-            components={
-                "ruff": ruff_score,
-                "mypy": mypy_score,
-                "black": black_score,
-                "radon": radon_score
-            }
+            components=components
         )

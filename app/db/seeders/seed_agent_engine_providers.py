@@ -10,7 +10,9 @@ EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 AGENT_ENGINES = [
     (1, "basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
-    (2, "openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"])
+    (2, "openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"]),
+    (3, "gemini_1_5_pro_agent_engine_provider.py", "gemini_1_5_pro_agent_engine", "Runs Gemini 1.5 Pro via Google AI API.", "gemini-1.5-pro", ["google", "production"]),
+    (4, "claude_3_sonnet_agent_engine_provider.py", "claude_3_sonnet_agent_engine", "Runs Claude 3 Sonnet via AWS Bedrock.", "claude-3-sonnet", ["aws", "bedrock", "production"]),
 ]
 
 def seed_agent_engine_providers(db_session: Session):

@@ -31,18 +31,18 @@ def append_agent_note(file_content: str, system: str, agent_name: str, note: str
 
 
 def split_code_and_notes(file_content: str) -> Tuple[str, str]:
-    """Return (stripped_code, extracted_footer_notes)"""
-    lines = file_content.strip().splitlines()
+    """Return (raw_code, extracted_footer_notes) without modifying whitespace"""
+    lines = file_content.splitlines()  # No .strip() here
     start_idx = None
 
     for i, line in enumerate(lines):
-        if line.strip().startswith(FOOTER_START):
+        if line.strip().startswith(FOOTER_START):  # You may keep this .strip() for detecting footer
             start_idx = i
             break
 
     if start_idx is not None:
-        code_part = "\n".join(lines[:start_idx]).strip()
-        notes_part = "\n".join(lines[start_idx:]).strip()
+        code_part = "\n".join(lines[:start_idx])  # No .strip() here to preserve whitespace
+        notes_part = "\n".join(lines[start_idx:])
         return code_part, notes_part
 
-    return file_content.strip(), ""
+    return file_content, ""  

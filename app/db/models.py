@@ -193,6 +193,39 @@ class AgentConversationLog(Base):
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
 
+class SnapshotMetrics(Base):
+    __tablename__ = "snapshot_metrics"
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String, nullable=False)
+    snapshot_id = Column(String, nullable=False)
+    system = Column(String, nullable=True)
+    agent = Column(String, nullable=True)
+    score = Column(Float, nullable=True)
+    state = Column(String, nullable=True)
+    decision = Column(String, nullable=True)
+    timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    # structural metrics
+    line_count_before = Column(Integer)
+    line_count_after = Column(Integer)
+    function_count_before = Column(Integer)
+    function_count_after = Column(Integer)
+    symbol_count_before = Column(Integer)
+    symbol_count_after = Column(Integer)
+    branch_count_before = Column(Integer)
+    branch_count_after = Column(Integer)
+    comment_count_before = Column(Integer)
+    comment_count_after = Column(Integer)
+
+    # deltas
+    line_count_delta = Column(Integer)
+    function_count_delta = Column(Integer)
+    symbol_count_delta = Column(Integer)
+    branch_count_delta = Column(Integer)
+    comment_count_delta = Column(Integer)
+
+
 class ErrorLog(Base):
     __tablename__ = "error_log"
 

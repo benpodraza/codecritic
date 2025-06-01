@@ -71,8 +71,11 @@ class SystemProviderBase(BaseProvider):
                 raise ValueError(f"No state provider registered for state: {current}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
+
             output = state_provider.run(input=provider_input, session_id=session_id)
+
             transition_result = self.transition(state, output)
+
             state = {**state, **transition_result, "_last_state": current}
             if "output" not in output:
                 state["output"] = output

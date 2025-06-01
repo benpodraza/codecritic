@@ -8,32 +8,39 @@ class StateProviderFactory(BaseProviderFactory):
 
     @classmethod
     def create(cls, id: int, **kwargs) -> StateProviderBase:
-        # Delayed imports to avoid circular dependencies
         from app.factories.agent_provider_factory import AgentProviderFactory
         from app.factories.context_provider_factory import ContextProviderFactory
         from app.factories.score_provider_factory import ScoreProviderFactory
         from app.factories.tool_provider_factory import ToolProviderFactory
 
-        engine = kwargs.get("engine")
-        preload_instance = super().create(id, engine=engine)
+        preload_instance = super().create(id, **kwargs)
         config = preload_instance.config.config or {}
-
-        # Inject agents into a dict
-        kwargs["agents"] = {
+        agents = {
             name: AgentProviderFactory.create(agent_id)
             for name, agent_id in config.get("agents", {}).items()
         }
 
-        # Inject optional context/score/tools
-        if "context_provider_id" in config:
-            kwargs["context_provider"] = ContextProviderFactory.create(config["context_provider_id"])
+        context_provider = (
+            ContextProviderFactory.create(config["context_provider_id"])
+            if config.get("context_provider_id") else None
+        )
 
-        if "score_provider_id" in config:
-            kwargs["score_provider"] = ScoreProviderFactory.create(config["score_provider_id"])
+        score_provider = (
+            ScoreProviderFactory.create(config["score_provider_id"])
+            if config.get("score_provider_id") else None
+        )
 
-        kwargs["tool_providers"] = [
+        tool_providers = [
             ToolProviderFactory.create(tool_id)
             for _, tool_id in (config.get("tool_provider_ids") or {}).items()
         ]
 
-        return super().create(id, **kwargs)
+        cls_type = type(preload_instance)
+        return cls_type(
+            config=preload_instance.config,
+            engine=preload_instance._engine,
+            agents=agents,
+            context_provider=context_provider,
+            score_provider=score_provider,
+            tool_providers=tool_providers
+        )

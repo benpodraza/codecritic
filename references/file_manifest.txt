@@ -26,10 +26,13 @@ codecritic
                - agent_engine_providers
                   - __init__.py
                   - basic_agent_engine_provider.py
+                  - claude_3_sonnet_agent_engine_provider.py
+                  - gemini_1_5_pro_agent_engine_provider.py
                   - openai_gpt4o_agent_engine_provider.py
                - agent_providers
                   - __init__.py
                   - basic_agent_provider.py
+                  - code_stability_agent_provider.py
                   - linting_discriminator_agent_provider.py
                   - linting_generator_agent_provider.py
                - context_providers
@@ -40,6 +43,7 @@ codecritic
                   - __init__.py
                   - preprocessing_controller_provider.py
                - program
+                  - __init__.py
                - program_providers
                   - __init__.py
                   - codecritic_program_provider.py
@@ -55,10 +59,12 @@ codecritic
                   - linting_system_prompt.txt
                - score_providers
                   - __init__.py
+                  - code_stability_score_provider.py
                   - linting_score_provider.py
                - state_providers
                   - __init__.py
                   - basic_state_provider.py
+                  - code_stability_state_provider.py
                   - linting_discriminator_state_provider.py
                   - linting_generator_state_provider.py
                - system_providers
@@ -135,6 +141,7 @@ codecritic
                - logging_provider.py
             - snapshots
                - __init__.py
+               - analyze_code_metrics.py
                - snapshot_reader.py
                - snapshot_writer.py
          - pydantic_compat.py
@@ -144,10 +151,6 @@ codecritic
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
-   - experiments
-      - snapshots
-         - notebook-dev-session
-   - extensions
    - htmlcov
    - mypy.ini
    - pytest
@@ -164,39 +167,24 @@ codecritic
    - test-runner.ps1
    - tests
       - __init__.py
-      - agent_generator_example.py
-      - codecritic_program_example.py
-      - codecritic_program_example_working.py
-      - context_example.py
-      - example_black_target.py
-      - example_lint_target.py
+      - example1.py
+      - example1_working.py
       - notebooks
          - .mypy_cache
          - __init__.py
-         - experiments
-            - artifacts
-               - snapshots
-            - codecritic.sqlite3
          - functional_tests
-            - .mypy_cache
-            - agent_engine_provider_test.ipynb
-            - agent_provider_test.ipynb
-            - context_provider_tests.ipynb
-            - database_tests.ipynb
-            - prompt_provider_tests.ipynb
-            - provider_test_and_log.ipynb
-            - score_provider_tests.ipynb
-            - symbol_library_validation.ipynb
-            - tool_provider_tests.ipynb
+            - agent_analysis.ipynb
+            - agent_provider_config.csv
+            - log_inspection_views.ipynb
+            - logs.csv
+            - state_transition_analysis.ipynb
+            - state_transition_log.csv
+            - test_agent_engines.ipynb
+            - test_metadata_systems.ipynb
+            - test_snapshot_metadata_generation.ipynb
+            - test_sonarcloud.ipynb
+         - insights
          - system_development
             - bad_code.py
             - linting_system.ipynb
-      - preprocess_only.py
-      - preprocess_only_working.py
-      - prompt_context_example.py
-      - session_linked_execution.py
-      - session_linked_execution_working.py
-      - state_generator_example.py
-      - system_linting_example.py
-      - system_linting_example_working.py
    - utilities.ipynb

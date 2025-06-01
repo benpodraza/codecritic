@@ -62,6 +62,7 @@ class ToolProviderConfig(BaseModel):
     description: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
+    tags: Optional[List[str]] = None
 
     @field_validator("artifact_path")
     @classmethod
@@ -84,6 +85,7 @@ class ScoreProviderConfig(BaseModel):
     name: str
     description: Optional[str] = None
     artifact_path: Optional[Path] = None
+    tags: Optional[List[str]] = None
     table_name: str = "score_provider"
 
     @field_validator("artifact_path")
@@ -102,6 +104,7 @@ class AgentEngineProviderConfig(BaseModel):
     description: Optional[str] = None
     model: str
     config: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
     artifact_path: Path
 
     @field_validator("artifact_path")
@@ -230,6 +233,35 @@ class AgentConversationLogSchema:
     agent_name: str
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+@dataclass
+class SnapshotMetricsSchema:
+    session_id: str
+    snapshot_id: str
+    system: str
+    agent: str
+    score: float
+    state: str
+    decision: str
+    timestamp: datetime
+
+    line_count_before: int
+    line_count_after: int
+    function_count_before: int
+    function_count_after: int
+    symbol_count_before: int
+    symbol_count_after: int
+    branch_count_before: int
+    branch_count_after: int
+    comment_count_before: int
+    comment_count_after: int
+
+    line_count_delta: int
+    function_count_delta: int
+    symbol_count_delta: int
+    branch_count_delta: int
+    comment_count_delta: int
+
 
 @dataclass
 class ErrorLogSchema:

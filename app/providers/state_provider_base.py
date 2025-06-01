@@ -36,27 +36,31 @@ class StateProviderBase(BaseProvider):
             current = state.get("state")
 
             if current == "end":
-                self.logger.write(LogType.PROVIDER, ProviderLogSchema(
-                    session_id=session_id,
-                    provider_id=self.config.id,
-                    provider_type=self.__class__.__name__,
-                    input=json.dumps(input),
-                    output=json.dumps(state),
-                    file_path=self.config.artifact_path,
-                    timestamp=datetime.now(timezone.utc)
-                ))
                 return state
 
             if current == "start":
-                state = {**state, **self.transition(state, None), "_last_state": "start"}
+                state = {**state, **self._transition(state, None), "_last_state": "start"}
                 continue
 
+            # Run the agent assigned to this state
             agent = self._agents.get(current)
             if not agent:
                 raise ValueError(f"No agent registered for state: {current}")
 
-            output = agent.run(input=state, session_id=session_id)
-            state = {**state, **self.transition(state, output), "_last_state": current, "output": output}
+            agent_output = agent.run(input=state, session_id=session_id)
+
+            transition_result = self._transition(state, agent_output)
+
+            state = {
+                **state,
+                **transition_result,
+                "_last_state": current,
+                "agent_output": agent_output
+            }
+
+            # Ensure output is always present for logging
+            if "output" not in state:
+                state["output"] = agent_output
 
     def transition(self, state: dict, agent_output: str | None) -> dict:
         next_state = self._transition(state, agent_output)

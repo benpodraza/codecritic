@@ -1,18 +1,82 @@
 from app.providers.system_provider_base import SystemProviderBase
-from app.enums.system_enums import Decision
-
 
 class LintingSystemProvider(SystemProviderBase):
-    def _transition(self, state: dict, agent_output: str | None) -> dict:
-        if state["state"] == "start":
-            return {"state": "generate", "reason": "initial entry"}
+    MAX_GENERATION_ATTEMPTS = 3
 
-        if state["state"] == "generate":
-            return {"state": "discriminate", "reason": "completed generation"}
+    def _transition(self, state: dict, state_output: dict | None) -> dict:
+        retry_count = state.get("retry_count", 0)
+        current = state.get("state")
+        last = state.get("_last_state")
+        result = state_output.get("result") if state_output else None
 
-        if state["state"] == "discriminate":
-            if agent_output and "[AGENT_DECISION]accept" in agent_output:
-                return {"state": "end", "reason": "accepted by discriminator"}
-            return {"state": "generate", "reason": "rejected by discriminator, retrying generation"}
+        if current == "start":
+            return {
+                "state": "code_stability",
+                "reason": "initial stability check",
+                "retry_count": 0
+            }
 
-        return {"state": "end", "reason": "unknown state or fallback"}
+        if current == "code_stability":
+            if result == "pass":
+                if last == "start":
+                    return {
+                        "state": "generate",
+                        "reason": "initial stability passed, now generate",
+                        "retry_count": retry_count
+                    }
+                return {
+                    "state": "discriminate",
+                    "reason": "post-generation stability passed, now discriminate",
+                    "retry_count": retry_count
+                }
+            if last == "start":
+                return {
+                    "state": "end",
+                    "reason": "initial stability failed—rejecting",
+                    "retry_count": retry_count
+                }
+            retry_count += 1
+            if retry_count >= self.MAX_GENERATION_ATTEMPTS:
+                return {
+                    "state": "end",
+                    "reason": "max generation attempts reached",
+                    "retry_count": retry_count
+                }
+            return {
+                "state": "generate",
+                "reason": "stability failed—retrying generation",
+                "retry_count": retry_count
+            }
+
+        if current == "generate":
+            return {
+                "state": "code_stability",
+                "reason": "post-generation stability check",
+                "retry_count": retry_count
+            }
+
+        if current == "discriminate":
+            if result == "pass":
+                return {
+                    "state": "end",
+                    "reason": "discriminator accepted the change",
+                    "retry_count": retry_count
+                }
+            retry_count += 1
+            if retry_count >= self.MAX_GENERATION_ATTEMPTS:
+                return {
+                    "state": "end",
+                    "reason": "max generation attempts reached",
+                    "retry_count": retry_count
+                }
+            return {
+                "state": "generate",
+                "reason": "discriminator rejected—retry generate",
+                "retry_count": retry_count
+            }
+
+        return {
+            "state": "end",
+            "reason": "unknown state, exiting",
+            "retry_count": retry_count
+        }

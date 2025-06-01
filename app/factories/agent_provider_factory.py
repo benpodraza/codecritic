@@ -17,6 +17,7 @@ class AgentProviderFactory(BaseProviderFactory):
 
         # 1) Preload via BaseProviderFactory (it will inject the DB engine for you)
         preload_instance = super().create(id)
+
         config           = preload_instance.config.config or {}
 
         # 2) Build each dependency exactly once

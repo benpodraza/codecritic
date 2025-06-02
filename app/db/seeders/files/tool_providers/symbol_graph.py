@@ -3,10 +3,10 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
-import subprocess
-from typing import Any, Dict, List, MutableMapping
+from typing import Any, Dict
 
 from app.providers.tool_provider_base import ToolProviderBase
+from app.db.schemas import ToolOutputSchema
 
 
 class SymbolGraph:
@@ -22,24 +22,33 @@ class SymbolGraph:
         visitor = _SymbolGraphVisitor(filepath.stem, str(filepath), self.graph)
         visitor.visit(tree)
 
+
 class SymbolGraphToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
-        if not Path(target).exists():
+        path = Path(target)
+        if not path.exists():
             raise FileNotFoundError(f"{target} does not exist")
 
         symbol_graph_util = SymbolGraph()
         symbol_graph_util.parse_file(target)
-        return json.dumps(symbol_graph_util.graph, indent=2)
+
+        result_json = json.dumps(symbol_graph_util.graph, indent=2)
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=result_json,
+            metrics=symbol_graph_util.graph,
+            summary="Symbol graph extraction successful"
+        )
 
 
 class _SymbolGraphVisitor(ast.NodeVisitor):
-    def __init__(self, module: str, file_path: str, graph: MutableMapping[str, Dict[str, Any]]) -> None:
+    def __init__(self, module: str, file_path: str, graph: Dict[str, Any]) -> None:
         self.module = module
         self.file_path = file_path
         self.graph = graph
-        self.scope: List[str] = []
-        self.current: str | None = None
+        self.scope = []
+        self.current = None
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._process_function_or_async_function(node)
@@ -77,39 +86,6 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.generic_visit(node)
         self.scope.pop()
         self.current = None
-
-    def visit_Assign(self, node: ast.Assign) -> None:
-        for target in node.targets:
-            if isinstance(target, ast.Name):
-                self._record(self._qualify(target.id), "variable", target)
-        self.generic_visit(node)
-
-    def visit_Import(self, node: ast.Import) -> None:
-        for alias in node.names:
-            name = alias.asname or alias.name
-            entry = self._record(self._qualify(name), "import", node)
-            entry["target"] = alias.name
-        self.generic_visit(node)
-
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        for alias in node.names:
-            name = alias.asname or alias.name
-            entry = self._record(self._qualify(name), "import", node)
-            entry["target"] = f"{node.module}.{alias.name}" if node.module else alias.name
-        self.generic_visit(node)
-
-    def visit_Call(self, node: ast.Call) -> None:
-        current = self.current or self.module
-        if isinstance(node.func, ast.Name):
-            called_name = node.func.id
-        elif isinstance(node.func, ast.Attribute):
-            called_name = node.func.attr
-        else:
-            called_name = None
-
-        if called_name:
-            self.graph.setdefault(current, {}).setdefault("calls", []).append(called_name)
-        self.generic_visit(node)
 
     def _qualify(self, name: str) -> str:
         return ".".join([self.module, *self.scope, name])

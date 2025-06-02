@@ -1,5 +1,6 @@
 from app.providers.score_provider_base import ScoreProviderBase
 from app.db.schemas import ScoreOutputSchema
+from app.enums.scoring_enums import SCORING_METRIC_TYPE
 import json
 
 class LintingScoreProvider(ScoreProviderBase):
@@ -40,10 +41,12 @@ class LintingScoreProvider(ScoreProviderBase):
         }
 
         top_violations = sorted(set(ruff_codes), key=ruff_codes.count, reverse=True)[:3]
-        self._log.debug(f"Top Ruff Violations: {top_violations}")
+        summary = f"Top Ruff Violations: {', '.join(top_violations)}" if top_violations else "No violations found."
+
 
         return ScoreOutputSchema(
-            name="linting_score",
+            name=SCORING_METRIC_TYPE.LINTING_SCORE,
             value=weighted_score,
-            components=components
+            components=components,
+            summary=summary
         )

@@ -4,8 +4,12 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
-from app.enums.agent_enums import AgentRole
-from app.enums.system_enums import Decision, SystemType
+from app.enums.agent_enums import AGENT_TYPE
+from app.enums.fsm_enums import DECISION_TYPE, REASON_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
+from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
+from app.enums.scoring_enums import SCORING_METRIC_TYPE
+from app.enums.system_enums import STATE_DECISION_TYPE, SYSTEM_TYPE
+from app.enums.agent_engine_enums import AGENT_ENGINE_MODEL
 
 
 class AgentPromptSchema(BaseModel):
@@ -27,7 +31,7 @@ class SystemPromptSchema(BaseModel):
     id: Optional[int] = None
     guid: UUID = Field(default_factory=uuid4)
     name: str
-    system_type: SystemType
+    system_type: SYSTEM_TYPE
     description: Optional[str] = None
     artifact_path: Path
     tags: Optional[List[str]] = None
@@ -72,12 +76,11 @@ class ToolProviderConfig(BaseModel):
         return v
 
 class ScoreOutputSchema(BaseModel):
-    name: str = Field(..., description="The name of the scoring metric (e.g., 'linting_score').")
-    value: float = Field(..., description="The final weighted score, normalized to a 0.0–1.0 scale.")
-    components: Dict[str, float] = Field(
-        ...,
-        description="Component scores used to compute the overall score. Keys should match tool names."
-    )
+    name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
+    value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
+    components: Dict[str, float] = Field(..., description="Tool/component-specific scores")
+    summary: Optional[str] = None
+
 
 class ScoreProviderConfig(BaseModel):
     id: Optional[int] = None
@@ -102,10 +105,11 @@ class AgentEngineProviderConfig(BaseModel):
     guid: UUID = Field(default_factory=uuid4)
     name: str
     description: Optional[str] = None
-    model: str
+    model: AGENT_ENGINE_MODEL  # ✅ Enum enforced
     config: Optional[Dict[str, Any]] = None
-    tags: Optional[List[str]] = None
+    cost_per_1k_tokens: Optional[float] = Field(default=0.0)
     artifact_path: Path
+    tags: Optional[List[str]] = None
 
     @field_validator("artifact_path")
     @classmethod
@@ -113,6 +117,7 @@ class AgentEngineProviderConfig(BaseModel):
         if not v.is_absolute() and ".." in v.parts:
             raise ValueError("Invalid artifact path")
         return v
+
 
 class AgentProviderConfigSchema(BaseModel):
     id: Optional[int] = None
@@ -122,6 +127,7 @@ class AgentProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[list[str]] = None
+    agent_type: AGENT_TYPE = AGENT_TYPE.UNKNOWN 
 
     @field_validator("artifact_path")
     @classmethod
@@ -206,43 +212,59 @@ class SessionConfigSchema(BaseModel):
 class ProviderLogSchema:
     session_id: str
     provider_id: int
-    provider_type: str
+    provider_type: PROVIDER_TYPE
     input: Optional[str] = None
     output: Optional[str] = None
-    snapshot_id: Optional[str] = None
+    output_schema: Optional[str] = None
+    latency_ms: Optional[int] = None
+    config_hash: Optional[str] = None
     file_path: Optional[str] = None
-    transition_from: Optional[str] = None
-    transition_to: Optional[str] = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 @dataclass
 class StateTransitionLogSchema:
     session_id: str
-    entity_type: str
+    entity_type: PROVIDER_TYPE  # e.g., "StateProvider", "SystemProvider", etc.
     entity_id: int
     from_state: str
     to_state: str
-    reason: str | None = None
+    reason: TRANSITION_REASON_TYPE
+    decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+    triggered_by: str | None = None
+    step: int | None = None
+    transition_metadata: dict | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 @dataclass
 class AgentConversationLogSchema:
     session_id: str
-    system: str
+    system: SYSTEM_TYPE
+    agent_type: AGENT_TYPE
     agent_provider_config_id: int
-    agent_name: str
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 @dataclass
+class ErrorLogSchema:
+    session_id: str
+    error_type: ERROR_TYPE
+    message: str
+    file_path: str | None = None
+    provider_id: int | None = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    
+@dataclass
 class SnapshotMetricsSchema:
     session_id: str
     snapshot_id: str
-    system: str
+    system: SYSTEM_TYPE
     agent: str
+    agent_type: AGENT_TYPE 
+    agent_id: int
     score: float
-    state: str
-    decision: str
+    state: str  # could be FSM state, usually freeform like "generate" or "stability"
+    decision: DECISION_TYPE
     timestamp: datetime
 
     line_count_before: int
@@ -262,14 +284,55 @@ class SnapshotMetricsSchema:
     branch_count_delta: int
     comment_count_delta: int
 
+# Provider output schemas (for logs)
 
-@dataclass
-class ErrorLogSchema:
-    session_id: str             
-    error_type: str                   
-    message: str                    
-    file_path: str | None = None       
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+class ToolOutputSchema(BaseModel):
+    return_code: int
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+    violations: Optional[list[str]] = None  # for linters like ruff
+    metrics: Optional[Dict[str, Any]] = None  # for tools like sonarcloud
+    summary: Optional[str] = None  # optional human-readable summary
+
+class AgentEngineOutput(BaseModel):
+    response: str
+    token_count: int
+    cost_usd: float
+    snapshot_id: Optional[str] = None
+    summary: Optional[str] = None
+
+# app/db/schemas.py
+class AgentOutputSchema(BaseModel):
+    response: str
+    log: Optional[str] = None
+    decision: Optional[str] = None
+    snapshot_id: Optional[str] = None
+
+class ContextOutputSchema(BaseModel):
+    context: dict
+    summary: Optional[str] = None
+
+class PromptOutputSchema(BaseModel):
+    prompt: str
+    summary: Optional[str] = None
+
+class FSMOutputSchema(BaseModel):
+    state: str
+    previous_state: Optional[str] = None
+    state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
+    reason: REASON_TYPE = REASON_TYPE.UNSPECIFIED
+    decision: Optional[STATE_DECISION_TYPE] = STATE_DECISION_TYPE.UNKNOWN
+    steps: int = Field(..., ge=0)
+    max_steps: int = Field(..., gt=0)
+    summary: Optional[str] = None
+    output: Optional[dict] = None
+    provider_name: Optional[str] = None
+
+class StateOutputSchema(FSMOutputSchema): pass
+class SystemOutputSchema(FSMOutputSchema): pass
+class ControllerOutputSchema(FSMOutputSchema): pass
+class ProgramOutputSchema(FSMOutputSchema): pass
+
 
 # DTOs
 
@@ -277,7 +340,7 @@ class Snapshot(BaseModel):
     timestamp: datetime
     file: str
     score: float
-    decision: Decision
+    decision: DECISION_TYPE
 
 class SystemState(BaseModel):
     system: str
@@ -286,3 +349,5 @@ class SystemState(BaseModel):
     final_file: Optional[str] = None
     snapshots: List[Snapshot]
     state: Optional[str] = "active"
+
+

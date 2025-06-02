@@ -5,9 +5,10 @@ import json
 from sqlalchemy.orm import Session
 from app.providers.context_provider_base import ContextProviderBase
 from app.utilities.metadata.logging.conversation_log import get_conversation_log
+from app.db.schemas import ContextOutputSchema
 
 class LintingContextProvider(ContextProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ContextOutputSchema:
         file_path = Path(input["file_path"]).resolve()
         session_id = input["session_id"]
         system = input["system"]
@@ -32,4 +33,8 @@ class LintingContextProvider(ContextProviderBase):
             "conversation_log": convo_log
         }
 
-        return json.dumps(context, indent=2)
+
+        return ContextOutputSchema(
+            context=context,
+            summary=f"Context for {file_path.name}, {score_result.value} score, {len(convo_log)} log entries"
+        )

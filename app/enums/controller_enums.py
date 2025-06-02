@@ -3,7 +3,7 @@
 from enum import Enum
 
 
-class ControllerType(str, Enum):
+class CONTROLLER_TYPE(str, Enum):
     """
     Enum of high-level controllers grouping related SystemTypes.
 

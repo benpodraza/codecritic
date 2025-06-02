@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 
 
-class SystemType(str, Enum):
+class SYSTEM_TYPE(str, Enum):
     # Core Code Transformation
     LINTING = "linting"
     FORMATTING = "formatting"
@@ -65,33 +65,16 @@ class SystemType(str, Enum):
     SEMANTIC_DIFF = "semantic_diff"
     CONTEXT_FILTERING = "context_filtering"
 
-
-class Decision(str, Enum):
-    initial = "initial"
-    improved = "improved"
-    rollback = "rollback"
-    final = "final"
+    UNKNOWN = "unknown"
 
 
-# class SystemState(Enum):
-#     """Finite state machine states for the CodeCritic system."""
-
-#     START = "start"
-#     GENERATE = "generate"
-#     DISCRIMINATE = "discriminate"
-#     MEDIATE = "mediate"
-#     PATCH = "patch"
-#     EVALUATE = "evaluate"
-#     END = "end"
+class STATE_DECISION_TYPE(str, Enum):
+    INITIAL = "initial"
+    IMPROVED = "improved"
+    ROLLBACK = "rollback"
+    REJECT = "reject"
+    FINAL = "final"
+    UNKNOWN = "unknown"
 
 
-# class StateTransitionReason(str, Enum):
-#     FIRST_ROUND = "first_round"
-#     MAX_ITERATIONS_REACHED = "max_iterations_reached"
-#     SCORE_THRESHOLD_MET = "score_threshold_met"
-#     SCORE_STAGNATION = "score_stagnation"
-#     AGENT_FAILURE = "agent_failure"
-#     MEDIATOR_OVERRIDE = "mediator_override"
-#     PATCH_RETRY = "patch_retry"
-#     CUSTOM_RULE = "custom_rule"
-#     END_REACHED = "end_reached"
+

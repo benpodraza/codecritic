@@ -14,6 +14,7 @@ AGENT_PROVIDERS = [
         "filename": "basic_agent_provider.py",
         "name": "basic_agent_provider",
         "description": "Returns a hardcoded result.",
+        "agent_type": "basic",
         "tags": ["test"],
         "config": {}
     },
@@ -22,6 +23,7 @@ AGENT_PROVIDERS = [
         "filename": "linting_generator_agent_provider.py",
         "name": "linting_generator_agent_provider",
         "description": "Runs GPT-4o to generate linting corrections.",
+        "agent_type": "generator",
         "tags": ["linting", "generator"],
         "config": {
             "agent_engine_provider_id": 2,
@@ -41,6 +43,7 @@ AGENT_PROVIDERS = [
         "filename": "linting_discriminator_agent_provider.py",
         "name": "linting_discriminator_agent_provider",
         "description": "Evaluates generator output for acceptance.",
+        "agent_type": "discriminator",
         "tags": ["linting", "discriminator"],
         "config": {
             "score_provider_id": 1
@@ -51,12 +54,14 @@ AGENT_PROVIDERS = [
         "filename": "code_stability_agent_provider.py",
         "name": "code_stability_agent_provider",
         "description": "Rejects output if code is not parseable, importable, compilable, or type-valid.",
+        "agent_type": "stability",
         "tags": ["stability"],
         "config": {
             "score_provider_id": 2
         }
     }
 ]
+
 
 def seed_agent_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

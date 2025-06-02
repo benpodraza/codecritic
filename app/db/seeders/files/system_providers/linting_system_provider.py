@@ -7,7 +7,7 @@ class LintingSystemProvider(SystemProviderBase):
         retry_count = state.get("retry_count", 0)
         current = state.get("state")
         last = state.get("_last_state")
-        result = state_output.get("result") if state_output else None
+        result = state_output.output.get("result") if state_output and state_output.output else None
 
         if current == "start":
             return {

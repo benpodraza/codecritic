@@ -1,8 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
-from app.providers.prompt_provider_base import PromptProviderBase
 import textwrap
 import json
+
+from app.providers.prompt_provider_base import PromptProviderBase
+from app.db.schemas import PromptOutputSchema
 
 class LintingPromptProvider(PromptProviderBase):
     def __init__(self, config, engine=None):
@@ -20,7 +22,7 @@ class LintingPromptProvider(PromptProviderBase):
         self.agent_prompt_path = (EXTENSIONS_DIR / self._agent_prompt.artifact_path).resolve()
         self.system_prompt_path = (EXTENSIONS_DIR / self._system_prompt.artifact_path).resolve()
 
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> PromptOutputSchema:
         session_id = input.get("session_id")
         system = input.get("system", "unknown")
         file_path = input.get("file_path")
@@ -34,14 +36,14 @@ class LintingPromptProvider(PromptProviderBase):
             raise FileNotFoundError(f"System prompt not found: {self.system_prompt_path}")
 
         # 🎯 Build context using the injected context provider
-        raw_context = self._context_provider.run(
+        context_output = self._context_provider.run(
             {
                 "file_path": file_path,
                 "session_id": session_id,
                 "system": system
             }
         )
-        context = json.loads(raw_context)
+        context = context_output.context if hasattr(context_output, "context") else json.loads(context_output)
 
         agent_text = self.agent_prompt_path.read_text(encoding="utf-8").strip()
         system_text = self.system_prompt_path.read_text(encoding="utf-8").strip()
@@ -49,7 +51,7 @@ class LintingPromptProvider(PromptProviderBase):
         score = context.get("score", {}).get("value", "unknown")
         source_code = context.get("source_code", "")
 
-        return textwrap.dedent(f"""\
+        full_prompt = textwrap.dedent(f"""\
 
             {agent_text}
 
@@ -69,3 +71,8 @@ class LintingPromptProvider(PromptProviderBase):
             {source_code.rstrip()}
             [/SOURCE_CODE]
         """)
+
+        return PromptOutputSchema(
+            prompt=full_prompt,
+            summary=f"Prompt for file: {Path(file_path).name} with score {score}"
+        )

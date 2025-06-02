@@ -4,6 +4,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy.orm import Session
 
+from app.db.models import SnapshotMetrics
+from app.db.schemas import AgentEngineOutput, SnapshotMetricsSchema
+from app.enums.system_enums import SYSTEM_TYPE
+from app.enums.agent_enums import AGENT_TYPE
+from app.enums.fsm_enums import DECISION_TYPE
+from app.enums.logging_enums import LOG_TYPE
+
 from app.providers.base_provider import BaseProvider
 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
@@ -11,7 +18,7 @@ from app.utilities.metadata.footer.code_annnotation_utils import (
     split_code_and_notes,
     append_agent_note
 )
-from app.db.models import SnapshotMetrics
+
 
 class AgentEngineProviderBase(BaseProvider):
     """Base class for agent engines that return raw LLM output and manage snapshots."""
@@ -31,10 +38,13 @@ class AgentEngineProviderBase(BaseProvider):
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
 
-    def _run_provider(self, input: dict) -> str:
+    def _run_provider(self, input: dict) -> AgentEngineOutput:
         file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
         session_id = input.get("session_id", "")
         system = input.get("system", "unknown")
+        agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
+        agent_id = input.get("agent_id", -1)
+
 
         before_code = ""
         prior_notes = ""
@@ -43,73 +53,85 @@ class AgentEngineProviderBase(BaseProvider):
             if path.exists():
                 full_code = path.read_text(encoding="utf-8")
                 before_code, prior_notes = split_code_and_notes(full_code)
-        # Initialize output to avoid UnboundLocalError
-        output = None
+
+        response_text = ""
+        snapshot_id = None
+        summary = None
+        token_count = 0
 
         try:
-            # === Call the LLM ===
-            output = self._run(input)
+            raw_output = self._run(input)
+            if isinstance(raw_output, AgentEngineOutput):
+                response_text = raw_output.response
+                token_count = raw_output.token_count
+                cost_usd = raw_output.cost_usd
+            else:
+                response_text = raw_output
+                token_count = len(response_text.split())
+                cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
 
-            # === Extract code and log blocks ===
-            code_block = self._extract_block(output, "[CODE]", "[/CODE]")
-            log_block = self._extract_block(output, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-            # If no code change, skip snapshot but still log the decision
+            code_block = self._extract_block(response_text, "[CODE]", "[/CODE]")
+            log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+            agent_decision = (
+                "accept" if "[AGENT_DECISION]accept" in response_text else
+                "reject" if "[AGENT_DECISION]reject" in response_text else
+                "unknown"
+            )
+
             if not code_block or not before_code or code_block == before_code:
-                # Still add the discriminator's decision to the log if no change is made
-                agent_decision = "[AGENT_DECISION]accept" if "[AGENT_DECISION]accept" in output else "[AGENT_DECISION]reject"
-                log_message = f"Code passed all stability checks. Discriminator decision: {agent_decision}"
-                self._log.debug(log_message)  # Log the decision
-                return output
+                return AgentEngineOutput(
+                    response=response_text,
+                    token_count=token_count,
+                    cost_usd=cost_usd,
+                    snapshot_id=None,
+                    summary="No change detected",
+                )
 
-            # Build after_code: reattach prior notes, append new log if present
             after_code = code_block.rstrip()
             if prior_notes:
                 after_code += f"\n\n{prior_notes}"
             if log_block:
-                after_code = append_agent_note(
-                    after_code,
-                    system=system,
-                    agent_name=self.config.name,
-                    note=log_block,
-                )
+                after_code = append_agent_note(after_code, system=system, agent_name=self.config.name, note=log_block)
 
-            # Compute metrics and deltas
             before_metrics = analyze_code(before_code)
             after_metrics = analyze_code(after_code)
             deltas = compute_deltas(before_metrics, after_metrics)
 
-            # Build metadata
+            timestamp = datetime.now(timezone.utc)
             metadata = {
                 "system": system,
                 "agent": self.config.name,
+                "agent_type": agent_type,
+                "agent_id": agent_id,
                 "score": None,
                 "state": input.get("state_context", {}).get("state", "unknown"),
-                "decision": "accept" if "[AGENT_DECISION]accept" in output else (
-                    "reject" if "[AGENT_DECISION]reject" in output else "unknown"
-                ),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "decision": agent_decision,
+                "timestamp": timestamp.isoformat(),
                 **{f"{k}_before": v for k, v in before_metrics.items()},
                 **{f"{k}_after": v for k, v in after_metrics.items()},
                 **deltas,
             }
 
-            # Write snapshot to disk and DB
-            snapshot_path = SnapshotWriter().write_snapshot(
+            snapshot_id = SnapshotWriter().write_snapshot(
                 before=before_code,
                 after=after_code,
                 session_id=session_id,
                 metadata=metadata,
             )
+
+            # Write to DB
             with Session(bind=self._engine) as session:
                 entry = SnapshotMetrics(
                     session_id=session_id,
-                    snapshot_id=snapshot_path,
+                    snapshot_id=snapshot_id,
                     system=system,
                     agent=self.config.name,
+                    agent_type=agent_type,
+                    agent_id=agent_id,
                     score=None,
                     state=metadata["state"],
                     decision=metadata["decision"],
-                    timestamp=datetime.fromisoformat(metadata["timestamp"]),
+                    timestamp=timestamp,
                     **{
                         k: metadata.get(k)
                         for k in SnapshotMetrics.__table__.columns.keys()
@@ -118,32 +140,59 @@ class AgentEngineProviderBase(BaseProvider):
                 )
                 session.add(entry)
                 session.commit()
-            self._log.debug(f"📦 Snapshot written: {snapshot_path}")
+
+            # Log to metrics stream
+            self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
+                session_id=session_id,
+                snapshot_id=snapshot_id,
+                system=SYSTEM_TYPE(system),
+                agent=self.config.name,
+                agent_type=agent_type,
+                agent_id=agent_id,
+                score=metadata["score"],
+                state=metadata["state"],
+                decision=DECISION_TYPE(metadata["decision"]),
+                timestamp=timestamp,
+                line_count_before=metadata["line_count_before"],
+                line_count_after=metadata["line_count_after"],
+                function_count_before=metadata["function_count_before"],
+                function_count_after=metadata["function_count_after"],
+                symbol_count_before=metadata["symbol_count_before"],
+                symbol_count_after=metadata["symbol_count_after"],
+                branch_count_before=metadata["branch_count_before"],
+                branch_count_after=metadata["branch_count_after"],
+                comment_count_before=metadata["comment_count_before"],
+                comment_count_after=metadata["comment_count_after"],
+                line_count_delta=metadata["line_count_delta"],
+                function_count_delta=metadata["function_count_delta"],
+                symbol_count_delta=metadata["symbol_count_delta"],
+                branch_count_delta=metadata["branch_count_delta"],
+                comment_count_delta=metadata["comment_count_delta"],
+            ))
+
+            self._log.debug(f"📦 Snapshot written: {snapshot_id}")
+            summary = log_block or "Snapshot successfully written"
 
         except Exception as exc:
-            # Log the error
             self._log.error(f"Error during agent run: {exc}")
+            summary = f"Error: {str(exc)}"
+            cost_usd = 0.0
 
-        return output
-    
+        return AgentEngineOutput(
+            response=response_text,
+            token_count=token_count,
+            cost_usd=cost_usd,
+            snapshot_id=snapshot_id,
+            summary=summary,
+        )
+
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-        """
-        Extracts the block of text between the specified start and end tags.
-        If the block is not found, it returns None.
-
-        :param text: The text to search within.
-        :param start_tag: The tag indicating the start of the block.
-        :param end_tag: The tag indicating the end of the block.
-        :return: Extracted text block or None if not found.
-        """
         start = text.find(start_tag)
         end = text.find(end_tag)
         if start != -1 and end != -1 and start < end:
             return text[start + len(start_tag):end].strip()
         return None
 
-
     @abstractmethod
     def _run(self, input: dict) -> str:
-        """Implement this to call the actual LLM engine."""
         raise NotImplementedError

@@ -1,10 +1,10 @@
 import subprocess
 import sys
-import json
 from app.providers.tool_provider_base import ToolProviderBase
+from app.db.schemas import ToolOutputSchema
 
 class DocFormatterToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
         check = input.get("check", False)
 
@@ -14,18 +14,18 @@ class DocFormatterToolProvider(ToolProviderBase):
 
         proc = subprocess.run(cmd, capture_output=True, text=True)
 
-        if proc.stdout:
-            self._log.debug(proc.stdout)
-        if proc.stderr:
-            self._log.error(proc.stderr)
+        summary = (
+            "Docstrings formatted" if not check and proc.returncode == 0 else
+            "Docstring format check passed" if check and proc.returncode == 0 else
+            "Docstring format check failed"
+        )
 
-        result = {
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "return_code": proc.returncode
-        }
-
-        if proc.returncode != 0:
+        if proc.returncode != 0 and not check:
             raise RuntimeError(f"docformatter failed: {proc.stderr}")
 
-        return json.dumps(result)
+        return ToolOutputSchema(
+            return_code=proc.returncode,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            summary=summary
+        )

@@ -3,7 +3,7 @@ import shutil
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from app.db.models import AgentPrompt, SystemPrompt
-from app.enums.system_enums import SystemType
+from app.enums.system_enums import SYSTEM_TYPE
 
 # Define paths relative to this script's file location explicitly
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -34,7 +34,7 @@ SYSTEM_PROMPT_FILES = [
         "id": 1,
         "name": "format",
         "filename": "default_system_prompt.txt",
-        "system_type": SystemType.LINTING,
+        "system_type": SYSTEM_TYPE.LINTING,
         "description": "Default prompt for formatting tasks.",
         "tags": ["formatting", "default"]
     },
@@ -42,7 +42,7 @@ SYSTEM_PROMPT_FILES = [
         "id": 2,
         "name": "linting_system",
         "filename": "linting_system_prompt.txt",
-        "system_type": SystemType.LINTING,
+        "system_type": SYSTEM_TYPE.LINTING,
         "description": "System prompt governing the linting subsystem.",
         "tags": ["linting", "system"]
     }

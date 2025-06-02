@@ -5,6 +5,30 @@
 
 
 
+# agent_generator_example.py
+
+# 1 def greet(name):
+# 2     return f"Hello, {name}!"
+
+
+# codecritic_program_example.py
+
+# 1 def add( x, y ):
+# 2  return x+y
+
+
+# codecritic_program_example_working.py
+
+# 1 def add( x, y ):
+# 2  return x+y
+
+
+# context_example.py
+
+# 1 def example(a, b):
+# 2     return a + b
+
+
 # example1.py
 
 # 1 import math
@@ -49,6 +73,18 @@
 # 16     print( greet("Alice") )  #  Repetitive call to the same function
 
 
+# example_black_target.py
+
+# 1 def add(a, b):
+# 2     return a + b
+
+
+# example_lint_target.py
+
+# 1 def lint_test(a, b):
+# 2     return a + b
+
+
 # notebooks\__init__.py
 
 
@@ -73,6 +109,52 @@
 # 16 
 # 17 
 # 18 add(1, 2)
+
+
+# preprocess_only.py
+
+# 1 def foo(): return 42
+
+
+# preprocess_only_working.py
+
+# 1 def foo(): return 42
+
+
+# prompt_context_example.py
+
+# 1 def greet(name):
+# 2     return f"Hello, {name}!"
+
+
+# session_linked_execution.py
+
+# 1 def ping( user ):
+# 2  return f"pong {user}"
+
+
+# session_linked_execution_working.py
+
+# 1 def ping( user ):
+# 2  return f"pong {user}"
+
+
+# state_generator_example.py
+
+# 1 def greet(name):
+# 2     return f"Hello, {name}!"
+
+
+# system_linting_example.py
+
+# 1 def greet( name ):
+# 2  return f"Hello, {name}!"
+
+
+# system_linting_example_working.py
+
+# 1 def greet( name ):
+# 2  return f"Hello, {name}!"
 
 
 

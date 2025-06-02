@@ -9,8 +9,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, Iterable
 from app.db.connection import get_connection
-from app.enums.logging_enums import LogType
+from app.enums.logging_enums import LOG_TYPE
 from app.db.schemas import (
+    SnapshotMetricsSchema,
     StateTransitionLogSchema,
     AgentConversationLogSchema,
     ErrorLogSchema,
@@ -18,10 +19,26 @@ from app.db.schemas import (
 )
 
 LOG_CONFIG_MAP = {
-    LogType.STATE_TRANSITION: {"schema": StateTransitionLogSchema, "table": "state_transition_log"},
-    LogType.AGENT_CONVERSATION: {"schema": AgentConversationLogSchema, "table": "agent_conversation_log"},
-    LogType.PROVIDER: {"schema": ProviderLogSchema, "table": "provider_log"},
-    LogType.ERROR: {"schema": ErrorLogSchema, "table": "error_log"},
+    LOG_TYPE.STATE_TRANSITION: {
+        "schema": StateTransitionLogSchema,
+        "table": "state_transition_log",
+    },
+    LOG_TYPE.AGENT_CONVERSATION: {
+        "schema": AgentConversationLogSchema,
+        "table": "agent_conversation_log",
+    },
+    LOG_TYPE.PROVIDER: {
+        "schema": ProviderLogSchema,
+        "table": "provider_log",
+    },
+    LOG_TYPE.ERROR: {
+        "schema": ErrorLogSchema,
+        "table": "error_log",
+    },
+    LOG_TYPE.SNAPSHOT_METRICS: {
+        "schema": SnapshotMetricsSchema,  
+        "table": "snapshot_metrics",   
+    },
 }
 
 class LoggingProvider:
@@ -90,7 +107,7 @@ class LoggingProvider:
                 for item in items:
                     fh.write(json.dumps(item) + "\n")
 
-    def write(self, log_type: LogType, entries: list[Any] | Any) -> None:
+    def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> None:
         if not isinstance(entries, list):
             entries = [entries]
 
@@ -114,16 +131,19 @@ class LoggingProvider:
         self._insert_many(table_name, serialized)
 
     def log_provider(self, log: ProviderLogSchema) -> None:
-        self.write(LogType.PROVIDER, log)
+        self.write(LOG_TYPE.PROVIDER, log)
 
     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
-        self.write(LogType.STATE_TRANSITION, log)
+        self.write(LOG_TYPE.STATE_TRANSITION, log)
 
     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
-        self.write(LogType.AGENT_CONVERSATION, log)
+        self.write(LOG_TYPE.AGENT_CONVERSATION, log)
 
     def log_error(self, log: ErrorLogSchema) -> None:
-        self.write(LogType.ERROR, log)
+        self.write(LOG_TYPE.ERROR, log)
+
+    def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
+        self.write(LOG_TYPE.SNAPSHOT_METRICS, log)
 
     def close(self) -> None:
         self.conn.close()
@@ -147,3 +167,6 @@ class LoggingMixin:
 
     def log_error(self, log: ErrorLogSchema) -> None:
         self.logger.log_error(log)
+
+    def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
+        self.logger.log_snapshot_metrics(log)

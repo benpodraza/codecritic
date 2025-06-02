@@ -7,10 +7,12 @@ from pathlib import Path
 import shutil
 import json
 
+from app.enums.system_enums import STATE_DECISION_TYPE
 from app.providers.base_provider import BaseProvider
 from app.factories.state_provider_factory import StateProviderFactory
-from app.db.schemas import StateTransitionLogSchema, ProviderLogSchema
-from app.enums.logging_enums import LogType
+from app.db.schemas import StateTransitionLogSchema, SystemOutputSchema
+from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
 
 
 class SystemProviderBase(BaseProvider):
@@ -25,7 +27,7 @@ class SystemProviderBase(BaseProvider):
         for name, provider_id in state_cfg.items():
             self._states[name] = StateProviderFactory.create(provider_id)
 
-    def _run_provider(self, input: dict) -> dict:
+    def _run_provider(self, input: dict) -> SystemOutputSchema:
         session_id = input.get("session_id")
         input_file = Path(input["file_path"])
         self.working_file = input_file.with_name(f"{input_file.stem}_working{input_file.suffix}")
@@ -38,29 +40,40 @@ class SystemProviderBase(BaseProvider):
             **input
         }
 
-        max_steps = 20
+        max_steps = input.get("max_steps", 20)
         step_count = 0
 
         while True:
             if step_count >= max_steps:
-                state["state"] = "end"
-                state["reason"] = f"max steps ({max_steps}) reached"
-                break
-            step_count += 1
+                return SystemOutputSchema(
+                    state="end",
+                    previous_state=state.get("state"),
+                    state_type=STATE_TYPE.END,
+                    reason=REASON_TYPE.MAX_STEPS,
+                    decision=STATE_DECISION_TYPE.UNKNOWN,
+                    steps=step_count,
+                    max_steps=max_steps,
+                    summary=f"Max steps ({max_steps}) reached",
+                    output=state,
+                    provider_name=self.config.name
+                )
 
+            step_count += 1
             current = state.get("state")
 
             if current == "end":
-                self.logger.write(LogType.PROVIDER, ProviderLogSchema(
-                    session_id=session_id,
-                    provider_id=self.config.id,
-                    provider_type=self.__class__.__name__,
-                    input=json.dumps(input),
-                    output=json.dumps(state),
-                    file_path=self.config.artifact_path,
-                    timestamp=datetime.now(timezone.utc)
-                ))
-                return state
+                return SystemOutputSchema(
+                    state="end",
+                    previous_state=state.get("_last_state"),
+                    state_type=STATE_TYPE.END,
+                    reason=REASON_TYPE.SUCCESS,
+                    decision=STATE_DECISION_TYPE.FINAL,
+                    steps=step_count,
+                    max_steps=max_steps,
+                    summary=state.get("reason", "Completed"),
+                    output=state,
+                    provider_name=self.config.name
+                )
 
             if current == "start":
                 state = {**state, **self.transition(state, None), "_last_state": "start"}
@@ -80,20 +93,25 @@ class SystemProviderBase(BaseProvider):
             if "output" not in output:
                 state["output"] = output
 
-        return state
-
     def transition(self, state: dict, agent_output: str | None) -> dict:
         next_state = self._transition(state, agent_output)
-        self.logger.write(LogType.STATE_TRANSITION, StateTransitionLogSchema(
+        state["steps"] = state.get("steps", 0) + 1
+
+        self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
             session_id=state.get("session_id"),
-            entity_type=self.__class__.__name__,
+            entity_type=PROVIDER_TYPE.SYSTEM,
             entity_id=self.config.id,
             from_state=state.get("state"),
             to_state=next_state.get("state", "unknown"),
-            reason=next_state.get("reason", "unspecified"),
+            reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
+            decision = STATE_DECISION_TYPE.REJECT if "accept" not in str(agent_output) else STATE_DECISION_TYPE.IMPROVED,
+            triggered_by=self.config.name,
+            step=state["steps"],
+            transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
             timestamp=datetime.now(timezone.utc)
         ))
         return next_state
+
 
     def update_working_file_from_snapshot(self, snapshot_path: str):
         after_file = Path(f"experiments/snapshots/{snapshot_path}.after")

@@ -7,15 +7,18 @@ import tempfile
 from pathlib import Path
 from typing import Dict
 from app.providers.tool_provider_base import ToolProviderBase
-
+from app.db.schemas import ToolOutputSchema
 
 class SonarCloudToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         target_path = Path(input.get("target"))
         if not target_path.exists():
             raise FileNotFoundError(f"{target_path} does not exist")
 
         github_token, sonar_token, sonar_project, sonar_org, github_user = self._load_env()
+
+        metrics = {}
+        stdout_msg = ""
 
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_url = f"https://github.com/{github_user}/codecritic_scoring"
@@ -28,20 +31,20 @@ class SonarCloudToolProvider(ToolProviderBase):
             target_dest.write_text(target_path.read_text(encoding="utf-8"))
 
             self._git_push(filename, cwd=src_dir)
-
             self._wait_for_scan_completion(sonar_token, sonar_project)
-
             metrics = self._poll_sonarcloud_metrics(sonar_token, sonar_project)
+            stdout_msg = f"Scan complete for {filename}"
+
             if metrics:
                 self._git_cleanup(filename, cwd=src_dir)
-            else:
-                print("⚠️ No metrics returned from SonarCloud — skipping cleanup")
 
-        return json.dumps({
-            "return_code": 0,
-            "stdout": f"Scan complete for {filename}",
-            "metrics": metrics
-        })
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=stdout_msg,
+            metrics=metrics,
+            summary="SonarCloud scan completed successfully"
+        )
+
 
     def _load_env(self) -> tuple[str, str, str, str, str]:
         github_token = os.getenv("GITHUB_TOKEN")

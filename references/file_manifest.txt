@@ -42,8 +42,6 @@ codecritic
                - controller_providers
                   - __init__.py
                   - preprocessing_controller_provider.py
-               - program
-                  - __init__.py
                - program_providers
                   - __init__.py
                   - codecritic_program_provider.py
@@ -93,8 +91,10 @@ codecritic
             - seed_tool_providers.py
       - enums
          - __init__.py
+         - agent_engine_enums.py
          - agent_enums.py
          - controller_enums.py
+         - fsm_enums.py
          - logging_enums.py
          - scoring_enums.py
          - system_enums.py
@@ -167,24 +167,28 @@ codecritic
    - test-runner.ps1
    - tests
       - __init__.py
+      - agent_generator_example.py
+      - codecritic_program_example.py
+      - codecritic_program_example_working.py
+      - context_example.py
       - example1.py
       - example1_working.py
+      - example_black_target.py
+      - example_lint_target.py
       - notebooks
          - .mypy_cache
          - __init__.py
          - functional_tests
-            - agent_analysis.ipynb
-            - agent_provider_config.csv
-            - log_inspection_views.ipynb
-            - logs.csv
-            - state_transition_analysis.ipynb
-            - state_transition_log.csv
-            - test_agent_engines.ipynb
-            - test_metadata_systems.ipynb
-            - test_snapshot_metadata_generation.ipynb
-            - test_sonarcloud.ipynb
          - insights
          - system_development
             - bad_code.py
             - linting_system.ipynb
+      - preprocess_only.py
+      - preprocess_only_working.py
+      - prompt_context_example.py
+      - session_linked_execution.py
+      - session_linked_execution_working.py
+      - state_generator_example.py
+      - system_linting_example.py
+      - system_linting_example_working.py
    - utilities.ipynb

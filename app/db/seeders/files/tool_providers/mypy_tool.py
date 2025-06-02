@@ -2,26 +2,33 @@ import subprocess
 import sys
 import json
 from app.providers.tool_provider_base import ToolProviderBase
+from app.db.schemas import ToolOutputSchema
 
 class MypyToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
 
         cmd = [sys.executable, "-m", "mypy", target]
         proc = subprocess.run(cmd, capture_output=True, text=True)
 
-        if proc.stdout:
-            self._log.debug(proc.stdout)
-        if proc.stderr:
-            self._log.error(proc.stderr)
+        return_code = proc.returncode
+        stdout = proc.stdout
+        stderr = proc.stderr
 
-        result = {
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "return_code": proc.returncode
-        }
+        summary = (
+            "Mypy check passed"
+            if return_code == 0 else
+            "Mypy type issues detected"
+            if return_code == 1 else
+            f"Mypy error ({return_code})"
+        )
 
-        if proc.returncode not in (0, 1):  # 1 means lint issues; not failure
-            raise RuntimeError(f"mypy execution error: {proc.stderr}")
+        if return_code not in (0, 1):  # 1 = valid analysis with issues
+            raise RuntimeError(f"Mypy execution error: {stderr or stdout}")
 
-        return json.dumps(result)
+        return ToolOutputSchema(
+            return_code=return_code,
+            stdout=stdout,
+            stderr=stderr,
+            summary=summary
+        )

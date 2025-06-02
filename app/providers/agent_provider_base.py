@@ -4,12 +4,14 @@ from abc import abstractmethod
 from sqlalchemy.orm import Session
 
 from app.db.models import SnapshotMetrics
-from app.enums.logging_enums import LogType
+from app.enums.logging_enums import LOG_TYPE
+from app.enums.agent_enums import AGENT_TYPE
+from app.enums.system_enums import SYSTEM_TYPE
 from app.providers.base_provider import BaseProvider
 from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-from app.db.schemas import AgentConversationLogSchema
+from app.db.schemas import AgentConversationLogSchema, AgentOutputSchema
 
 class AgentProviderBase(BaseProvider):
     def __init__(
@@ -29,18 +31,28 @@ class AgentProviderBase(BaseProvider):
         self._score_provider = score_provider
         self._tool_providers = tool_providers or []
 
-    def _run_provider(self, input: dict) -> str:
+    def _run_provider(self, input: dict) -> AgentOutputSchema:
         output = self._run(input)
 
         self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
 
         # === Extract structured blocks ===
-        code_block = self._extract_block(output, "[CODE]", "[/CODE]") or (
-            output.strip() if input.get("before") else None
-        )
-        log_content = self._extract_block(output, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+        response = output.response if hasattr(output, "response") else str(output)
 
-        # === Write snapshot ===
+        code_block = self._extract_block(response, "[CODE]", "[/CODE]") or (
+            response.strip() if input.get("before") else None
+        )
+
+        log_content = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+
+
+        decision = (
+            "accept" if "[AGENT_DECISION]accept" in output else
+            "reject" if "[AGENT_DECISION]reject" in output else
+            "unknown"
+        )
+
+        snapshot_id = None
         file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
         if file_path and code_block:
             before_path = Path(file_path).resolve()
@@ -59,15 +71,13 @@ class AgentProviderBase(BaseProvider):
                         {"file_path": str(before_path)}, session_id=self._session_id
                     ).value if self._score_provider else None,
                     "state": input.get("state_context", {}).get("state", "unknown"),
-                    "decision": "accept" if "[AGENT_DECISION]accept" in output else (
-                        "reject" if "[AGENT_DECISION]reject" in output else "unknown"
-                    ),
+                    "decision": decision,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     **{f"{k}_before": v for k, v in before_metrics.items()},
                     **{f"{k}_after": v for k, v in after_metrics.items()},
                     **deltas
                 }
-                
+
                 after_code = append_agent_note(
                     file_content=after_code,
                     system=self._system,
@@ -75,7 +85,7 @@ class AgentProviderBase(BaseProvider):
                     note=log_content or "No log entry provided."
                 )
 
-                snapshot_path = SnapshotWriter().write_snapshot(
+                snapshot_id = SnapshotWriter().write_snapshot(
                     before=before_code,
                     after=after_code,
                     session_id=self._session_id,
@@ -84,7 +94,7 @@ class AgentProviderBase(BaseProvider):
                 with Session(bind=self._engine) as session:
                     entry = SnapshotMetrics(
                         session_id=self._session_id,
-                        snapshot_id=snapshot_path,
+                        snapshot_id=snapshot_id,
                         system=self._system,
                         agent=self.config.name,
                         score=metadata.get("score"),
@@ -99,23 +109,26 @@ class AgentProviderBase(BaseProvider):
                     )
                     session.add(entry)
                     session.commit()
-                self._snapshot_id = snapshot_path
-                self._log.debug(f"📦 Snapshot written to: {snapshot_path}")
+                self._snapshot_id = snapshot_id
+                self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
             else:
                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
 
         # === Log conversation entry ===
         if log_content:
-            self.logger.write(LogType.AGENT_CONVERSATION, AgentConversationLogSchema(
+            self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
                 session_id=self._session_id,
-                system=self._system,
+                system=SYSTEM_TYPE(self._system),
+                agent_type=self.config.agent_type if hasattr(self.config, "agent_type") else AGENT_TYPE.BASIC,
                 agent_provider_config_id=self.config.id if self.config else -1,
-                agent_name=self.config.name if self.config else "unknown",
                 content=log_content,
                 timestamp=datetime.now(timezone.utc),
             ))
             self._log.debug("✅ AGENT_CONVERSATION log write complete")
 
+        output.log = log_content
+        output.decision = decision
+        output.snapshot_id = snapshot_id
         return output
 
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:

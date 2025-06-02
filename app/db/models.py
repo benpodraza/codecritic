@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
+from typing import Optional
 from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, JSON
 from sqlalchemy.dialects.sqlite import TEXT
 from app.db.base import Base
 from uuid import uuid4
 
-from app.enums.system_enums import SystemType
+from app.enums.agent_enums import AGENT_TYPE
+from app.enums.system_enums import SYSTEM_TYPE
+from sqlalchemy.orm import Mapped, mapped_column
 
 ## PROMPT CONFIGS
 
@@ -22,7 +25,7 @@ class SystemPrompt(Base):
     id = Column(Integer, primary_key=True, index=True)
     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False)
-    system_type = Column(Enum(SystemType), nullable=False) 
+    system_type = Column(Enum(SYSTEM_TYPE), nullable=False) 
     description = Column(String)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
@@ -80,6 +83,7 @@ class AgentEngineProviderConfig(Base):
     description = Column(String, nullable=True)
     model= Column(String, nullable=False)
     config = Column(JSON, nullable=True)
+    cost_per_1k_tokens = Column(Float, nullable=True, default=0.0)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
 
@@ -91,6 +95,7 @@ class AgentProviderConfig(Base):
     guid = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    agent_type = Column(String, nullable=False, default="unknown")
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
@@ -163,10 +168,11 @@ class ProviderLog(Base):
     provider_type = Column(String, nullable=False)
     input = Column(String, nullable=True)
     output = Column(String, nullable=True)
-    snapshot_id = Column(String, nullable=True)
+    output_schema = Column(String, nullable=True) 
+    latency_ms = Column(Integer, nullable=True)   
+    config_hash = Column(String, nullable=True)   
     file_path = Column(String, nullable=True)
-    transition_from = Column(String, nullable=True)
-    transition_to = Column(String, nullable=True)
+
     
 class StateTransitionLog(Base):
     __tablename__ = "state_transition_log"
@@ -179,8 +185,13 @@ class StateTransitionLog(Base):
     from_state = Column(String, nullable=False)
     to_state = Column(String, nullable=False)
     reason = Column(String, nullable=True)
+    decision = Column(String, nullable=True)    
+    triggered_by = Column(String, nullable=True)   
+    step = Column(Integer, nullable=True)   
+    transition_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     input_snapshot_id = Column(String, nullable=True)
     output_snapshot_id = Column(String, nullable=True)
+
 
 class AgentConversationLog(Base):
     __tablename__ = "agent_conversation_log"
@@ -188,10 +199,22 @@ class AgentConversationLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, nullable=False)
     system = Column(String, nullable=False)
-    agent_provider_config_id = Column(Integer, nullable=False)  
-    agent_name = Column(String, nullable=False)
+    agent_provider_config_id = Column(Integer, nullable=False)
+    agent_type = Column(String, nullable=False)  # NEW: replaces `agent_name`
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+class ErrorLog(Base):
+    __tablename__ = "error_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=False)
+    timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+    provider_id = Column(Integer, nullable=True)
+    provider_type = Column(String, nullable=True)
+    error_type = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    file_path = Column(String, nullable=True)
 
 class SnapshotMetrics(Base):
     __tablename__ = "snapshot_metrics"
@@ -201,6 +224,8 @@ class SnapshotMetrics(Base):
     snapshot_id = Column(String, nullable=False)
     system = Column(String, nullable=True)
     agent = Column(String, nullable=True)
+    agent_type = Column(Enum(AGENT_TYPE), nullable=True)
+    agent_id = Column(Integer, nullable=True)
     score = Column(Float, nullable=True)
     state = Column(String, nullable=True)
     decision = Column(String, nullable=True)
@@ -226,14 +251,3 @@ class SnapshotMetrics(Base):
     comment_count_delta = Column(Integer)
 
 
-class ErrorLog(Base):
-    __tablename__ = "error_log"
-
-    id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-    provider_id = Column(Integer, nullable=True)
-    provider_type = Column(String, nullable=True)
-    error_type = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    file_path = Column(String, nullable=True)

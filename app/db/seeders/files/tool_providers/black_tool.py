@@ -1,11 +1,11 @@
-from __future__ import annotations
 import subprocess
 import sys
 import json
 from app.providers.tool_provider_base import ToolProviderBase
+from app.db.schemas import ToolOutputSchema
 
 class BlackToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
         check = input.get("check", False)
 
@@ -21,17 +21,19 @@ class BlackToolProvider(ToolProviderBase):
             errors="ignore"
         )
 
-        self._log.debug(proc.stdout)
-        if proc.stderr:
-            self._log.error(proc.stderr)
+        summary = (
+            "Black check passed (code formatted correctly)"
+            if proc.returncode == 0 and check else
+            "Black formatting applied" if proc.returncode == 0 else
+            "Black check failed"
+        )
 
-        result = {
-            "stdout": proc.stdout,
-            "stderr": proc.stderr,
-            "return_code": proc.returncode
-        }
-
-        if proc.returncode != 0:
+        if proc.returncode != 0 and not check:
             raise RuntimeError(f"black failed: {proc.stderr}")
 
-        return json.dumps(result)
+        return ToolOutputSchema(
+            return_code=proc.returncode,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            summary=summary
+        )

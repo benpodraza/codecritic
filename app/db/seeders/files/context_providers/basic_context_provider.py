@@ -1,9 +1,9 @@
 from app.providers.context_provider_base import ContextProviderBase
-import json
+from app.db.schemas import ContextOutputSchema
 
 class BasicContextProvider(ContextProviderBase):
-    def _run(self, input: dict) -> str:
-        return json.dumps({
-            "file_path": "tests/example.py",
-            "source_code": "def example():\n    pass\n"
-        })
+    def _run(self, input: dict) -> ContextOutputSchema:
+        return ContextOutputSchema(
+            context={"file_path": input.get("file_path")},
+            summary="Basic context with file_path only."
+        )

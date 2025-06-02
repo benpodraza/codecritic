@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 
 from app.db.models import AgentPrompt, SystemPrompt
+from app.db.schemas import PromptOutputSchema
 from app.providers.base_provider import BaseProvider
 from app.factories.context_provider_factory import ContextProviderFactory
 
@@ -31,9 +32,9 @@ class PromptProviderBase(BaseProvider):
             if context_id := self.config.config.get("context_provider_id"):
                 self._context_provider = ContextProviderFactory.create(id=context_id)
 
-    def _run_provider(self, input: dict) -> str:
+    def _run_provider(self, input: dict) -> PromptOutputSchema:
         return self._run(input)
 
     @abstractmethod
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> PromptOutputSchema:
         raise NotImplementedError

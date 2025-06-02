@@ -9,10 +9,12 @@ if TYPE_CHECKING:
     from app.providers.score_provider_base import ScoreProviderBase
 
 
+from app.db.schemas import ToolOutputSchema
+
 class ToolProviderBase(BaseProvider):
     """Base class for tool providers with optional context/score wiring."""
 
-    def _run_provider(self, input: dict) -> str:
+    def _run_provider(self, input: dict) -> ToolOutputSchema:
         return self._run(input)
 
     def set_context_provider(self, provider: ContextProviderBase) -> None:
@@ -22,5 +24,6 @@ class ToolProviderBase(BaseProvider):
         self.score_provider = provider
 
     @abstractmethod
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict) -> ToolOutputSchema:
         raise NotImplementedError
+

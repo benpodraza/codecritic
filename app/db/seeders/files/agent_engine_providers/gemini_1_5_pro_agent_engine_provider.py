@@ -22,6 +22,6 @@ class Gemini1_5ProAgentEngineProvider(AgentEngineProviderBase):
         content = response_raw.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
         token_count = len(content.split())
-        cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+        cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 
         return AgentEngineOutput(response=content, token_count=token_count, cost_usd=cost_usd)

@@ -65,13 +65,25 @@ class LoggingProvider:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
 
-        self.conn = connection or get_connection()
+        self._conn = connection or get_connection()
 
         self.output_path = Path(output_path) if output_path else None
         if self.output_path:
             self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._initialized = True
+
+    @property
+    def conn(self):
+        if getattr(self, "_conn", None) is None:
+            from app.db import init_db
+            self._conn = init_db(reset=False).raw_connection()
+        try:
+            self._conn.cursor()
+        except Exception:
+            from app.db import init_db
+            self._conn = init_db(reset=False).raw_connection()
+        return self._conn
 
     def _serialize(self, obj: Any) -> dict:
         def _safe(v: Any) -> Any:

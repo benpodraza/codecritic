@@ -178,6 +178,22 @@ codecritic
       - notebooks
          - .mypy_cache
          - __init__.py
+         - eda
+            - eda_agent_conversation_log.ipynb
+            - eda_agent_engine_providers.ipynb
+            - eda_agent_providers.ipynb
+            - eda_context_providers.ipynb
+            - eda_controller_providers.ipynb
+            - eda_error_log.ipynb
+            - eda_program_providers.ipynb
+            - eda_prompt_providers.ipynb
+            - eda_provider_log.ipynb
+            - eda_score_providers.ipynb
+            - eda_snapshot_metrics.ipynb
+            - eda_state_providers.ipynb
+            - eda_state_transition_log.ipynb
+            - eda_system_providers.ipynb
+            - eda_tool_providers.ipynb
          - functional_tests
          - insights
          - system_development

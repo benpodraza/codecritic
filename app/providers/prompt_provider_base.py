@@ -12,24 +12,24 @@ from app.factories.context_provider_factory import ContextProviderFactory
 class PromptProviderBase(BaseProvider):
     """Base class for prompt generators with optional context/agent/system loading."""
 
-    def __init__(self, config, engine=None):
-        super().__init__(config=config, engine=engine)
+    def __init__(self, config, called_by_type=None, called_by_id=None):
+        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
 
         self._agent_prompt = None
         self._system_prompt = None
         self._context_provider = None
 
-        if not self.config or not self._engine:
+        if not self._config or not self._engine:
             return
 
         with Session(bind=self._engine) as session:
-            if agent_id := self.config.config.get("agent_prompt_id"):
+            if agent_id := self._config.config.get("agent_prompt_id"):
                 self._agent_prompt = session.get(AgentPrompt, agent_id)
 
-            if system_id := self.config.config.get("system_prompt_id"):
+            if system_id := self._config.config.get("system_prompt_id"):
                 self._system_prompt = session.get(SystemPrompt, system_id)
 
-            if context_id := self.config.config.get("context_provider_id"):
+            if context_id := self._config.config.get("context_provider_id"):
                 self._context_provider = ContextProviderFactory.create(id=context_id)
 
     def _run_provider(self, input: dict) -> PromptOutputSchema:

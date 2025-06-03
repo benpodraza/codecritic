@@ -7,8 +7,19 @@ from app.providers.prompt_provider_base import PromptProviderBase
 from app.db.schemas import PromptOutputSchema
 
 class LintingPromptProvider(PromptProviderBase):
-    def __init__(self, config, engine=None):
-        super().__init__(config=config, engine=engine)
+    def __init__(
+        self,
+        config,
+        called_by_type=None,
+        called_by_id=None,
+        **kwargs
+    ):
+        super().__init__(
+            config=config,
+            called_by_type=called_by_type,
+            called_by_id=called_by_id,
+            **kwargs
+        )
 
         EXTENSIONS_DIR = Path(__file__).resolve().parent
 

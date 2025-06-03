@@ -26,20 +26,21 @@ class AgentEngineProviderBase(BaseProvider):
     def __init__(
         self,
         config=None,
-        engine=None,
         prompt_provider=None,
         context_provider=None,
         score_provider=None,
         tool_providers=None,
+        called_by_type=None,
+        called_by_id=None,
     ):
-        super().__init__(config=config, engine=engine)
+        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
         self.prompt_provider = prompt_provider
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
 
     def _run_provider(self, input: dict) -> AgentEngineOutput:
-        file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
+        file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
         session_id = input.get("session_id", "")
         system = input.get("system", "unknown")
         agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
@@ -68,7 +69,7 @@ class AgentEngineProviderBase(BaseProvider):
             else:
                 response_text = raw_output
                 token_count = len(response_text.split())
-                cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+                cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 
             code_block = self._extract_block(response_text, "[CODE]", "[/CODE]")
             log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
@@ -91,7 +92,7 @@ class AgentEngineProviderBase(BaseProvider):
             if prior_notes:
                 after_code += f"\n\n{prior_notes}"
             if log_block:
-                after_code = append_agent_note(after_code, system=system, agent_name=self.config.name, note=log_block)
+                after_code = append_agent_note(after_code, system=system, agent_name=self._config.name, note=log_block)
 
             before_metrics = analyze_code(before_code)
             after_metrics = analyze_code(after_code)
@@ -100,7 +101,7 @@ class AgentEngineProviderBase(BaseProvider):
             timestamp = datetime.now(timezone.utc)
             metadata = {
                 "system": system,
-                "agent": self.config.name,
+                "agent": self._config.name,
                 "agent_type": agent_type,
                 "agent_id": agent_id,
                 "score": None,
@@ -125,7 +126,7 @@ class AgentEngineProviderBase(BaseProvider):
                     session_id=session_id,
                     snapshot_id=snapshot_id,
                     system=system,
-                    agent=self.config.name,
+                    agent=self._config.name,
                     agent_type=agent_type,
                     agent_id=agent_id,
                     score=None,
@@ -146,7 +147,7 @@ class AgentEngineProviderBase(BaseProvider):
                 session_id=session_id,
                 snapshot_id=snapshot_id,
                 system=SYSTEM_TYPE(system),
-                agent=self.config.name,
+                agent=self._config.name,
                 agent_type=agent_type,
                 agent_id=agent_id,
                 score=metadata["score"],

@@ -17,14 +17,15 @@ class AgentProviderBase(BaseProvider):
     def __init__(
         self,
         config=None,
-        engine=None,
         agent_engine=None,
         prompt_provider=None,
         context_provider=None,
         score_provider=None,
         tool_providers=None,
+        called_by_type=None,
+        called_by_id=None,
     ):
-        super().__init__(config=config, engine=engine)
+        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
         self._agent_engine = agent_engine
         self._prompt_provider = prompt_provider
         self._context_provider = context_provider
@@ -34,7 +35,7 @@ class AgentProviderBase(BaseProvider):
     def _run_provider(self, input: dict) -> AgentOutputSchema:
         output = self._run(input)
 
-        self._log.debug(f"🐛 _run_provider called for: {self.config.name if self.config else 'unknown'}")
+        self._log.debug(f"🧻 _run_provider called for: {self._config.name if self._config else 'unknown'}")
 
         # === Extract structured blocks ===
         response = output.response if hasattr(output, "response") else str(output)
@@ -45,17 +46,27 @@ class AgentProviderBase(BaseProvider):
 
         log_content = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
 
-
         decision = (
-            "accept" if "[AGENT_DECISION]accept" in output else
-            "reject" if "[AGENT_DECISION]reject" in output else
+            "accept" if "[AGENT_DECISION]accept" in response else
+            "reject" if "[AGENT_DECISION]reject" in response else
             "unknown"
         )
 
+        if not log_content:
+            log_content = f"No conversation log entry found. Agent decision was: {decision}."
+            self._log.warning("📜 No conversation log entry block found in response.")
+
+        if decision == "unknown":
+            self._log.warning("❓ Agent decision tag not found in response.")
+
+        # Avoid nesting in agent_output.output by removing self-referential fields if present
+        if hasattr(output, "output") and getattr(output, "output") == output:
+            output.output = None
+
         snapshot_id = None
-        file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
-        if file_path and code_block:
-            before_path = Path(file_path).resolve()
+        file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
+        if file_name and code_block:
+            before_path = Path(file_name).resolve()
             if before_path.exists():
                 before_code = before_path.read_text(encoding="utf-8")
                 after_code = code_block
@@ -66,9 +77,9 @@ class AgentProviderBase(BaseProvider):
 
                 metadata = {
                     "system": self._system,
-                    "agent": self.config.name if self.config else "unknown",
+                    "agent": self._config.name if self._config else "unknown",
                     "score": self._score_provider.run(
-                        {"file_path": str(before_path)}, session_id=self._session_id
+                        {"file_name": str(before_path)}, session_id=self._session_id
                     ).value if self._score_provider else None,
                     "state": input.get("state_context", {}).get("state", "unknown"),
                     "decision": decision,
@@ -81,7 +92,7 @@ class AgentProviderBase(BaseProvider):
                 after_code = append_agent_note(
                     file_content=after_code,
                     system=self._system,
-                    agent_name=self.config.name if self.config else "unknown",
+                    agent_name=self._config.name if self._config else "unknown",
                     note=log_content or "No log entry provided."
                 )
 
@@ -96,7 +107,7 @@ class AgentProviderBase(BaseProvider):
                         session_id=self._session_id,
                         snapshot_id=snapshot_id,
                         system=self._system,
-                        agent=self.config.name,
+                        agent=self._config.name,
                         score=metadata.get("score"),
                         state=metadata.get("state"),
                         decision=metadata.get("decision"),
@@ -118,9 +129,9 @@ class AgentProviderBase(BaseProvider):
         if log_content:
             self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
                 session_id=self._session_id,
-                system=SYSTEM_TYPE(self._system),
-                agent_type=self.config.agent_type if hasattr(self.config, "agent_type") else AGENT_TYPE.BASIC,
-                agent_provider_config_id=self.config.id if self.config else -1,
+                system=self._system,
+                agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT_TYPE.BASIC,
+                agent_provider_config_id=self._config.id if self._config else -1,
                 content=log_content,
                 timestamp=datetime.now(timezone.utc),
             ))

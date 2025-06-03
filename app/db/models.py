@@ -171,7 +171,9 @@ class ProviderLog(Base):
     output_schema = Column(String, nullable=True) 
     latency_ms = Column(Integer, nullable=True)   
     config_hash = Column(String, nullable=True)   
-    file_path = Column(String, nullable=True)
+    file_name = Column(String, nullable=True)
+    called_by_type = Column(String, nullable=True)
+    called_by_id = Column(Integer, nullable=True)
 
     
 class StateTransitionLog(Base):
@@ -210,11 +212,14 @@ class ErrorLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+    latency_ms = Column(Integer, nullable=True) 
     provider_id = Column(Integer, nullable=True)
     provider_type = Column(String, nullable=True)
     error_type = Column(String, nullable=False)
     message = Column(String, nullable=False)
     file_path = Column(String, nullable=True)
+    called_by_type = Column(String, nullable=True)
+    called_by_id = Column(Integer, nullable=True)
 
 class SnapshotMetrics(Base):
     __tablename__ = "snapshot_metrics"

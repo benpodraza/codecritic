@@ -2,29 +2,38 @@ from abc import abstractmethod
 from datetime import datetime, timezone
 import hashlib
 import json
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Optional
 
+from app.db import init_db
 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE
 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
-from app.enums.logging_enums import PROVIDER_TYPE
-from app.enums.logging_enums import ERROR_TYPE
+from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
 
 
 class BaseProvider(LoggingMixin):
-    def __init__(self, config=None, engine=None) -> None:
+    def __init__(
+        self,
+        config=None,
+        called_by_type: Optional[PROVIDER_TYPE] = None,
+        called_by_id: Optional[int] = None,
+    ) -> None:
         super().__init__()
-        assert engine is not None, "🚨 engine must be injected into BaseProvider"
-        self.config = config
-        self._engine = engine
+        assert config is not None, "🚨 engine must be injected into BaseProvider"
+        self._config = config
+        self._engine = init_db(reset=False) 
+        self._called_by_type = called_by_type
+        self._called_by_id = called_by_id
 
     def run(self, input: dict | None = None, session_id: str = "") -> str:
         input = input or {}
         self._session_id = session_id
         self._system = input.get("system", "unknown")
 
-        start_time = time.perf_counter()
+        start_clock = time.perf_counter()
+        start_time = datetime.now(timezone.utc)
+
         output = None
         output_schema = None
 
@@ -33,6 +42,7 @@ class BaseProvider(LoggingMixin):
             if hasattr(output, "json"):
                 output_schema = output.__class__.__name__
         except Exception as exc:
+            latency_ms = int((time.perf_counter() - start_clock) * 1000)
             self.logger.write(
                 LOG_TYPE.ERROR,
                 ErrorLogSchema(
@@ -40,29 +50,34 @@ class BaseProvider(LoggingMixin):
                     error_type=self._map_error_type(exc),
                     message=str(exc),
                     file_path=str(Path(__file__).relative_to(Path.cwd())),
-                    provider_id=self.config.id if self.config else None,
+                    provider_id=self._config.id if self._config else None,
                     provider_type=self._infer_provider_type(),
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=start_time,
+                    latency_ms=latency_ms,
+                    called_by_type=self._called_by_type,
+                    called_by_id=self._called_by_id,
                 ),
             )
             raise
-        finally:
-            latency_ms = int((time.perf_counter() - start_time) * 1000)
-
-            # Serialize the input and output properly
-            log = ProviderLogSchema(
-                session_id=session_id,
-                provider_id=self.config.id if self.config else -1,
-                provider_type=self._infer_provider_type(),
-                input=json.dumps({k: v.dict() if hasattr(v, "dict") else v for k, v in input.items()}),
-                output=json.dumps(output.dict() if hasattr(output, "dict") else output),
-                output_schema=output_schema,
-                latency_ms=latency_ms,
-                config_hash=self._compute_config_hash(),
-                file_path=getattr(self.config, "artifact_path", None),
-                timestamp=datetime.now(timezone.utc),
+        else:
+            latency_ms = int((time.perf_counter() - start_clock) * 1000)
+            self.logger.write(
+                LOG_TYPE.PROVIDER,
+                ProviderLogSchema(
+                    session_id=session_id,
+                    provider_id=self._config.id if self._config else -1,
+                    provider_type=self._infer_provider_type(),
+                    input=json.dumps({k: v.dict() if hasattr(v, "dict") else v for k, v in input.items()}),
+                    output=json.dumps(output.dict() if hasattr(output, "dict") else output),
+                    output_schema=output_schema,
+                    latency_ms=latency_ms,
+                    config_hash=self._compute_config_hash(),
+                    file_name=getattr(self._config, "artifact_path", "").split("/")[-1] if getattr(self._config, "artifact_path", None) else None,
+                    timestamp=start_time,
+                    called_by_type=self._called_by_type,
+                    called_by_id=self._called_by_id,
+                ),
             )
-            self.logger.write(LOG_TYPE.PROVIDER, log)
             self._log.debug("✅ Provider run logged")
 
         return output
@@ -92,9 +107,9 @@ class BaseProvider(LoggingMixin):
             return PROVIDER_TYPE.CONTROLLER
         if "program" in cls:
             return PROVIDER_TYPE.PROGRAM
-        return PROVIDER_TYPE.UNKNOWN  # fallback
+        return PROVIDER_TYPE.UNKNOWN
 
     def _compute_config_hash(self) -> Optional[str]:
-        if not self.config or not getattr(self.config, "config", None):
+        if not self._config or not getattr(self._config, "config", None):
             return None
-        return hashlib.md5(json.dumps(self.config.config, sort_keys=True).encode()).hexdigest()
+        return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()

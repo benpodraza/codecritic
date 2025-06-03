@@ -2,6 +2,9 @@
 # === PYTHON FILES ===
 
 
+# === PYTHON-NOTEBOOKS FILES ===
+
+
 # === NON-PYTHON FILES ===
 
 # snapshots\08f36876-f2eb-42fe-b622-0d4368c6de23.meta.json
@@ -98,6 +101,56 @@
 # 42   "comment_count_delta": -5,
 # 43   "import_count_delta": -1
 # 44 }
+
+
+# snapshots\1ae3b175-97bd-4732-a2cf-b0ceb2336563.meta.json
+
+# 1 {
+# 2   "system": "linting",
+# 3   "agent": "openai_gpt_4o_agent_engine",
+# 4   "agent_type": "unknown",
+# 5   "agent_id": 2,
+# 6   "score": null,
+# 7   "state": "unknown",
+# 8   "decision": "unknown",
+# 9   "timestamp": "2025-06-02T17:22:37.954491+00:00",
+# 10   "line_count_before": 2,
+# 11   "function_count_before": 1,
+# 12   "class_count_before": 0,
+# 13   "branch_count_before": 0,
+# 14   "call_count_before": 0,
+# 15   "assignment_count_before": 0,
+# 16   "return_count_before": 1,
+# 17   "exception_count_before": 0,
+# 18   "docstring_count_before": 0,
+# 19   "symbol_count_before": 1,
+# 20   "comment_count_before": 0,
+# 21   "import_count_before": 0,
+# 22   "line_count_after": 8,
+# 23   "function_count_after": 1,
+# 24   "class_count_after": 0,
+# 25   "branch_count_after": 0,
+# 26   "call_count_after": 0,
+# 27   "assignment_count_after": 0,
+# 28   "return_count_after": 1,
+# 29   "exception_count_after": 0,
+# 30   "docstring_count_after": 0,
+# 31   "symbol_count_after": 1,
+# 32   "comment_count_after": 5,
+# 33   "import_count_after": 0,
+# 34   "line_count_delta": 6,
+# 35   "function_count_delta": 0,
+# 36   "class_count_delta": 0,
+# 37   "branch_count_delta": 0,
+# 38   "call_count_delta": 0,
+# 39   "assignment_count_delta": 0,
+# 40   "return_count_delta": 0,
+# 41   "exception_count_delta": 0,
+# 42   "docstring_count_delta": 0,
+# 43   "symbol_count_delta": 0,
+# 44   "comment_count_delta": 5,
+# 45   "import_count_delta": 0
+# 46 }
 
 
 # snapshots\1d07c695-ae73-4c3b-895c-32f2a3c5aad8.meta.json
@@ -292,6 +345,54 @@
 # 44 }
 
 
+# snapshots\3dc68552-769f-4baf-9aaf-a0e338811fa1.meta.json
+
+# 1 {
+# 2   "system": "linting",
+# 3   "agent": "linting_generator_agent_provider",
+# 4   "score": 0.0,
+# 5   "state": "unknown",
+# 6   "decision": "unknown",
+# 7   "timestamp": "2025-06-02T17:22:38.469846+00:00",
+# 8   "line_count_before": 2,
+# 9   "function_count_before": 1,
+# 10   "class_count_before": 0,
+# 11   "branch_count_before": 0,
+# 12   "call_count_before": 0,
+# 13   "assignment_count_before": 0,
+# 14   "return_count_before": 1,
+# 15   "exception_count_before": 0,
+# 16   "docstring_count_before": 0,
+# 17   "symbol_count_before": 1,
+# 18   "comment_count_before": 0,
+# 19   "import_count_before": 0,
+# 20   "line_count_after": 2,
+# 21   "function_count_after": 1,
+# 22   "class_count_after": 0,
+# 23   "branch_count_after": 0,
+# 24   "call_count_after": 0,
+# 25   "assignment_count_after": 0,
+# 26   "return_count_after": 1,
+# 27   "exception_count_after": 0,
+# 28   "docstring_count_after": 0,
+# 29   "symbol_count_after": 1,
+# 30   "comment_count_after": 0,
+# 31   "import_count_after": 0,
+# 32   "line_count_delta": 0,
+# 33   "function_count_delta": 0,
+# 34   "class_count_delta": 0,
+# 35   "branch_count_delta": 0,
+# 36   "call_count_delta": 0,
+# 37   "assignment_count_delta": 0,
+# 38   "return_count_delta": 0,
+# 39   "exception_count_delta": 0,
+# 40   "docstring_count_delta": 0,
+# 41   "symbol_count_delta": 0,
+# 42   "comment_count_delta": 0,
+# 43   "import_count_delta": 0
+# 44 }
+
+
 # snapshots\3f45a93c-7111-4dcc-84da-da7e316dc4b2.meta.json
 
 # 1 {
@@ -303,6 +404,56 @@
 # 7   "state": "unknown",
 # 8   "decision": "unknown",
 # 9   "timestamp": "2025-06-02T17:02:10.262042+00:00",
+# 10   "line_count_before": 2,
+# 11   "function_count_before": 1,
+# 12   "class_count_before": 0,
+# 13   "branch_count_before": 0,
+# 14   "call_count_before": 0,
+# 15   "assignment_count_before": 0,
+# 16   "return_count_before": 1,
+# 17   "exception_count_before": 0,
+# 18   "docstring_count_before": 0,
+# 19   "symbol_count_before": 1,
+# 20   "comment_count_before": 0,
+# 21   "import_count_before": 0,
+# 22   "line_count_after": 8,
+# 23   "function_count_after": 1,
+# 24   "class_count_after": 0,
+# 25   "branch_count_after": 0,
+# 26   "call_count_after": 0,
+# 27   "assignment_count_after": 0,
+# 28   "return_count_after": 1,
+# 29   "exception_count_after": 0,
+# 30   "docstring_count_after": 0,
+# 31   "symbol_count_after": 1,
+# 32   "comment_count_after": 5,
+# 33   "import_count_after": 0,
+# 34   "line_count_delta": 6,
+# 35   "function_count_delta": 0,
+# 36   "class_count_delta": 0,
+# 37   "branch_count_delta": 0,
+# 38   "call_count_delta": 0,
+# 39   "assignment_count_delta": 0,
+# 40   "return_count_delta": 0,
+# 41   "exception_count_delta": 0,
+# 42   "docstring_count_delta": 0,
+# 43   "symbol_count_delta": 0,
+# 44   "comment_count_delta": 5,
+# 45   "import_count_delta": 0
+# 46 }
+
+
+# snapshots\41aba129-75a2-44bb-842b-3a9f69e9661f.meta.json
+
+# 1 {
+# 2   "system": "linting",
+# 3   "agent": "openai_gpt_4o_agent_engine",
+# 4   "agent_type": "unknown",
+# 5   "agent_id": 2,
+# 6   "score": null,
+# 7   "state": "unknown",
+# 8   "decision": "unknown",
+# 9   "timestamp": "2025-06-02T17:22:41.742196+00:00",
 # 10   "line_count_before": 2,
 # 11   "function_count_before": 1,
 # 12   "class_count_before": 0,
@@ -2135,6 +2286,54 @@
 # 5   "state": "unknown",
 # 6   "decision": "unknown",
 # 7   "timestamp": "2025-06-02T07:27:03.288679+00:00",
+# 8   "line_count_before": 2,
+# 9   "function_count_before": 1,
+# 10   "class_count_before": 0,
+# 11   "branch_count_before": 0,
+# 12   "call_count_before": 0,
+# 13   "assignment_count_before": 0,
+# 14   "return_count_before": 1,
+# 15   "exception_count_before": 0,
+# 16   "docstring_count_before": 0,
+# 17   "symbol_count_before": 1,
+# 18   "comment_count_before": 0,
+# 19   "import_count_before": 0,
+# 20   "line_count_after": 2,
+# 21   "function_count_after": 1,
+# 22   "class_count_after": 0,
+# 23   "branch_count_after": 0,
+# 24   "call_count_after": 0,
+# 25   "assignment_count_after": 0,
+# 26   "return_count_after": 1,
+# 27   "exception_count_after": 0,
+# 28   "docstring_count_after": 0,
+# 29   "symbol_count_after": 1,
+# 30   "comment_count_after": 0,
+# 31   "import_count_after": 0,
+# 32   "line_count_delta": 0,
+# 33   "function_count_delta": 0,
+# 34   "class_count_delta": 0,
+# 35   "branch_count_delta": 0,
+# 36   "call_count_delta": 0,
+# 37   "assignment_count_delta": 0,
+# 38   "return_count_delta": 0,
+# 39   "exception_count_delta": 0,
+# 40   "docstring_count_delta": 0,
+# 41   "symbol_count_delta": 0,
+# 42   "comment_count_delta": 0,
+# 43   "import_count_delta": 0
+# 44 }
+
+
+# snapshots\state-test-session\9d2d3b3e-e731-416e-925a-0af34aadcd03.meta.json
+
+# 1 {
+# 2   "system": "linting",
+# 3   "agent": "linting_generator_agent_provider",
+# 4   "score": 0.0,
+# 5   "state": "unknown",
+# 6   "decision": "unknown",
+# 7   "timestamp": "2025-06-02T17:22:42.252385+00:00",
 # 8   "line_count_before": 2,
 # 9   "function_count_before": 1,
 # 10   "class_count_before": 0,

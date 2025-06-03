@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 from importlib.util import spec_from_file_location, module_from_spec
 from pathlib import Path
-from app.db import init_db # <-- global DB engine instance
+
+from app.db import init_db  # global DB engine instance
 from app.providers.base_provider import BaseProvider
+from app.enums.logging_enums import PROVIDER_TYPE
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
@@ -10,12 +12,18 @@ EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 engine = init_db(reset=False)
 
 class BaseProviderFactory:
-    config_model = None  
-    base_class = BaseProvider  
+    config_model = None
+    base_class = BaseProvider
 
     @classmethod
-    def create(cls, id: int, **kwargs):
-
+    def create(
+        cls,
+        id: int,
+        *,
+        called_by_type: PROVIDER_TYPE | None = None,
+        called_by_id: int | None = None,
+        **kwargs,
+    ) -> BaseProvider:
         with Session(bind=engine) as session:
             config = session.get(cls.config_model, int(id))
             if not config:
@@ -41,6 +49,10 @@ class BaseProviderFactory:
         if provider_class is None:
             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
 
-        # Explicitly pass the global engine here
-        instance = provider_class(config=config, engine=engine)
+        instance = provider_class(
+            config=config,
+            called_by_type=called_by_type,
+            called_by_id=called_by_id,
+            **kwargs
+        )
         return instance

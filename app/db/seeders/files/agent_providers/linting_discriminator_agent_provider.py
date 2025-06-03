@@ -4,9 +4,6 @@ from app.utilities.metadata.snapshots.snapshot_reader import read_latest_snapsho
 from app.utilities.diff_utils import summarize_diff
 
 class LintingDiscriminatorAgentProvider(AgentProviderBase):
-    def __init__(self, config=None, engine=None, **kwargs):
-        super().__init__(config=config, engine=engine, **kwargs)
-
     def _run(self, input: dict) -> AgentOutputSchema:
         snapshot = read_latest_snapshot(session_id=self._session_id)
         if not snapshot:

@@ -28,11 +28,11 @@ def suppress_output():
 
 class CodeStabilityScoreProvider(ScoreProviderBase):
     def _run(self, input: dict) -> ScoreOutputSchema:
-        file_path = Path(input["file_path"]).resolve()
+        file_name = Path(input["file_name"]).resolve()
         components: Dict[str, bool] = {}
 
         try:
-            source_code = file_path.read_text(encoding="utf-8")
+            source_code = file_name.read_text(encoding="utf-8")
             components["utf8_valid"] = True
         except Exception:
             components["utf8_valid"] = False
@@ -47,21 +47,21 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
                 return self._final_score(components)
 
             try:
-                compile(source_code, str(file_path), "exec")
+                compile(source_code, str(file_name), "exec")
                 components["can_compile"] = True
             except Exception:
                 components["can_compile"] = False
                 return self._final_score(components)
 
             try:
-                py_compile.compile(str(file_path), doraise=True)
+                py_compile.compile(str(file_name), doraise=True)
                 components["py_compile_ok"] = True
             except Exception:
                 components["py_compile_ok"] = False
                 return self._final_score(components)
 
             try:
-                spec = importlib.util.spec_from_file_location("mod", str(file_path))
+                spec = importlib.util.spec_from_file_location("mod", str(file_name))
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)  # type: ignore
                 components["can_import"] = True
@@ -70,7 +70,7 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
                 return self._final_score(components)
 
         # Optional tool checks
-        available = {tool.config.name: tool for tool in getattr(self, "tool_providers", [])}
+        available = {tool._config.name: tool for tool in getattr(self, "tool_providers", [])}
 
         def safe_check(name: str, callback) -> bool:
             try:
@@ -79,24 +79,44 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
                 return False
 
         components["formatter_idempotent"] = safe_check("black", lambda: (
-            json.loads(available["black"].run({"target": str(file_path), "check": True}, session_id=self._session_id))["return_code"] == 0
+            json.loads(available["black"].run({"target": str(file_name), "check": True}, session_id=self._session_id))["return_code"] == 0
         ))
 
         components["symbol_graph_valid"] = safe_check("symbol_graph", lambda: (
             lambda res: bool(res) and all(node.get("name") and node.get("lineno") for node in res.values())
-        )(json.loads(available["symbol_graph"].run({"target": str(file_path)}, session_id=self._session_id))))
+        )(json.loads(available["symbol_graph"].run({"target": str(file_name)}, session_id=self._session_id))))
 
         components["mypy_ok"] = safe_check("mypy", lambda: (
-            json.loads(available["mypy"].run({"target": str(file_path)}, session_id=self._session_id))["return_code"] in (0, 1)
+            json.loads(available["mypy"].run({"target": str(file_name)}, session_id=self._session_id))["return_code"] in (0, 1)
         ))
 
         return self._final_score(components)
 
     def _final_score(self, components: Dict[str, bool]) -> ScoreOutputSchema:
-        basics = ["utf8_valid", "syntax_ok", "can_compile", "can_import"]
-        score = 1.0 if all(components.get(k, False) for k in basics) else 0.0
-        failing = [k for k, v in components.items() if not v]
-        summary = "✅ All checks passed." if score == 1.0 else f"❌ Failed checks: {', '.join(failing)}"
+        weights = {
+            "utf8_valid": 0.15,
+            "syntax_ok": 0.15,
+            "can_compile": 0.15,
+            "py_compile_ok": 0.10,
+            "can_import": 0.10,
+            "formatter_idempotent": 0.15,
+            "symbol_graph_valid": 0.10,
+            "mypy_ok": 0.10
+        }
+
+        # Compute weighted score
+        score = round(
+            sum(weights[k] for k, v in components.items() if v and k in weights),
+            3
+        )
+
+        # Apply pass/fail threshold
+        threshold = 0.85
+        summary = (
+            "✅ All critical checks passed." if score >= threshold
+            else f"❌ Below threshold ({threshold}): " +
+                ", ".join(k for k, v in components.items() if not v)
+        )
 
         return ScoreOutputSchema(
             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
@@ -104,3 +124,4 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
             components={k: float(v) for k, v in components.items()},
             summary=summary
         )
+

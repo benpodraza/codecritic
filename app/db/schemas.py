@@ -218,8 +218,10 @@ class ProviderLogSchema:
     output_schema: Optional[str] = None
     latency_ms: Optional[int] = None
     config_hash: Optional[str] = None
-    file_path: Optional[str] = None
+    file_name: Optional[str] = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    called_by_type: Optional[PROVIDER_TYPE] = None
+    called_by_id: Optional[int] = None
 
 @dataclass
 class StateTransitionLogSchema:
@@ -253,6 +255,9 @@ class ErrorLogSchema:
     provider_id: int | None = None
     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    latency_ms: Optional[int] = None
+    called_by_type: Optional[PROVIDER_TYPE] = None
+    called_by_id: Optional[int] = None
     
 @dataclass
 class SnapshotMetricsSchema:

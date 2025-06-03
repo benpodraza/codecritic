@@ -9,6 +9,17 @@ from typing import Dict
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
+import os
+import subprocess
+import time
+import uuid
+import json
+import tempfile
+from pathlib import Path
+from typing import Dict
+from app.providers.tool_provider_base import ToolProviderBase
+from app.db.schemas import ToolOutputSchema
+
 class SonarCloudToolProvider(ToolProviderBase):
     def _run(self, input: dict) -> ToolOutputSchema:
         target_path = Path(input.get("target"))
@@ -38,11 +49,22 @@ class SonarCloudToolProvider(ToolProviderBase):
             if metrics:
                 self._git_cleanup(filename, cwd=src_dir)
 
+        # Determine if the scan passes your criteria
+        violations_present = any(
+            metrics.get(key, 0) > 0 for key in ("bugs", "vulnerabilities", "code_smells")
+        )
+
+        return_code = 0 if violations_present else 1
+        summary = (
+            "SonarCloud scan clean" if return_code == 1
+            else "SonarCloud found issues"
+        )
+
         return ToolOutputSchema(
-            return_code=0,
+            return_code=return_code,
             stdout=stdout_msg,
             metrics=metrics,
-            summary="SonarCloud scan completed successfully"
+            summary=summary
         )
 
 

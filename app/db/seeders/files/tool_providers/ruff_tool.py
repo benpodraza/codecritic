@@ -11,32 +11,32 @@ class RuffToolProvider(ToolProviderBase):
         cmd = [sys.executable, "-m", "ruff", "check", target]
         proc = subprocess.run(cmd, capture_output=True, text=True)
 
-        stdout = proc.stdout
-        stderr = proc.stderr
-        return_code = proc.returncode
+        stdout = proc.stdout.strip()
+        stderr = proc.stderr.strip()
+        raw_code = proc.returncode
 
-        # Default: no violations parsed
         violations = []
-        if return_code in (0, 1):  # 1 = rule violations, not error
+
+        if raw_code in (0, 1):  # 1 = violations, 0 = clean
             for line in stdout.splitlines():
                 if line.strip().startswith(target):
-                    code = line.strip().split(" ")[-1]
-                    violations.append(code)
+                    parts = line.strip().split()
+                    if parts:
+                        violations.append(parts[-1])  # Capture violation code
 
-        summary = (
-            "Clean" if return_code == 0
-            else "Lint rule violations found"
-            if return_code == 1
-            else f"Ruff execution error ({return_code})"
-        )
-
-        if return_code > 1:
-            raise RuntimeError(f"Ruff failed: {stderr or stdout or 'unknown error'}")
+        if raw_code == 0:
+            norm_code = 1  # ✅ pass
+            summary = "Ruff check passed"
+        elif raw_code == 1:
+            norm_code = 0  # ❌ fail
+            summary = "Ruff rule violations found"
+        else:
+            raise RuntimeError(f"Ruff execution error ({raw_code}): {stderr or stdout or 'unknown error'}")
 
         return ToolOutputSchema(
-            return_code=return_code,
+            return_code=norm_code,
             stdout=stdout,
             stderr=stderr,
-            violations=violations,
+            violations=violations or None,
             summary=summary
         )

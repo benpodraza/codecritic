@@ -2,39 +2,50 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from typing import Dict
-from datetime import datetime, timezone
-import json
-
 from app.enums.system_enums import STATE_DECISION_TYPE
-from app.providers.base_provider import BaseProvider
-from app.db.schemas import StateTransitionLogSchema, StateOutputSchema
-from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
+from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+from app.providers.fsm_provider_base import FSMProviderBase
+from app.db.schemas import StateOutputSchema
 
 
-class StateProviderBase(BaseProvider):
-    """Base class for FSM-driven state providers."""
-
+class StateProviderBase(FSMProviderBase):
     def __init__(
         self,
         config=None,
-        engine=None,
-        agents: dict[str, object] = None,
+        agent_providers: Dict[str, object] = None,
         context_provider=None,
         score_provider=None,
-        tool_providers=None
+        tool_providers=None,
+        called_by_type=None,
+        called_by_id=None,
     ):
-        super().__init__(config=config, engine=engine)
-        self._agents = agents or {}
-        self._context_provider = context_provider
-        self._score_provider = score_provider
-        self._tool_providers = tool_providers or []
+        super().__init__(
+            config=config,
+            called_by_type=called_by_type,
+            called_by_id=called_by_id
+        )
+        self._states = agent_providers or {}
+        self.context_provider = context_provider
+        self.score_provider = score_provider
+        self.tool_providers = tool_providers or []
 
     def _run_provider(self, input: dict) -> StateOutputSchema:
         session_id = input.get("session_id")
-        state = {"state": "start", **input}
-        step_count = 0
         max_steps = input.get("max_steps", 20)
+
+        state = {
+            "state": "start",
+            "file_name": input.get("file_name"),
+            "working_file": input.get("working_file"),
+            "session_id": session_id,
+            "system": input.get("system", "unknown"),
+            "reason": input.get("reason", "start"),
+            "steps": input.get("steps", 0),
+            "retry_count": input.get("retry_count", 0),
+            "_last_state": input.get("_last_state"),
+        }
+
+        step_count = 0
 
         while True:
             current = state.get("state")
@@ -48,9 +59,9 @@ class StateProviderBase(BaseProvider):
                     decision=STATE_DECISION_TYPE.UNKNOWN,
                     steps=step_count,
                     max_steps=max_steps,
-                    summary="Max steps reached",
+                    summary=f"Max steps ({max_steps}) reached",
                     output=state,
-                    provider_name=self.config.name
+                    provider_name=self._config.name
                 )
 
             if current == "end":
@@ -64,50 +75,33 @@ class StateProviderBase(BaseProvider):
                     max_steps=max_steps,
                     summary=state.get("reason", "Completed"),
                     output=state,
-                    provider_name=self.config.name
+                    provider_name=self._config.name
                 )
 
             step_count += 1
 
             if current == "start":
                 transition = self.transition(state, None)
-                state.update(transition)
-                state["_last_state"] = "start"
+                state.update(transition, _last_state="start")
                 continue
 
-            agent = self._agents.get(current)
-            if not agent:
-                raise ValueError(f"No agent registered for state: {current}")
+            provider = self._states.get(current)
+            if not provider:
+                raise ValueError(f"No agent provider registered for state: {current}")
 
-            agent_output = agent.run(input=state, session_id=session_id)
-            transition = self.transition(state, agent_output)
-            state.update({
-                **transition,
+            provider_input = {k: v for k, v in state.items() if k != "state"}
+            output = provider.run(input=provider_input, session_id=session_id)
+
+            transition_result = self.transition(state, output)
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+
+            state = {
+                **state,
+                **transition_result,
                 "_last_state": current,
-                "agent_output": agent_output,
-                "output": agent_output
-            })
-
-
-    def transition(self, state: dict, agent_output: str | None) -> dict:
-        next_state = self._transition(state, agent_output)
-        state["steps"] = state.get("steps", 0) + 1
-
-        self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
-            session_id=state.get("session_id"),
-            entity_type=PROVIDER_TYPE.STATE,
-            entity_id=self.config.id,
-            from_state=state.get("state"),
-            to_state=next_state.get("state", "unknown"),
-            reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
-            decision = STATE_DECISION_TYPE.REJECT if "accept" not in str(agent_output) else STATE_DECISION_TYPE.IMPROVED,
-            triggered_by=self.config.name,
-            step=state["steps"],
-            transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
-            timestamp=datetime.now(timezone.utc)
-        ))
-        return next_state
+                "agent_output": flat_output.get("output", {})
+            }
 
     @abstractmethod
-    def _transition(self, state: dict, agent_output: str | None) -> dict:
-        raise NotImplementedError
+    def _transition(self, state: dict, output: dict | None) -> dict:
+        ...

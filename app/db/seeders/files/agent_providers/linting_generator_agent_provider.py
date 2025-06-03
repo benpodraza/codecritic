@@ -3,10 +3,6 @@ from app.db.schemas import AgentOutputSchema
 
 class LintingGeneratorAgentProvider(AgentProviderBase):
     """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
-
-    def __init__(self, config=None, engine=None, **kwargs):
-        super().__init__(config=config, engine=engine, **kwargs)
-
     def _run(self, input: dict) -> AgentOutputSchema:
         session_id = self._session_id
         file_path = input["file_path"]
@@ -28,8 +24,8 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
             input={
                 "prompt": final_prompt,
                 "before": file_path,
-                "agent_type": self.config.agent_type,
-                "agent_id": self.config.id,
+                "agent_type": self._config.agent_type,
+                "agent_id": self._config.id,
                 "system": system,
                 "state_context": input.get("state_context", {}),
             },

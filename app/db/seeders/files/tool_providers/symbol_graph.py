@@ -11,10 +11,11 @@ from app.db.schemas import ToolOutputSchema
 
 class SymbolGraph:
     def __init__(self) -> None:
-        self.graph = {}
+        self.graph: Dict[str, Any] = {}
 
     def parse_file(self, filepath: str | Path) -> None:
         from ast import parse
+
         filepath = Path(filepath)
         source = filepath.read_text(encoding="utf-8")
         tree = parse(source, filename=str(filepath))
@@ -34,8 +35,10 @@ class SymbolGraphToolProvider(ToolProviderBase):
         symbol_graph_util.parse_file(target)
 
         result_json = json.dumps(symbol_graph_util.graph, indent=2)
+
+        # Return 1 to indicate “error free / success”
         return ToolOutputSchema(
-            return_code=0,
+            return_code=1,
             stdout=result_json,
             metrics=symbol_graph_util.graph,
             summary="Symbol graph extraction successful"
@@ -47,8 +50,8 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.module = module
         self.file_path = file_path
         self.graph = graph
-        self.scope = []
-        self.current = None
+        self.scope: list[str] = []
+        self.current: str | None = None
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._process_function_or_async_function(node)

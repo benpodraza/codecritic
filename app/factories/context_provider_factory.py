@@ -1,15 +1,31 @@
 from app.factories.base_provider_factory import BaseProviderFactory
 from app.db.models import ContextProviderConfig
 from app.providers.context_provider_base import ContextProviderBase
+from app.enums.logging_enums import PROVIDER_TYPE
+
 
 class ContextProviderFactory(BaseProviderFactory):
     config_model = ContextProviderConfig
     base_class = ContextProviderBase
 
     @classmethod
-    def create(cls, id: int, **kwargs) -> ContextProviderBase:
-        instance = super().create(id, **kwargs)
-        config = instance.config.config or {}
+    def create(
+        cls,
+        id: int,
+        *,
+        called_by_type: PROVIDER_TYPE | None = None,
+        called_by_id: int | None = None,
+        **kwargs
+    ) -> ContextProviderBase:
+        instance = super().create(
+            id,
+            called_by_type=called_by_type,
+            called_by_id=called_by_id,
+            **kwargs
+        )
+        config = instance._config.config or {}
+        provider_id = instance._config.id
+        provider_type = instance._infer_provider_type()
 
         # ⏱️ Delayed imports to avoid circular dependencies
         if "score_provider_id" in config or "tool_provider_ids" in config:
@@ -18,11 +34,19 @@ class ContextProviderFactory(BaseProviderFactory):
 
             if (score_id := config.get("score_provider_id")):
                 if isinstance(score_id, int) and score_id > 0:
-                    score = ScoreProviderFactory.create(score_id)
+                    score = ScoreProviderFactory.create(
+                        score_id,
+                        called_by_type=provider_type,
+                        called_by_id=provider_id
+                    )
                     instance.set_score_provider(score)
 
             for _, tool_id in (config.get("tool_provider_ids") or {}).items():
-                tool = ToolProviderFactory.create(tool_id)
+                tool = ToolProviderFactory.create(
+                    tool_id,
+                    called_by_type=provider_type,
+                    called_by_id=provider_id
+                )
                 instance.set_tool_provider(tool)
 
         return instance

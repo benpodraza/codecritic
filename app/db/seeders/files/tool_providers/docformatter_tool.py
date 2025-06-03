@@ -8,24 +8,35 @@ class DocFormatterToolProvider(ToolProviderBase):
         target = input.get("target")
         check = input.get("check", False)
 
+        # Build command
         cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
         if check:
             cmd.append("--check")
 
         proc = subprocess.run(cmd, capture_output=True, text=True)
+        stdout = proc.stdout.strip()
+        stderr = proc.stderr.strip()
+        raw_code = proc.returncode
 
-        summary = (
-            "Docstrings formatted" if not check and proc.returncode == 0 else
-            "Docstring format check passed" if check and proc.returncode == 0 else
-            "Docstring format check failed"
-        )
-
-        if proc.returncode != 0 and not check:
-            raise RuntimeError(f"docformatter failed: {proc.stderr}")
+        if check:
+            if raw_code == 0:
+                norm_code = 1
+                summary = "Docstring format check passed"
+            elif raw_code == 1:
+                norm_code = 0
+                summary = "Docstring format check failed"
+            else:
+                raise RuntimeError(f"docformatter check error ({raw_code}): {stderr or stdout}")
+        else:
+            if raw_code == 0:
+                norm_code = 1
+                summary = "Docstrings formatted successfully"
+            else:
+                raise RuntimeError(f"docformatter formatting error ({raw_code}): {stderr or stdout}")
 
         return ToolOutputSchema(
-            return_code=proc.returncode,
-            stdout=proc.stdout,
-            stderr=proc.stderr,
+            return_code=norm_code,
+            stdout=stdout,
+            stderr=stderr,
             summary=summary
         )

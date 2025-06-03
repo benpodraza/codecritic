@@ -118,6 +118,7 @@ codecritic
          - base_provider.py
          - context_provider_base.py
          - controller_provider_base.py
+         - fsm_provider_base.py
          - program_provider_base.py
          - prompt_provider_base.py
          - score_provider_base.py

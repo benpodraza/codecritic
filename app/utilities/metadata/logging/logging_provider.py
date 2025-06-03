@@ -94,13 +94,17 @@ class LoggingProvider:
             elif isinstance(v, list):
                 return [_safe(i) for i in v]
             elif isinstance(v, dict):
-                return json.dumps({k: _safe(val) for k, val in v.items()})
+                # Turn any nested dict into a JSON string here:
+                return json.dumps({k: _safe(val) for k, val in v.items()}, default=str)
             return v
 
         if not is_dataclass(obj) or isinstance(obj, type):
             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+
         raw = asdict(obj)
         return {k: _safe(v) for k, v in raw.items()}
+
+
 
     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
         items = list(items)

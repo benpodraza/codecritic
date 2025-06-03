@@ -750,7 +750,7 @@
 # 5     def _run(self, input: dict) -> AgentEngineOutput:
 # 6         response = f"[Basic Response] You said: {input.get('prompt', '')}"
 # 7         token_count = len(response.split())
-# 8         cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+# 8         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 # 9         return AgentEngineOutput(response=response, token_count=token_count, cost_usd=cost_usd)
 
 
@@ -781,7 +781,7 @@
 # 23 
 # 24         content = json.loads(response_raw["body"].read())["content"][0]["text"].strip()
 # 25         token_count = len(content.split())
-# 26         cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+# 26         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 # 27 
 # 28         return AgentEngineOutput(response=content, token_count=token_count, cost_usd=cost_usd)
 
@@ -812,7 +812,7 @@
 # 22         content = response_raw.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 # 23 
 # 24         token_count = len(content.split())
-# 25         cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+# 25         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 # 26 
 # 27         return AgentEngineOutput(response=content, token_count=token_count, cost_usd=cost_usd)
 
@@ -854,7 +854,7 @@
 # 33 
 # 34         content = response.choices[0].message.content.strip()
 # 35         token_count = len(content.split())
-# 36         cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
+# 36         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 # 37 
 # 38         return AgentEngineOutput(response=content, token_count=token_count, cost_usd=cost_usd)
 
@@ -886,7 +886,7 @@
 # 3 
 # 4 class CodeStabilityAgentProvider(AgentProviderBase):
 # 5     def _run(self, input: dict) -> AgentOutputSchema:
-# 6         score_result = self.score_provider.run(input, session_id=input["session_id"])
+# 6         score_result = self._score_provider.run(input, session_id=input["session_id"])
 # 7         if score_result.value >= 1.0:
 # 8             return AgentOutputSchema(
 # 9                 response="[AGENT_DECISION]accept[/AGENT_DECISION]",
@@ -975,8 +975,8 @@
 # 24             input={
 # 25                 "prompt": final_prompt,
 # 26                 "before": file_path,
-# 27                 "agent_type": self.config.agent_type,
-# 28                 "agent_id": self.config.id,
+# 27                 "agent_type": self._config.agent_type,
+# 28                 "agent_id": self._config.id,
 # 29                 "system": system,
 # 30                 "state_context": input.get("state_context", {}),
 # 31             },
@@ -1138,88 +1138,53 @@
 # 7 from app.db.schemas import PromptOutputSchema
 # 8 
 # 9 class LintingPromptProvider(PromptProviderBase):
-# 10     def __init__(
-# 11         self,
-# 12         config,
-# 13         engine=None,
-# 14         called_by_type=None,
-# 15         called_by_id=None,
-# 16         **kwargs
-# 17     ):
-# 18         super().__init__(
-# 19             config=config,
-# 20             engine=engine,
-# 21             called_by_type=called_by_type,
-# 22             called_by_id=called_by_id,
-# 23             **kwargs
-# 24         )
-# 25 
-# 26         EXTENSIONS_DIR = Path(__file__).resolve().parent
+# 10     def _run(self, input: dict) -> PromptOutputSchema:
+# 11         session_id = input.get("session_id")
+# 12         system = input.get("system", "unknown")
+# 13         file_path = input.get("file_path")
+# 14 
+# 15         if not session_id or not file_path:
+# 16             raise ValueError("PromptProvider requires both session_id and file_path")
+# 17 
+# 18         if not self.agent_text or not self.system_text or not self._context_provider:
+# 19             raise ValueError("Missing required prompt text or context provider")
+# 20 
+# 21         context_output = self._context_provider.run({
+# 22             "file_path": file_path,
+# 23             "session_id": session_id,
+# 24             "system": system
+# 25         })
+# 26         context = context_output.context if hasattr(context_output, "context") else json.loads(context_output)
 # 27 
-# 28         if not self._agent_prompt:
-# 29             raise ValueError("PromptProvider is missing required AgentPrompt")
-# 30         if not self._system_prompt:
-# 31             raise ValueError("PromptProvider is missing required SystemPrompt")
-# 32         if not self._context_provider:
-# 33             raise ValueError("PromptProvider is missing required ContextProvider")
-# 34 
-# 35         self.agent_prompt_path = (EXTENSIONS_DIR / self._agent_prompt.artifact_path).resolve()
-# 36         self.system_prompt_path = (EXTENSIONS_DIR / self._system_prompt.artifact_path).resolve()
+# 28         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
+# 29         score = context.get("score", {}).get("value", "unknown")
+# 30         source_code = context.get("source_code", "")
+# 31 
+# 32         full_prompt = textwrap.dedent(f"""\
+# 33 
+# 34             {self.agent_text}
+# 35 
+# 36             ---
 # 37 
-# 38     def _run(self, input: dict) -> PromptOutputSchema:
-# 39         session_id = input.get("session_id")
-# 40         system = input.get("system", "unknown")
-# 41         file_path = input.get("file_path")
-# 42 
-# 43         if not session_id or not file_path:
-# 44             raise ValueError("PromptProvider requires both session_id and file_path")
+# 38             {self.system_text}
+# 39 
+# 40             ---
+# 41 
+# 42             Score: {score}
+# 43             Conversation Log:
+# 44             {convo_section}
 # 45 
-# 46         if not self.agent_prompt_path.exists():
-# 47             raise FileNotFoundError(f"Agent prompt not found: {self.agent_prompt_path}")
-# 48         if not self.system_prompt_path.exists():
-# 49             raise FileNotFoundError(f"System prompt not found: {self.system_prompt_path}")
-# 50 
-# 51         #  🎯 Build context using the injected context provider
-# 52         context_output = self._context_provider.run(
-# 53             {
-# 54                 "file_path": file_path,
-# 55                 "session_id": session_id,
-# 56                 "system": system
-# 57             }
-# 58         )
-# 59         context = context_output.context if hasattr(context_output, "context") else json.loads(context_output)
-# 60 
-# 61         agent_text = self.agent_prompt_path.read_text(encoding="utf-8").strip()
-# 62         system_text = self.system_prompt_path.read_text(encoding="utf-8").strip()
-# 63         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
-# 64         score = context.get("score", {}).get("value", "unknown")
-# 65         source_code = context.get("source_code", "")
-# 66 
-# 67         full_prompt = textwrap.dedent(f"""\
-# 68 
-# 69             {agent_text}
-# 70 
-# 71             ---
-# 72 
-# 73             {system_text}
-# 74 
-# 75             ---
-# 76 
-# 77             Score: {score}
-# 78             Conversation Log:
-# 79             {convo_section}
-# 80 
-# 81             ---
-# 82 
-# 83             [SOURCE_CODE]
-# 84             {source_code.rstrip()}
-# 85             [/SOURCE_CODE]
-# 86         """)
-# 87 
-# 88         return PromptOutputSchema(
-# 89             prompt=full_prompt,
-# 90             summary=f"Prompt for file: {Path(file_path).name} with score {score}"
-# 91         )
+# 46             ---
+# 47 
+# 48             [SOURCE_CODE]
+# 49             {source_code.rstrip()}
+# 50             [/SOURCE_CODE]
+# 51         """)
+# 52 
+# 53         return PromptOutputSchema(
+# 54             prompt=full_prompt,
+# 55             summary=f"Prompt for file: {Path(file_path).name} with score {score}"
+# 56         )
 
 
 # db\seeders\files\prompts\__init__.py
@@ -1304,7 +1269,7 @@
 # 70                 return self._final_score(components)
 # 71 
 # 72         #  Optional tool checks
-# 73         available = {tool.config.name: tool for tool in getattr(self, "tool_providers", [])}
+# 73         available = {tool._config.name: tool for tool in getattr(self, "tool_providers", [])}
 # 74 
 # 75         def safe_check(name: str, callback) -> bool:
 # 76             try:
@@ -1375,7 +1340,7 @@
 # 10         session_id = input.get("session_id", self._session_id)
 # 11 
 # 12         #  Build a dict of available tools, keyed by exactly tool.config.name.lower()
-# 13         available = {tool.config.name.lower(): tool for tool in self.tool_providers}
+# 13         available = {tool._config.name.lower(): tool for tool in self.tool_providers}
 # 14 
 # 15         #  DEBUG / DIAGNOSTICS: print or log which tools are actually registered
 # 16         print("Available linting tools:", list(available.keys()))
@@ -3337,8 +3302,8 @@
 # 31             called_by_id=called_by_id,
 # 32         )
 # 33 
-# 34         config = preload_instance.config.config or {}
-# 35         provider_id = preload_instance.config.id
+# 34         config = preload_instance._config.config or {}
+# 35         provider_id = preload_instance._config.id
 # 36         provider_type = preload_instance._infer_provider_type()
 # 37 
 # 38         #  2) Construct dependencies, passing caller identity
@@ -3386,16 +3351,15 @@
 # 80         #  3) Build final typed instance with dependencies
 # 81         cls_type = type(preload_instance)
 # 82         return cls_type(
-# 83             config           = preload_instance.config,
-# 84             engine           = preload_instance._engine,
-# 85             agent_engine     = agent_engine,
-# 86             prompt_provider  = prompt_provider,
-# 87             context_provider = context_provider,
-# 88             score_provider   = score_provider,
-# 89             tool_providers   = tool_providers,
-# 90             called_by_type   = called_by_type,
-# 91             called_by_id     = called_by_id,
-# 92         )
+# 83             config           = preload_instance._config,
+# 84             agent_engine     = agent_engine,
+# 85             prompt_provider  = prompt_provider,
+# 86             context_provider = context_provider,
+# 87             score_provider   = score_provider,
+# 88             tool_providers   = tool_providers,
+# 89             called_by_type   = called_by_type,
+# 90             called_by_id     = called_by_id,
+# 91         )
 
 
 # factories\base_provider_factory.py
@@ -3403,56 +3367,56 @@
 # 1 from sqlalchemy.orm import Session
 # 2 from importlib.util import spec_from_file_location, module_from_spec
 # 3 from pathlib import Path
-# 4 from app.db import init_db  #  <-- global DB engine instance
-# 5 from app.providers.base_provider import BaseProvider
-# 6 from app.enums.logging_enums import PROVIDER_TYPE
-# 7 
-# 8 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 engine = init_db(reset=False)
-# 12 
-# 13 class BaseProviderFactory:
-# 14     config_model = None
-# 15     base_class = BaseProvider
-# 16 
-# 17     @classmethod
-# 18     def create(
-# 19         cls,
-# 20         id: int,
-# 21         *,
-# 22         called_by_type: PROVIDER_TYPE | None = None,
-# 23         called_by_id: int | None = None,
-# 24         **kwargs,
-# 25     ) -> BaseProvider:
-# 26         with Session(bind=engine) as session:
-# 27             config = session.get(cls.config_model, int(id))
-# 28             if not config:
-# 29                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
-# 30 
-# 31             ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
-# 32             if not ext_path.exists():
-# 33                 raise FileNotFoundError(f"Extension not found: {ext_path}")
-# 34 
-# 35         spec = spec_from_file_location(ext_path.stem, ext_path)
-# 36         if spec is None or spec.loader is None:
-# 37             raise ImportError(f"Cannot load module spec for {ext_path}")
-# 38 
-# 39         module = module_from_spec(spec)
-# 40         spec.loader.exec_module(module)
-# 41 
-# 42         provider_class = next(
-# 43             (obj for obj in vars(module).values()
-# 44              if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class),
-# 45             None
-# 46         )
-# 47 
-# 48         if provider_class is None:
-# 49             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
-# 50 
-# 51         instance = provider_class(
-# 52             config=config,
-# 53             engine=engine,
+# 4 
+# 5 from app.db import init_db  #  global DB engine instance
+# 6 from app.providers.base_provider import BaseProvider
+# 7 from app.enums.logging_enums import PROVIDER_TYPE
+# 8 
+# 9 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 engine = init_db(reset=False)
+# 13 
+# 14 class BaseProviderFactory:
+# 15     config_model = None
+# 16     base_class = BaseProvider
+# 17 
+# 18     @classmethod
+# 19     def create(
+# 20         cls,
+# 21         id: int,
+# 22         *,
+# 23         called_by_type: PROVIDER_TYPE | None = None,
+# 24         called_by_id: int | None = None,
+# 25         **kwargs,
+# 26     ) -> BaseProvider:
+# 27         with Session(bind=engine) as session:
+# 28             config = session.get(cls.config_model, int(id))
+# 29             if not config:
+# 30                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
+# 31 
+# 32             ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
+# 33             if not ext_path.exists():
+# 34                 raise FileNotFoundError(f"Extension not found: {ext_path}")
+# 35 
+# 36         spec = spec_from_file_location(ext_path.stem, ext_path)
+# 37         if spec is None or spec.loader is None:
+# 38             raise ImportError(f"Cannot load module spec for {ext_path}")
+# 39 
+# 40         module = module_from_spec(spec)
+# 41         spec.loader.exec_module(module)
+# 42 
+# 43         provider_class = next(
+# 44             (obj for obj in vars(module).values()
+# 45              if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class),
+# 46             None
+# 47         )
+# 48 
+# 49         if provider_class is None:
+# 50             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
+# 51 
+# 52         instance = provider_class(
+# 53             config=config,
 # 54             called_by_type=called_by_type,
 # 55             called_by_id=called_by_id,
 # 56             **kwargs
@@ -3487,8 +3451,8 @@
 # 23             called_by_id=called_by_id,
 # 24             **kwargs
 # 25         )
-# 26         config = instance.config.config or {}
-# 27         provider_id = instance.config.id
+# 26         config = instance._config.config or {}
+# 27         provider_id = instance._config.id
 # 28         provider_type = instance._infer_provider_type()
 # 29 
 # 30         #  ⏱️ Delayed imports to avoid circular dependencies
@@ -3548,8 +3512,8 @@
 # 28             called_by_id=called_by_id,
 # 29             **kwargs
 # 30         )
-# 31         config = inst.config.config or {}
-# 32         provider_id = inst.config.id
+# 31         config = inst._config.config or {}
+# 32         provider_id = inst._config.id
 # 33         provider_type = inst._infer_provider_type()
 # 34 
 # 35         context_provider = (
@@ -3588,15 +3552,14 @@
 # 68 
 # 69         cls_type = type(inst)
 # 70         return cls_type(
-# 71             config           = inst.config,
-# 72             engine           = inst._engine,
-# 73             context_provider = context_provider,
-# 74             score_provider   = score_provider,
-# 75             tool_providers   = tool_providers,
-# 76             system_providers = system_providers, 
-# 77             called_by_type   = called_by_type,
-# 78             called_by_id     = called_by_id,
-# 79         )
+# 71             config           = inst._config,
+# 72             context_provider = context_provider,
+# 73             score_provider   = score_provider,
+# 74             tool_providers   = tool_providers,
+# 75             system_providers = system_providers, 
+# 76             called_by_type   = called_by_type,
+# 77             called_by_id     = called_by_id,
+# 78         )
 
 
 # factories\program_provider_factory.py
@@ -3631,8 +3594,8 @@
 # 28             called_by_id=called_by_id,
 # 29             **kwargs
 # 30         )
-# 31         config = inst.config.config or {}
-# 32         provider_id = inst.config.id
+# 31         config = inst._config.config or {}
+# 32         provider_id = inst._config.id
 # 33         provider_type = inst._infer_provider_type()
 # 34 
 # 35         context_provider = (
@@ -3671,15 +3634,14 @@
 # 68 
 # 69         cls_type = type(inst)
 # 70         return cls_type(
-# 71             config=inst.config,
-# 72             engine=inst._engine,
-# 73             context_provider=context_provider,
-# 74             score_provider=score_provider,
-# 75             tool_providers=tool_providers,
-# 76             controller_providers=controller_providers,
-# 77             called_by_type=called_by_type,
-# 78             called_by_id=called_by_id,
-# 79         )
+# 71             config=inst._config,
+# 72             context_provider=context_provider,
+# 73             score_provider=score_provider,
+# 74             tool_providers=tool_providers,
+# 75             controller_providers=controller_providers,
+# 76             called_by_type=called_by_type,
+# 77             called_by_id=called_by_id,
+# 78         )
 
 
 # factories\prompt_provider_factory.py
@@ -3721,8 +3683,8 @@
 # 23             called_by_id=called_by_id,
 # 24             **kwargs
 # 25         )
-# 26         config = instance.config.config or {}
-# 27         provider_id = instance.config.id
+# 26         config = instance._config.config or {}
+# 27         provider_id = instance._config.id
 # 28         provider_type = instance._infer_provider_type()
 # 29 
 # 30         #  ⏱️ Delayed imports to prevent circular references
@@ -3784,8 +3746,8 @@
 # 29             **kwargs
 # 30         )
 # 31 
-# 32         config = preload_instance.config.config or {}
-# 33         provider_id = preload_instance.config.id
+# 32         config = preload_instance._config.config or {}
+# 33         provider_id = preload_instance._config.id
 # 34         provider_type = preload_instance._infer_provider_type()
 # 35 
 # 36         agent_providers = {
@@ -3826,15 +3788,14 @@
 # 71 
 # 72         cls_type = type(preload_instance)
 # 73         return cls_type(
-# 74             config=preload_instance.config,
-# 75             engine=preload_instance._engine,
-# 76             agent_providers=agent_providers,
-# 77             context_provider=context_provider,
-# 78             score_provider=score_provider,
-# 79             tool_providers=tool_providers,
-# 80             called_by_type=called_by_type,
-# 81             called_by_id=called_by_id,
-# 82         )
+# 74             config=preload_instance._config,
+# 75             agent_providers=agent_providers,
+# 76             context_provider=context_provider,
+# 77             score_provider=score_provider,
+# 78             tool_providers=tool_providers,
+# 79             called_by_type=called_by_type,
+# 80             called_by_id=called_by_id,
+# 81         )
 
 
 # factories\system_provider_factory.py
@@ -3871,8 +3832,8 @@
 # 30             **kwargs
 # 31         )
 # 32 
-# 33         config = preload_instance.config.config or {}
-# 34         provider_id = preload_instance.config.id
+# 33         config = preload_instance._config.config or {}
+# 34         provider_id = preload_instance._config.id
 # 35         provider_type = preload_instance._infer_provider_type()
 # 36 
 # 37         context_provider = (
@@ -3911,15 +3872,14 @@
 # 70 
 # 71         cls_type = type(preload_instance)
 # 72         return cls_type(
-# 73             config=preload_instance.config,
-# 74             engine=preload_instance._engine,
-# 75             context_provider=context_provider,
-# 76             score_provider=score_provider,
-# 77             tool_providers=tool_providers,
-# 78             state_providers=state_providers,
-# 79             called_by_type=called_by_type,
-# 80             called_by_id=called_by_id,
-# 81         )
+# 73             config=preload_instance._config,
+# 74             context_provider=context_provider,
+# 75             score_provider=score_provider,
+# 76             tool_providers=tool_providers,
+# 77             state_providers=state_providers,
+# 78             called_by_type=called_by_type,
+# 79             called_by_id=called_by_id,
+# 80         )
 
 
 # factories\tool_provider_factory.py
@@ -3949,8 +3909,8 @@
 # 23             called_by_id=called_by_id,
 # 24             **kwargs
 # 25         )
-# 26         config = instance.config.config or {}
-# 27         provider_id = instance.config.id
+# 26         config = instance._config.config or {}
+# 27         provider_id = instance._config.id
 # 28         provider_type = instance._infer_provider_type()
 # 29 
 # 30         #  ⏱️ Delayed imports to avoid circular dependencies
@@ -4016,178 +3976,177 @@
 # 26     def __init__(
 # 27         self,
 # 28         config=None,
-# 29         engine=None,
-# 30         prompt_provider=None,
-# 31         context_provider=None,
-# 32         score_provider=None,
-# 33         tool_providers=None,
-# 34         called_by_type=None,
-# 35         called_by_id=None,
-# 36     ):
-# 37         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
-# 38         self.prompt_provider = prompt_provider
-# 39         self.context_provider = context_provider
-# 40         self.score_provider = score_provider
-# 41         self.tool_providers = tool_providers or []
-# 42 
-# 43     def _run_provider(self, input: dict) -> AgentEngineOutput:
-# 44         file_path = input.get("before") or input.get("file_path") or (self.config.config or {}).get("before")
-# 45         session_id = input.get("session_id", "")
-# 46         system = input.get("system", "unknown")
-# 47         agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
-# 48         agent_id = input.get("agent_id", -1)
+# 29         prompt_provider=None,
+# 30         context_provider=None,
+# 31         score_provider=None,
+# 32         tool_providers=None,
+# 33         called_by_type=None,
+# 34         called_by_id=None,
+# 35     ):
+# 36         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
+# 37         self.prompt_provider = prompt_provider
+# 38         self.context_provider = context_provider
+# 39         self.score_provider = score_provider
+# 40         self.tool_providers = tool_providers or []
+# 41 
+# 42     def _run_provider(self, input: dict) -> AgentEngineOutput:
+# 43         file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
+# 44         session_id = input.get("session_id", "")
+# 45         system = input.get("system", "unknown")
+# 46         agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
+# 47         agent_id = input.get("agent_id", -1)
+# 48 
 # 49 
-# 50 
-# 51         before_code = ""
-# 52         prior_notes = ""
-# 53         if file_path:
-# 54             path = Path(file_path).resolve()
-# 55             if path.exists():
-# 56                 full_code = path.read_text(encoding="utf-8")
-# 57                 before_code, prior_notes = split_code_and_notes(full_code)
-# 58 
-# 59         response_text = ""
-# 60         snapshot_id = None
-# 61         summary = None
-# 62         token_count = 0
-# 63 
-# 64         try:
-# 65             raw_output = self._run(input)
-# 66             if isinstance(raw_output, AgentEngineOutput):
-# 67                 response_text = raw_output.response
-# 68                 token_count = raw_output.token_count
-# 69                 cost_usd = raw_output.cost_usd
-# 70             else:
-# 71                 response_text = raw_output
-# 72                 token_count = len(response_text.split())
-# 73                 cost_usd = token_count * (self.config.cost_per_1k_tokens or 0.0) / 1000
-# 74 
-# 75             code_block = self._extract_block(response_text, "[CODE]", "[/CODE]")
-# 76             log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 77             agent_decision = (
-# 78                 "accept" if "[AGENT_DECISION]accept" in response_text else
-# 79                 "reject" if "[AGENT_DECISION]reject" in response_text else
-# 80                 "unknown"
-# 81             )
-# 82 
-# 83             if not code_block or not before_code or code_block == before_code:
-# 84                 return AgentEngineOutput(
-# 85                     response=response_text,
-# 86                     token_count=token_count,
-# 87                     cost_usd=cost_usd,
-# 88                     snapshot_id=None,
-# 89                     summary="No change detected",
-# 90                 )
-# 91 
-# 92             after_code = code_block.rstrip()
-# 93             if prior_notes:
-# 94                 after_code += f"\n\n{prior_notes}"
-# 95             if log_block:
-# 96                 after_code = append_agent_note(after_code, system=system, agent_name=self.config.name, note=log_block)
-# 97 
-# 98             before_metrics = analyze_code(before_code)
-# 99             after_metrics = analyze_code(after_code)
-# 100             deltas = compute_deltas(before_metrics, after_metrics)
-# 101 
-# 102             timestamp = datetime.now(timezone.utc)
-# 103             metadata = {
-# 104                 "system": system,
-# 105                 "agent": self.config.name,
-# 106                 "agent_type": agent_type,
-# 107                 "agent_id": agent_id,
-# 108                 "score": None,
-# 109                 "state": input.get("state_context", {}).get("state", "unknown"),
-# 110                 "decision": agent_decision,
-# 111                 "timestamp": timestamp.isoformat(),
-# 112                 **{f"{k}_before": v for k, v in before_metrics.items()},
-# 113                 **{f"{k}_after": v for k, v in after_metrics.items()},
-# 114                 **deltas,
-# 115             }
-# 116 
-# 117             snapshot_id = SnapshotWriter().write_snapshot(
-# 118                 before=before_code,
-# 119                 after=after_code,
-# 120                 session_id=session_id,
-# 121                 metadata=metadata,
-# 122             )
-# 123 
-# 124             #  Write to DB
-# 125             with Session(bind=self._engine) as session:
-# 126                 entry = SnapshotMetrics(
-# 127                     session_id=session_id,
-# 128                     snapshot_id=snapshot_id,
-# 129                     system=system,
-# 130                     agent=self.config.name,
-# 131                     agent_type=agent_type,
-# 132                     agent_id=agent_id,
-# 133                     score=None,
-# 134                     state=metadata["state"],
-# 135                     decision=metadata["decision"],
-# 136                     timestamp=timestamp,
-# 137                     **{
-# 138                         k: metadata.get(k)
-# 139                         for k in SnapshotMetrics.__table__.columns.keys()
-# 140                         if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
-# 141                     },
-# 142                 )
-# 143                 session.add(entry)
-# 144                 session.commit()
-# 145 
-# 146             #  Log to metrics stream
-# 147             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
-# 148                 session_id=session_id,
-# 149                 snapshot_id=snapshot_id,
-# 150                 system=SYSTEM_TYPE(system),
-# 151                 agent=self.config.name,
-# 152                 agent_type=agent_type,
-# 153                 agent_id=agent_id,
-# 154                 score=metadata["score"],
-# 155                 state=metadata["state"],
-# 156                 decision=DECISION_TYPE(metadata["decision"]),
-# 157                 timestamp=timestamp,
-# 158                 line_count_before=metadata["line_count_before"],
-# 159                 line_count_after=metadata["line_count_after"],
-# 160                 function_count_before=metadata["function_count_before"],
-# 161                 function_count_after=metadata["function_count_after"],
-# 162                 symbol_count_before=metadata["symbol_count_before"],
-# 163                 symbol_count_after=metadata["symbol_count_after"],
-# 164                 branch_count_before=metadata["branch_count_before"],
-# 165                 branch_count_after=metadata["branch_count_after"],
-# 166                 comment_count_before=metadata["comment_count_before"],
-# 167                 comment_count_after=metadata["comment_count_after"],
-# 168                 line_count_delta=metadata["line_count_delta"],
-# 169                 function_count_delta=metadata["function_count_delta"],
-# 170                 symbol_count_delta=metadata["symbol_count_delta"],
-# 171                 branch_count_delta=metadata["branch_count_delta"],
-# 172                 comment_count_delta=metadata["comment_count_delta"],
-# 173             ))
-# 174 
-# 175             self._log.debug(f"📦 Snapshot written: {snapshot_id}")
-# 176             summary = log_block or "Snapshot successfully written"
-# 177 
-# 178         except Exception as exc:
-# 179             self._log.error(f"Error during agent run: {exc}")
-# 180             summary = f"Error: {str(exc)}"
-# 181             cost_usd = 0.0
-# 182 
-# 183         return AgentEngineOutput(
-# 184             response=response_text,
-# 185             token_count=token_count,
-# 186             cost_usd=cost_usd,
-# 187             snapshot_id=snapshot_id,
-# 188             summary=summary,
-# 189         )
-# 190 
-# 191     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-# 192         start = text.find(start_tag)
-# 193         end = text.find(end_tag)
-# 194         if start != -1 and end != -1 and start < end:
-# 195             return text[start + len(start_tag):end].strip()
-# 196         return None
-# 197 
-# 198     @abstractmethod
-# 199     def _run(self, input: dict) -> str:
-# 200         raise NotImplementedError
+# 50         before_code = ""
+# 51         prior_notes = ""
+# 52         if file_path:
+# 53             path = Path(file_path).resolve()
+# 54             if path.exists():
+# 55                 full_code = path.read_text(encoding="utf-8")
+# 56                 before_code, prior_notes = split_code_and_notes(full_code)
+# 57 
+# 58         response_text = ""
+# 59         snapshot_id = None
+# 60         summary = None
+# 61         token_count = 0
+# 62 
+# 63         try:
+# 64             raw_output = self._run(input)
+# 65             if isinstance(raw_output, AgentEngineOutput):
+# 66                 response_text = raw_output.response
+# 67                 token_count = raw_output.token_count
+# 68                 cost_usd = raw_output.cost_usd
+# 69             else:
+# 70                 response_text = raw_output
+# 71                 token_count = len(response_text.split())
+# 72                 cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
+# 73 
+# 74             code_block = self._extract_block(response_text, "[CODE]", "[/CODE]")
+# 75             log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 76             agent_decision = (
+# 77                 "accept" if "[AGENT_DECISION]accept" in response_text else
+# 78                 "reject" if "[AGENT_DECISION]reject" in response_text else
+# 79                 "unknown"
+# 80             )
+# 81 
+# 82             if not code_block or not before_code or code_block == before_code:
+# 83                 return AgentEngineOutput(
+# 84                     response=response_text,
+# 85                     token_count=token_count,
+# 86                     cost_usd=cost_usd,
+# 87                     snapshot_id=None,
+# 88                     summary="No change detected",
+# 89                 )
+# 90 
+# 91             after_code = code_block.rstrip()
+# 92             if prior_notes:
+# 93                 after_code += f"\n\n{prior_notes}"
+# 94             if log_block:
+# 95                 after_code = append_agent_note(after_code, system=system, agent_name=self._config.name, note=log_block)
+# 96 
+# 97             before_metrics = analyze_code(before_code)
+# 98             after_metrics = analyze_code(after_code)
+# 99             deltas = compute_deltas(before_metrics, after_metrics)
+# 100 
+# 101             timestamp = datetime.now(timezone.utc)
+# 102             metadata = {
+# 103                 "system": system,
+# 104                 "agent": self._config.name,
+# 105                 "agent_type": agent_type,
+# 106                 "agent_id": agent_id,
+# 107                 "score": None,
+# 108                 "state": input.get("state_context", {}).get("state", "unknown"),
+# 109                 "decision": agent_decision,
+# 110                 "timestamp": timestamp.isoformat(),
+# 111                 **{f"{k}_before": v for k, v in before_metrics.items()},
+# 112                 **{f"{k}_after": v for k, v in after_metrics.items()},
+# 113                 **deltas,
+# 114             }
+# 115 
+# 116             snapshot_id = SnapshotWriter().write_snapshot(
+# 117                 before=before_code,
+# 118                 after=after_code,
+# 119                 session_id=session_id,
+# 120                 metadata=metadata,
+# 121             )
+# 122 
+# 123             #  Write to DB
+# 124             with Session(bind=self._engine) as session:
+# 125                 entry = SnapshotMetrics(
+# 126                     session_id=session_id,
+# 127                     snapshot_id=snapshot_id,
+# 128                     system=system,
+# 129                     agent=self._config.name,
+# 130                     agent_type=agent_type,
+# 131                     agent_id=agent_id,
+# 132                     score=None,
+# 133                     state=metadata["state"],
+# 134                     decision=metadata["decision"],
+# 135                     timestamp=timestamp,
+# 136                     **{
+# 137                         k: metadata.get(k)
+# 138                         for k in SnapshotMetrics.__table__.columns.keys()
+# 139                         if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
+# 140                     },
+# 141                 )
+# 142                 session.add(entry)
+# 143                 session.commit()
+# 144 
+# 145             #  Log to metrics stream
+# 146             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
+# 147                 session_id=session_id,
+# 148                 snapshot_id=snapshot_id,
+# 149                 system=SYSTEM_TYPE(system),
+# 150                 agent=self._config.name,
+# 151                 agent_type=agent_type,
+# 152                 agent_id=agent_id,
+# 153                 score=metadata["score"],
+# 154                 state=metadata["state"],
+# 155                 decision=DECISION_TYPE(metadata["decision"]),
+# 156                 timestamp=timestamp,
+# 157                 line_count_before=metadata["line_count_before"],
+# 158                 line_count_after=metadata["line_count_after"],
+# 159                 function_count_before=metadata["function_count_before"],
+# 160                 function_count_after=metadata["function_count_after"],
+# 161                 symbol_count_before=metadata["symbol_count_before"],
+# 162                 symbol_count_after=metadata["symbol_count_after"],
+# 163                 branch_count_before=metadata["branch_count_before"],
+# 164                 branch_count_after=metadata["branch_count_after"],
+# 165                 comment_count_before=metadata["comment_count_before"],
+# 166                 comment_count_after=metadata["comment_count_after"],
+# 167                 line_count_delta=metadata["line_count_delta"],
+# 168                 function_count_delta=metadata["function_count_delta"],
+# 169                 symbol_count_delta=metadata["symbol_count_delta"],
+# 170                 branch_count_delta=metadata["branch_count_delta"],
+# 171                 comment_count_delta=metadata["comment_count_delta"],
+# 172             ))
+# 173 
+# 174             self._log.debug(f"📦 Snapshot written: {snapshot_id}")
+# 175             summary = log_block or "Snapshot successfully written"
+# 176 
+# 177         except Exception as exc:
+# 178             self._log.error(f"Error during agent run: {exc}")
+# 179             summary = f"Error: {str(exc)}"
+# 180             cost_usd = 0.0
+# 181 
+# 182         return AgentEngineOutput(
+# 183             response=response_text,
+# 184             token_count=token_count,
+# 185             cost_usd=cost_usd,
+# 186             snapshot_id=snapshot_id,
+# 187             summary=summary,
+# 188         )
+# 189 
+# 190     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 191         start = text.find(start_tag)
+# 192         end = text.find(end_tag)
+# 193         if start != -1 and end != -1 and start < end:
+# 194             return text[start + len(start_tag):end].strip()
+# 195         return None
+# 196 
+# 197     @abstractmethod
+# 198     def _run(self, input: dict) -> str:
+# 199         raise NotImplementedError
 
 
 # providers\agent_provider_base.py
@@ -4211,142 +4170,141 @@
 # 17     def __init__(
 # 18         self,
 # 19         config=None,
-# 20         engine=None,
-# 21         agent_engine=None,
-# 22         prompt_provider=None,
-# 23         context_provider=None,
-# 24         score_provider=None,
-# 25         tool_providers=None,
-# 26         called_by_type=None,
-# 27         called_by_id=None,
-# 28     ):
-# 29         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
-# 30         self._agent_engine = agent_engine
-# 31         self._prompt_provider = prompt_provider
-# 32         self._context_provider = context_provider
-# 33         self._score_provider = score_provider
-# 34         self._tool_providers = tool_providers or []
-# 35 
-# 36     def _run_provider(self, input: dict) -> AgentOutputSchema:
-# 37         output = self._run(input)
-# 38 
-# 39         self._log.debug(f"🧻 _run_provider called for: {self.config.name if self.config else 'unknown'}")
-# 40 
-# 41         #  === Extract structured blocks ===
-# 42         response = output.response if hasattr(output, "response") else str(output)
-# 43 
-# 44         code_block = self._extract_block(response, "[CODE]", "[/CODE]") or (
-# 45             response.strip() if input.get("before") else None
-# 46         )
-# 47 
-# 48         log_content = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 49 
-# 50         decision = (
-# 51             "accept" if "[AGENT_DECISION]accept" in response else
-# 52             "reject" if "[AGENT_DECISION]reject" in response else
-# 53             "unknown"
-# 54         )
-# 55 
-# 56         if not log_content:
-# 57             log_content = f"No conversation log entry found. Agent decision was: {decision}."
-# 58             self._log.warning("📜 No conversation log entry block found in response.")
-# 59 
-# 60         if decision == "unknown":
-# 61             self._log.warning("❓ Agent decision tag not found in response.")
-# 62 
-# 63         #  Avoid nesting in agent_output.output by removing self-referential fields if present
-# 64         if hasattr(output, "output") and getattr(output, "output") == output:
-# 65             output.output = None
-# 66 
-# 67         snapshot_id = None
-# 68         file_name = input.get("before") or input.get("file_name") or (self.config.config or {}).get("before")
-# 69         if file_name and code_block:
-# 70             before_path = Path(file_name).resolve()
-# 71             if before_path.exists():
-# 72                 before_code = before_path.read_text(encoding="utf-8")
-# 73                 after_code = code_block
-# 74 
-# 75                 before_metrics = analyze_code(before_code)
-# 76                 after_metrics = analyze_code(after_code)
-# 77                 deltas = compute_deltas(before_metrics, after_metrics)
-# 78 
-# 79                 metadata = {
-# 80                     "system": self._system,
-# 81                     "agent": self.config.name if self.config else "unknown",
-# 82                     "score": self._score_provider.run(
-# 83                         {"file_name": str(before_path)}, session_id=self._session_id
-# 84                     ).value if self._score_provider else None,
-# 85                     "state": input.get("state_context", {}).get("state", "unknown"),
-# 86                     "decision": decision,
-# 87                     "timestamp": datetime.now(timezone.utc).isoformat(),
-# 88                     **{f"{k}_before": v for k, v in before_metrics.items()},
-# 89                     **{f"{k}_after": v for k, v in after_metrics.items()},
-# 90                     **deltas
-# 91                 }
-# 92 
-# 93                 after_code = append_agent_note(
-# 94                     file_content=after_code,
-# 95                     system=self._system,
-# 96                     agent_name=self.config.name if self.config else "unknown",
-# 97                     note=log_content or "No log entry provided."
-# 98                 )
-# 99 
-# 100                 snapshot_id = SnapshotWriter().write_snapshot(
-# 101                     before=before_code,
-# 102                     after=after_code,
-# 103                     session_id=self._session_id,
-# 104                     metadata=metadata
-# 105                 )
-# 106                 with Session(bind=self._engine) as session:
-# 107                     entry = SnapshotMetrics(
-# 108                         session_id=self._session_id,
-# 109                         snapshot_id=snapshot_id,
-# 110                         system=self._system,
-# 111                         agent=self.config.name,
-# 112                         score=metadata.get("score"),
-# 113                         state=metadata.get("state"),
-# 114                         decision=metadata.get("decision"),
-# 115                         timestamp=datetime.fromisoformat(metadata["timestamp"]),
-# 116                         **{
-# 117                             k: metadata.get(k)
-# 118                             for k in SnapshotMetrics.__table__.columns.keys()
-# 119                             if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
-# 120                         }
-# 121                     )
-# 122                     session.add(entry)
-# 123                     session.commit()
-# 124                 self._snapshot_id = snapshot_id
-# 125                 self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
-# 126             else:
-# 127                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
-# 128 
-# 129         #  === Log conversation entry ===
-# 130         if log_content:
-# 131             self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
-# 132                 session_id=self._session_id,
-# 133                 system=self._system,
-# 134                 agent_type=self.config.agent_type if hasattr(self.config, "agent_type") else AGENT_TYPE.BASIC,
-# 135                 agent_provider_config_id=self.config.id if self.config else -1,
-# 136                 content=log_content,
-# 137                 timestamp=datetime.now(timezone.utc),
-# 138             ))
-# 139             self._log.debug("✅ AGENT_CONVERSATION log write complete")
-# 140 
-# 141         output.log = log_content
-# 142         output.decision = decision
-# 143         output.snapshot_id = snapshot_id
-# 144         return output
-# 145 
-# 146     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-# 147         start = text.find(start_tag)
-# 148         end = text.find(end_tag)
-# 149         if start != -1 and end != -1 and start < end:
-# 150             return text[start + len(start_tag):end].strip()
-# 151         return None
-# 152 
-# 153     @abstractmethod
-# 154     def _run(self, input: dict) -> str:
-# 155         raise NotImplementedError
+# 20         agent_engine=None,
+# 21         prompt_provider=None,
+# 22         context_provider=None,
+# 23         score_provider=None,
+# 24         tool_providers=None,
+# 25         called_by_type=None,
+# 26         called_by_id=None,
+# 27     ):
+# 28         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
+# 29         self._agent_engine = agent_engine
+# 30         self._prompt_provider = prompt_provider
+# 31         self._context_provider = context_provider
+# 32         self._score_provider = score_provider
+# 33         self._tool_providers = tool_providers or []
+# 34 
+# 35     def _run_provider(self, input: dict) -> AgentOutputSchema:
+# 36         output = self._run(input)
+# 37 
+# 38         self._log.debug(f"🧻 _run_provider called for: {self._config.name if self._config else 'unknown'}")
+# 39 
+# 40         #  === Extract structured blocks ===
+# 41         response = output.response if hasattr(output, "response") else str(output)
+# 42 
+# 43         code_block = self._extract_block(response, "[CODE]", "[/CODE]") or (
+# 44             response.strip() if input.get("before") else None
+# 45         )
+# 46 
+# 47         log_content = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 48 
+# 49         decision = (
+# 50             "accept" if "[AGENT_DECISION]accept" in response else
+# 51             "reject" if "[AGENT_DECISION]reject" in response else
+# 52             "unknown"
+# 53         )
+# 54 
+# 55         if not log_content:
+# 56             log_content = f"No conversation log entry found. Agent decision was: {decision}."
+# 57             self._log.warning("📜 No conversation log entry block found in response.")
+# 58 
+# 59         if decision == "unknown":
+# 60             self._log.warning("❓ Agent decision tag not found in response.")
+# 61 
+# 62         #  Avoid nesting in agent_output.output by removing self-referential fields if present
+# 63         if hasattr(output, "output") and getattr(output, "output") == output:
+# 64             output.output = None
+# 65 
+# 66         snapshot_id = None
+# 67         file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
+# 68         if file_name and code_block:
+# 69             before_path = Path(file_name).resolve()
+# 70             if before_path.exists():
+# 71                 before_code = before_path.read_text(encoding="utf-8")
+# 72                 after_code = code_block
+# 73 
+# 74                 before_metrics = analyze_code(before_code)
+# 75                 after_metrics = analyze_code(after_code)
+# 76                 deltas = compute_deltas(before_metrics, after_metrics)
+# 77 
+# 78                 metadata = {
+# 79                     "system": self._system,
+# 80                     "agent": self._config.name if self._config else "unknown",
+# 81                     "score": self._score_provider.run(
+# 82                         {"file_name": str(before_path)}, session_id=self._session_id
+# 83                     ).value if self._score_provider else None,
+# 84                     "state": input.get("state_context", {}).get("state", "unknown"),
+# 85                     "decision": decision,
+# 86                     "timestamp": datetime.now(timezone.utc).isoformat(),
+# 87                     **{f"{k}_before": v for k, v in before_metrics.items()},
+# 88                     **{f"{k}_after": v for k, v in after_metrics.items()},
+# 89                     **deltas
+# 90                 }
+# 91 
+# 92                 after_code = append_agent_note(
+# 93                     file_content=after_code,
+# 94                     system=self._system,
+# 95                     agent_name=self._config.name if self._config else "unknown",
+# 96                     note=log_content or "No log entry provided."
+# 97                 )
+# 98 
+# 99                 snapshot_id = SnapshotWriter().write_snapshot(
+# 100                     before=before_code,
+# 101                     after=after_code,
+# 102                     session_id=self._session_id,
+# 103                     metadata=metadata
+# 104                 )
+# 105                 with Session(bind=self._engine) as session:
+# 106                     entry = SnapshotMetrics(
+# 107                         session_id=self._session_id,
+# 108                         snapshot_id=snapshot_id,
+# 109                         system=self._system,
+# 110                         agent=self._config.name,
+# 111                         score=metadata.get("score"),
+# 112                         state=metadata.get("state"),
+# 113                         decision=metadata.get("decision"),
+# 114                         timestamp=datetime.fromisoformat(metadata["timestamp"]),
+# 115                         **{
+# 116                             k: metadata.get(k)
+# 117                             for k in SnapshotMetrics.__table__.columns.keys()
+# 118                             if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
+# 119                         }
+# 120                     )
+# 121                     session.add(entry)
+# 122                     session.commit()
+# 123                 self._snapshot_id = snapshot_id
+# 124                 self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
+# 125             else:
+# 126                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
+# 127 
+# 128         #  === Log conversation entry ===
+# 129         if log_content:
+# 130             self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
+# 131                 session_id=self._session_id,
+# 132                 system=self._system,
+# 133                 agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT_TYPE.BASIC,
+# 134                 agent_provider_config_id=self._config.id if self._config else -1,
+# 135                 content=log_content,
+# 136                 timestamp=datetime.now(timezone.utc),
+# 137             ))
+# 138             self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 139 
+# 140         output.log = log_content
+# 141         output.decision = decision
+# 142         output.snapshot_id = snapshot_id
+# 143         return output
+# 144 
+# 145     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 146         start = text.find(start_tag)
+# 147         end = text.find(end_tag)
+# 148         if start != -1 and end != -1 and start < end:
+# 149             return text[start + len(start_tag):end].strip()
+# 150         return None
+# 151 
+# 152     @abstractmethod
+# 153     def _run(self, input: dict) -> str:
+# 154         raise NotImplementedError
 
 
 # providers\base_provider.py
@@ -4359,113 +4317,143 @@
 # 6 from pathlib import Path
 # 7 from typing import Optional
 # 8 
-# 9 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE
-# 10 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
-# 11 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
-# 12 
+# 9 from app.db import init_db
+# 10 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE
+# 11 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
+# 12 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
 # 13 
-# 14 class BaseProvider(LoggingMixin):
-# 15     def __init__(
-# 16         self,
-# 17         config=None,
-# 18         engine=None,
+# 14 
+# 15 class BaseProvider(LoggingMixin):
+# 16     def __init__(
+# 17         self,
+# 18         config=None,
 # 19         called_by_type: Optional[PROVIDER_TYPE] = None,
 # 20         called_by_id: Optional[int] = None,
 # 21     ) -> None:
 # 22         super().__init__()
-# 23         assert engine is not None, "🚨 engine must be injected into BaseProvider"
-# 24         self.config = config
-# 25         self._engine = engine
-# 26         self.called_by_type = called_by_type
-# 27         self.called_by_id = called_by_id
+# 23         assert config is not None, "🚨 engine must be injected into BaseProvider"
+# 24         self._config = config
+# 25         self._engine = init_db(reset=False)
+# 26         self._called_by_type = called_by_type
+# 27         self._called_by_id = called_by_id
 # 28 
 # 29     def run(self, input: dict | None = None, session_id: str = "") -> str:
 # 30         input = input or {}
-# 31         self._session_id = session_id
-# 32         self._system = input.get("system", "unknown")
+# 31         if not session_id:
+# 32             raise ValueError("session_id must be provided to run()")
 # 33 
-# 34         start_clock = time.perf_counter()
-# 35         start_time = datetime.now(timezone.utc)
+# 34         self._session_id = session_id
+# 35         self._system = input.get("system", "unknown")
 # 36 
-# 37         output = None
-# 38         output_schema = None
+# 37         start_clock = time.perf_counter()
+# 38         start_time = datetime.now(timezone.utc)
 # 39 
 # 40         try:
 # 41             output = self._run_provider(input)
-# 42             if hasattr(output, "json"):
-# 43                 output_schema = output.__class__.__name__
-# 44         except Exception as exc:
-# 45             latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 46             self.logger.write(
-# 47                 LOG_TYPE.ERROR,
-# 48                 ErrorLogSchema(
-# 49                     session_id=session_id,
-# 50                     error_type=self._map_error_type(exc),
-# 51                     message=str(exc),
-# 52                     file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 53                     provider_id=self.config.id if self.config else None,
-# 54                     provider_type=self._infer_provider_type(),
-# 55                     timestamp=start_time,
-# 56                     latency_ms=latency_ms,
-# 57                     called_by_type=self.called_by_type,
-# 58                     called_by_id=self.called_by_id,
-# 59                 ),
-# 60             )
-# 61             raise
-# 62         else:
-# 63             latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 64             self.logger.write(
-# 65                 LOG_TYPE.PROVIDER,
-# 66                 ProviderLogSchema(
-# 67                     session_id=session_id,
-# 68                     provider_id=self.config.id if self.config else -1,
-# 69                     provider_type=self._infer_provider_type(),
-# 70                     input=json.dumps({k: v.dict() if hasattr(v, "dict") else v for k, v in input.items()}),
-# 71                     output=json.dumps(output.dict() if hasattr(output, "dict") else output),
-# 72                     output_schema=output_schema,
-# 73                     latency_ms=latency_ms,
-# 74                     config_hash=self._compute_config_hash(),
-# 75                     file_name=getattr(self.config, "artifact_path", "").split("/")[-1] if getattr(self.config, "artifact_path", None) else None,
-# 76                     timestamp=start_time,
-# 77                     called_by_type=self.called_by_type,
-# 78                     called_by_id=self.called_by_id,
-# 79                 ),
-# 80             )
-# 81             self._log.debug("✅ Provider run logged")
-# 82 
-# 83         return output
-# 84 
-# 85     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 86         return ERROR_TYPE.RUNTIME
-# 87 
-# 88     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 89         cls = self.__class__.__name__.lower()
-# 90         if "tool" in cls:
-# 91             return PROVIDER_TYPE.TOOL
-# 92         if "engine" in cls:
-# 93             return PROVIDER_TYPE.AGENT_ENGINE
-# 94         if "agent" in cls:
-# 95             return PROVIDER_TYPE.AGENT
-# 96         if "prompt" in cls:
-# 97             return PROVIDER_TYPE.PROMPT
-# 98         if "context" in cls:
-# 99             return PROVIDER_TYPE.CONTEXT
-# 100         if "score" in cls:
-# 101             return PROVIDER_TYPE.SCORE
-# 102         if "state" in cls:
-# 103             return PROVIDER_TYPE.STATE
-# 104         if "system" in cls:
-# 105             return PROVIDER_TYPE.SYSTEM
-# 106         if "controller" in cls:
-# 107             return PROVIDER_TYPE.CONTROLLER
-# 108         if "program" in cls:
-# 109             return PROVIDER_TYPE.PROGRAM
-# 110         return PROVIDER_TYPE.UNKNOWN
+# 42         except Exception as exc:
+# 43             latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 44             try:
+# 45                 self.logger.write(
+# 46                     LOG_TYPE.ERROR,
+# 47                     ErrorLogSchema(
+# 48                         session_id=session_id,
+# 49                         error_type=self._map_error_type(exc).value,
+# 50                         message=str(exc),
+# 51                         file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 52                         provider_id=self._config.id if self._config else None,
+# 53                         provider_type=self._infer_provider_type().value,
+# 54                         timestamp=start_time,
+# 55                         latency_ms=latency_ms,
+# 56                         called_by_type=self._called_by_type.value if self._called_by_type else None,
+# 57                         called_by_id=self._called_by_id,
+# 58                     ),
+# 59                 )
+# 60             except Exception:
+# 61                 pass
+# 62             raise
+# 63 
+# 64         latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 65 
+# 66         try:
+# 67             input_str = json.dumps(
+# 68                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 69                 default=str,
+# 70             )
+# 71         except Exception:
+# 72             input_str = ""
+# 73 
+# 74         try:
+# 75             if hasattr(output, "model_dump"):
+# 76                 dumped = output.model_dump()
+# 77                 for k, v in dumped.items():
+# 78                     if isinstance(v, dict):
+# 79                         dumped[k] = json.dumps(v, default=str)
+# 80                 output_str = json.dumps(dumped, default=str)
+# 81                 output_schema = output.__class__.__name__
+# 82             else:
+# 83                 output_str = json.dumps(output, default=str)
+# 84                 output_schema = None
+# 85         except Exception:
+# 86             output_str = ""
+# 87             output_schema = None
+# 88 
+# 89         try:
+# 90             self.logger.write(
+# 91                 LOG_TYPE.PROVIDER,
+# 92                 ProviderLogSchema(
+# 93                     session_id=session_id,
+# 94                     provider_id=self._config.id if self._config else -1,
+# 95                     provider_type=self._infer_provider_type().value,
+# 96                     input=input_str,
+# 97                     output=output_str,
+# 98                     output_schema=output_schema,
+# 99                     latency_ms=latency_ms,
+# 100                     config_hash=self._compute_config_hash(),
+# 101                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 102                     if getattr(self._config, "artifact_path", None)
+# 103                     else None,
+# 104                     timestamp=start_time,
+# 105                     called_by_type=self._called_by_type.value if self._called_by_type else None,
+# 106                     called_by_id=self._called_by_id,
+# 107                 ),
+# 108             )
+# 109         except Exception:
+# 110             raise
 # 111 
-# 112     def _compute_config_hash(self) -> Optional[str]:
-# 113         if not self.config or not getattr(self.config, "config", None):
-# 114             return None
-# 115         return hashlib.md5(json.dumps(self.config.config, sort_keys=True).encode()).hexdigest()
+# 112         self._log.debug("✅ Provider run logged")
+# 113         return output
+# 114 
+# 115     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 116         return ERROR_TYPE.RUNTIME
+# 117 
+# 118     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 119         cls = self.__class__.__name__.lower()
+# 120         if "tool" in cls:
+# 121             return PROVIDER_TYPE.TOOL
+# 122         if "engine" in cls:
+# 123             return PROVIDER_TYPE.AGENT_ENGINE
+# 124         if "agent" in cls:
+# 125             return PROVIDER_TYPE.AGENT
+# 126         if "prompt" in cls:
+# 127             return PROVIDER_TYPE.PROMPT
+# 128         if "context" in cls:
+# 129             return PROVIDER_TYPE.CONTEXT
+# 130         if "score" in cls:
+# 131             return PROVIDER_TYPE.SCORE
+# 132         if "state" in cls:
+# 133             return PROVIDER_TYPE.STATE
+# 134         if "system" in cls:
+# 135             return PROVIDER_TYPE.SYSTEM
+# 136         if "controller" in cls:
+# 137             return PROVIDER_TYPE.CONTROLLER
+# 138         if "program" in cls:
+# 139             return PROVIDER_TYPE.PROGRAM
+# 140         return PROVIDER_TYPE.UNKNOWN
+# 141 
+# 142     def _compute_config_hash(self) -> Optional[str]:
+# 143         if not self._config or not getattr(self._config, "config", None):
+# 144             return None
+# 145         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
 
 
 # providers\context_provider_base.py
@@ -4510,136 +4498,180 @@
 # 4 from typing import Dict
 # 5 from datetime import datetime, timezone
 # 6 from pathlib import Path
-# 7 import shutil
-# 8 import json
-# 9 
-# 10 from app.enums.system_enums import STATE_DECISION_TYPE
-# 11 from app.providers.base_provider import BaseProvider
-# 12 from app.db.schemas import ControllerOutputSchema, StateTransitionLogSchema
-# 13 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 14 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
-# 15 
-# 16 
-# 17 class ControllerProviderBase(BaseProvider):
-# 18     def __init__(
-# 19         self,
-# 20         config=None,
-# 21         engine=None,
-# 22         context_provider=None,
-# 23         score_provider=None,
-# 24         tool_providers=None,
-# 25         system_providers=None,   #  🔄 renamed
-# 26         called_by_type=None,
-# 27         called_by_id=None,
-# 28     ):
-# 29         super().__init__(
-# 30             config=config,
-# 31             engine=engine,
-# 32             called_by_type=called_by_type,
-# 33             called_by_id=called_by_id,
-# 34         )
-# 35         self.context_provider = context_provider
-# 36         self.score_provider = score_provider
-# 37         self.tool_providers = tool_providers or []
-# 38         
-# 39         self._states = system_providers or {}
+# 7 import shutil, json
+# 8 
+# 9 from app.enums.system_enums import STATE_DECISION_TYPE
+# 10 from app.providers.fsm_provider_base import FSMProviderBase
+# 11 from app.db.schemas import ControllerOutputSchema
+# 12 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+# 13 
+# 14 
+# 15 class ControllerProviderBase(FSMProviderBase):
+# 16     def __init__(
+# 17         self,
+# 18         config=None,
+# 19         context_provider=None,
+# 20         score_provider=None,
+# 21         tool_providers=None,
+# 22         system_providers: Dict[str, object] = None,
+# 23         called_by_type=None,
+# 24         called_by_id=None,
+# 25     ):
+# 26         super().__init__(
+# 27             config=config,
+# 28             called_by_type=called_by_type,
+# 29             called_by_id=called_by_id
+# 30         )
+# 31         self.context_provider = context_provider
+# 32         self.score_provider   = score_provider
+# 33         self.tool_providers   = tool_providers or []
+# 34         self._states = system_providers or {}
+# 35 
+# 36     def _run_provider(self, input: dict) -> ControllerOutputSchema:
+# 37         session_id = input.get("session_id")
+# 38         src = Path(input["file_name"])
+# 39         max_steps = input.get("max_steps", 20)
 # 40 
-# 41     def _run_provider(self, input: dict) -> ControllerOutputSchema:
-# 42         session_id = input.get("session_id")
-# 43         src = Path(input["file_name"])
-# 44         max_steps = input.get("max_steps", 20)
-# 45 
-# 46         self.working_file = src.with_name(f"{src.stem}_working{src.suffix}")
-# 47         shutil.copy(src, self.working_file)
-# 48 
-# 49         state = {
-# 50             "state": "start",
-# 51             "file_name": input["file_name"],
-# 52             "working_file": str(self.working_file),
-# 53             "session_id": session_id,
-# 54             "system": input.get("system", "unknown"),
-# 55             "reason": input.get("reason", "start"),
-# 56             "steps": input.get("steps", 0),
-# 57             "retry_count": input.get("retry_count", 0),
-# 58         }
+# 41         self.working_file = src.with_name(f"{src.stem}_working{src.suffix}")
+# 42         shutil.copy(src, self.working_file)
+# 43 
+# 44         state = {
+# 45             "state": "start",
+# 46             "file_name": input["file_name"],
+# 47             "working_file": str(self.working_file),
+# 48             "session_id": session_id,
+# 49             "system": input.get("system", "unknown"),
+# 50             "reason": input.get("reason", "start"),
+# 51             "steps": input.get("steps", 0),
+# 52             "retry_count": input.get("retry_count", 0),
+# 53         }
+# 54 
+# 55         step_count = 0
+# 56 
+# 57         while True:
+# 58             current = state["state"]
 # 59 
-# 60         step_count = 0
-# 61 
-# 62         while True:
-# 63             current = state["state"]
-# 64 
-# 65             if step_count >= max_steps:
-# 66                 return ControllerOutputSchema(
-# 67                     state="end",
-# 68                     previous_state=current,
-# 69                     state_type=STATE_TYPE.END,
-# 70                     reason=REASON_TYPE.MAX_STEPS,
-# 71                     decision=STATE_DECISION_TYPE.UNKNOWN,
-# 72                     steps=step_count,
-# 73                     max_steps=max_steps,
-# 74                     summary=f"Max steps ({max_steps}) reached",
-# 75                     output=state,
-# 76                     provider_name=self.config.name
-# 77                 )
-# 78 
-# 79             if current == "end":
-# 80                 return ControllerOutputSchema(
-# 81                     state="end",
-# 82                     previous_state=state.get("_last_state"),
-# 83                     state_type=STATE_TYPE.END,
-# 84                     reason=REASON_TYPE.SUCCESS,
-# 85                     decision=STATE_DECISION_TYPE.FINAL,
-# 86                     steps=step_count,
-# 87                     max_steps=max_steps,
-# 88                     summary=state.get("reason", "Completed"),
-# 89                     output=state,
-# 90                     provider_name=self.config.name
-# 91                 )
-# 92 
-# 93             step_count += 1
+# 60             if step_count >= max_steps:
+# 61                 return ControllerOutputSchema(
+# 62                     state="end",
+# 63                     previous_state=current,
+# 64                     state_type=STATE_TYPE.END,
+# 65                     reason=REASON_TYPE.MAX_STEPS,
+# 66                     decision=STATE_DECISION_TYPE.UNKNOWN,
+# 67                     steps=step_count,
+# 68                     max_steps=max_steps,
+# 69                     summary=f"Max steps ({max_steps}) reached",
+# 70                     output=state,
+# 71                     provider_name=self._config.name
+# 72                 )
+# 73 
+# 74             if current == "end":
+# 75                 return ControllerOutputSchema(
+# 76                     state="end",
+# 77                     previous_state=state.get("_last_state"),
+# 78                     state_type=STATE_TYPE.END,
+# 79                     reason=REASON_TYPE.SUCCESS,
+# 80                     decision=STATE_DECISION_TYPE.FINAL,
+# 81                     steps=step_count,
+# 82                     max_steps=max_steps,
+# 83                     summary=state.get("reason", "Completed"),
+# 84                     output=state,
+# 85                     provider_name=self._config.name
+# 86                 )
+# 87 
+# 88             step_count += 1
+# 89 
+# 90             if current == "start":
+# 91                 nxt = self.transition(state, None)
+# 92                 state.update(nxt, _last_state="start")
+# 93                 continue
 # 94 
-# 95             if current == "start":
-# 96                 nxt = self.transition(state, None)
-# 97                 state.update(nxt, _last_state="start")
-# 98                 continue
-# 99 
-# 100             provider = self._states.get(current) 
-# 101             if not provider:
-# 102                 raise ValueError(f"No system provider registered for state '{current}'")
-# 103 
-# 104             inp = {k: v for k, v in state.items() if k != "state"}
-# 105             out = provider.run(input=inp, session_id=session_id)
-# 106 
-# 107             nxt = self.transition(state, out)
-# 108             flat_output = out.model_dump(exclude={"output"}) if hasattr(out, "model_dump") else dict(out)
-# 109             clean_nxt = {k: v for k, v in nxt.items() if k != "output"}
+# 95             provider = self._states.get(current)
+# 96             if not provider:
+# 97                 raise ValueError(f"No system provider registered for state '{current}'")
+# 98 
+# 99             inp = {k: v for k, v in state.items() if k != "state"}
+# 100             out = provider.run(input=inp, session_id=session_id)
+# 101 
+# 102             nxt = self.transition(state, out)
+# 103             flat_output = out.model_dump(exclude={"output"}) if hasattr(out, "model_dump") else dict(out)
+# 104             clean_nxt = {k: v for k, v in nxt.items() if k != "output"}
+# 105 
+# 106             #  Flatten controller's state output
+# 107             state.update(clean_nxt, _last_state=current)
+# 108             state["output"] = flat_output.get("output", {})  #  only keep what's in `.output`
+# 109 
 # 110 
-# 111             state.update(clean_nxt, _last_state=current)
-# 112             state["output"] = flat_output.get("output", {})  #  ✅ keep only structured `.output`
-# 113 
-# 114     def transition(self, state: dict, sys_output: dict | None) -> dict:
-# 115         next_state = self._transition(state, sys_output)
-# 116         state["steps"] = state.get("steps", 0) + 1
-# 117 
-# 118         self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
-# 119             session_id=state.get("session_id"),
-# 120             entity_type=PROVIDER_TYPE.CONTROLLER,
-# 121             entity_id=self.config.id,
-# 122             from_state=state.get("state"),
-# 123             to_state=next_state.get("state", "unknown"),
-# 124             reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
-# 125             decision=STATE_DECISION_TYPE.REJECT if "accept" not in str(sys_output) else STATE_DECISION_TYPE.IMPROVED,
-# 126             triggered_by=self.config.name,
-# 127             step=state["steps"],
-# 128             transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
-# 129             timestamp=datetime.now(timezone.utc)
-# 130         ))
-# 131         return next_state
-# 132 
-# 133     @abstractmethod
-# 134     def _transition(self, state: dict, sys_output: dict | None) -> dict:
-# 135         """Return next state dict: {'state': '...', 'reason': '...'}. Do not return an output schema."""
-# 136         ...
+# 111     @abstractmethod
+# 112     def _transition(self, state: dict, sys_output: dict | None) -> dict:
+# 113         """Return next state dict: {'state': '...', 'reason': '...'}. Do not return an output schema."""
+# 114         ...
+
+
+# providers\fsm_provider_base.py
+
+# 1 from __future__ import annotations
+# 2 
+# 3 from abc import abstractmethod
+# 4 from datetime import datetime, timezone
+# 5 from typing import Optional
+# 6 
+# 7 from app.enums.fsm_enums import TRANSITION_REASON_TYPE
+# 8 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
+# 9 from app.enums.system_enums import STATE_DECISION_TYPE
+# 10 from app.db.schemas import StateTransitionLogSchema
+# 11 from app.providers.base_provider import BaseProvider
+# 12 
+# 13 
+# 14 class FSMProviderBase(BaseProvider):
+# 15     """
+# 16     Base class for FSM-enabled providers (Program, Controller, System, State).
+# 17     Provides a shared `transition` method and logging of state transitions.
+# 18     """
+# 19 
+# 20     def __init__(
+# 21         self,
+# 22         config=None,
+# 23         called_by_type: Optional[PROVIDER_TYPE] = None,
+# 24         called_by_id: Optional[int] = None,
+# 25     ) -> None:
+# 26         super().__init__(
+# 27             config=config,
+# 28             called_by_type=called_by_type,
+# 29             called_by_id=called_by_id,
+# 30         )
+# 31 
+# 32     def transition(self, state: dict, result: dict | None) -> dict:
+# 33         next_state = self._transition(state, result)
+# 34         state["steps"] = state.get("steps", 0) + 1
+# 35 
+# 36         self.logger.write(
+# 37             LOG_TYPE.STATE_TRANSITION,
+# 38             StateTransitionLogSchema(
+# 39                 session_id=state.get("session_id"),
+# 40                 entity_type=self._infer_provider_type(),
+# 41                 entity_id=self._config.id,
+# 42                 from_state=state.get("state"),
+# 43                 to_state=next_state.get("state", "unknown"),
+# 44                 reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
+# 45                 decision=(
+# 46                     STATE_DECISION_TYPE.REJECT
+# 47                     if "accept" not in str(result)
+# 48                     else STATE_DECISION_TYPE.IMPROVED
+# 49                 ),
+# 50                 triggered_by=self._config.name,
+# 51                 step=state["steps"],
+# 52                 transition_metadata={
+# 53                     k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}
+# 54                 },
+# 55                 timestamp=datetime.now(timezone.utc),
+# 56             ),
+# 57         )
+# 58         return next_state
+# 59 
+# 60     @abstractmethod
+# 61     def _transition(self, state: dict, result: dict | None) -> dict:
+# 62         raise NotImplementedError
 
 
 # providers\program_provider_base.py
@@ -4648,140 +4680,109 @@
 # 2 
 # 3 from abc import abstractmethod
 # 4 from typing import Dict
-# 5 from datetime import datetime, timezone
-# 6 from pathlib import Path
-# 7 import shutil
-# 8 import json
+# 5 from app.enums.system_enums import STATE_DECISION_TYPE
+# 6 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import ProgramOutputSchema
 # 9 
-# 10 from app.enums.system_enums import STATE_DECISION_TYPE
-# 11 from app.providers.base_provider import BaseProvider
-# 12 from app.factories.controller_provider_factory import ControllerProviderFactory
-# 13 from app.db.schemas import ProgramOutputSchema, StateTransitionLogSchema
-# 14 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 15 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
-# 16 
-# 17 
-# 18 class ProgramProviderBase(BaseProvider):
-# 19     def __init__(
-# 20         self,
-# 21         config=None,
-# 22         engine=None,
-# 23         context_provider=None,
-# 24         score_provider=None,
-# 25         tool_providers=None,
-# 26         controller_providers=None,
-# 27         called_by_type=None,
-# 28         called_by_id=None,
-# 29     ):
-# 30         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
-# 31         self.context_provider = context_provider
-# 32         self.score_provider = score_provider
-# 33         self.tool_providers = tool_providers or []
-# 34         
-# 35         self._states = controller_providers or {}
-# 36 
-# 37     def _run_provider(self, input: dict) -> ProgramOutputSchema:
-# 38         session_id = input.get("session_id")
-# 39         input_file = Path(input["file_name"])
-# 40         max_steps = input.get("max_steps", 20)
-# 41 
-# 42         self.working_file = input_file.with_name(f"{input_file.stem}_working{input_file.suffix}")
-# 43         shutil.copy(input_file, self.working_file)
-# 44 
-# 45         state = {
-# 46             "state": "start",
-# 47             "file_name": str(input_file),
-# 48             "working_file": str(self.working_file),
-# 49             "session_id": session_id,
-# 50             "system": input.get("system", "unknown"),
-# 51             "reason": input.get("reason", "start"),
-# 52             "steps": input.get("steps", 0),
-# 53             "retry_count": input.get("retry_count", 0),
-# 54         }
-# 55 
-# 56         step_count = 0
-# 57         result = None
-# 58 
-# 59         while True:
-# 60             current = state.get("state")
-# 61 
-# 62             if step_count >= max_steps:
-# 63                 result = ProgramOutputSchema(
-# 64                     state="end",
-# 65                     previous_state=current,
-# 66                     state_type=STATE_TYPE.END,
-# 67                     reason=REASON_TYPE.MAX_STEPS,
-# 68                     decision=STATE_DECISION_TYPE.UNKNOWN,
-# 69                     steps=step_count,
-# 70                     max_steps=max_steps,
-# 71                     summary=f"Max steps ({max_steps}) reached",
-# 72                     output=state,
-# 73                     provider_name=self.config.name
-# 74                 )
-# 75                 break
-# 76 
-# 77             if current == "end":
-# 78                 result = ProgramOutputSchema(
-# 79                     state="end",
-# 80                     previous_state=state.get("_last_state"),
-# 81                     state_type=STATE_TYPE.END,
-# 82                     reason=REASON_TYPE.SUCCESS,
-# 83                     decision=STATE_DECISION_TYPE.FINAL,
-# 84                     steps=step_count,
-# 85                     max_steps=max_steps,
-# 86                     summary=state.get("reason", "Completed"),
-# 87                     output=state,
-# 88                     provider_name=self.config.name
-# 89                 )
-# 90                 break
+# 10 
+# 11 class ProgramProviderBase(FSMProviderBase):
+# 12     def __init__(
+# 13         self,
+# 14         config=None,
+# 15         controller_providers: Dict[str, object] = None,
+# 16         context_provider=None,
+# 17         score_provider=None,
+# 18         tool_providers=None,
+# 19         called_by_type=None,
+# 20         called_by_id=None,
+# 21     ):
+# 22         super().__init__(
+# 23             config=config,
+# 24             called_by_type=called_by_type,
+# 25             called_by_id=called_by_id
+# 26         )
+# 27         self._states = controller_providers or {}
+# 28         self.context_provider = context_provider
+# 29         self.score_provider = score_provider
+# 30         self.tool_providers = tool_providers or []
+# 31 
+# 32     def _run_provider(self, input: dict) -> ProgramOutputSchema:
+# 33         session_id = input.get("session_id")
+# 34         max_steps = input.get("max_steps", 20)
+# 35 
+# 36         state = {
+# 37             "state": "start",
+# 38             "file_name": input.get("file_name"),
+# 39             "working_file": input.get("working_file"),
+# 40             "session_id": session_id,
+# 41             "system": input.get("system", "unknown"),
+# 42             "reason": input.get("reason", "start"),
+# 43             "steps": input.get("steps", 0),
+# 44             "retry_count": input.get("retry_count", 0),
+# 45             "_last_state": input.get("_last_state"),
+# 46         }
+# 47 
+# 48         step_count = 0
+# 49 
+# 50         while True:
+# 51             current = state.get("state")
+# 52 
+# 53             if step_count >= max_steps:
+# 54                 return ProgramOutputSchema(
+# 55                     state="end",
+# 56                     previous_state=current,
+# 57                     state_type=STATE_TYPE.END,
+# 58                     reason=REASON_TYPE.MAX_STEPS,
+# 59                     decision=STATE_DECISION_TYPE.UNKNOWN,
+# 60                     steps=step_count,
+# 61                     max_steps=max_steps,
+# 62                     summary=f"Max steps ({max_steps}) reached",
+# 63                     output=state,
+# 64                     provider_name=self._config.name
+# 65                 )
+# 66 
+# 67             if current == "end":
+# 68                 return ProgramOutputSchema(
+# 69                     state="end",
+# 70                     previous_state=state.get("_last_state"),
+# 71                     state_type=STATE_TYPE.END,
+# 72                     reason=REASON_TYPE.SUCCESS,
+# 73                     decision=STATE_DECISION_TYPE.FINAL,
+# 74                     steps=step_count,
+# 75                     max_steps=max_steps,
+# 76                     summary=state.get("reason", "Completed"),
+# 77                     output=state,
+# 78                     provider_name=self._config.name
+# 79                 )
+# 80 
+# 81             step_count += 1
+# 82 
+# 83             if current == "start":
+# 84                 transition = self.transition(state, None)
+# 85                 state.update(transition, _last_state="start")
+# 86                 continue
+# 87 
+# 88             provider = self._states.get(current)
+# 89             if not provider:
+# 90                 raise ValueError(f"No controller provider registered for state: {current}")
 # 91 
-# 92             step_count += 1
-# 93 
-# 94             if current == "start":
-# 95                 state = {**state, **self.transition(state, None), "_last_state": "start"}
-# 96                 continue
+# 92             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 93             output = provider.run(input=provider_input, session_id=session_id)
+# 94 
+# 95             transition_result = self.transition(state, output)
+# 96             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
 # 97 
-# 98             controller = self._states.get(current)
-# 99             if not controller:
-# 100                 raise ValueError(f"No controller registered for state: {current}")
-# 101 
-# 102             controller_input = {k: v for k, v in state.items() if k != "state"}
-# 103             output = controller.run(input=controller_input, session_id=session_id)
+# 98             state = {
+# 99                 **state,
+# 100                 **transition_result,
+# 101                 "_last_state": current,
+# 102                 "output": flat_output.get("output", {})
+# 103             }
 # 104 
-# 105             transition_result = self.transition(state, output)
-# 106             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 107             state = {
-# 108                 **state,
-# 109                 **transition_result,
-# 110                 "_last_state": current,
-# 111                 "output": flat_output
-# 112             }
-# 113 
-# 114         return result
-# 115 
-# 116     def transition(self, state: dict, controller_output: dict | None) -> dict:
-# 117         next_state = self._transition(state, controller_output)
-# 118         state["steps"] = state.get("steps", 0) + 1
-# 119 
-# 120         self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
-# 121             session_id=state.get("session_id"),
-# 122             entity_type=PROVIDER_TYPE.PROGRAM,
-# 123             entity_id=self.config.id,
-# 124             from_state=state.get("state"),
-# 125             to_state=next_state.get("state", "unknown"),
-# 126             reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
-# 127             decision = STATE_DECISION_TYPE.REJECT if "accept" not in str(controller_output) else STATE_DECISION_TYPE.IMPROVED,
-# 128             triggered_by=self.config.name,
-# 129             step=state["steps"],
-# 130             transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
-# 131             timestamp=datetime.now(timezone.utc)
-# 132         ))
-# 133         return next_state
-# 134 
-# 135 
-# 136     @abstractmethod
-# 137     def _transition(self, state: dict, controller_output: dict | None) -> dict:
-# 138         raise NotImplementedError
+# 105     @abstractmethod
+# 106     def _transition(self, state: dict, output: dict | None) -> dict:
+# 107         ...
 
 
 # providers\prompt_provider_base.py
@@ -4800,32 +4801,40 @@
 # 12 class PromptProviderBase(BaseProvider):
 # 13     """Base class for prompt generators with optional context/agent/system loading."""
 # 14 
-# 15     def __init__(self, config, engine=None, called_by_type=None, called_by_id=None):
-# 16         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
+# 15     def __init__(self, config, called_by_type=None, called_by_id=None):
+# 16         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
 # 17 
 # 18         self._agent_prompt = None
 # 19         self._system_prompt = None
 # 20         self._context_provider = None
-# 21 
-# 22         if not self.config or not self._engine:
-# 23             return
-# 24 
-# 25         with Session(bind=self._engine) as session:
-# 26             if agent_id := self.config.config.get("agent_prompt_id"):
-# 27                 self._agent_prompt = session.get(AgentPrompt, agent_id)
-# 28 
-# 29             if system_id := self.config.config.get("system_prompt_id"):
-# 30                 self._system_prompt = session.get(SystemPrompt, system_id)
-# 31 
-# 32             if context_id := self.config.config.get("context_provider_id"):
-# 33                 self._context_provider = ContextProviderFactory.create(id=context_id)
-# 34 
-# 35     def _run_provider(self, input: dict) -> PromptOutputSchema:
-# 36         return self._run(input)
-# 37 
-# 38     @abstractmethod
-# 39     def _run(self, input: dict) -> PromptOutputSchema:
-# 40         raise NotImplementedError
+# 21         self.agent_text = None
+# 22         self.system_text = None
+# 23 
+# 24         if not self._config or not self._engine:
+# 25             return
+# 26 
+# 27         with Session(bind=self._engine) as session:
+# 28             if agent_id := self._config.config.get("agent_prompt_id"):
+# 29                 self._agent_prompt = session.get(AgentPrompt, agent_id)
+# 30                 if self._agent_prompt:
+# 31                     self.agent_text = Path("extensions") / self._agent_prompt.artifact_path
+# 32                     self.agent_text = self.agent_text.read_text(encoding="utf-8").strip()
+# 33 
+# 34             if system_id := self._config.config.get("system_prompt_id"):
+# 35                 self._system_prompt = session.get(SystemPrompt, system_id)
+# 36                 if self._system_prompt:
+# 37                     self.system_text = Path("extensions") / self._system_prompt.artifact_path
+# 38                     self.system_text = self.system_text.read_text(encoding="utf-8").strip()
+# 39 
+# 40             if context_id := self._config.config.get("context_provider_id"):
+# 41                 self._context_provider = ContextProviderFactory.create(id=context_id)
+# 42 
+# 43     def _run_provider(self, input: dict) -> PromptOutputSchema:
+# 44         return self._run(input)
+# 45 
+# 46     @abstractmethod
+# 47     def _run(self, input: dict) -> PromptOutputSchema:
+# 48         raise NotImplementedError
 
 
 # providers\score_provider_base.py
@@ -4866,126 +4875,109 @@
 # 2 
 # 3 from abc import abstractmethod
 # 4 from typing import Dict
-# 5 from datetime import datetime, timezone
-# 6 import json
-# 7 
-# 8 from app.enums.system_enums import STATE_DECISION_TYPE
-# 9 from app.providers.base_provider import BaseProvider
-# 10 from app.db.schemas import StateTransitionLogSchema, StateOutputSchema
-# 11 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 12 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
-# 13 
-# 14 
-# 15 class StateProviderBase(BaseProvider):
-# 16     """Base class for FSM-driven state providers."""
-# 17 
-# 18     def __init__(
-# 19         self,
-# 20         config=None,
-# 21         engine=None,
-# 22         agent_providers: dict[str, object] = None,
-# 23         context_provider=None,
-# 24         score_provider=None,
-# 25         tool_providers=None,
-# 26         called_by_type=None,
-# 27         called_by_id=None,
-# 28     ):
-# 29         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
-# 30         self._context_provider = context_provider
-# 31         self._score_provider = score_provider
-# 32         self._tool_providers = tool_providers or []
-# 33 
-# 34         self._states = agent_providers or {}
+# 5 from app.enums.system_enums import STATE_DECISION_TYPE
+# 6 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import StateOutputSchema
+# 9 
+# 10 
+# 11 class StateProviderBase(FSMProviderBase):
+# 12     def __init__(
+# 13         self,
+# 14         config=None,
+# 15         agent_providers: Dict[str, object] = None,
+# 16         context_provider=None,
+# 17         score_provider=None,
+# 18         tool_providers=None,
+# 19         called_by_type=None,
+# 20         called_by_id=None,
+# 21     ):
+# 22         super().__init__(
+# 23             config=config,
+# 24             called_by_type=called_by_type,
+# 25             called_by_id=called_by_id
+# 26         )
+# 27         self._states = agent_providers or {}
+# 28         self.context_provider = context_provider
+# 29         self.score_provider = score_provider
+# 30         self.tool_providers = tool_providers or []
+# 31 
+# 32     def _run_provider(self, input: dict) -> StateOutputSchema:
+# 33         session_id = input.get("session_id")
+# 34         max_steps = input.get("max_steps", 20)
 # 35 
-# 36     def _run_provider(self, input: dict) -> StateOutputSchema:
-# 37         session_id = input.get("session_id")
-# 38         state = {
-# 39             "state": "start",
-# 40             "file_name": input.get("file_name"),
-# 41             "working_file": input.get("working_file"),
-# 42             "session_id": input.get("session_id"),
-# 43             "system": input.get("system", "unknown"),
-# 44             "reason": input.get("reason", "start"),
-# 45             "steps": input.get("steps", 0),
-# 46             "retry_count": input.get("retry_count", 0)
-# 47         }
+# 36         state = {
+# 37             "state": "start",
+# 38             "file_name": input.get("file_name"),
+# 39             "working_file": input.get("working_file"),
+# 40             "session_id": session_id,
+# 41             "system": input.get("system", "unknown"),
+# 42             "reason": input.get("reason", "start"),
+# 43             "steps": input.get("steps", 0),
+# 44             "retry_count": input.get("retry_count", 0),
+# 45             "_last_state": input.get("_last_state"),
+# 46         }
+# 47 
 # 48         step_count = 0
-# 49         max_steps = input.get("max_steps", 20)
-# 50 
-# 51         while True:
-# 52             current = state.get("state")
-# 53 
-# 54             if step_count >= max_steps:
-# 55                 return StateOutputSchema(
-# 56                     state="end",
-# 57                     previous_state=current,
-# 58                     state_type=STATE_TYPE.END,
-# 59                     reason=REASON_TYPE.MAX_STEPS,
-# 60                     decision=STATE_DECISION_TYPE.UNKNOWN,
-# 61                     steps=step_count,
-# 62                     max_steps=max_steps,
-# 63                     summary="Max steps reached",
-# 64                     output=state,
-# 65                     provider_name=self.config.name
-# 66                 )
-# 67 
-# 68             if current == "end":
-# 69                 return StateOutputSchema(
-# 70                     state="end",
-# 71                     previous_state=state.get("_last_state"),
-# 72                     state_type=STATE_TYPE.END,
-# 73                     reason=REASON_TYPE.SUCCESS,
-# 74                     decision=STATE_DECISION_TYPE.FINAL,
-# 75                     steps=step_count,
-# 76                     max_steps=max_steps,
-# 77                     summary=state.get("reason", "Completed"),
-# 78                     output=state,
-# 79                     provider_name=self.config.name
-# 80                 )
-# 81 
-# 82             step_count += 1
-# 83 
-# 84             if current == "start":
-# 85                 transition = self.transition(state, None)
-# 86                 state.update(transition)
-# 87                 state["_last_state"] = "start"
-# 88                 continue
-# 89 
-# 90             agent = self._states.get(current)
-# 91             if not agent:
-# 92                 raise ValueError(f"No agent registered for state: {current}")
-# 93 
-# 94             agent_output = agent.run(input=state, session_id=session_id)
-# 95             transition = self.transition(state, agent_output)
-# 96             state.update({
-# 97                 **transition,
-# 98                 "_last_state": current,
-# 99                 "agent_output": agent_output
-# 100             })
-# 101 
-# 102 
-# 103     def transition(self, state: dict, agent_output: str | None) -> dict:
-# 104         next_state = self._transition(state, agent_output)
-# 105         state["steps"] = state.get("steps", 0) + 1
-# 106 
-# 107         self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
-# 108             session_id=state.get("session_id"),
-# 109             entity_type=PROVIDER_TYPE.STATE,
-# 110             entity_id=self.config.id,
-# 111             from_state=state.get("state"),
-# 112             to_state=next_state.get("state", "unknown"),
-# 113             reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
-# 114             decision = STATE_DECISION_TYPE.REJECT if "accept" not in str(agent_output) else STATE_DECISION_TYPE.IMPROVED,
-# 115             triggered_by=self.config.name,
-# 116             step=state["steps"],
-# 117             transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
-# 118             timestamp=datetime.now(timezone.utc)
-# 119         ))
-# 120         return next_state
-# 121 
-# 122     @abstractmethod
-# 123     def _transition(self, state: dict, agent_output: str | None) -> dict:
-# 124         raise NotImplementedError
+# 49 
+# 50         while True:
+# 51             current = state.get("state")
+# 52 
+# 53             if step_count >= max_steps:
+# 54                 return StateOutputSchema(
+# 55                     state="end",
+# 56                     previous_state=current,
+# 57                     state_type=STATE_TYPE.END,
+# 58                     reason=REASON_TYPE.MAX_STEPS,
+# 59                     decision=STATE_DECISION_TYPE.UNKNOWN,
+# 60                     steps=step_count,
+# 61                     max_steps=max_steps,
+# 62                     summary=f"Max steps ({max_steps}) reached",
+# 63                     output=state,
+# 64                     provider_name=self._config.name
+# 65                 )
+# 66 
+# 67             if current == "end":
+# 68                 return StateOutputSchema(
+# 69                     state="end",
+# 70                     previous_state=state.get("_last_state"),
+# 71                     state_type=STATE_TYPE.END,
+# 72                     reason=REASON_TYPE.SUCCESS,
+# 73                     decision=STATE_DECISION_TYPE.FINAL,
+# 74                     steps=step_count,
+# 75                     max_steps=max_steps,
+# 76                     summary=state.get("reason", "Completed"),
+# 77                     output=state,
+# 78                     provider_name=self._config.name
+# 79                 )
+# 80 
+# 81             step_count += 1
+# 82 
+# 83             if current == "start":
+# 84                 transition = self.transition(state, None)
+# 85                 state.update(transition, _last_state="start")
+# 86                 continue
+# 87 
+# 88             provider = self._states.get(current)
+# 89             if not provider:
+# 90                 raise ValueError(f"No agent provider registered for state: {current}")
+# 91 
+# 92             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 93             output = provider.run(input=provider_input, session_id=session_id)
+# 94 
+# 95             transition_result = self.transition(state, output)
+# 96             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 97 
+# 98             state = {
+# 99                 **state,
+# 100                 **transition_result,
+# 101                 "_last_state": current,
+# 102                 "agent_output": flat_output.get("output", {})
+# 103             }
+# 104 
+# 105     @abstractmethod
+# 106     def _transition(self, state: dict, output: dict | None) -> dict:
+# 107         ...
 
 
 # providers\system_provider_base.py
@@ -4995,126 +4987,111 @@
 # 3 from abc import abstractmethod
 # 4 from typing import Dict
 # 5 from datetime import datetime, timezone
-# 6 from pathlib import Path
-# 7 import shutil
-# 8 import json
-# 9 
-# 10 from app.enums.system_enums import STATE_DECISION_TYPE
-# 11 from app.providers.base_provider import BaseProvider
-# 12 from app.factories.state_provider_factory import StateProviderFactory
-# 13 from app.db.schemas import StateTransitionLogSchema, SystemOutputSchema
-# 14 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 15 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
-# 16 
-# 17 
-# 18 class SystemProviderBase(BaseProvider):
-# 19     def __init__(self, config=None, engine=None, context_provider=None, score_provider=None, tool_providers=None, state_providers=None, called_by_type=None, called_by_id=None):
-# 20         super().__init__(config=config, engine=engine, called_by_type=called_by_type, called_by_id=called_by_id)
-# 21         self.context_provider = context_provider
-# 22         self.score_provider = score_provider
-# 23         self.tool_providers = tool_providers or []
-# 24 
-# 25         self._states = state_providers or {} 
-# 26 
-# 27 
-# 28     def _run_provider(self, input: dict) -> SystemOutputSchema:
-# 29         session_id = input.get("session_id")
-# 30         input_file = Path(input["file_name"])
-# 31         self.working_file = input_file.with_name(f"{input_file.stem}_working{input_file.suffix}")
-# 32         shutil.copy(input_file, self.working_file)
-# 33 
-# 34         state = {
-# 35             "state": "start",
-# 36             "file_name": input["file_name"],
-# 37             "working_file": str(self.working_file),
-# 38             "session_id": session_id,
-# 39             "system": input.get("system", "unknown"),
-# 40             "reason": input.get("reason", "kickoff"),
-# 41             "steps": input.get("steps", 0),
-# 42             "retry_count": input.get("retry_count", 0),
-# 43         }
-# 44 
-# 45         max_steps = input.get("max_steps", 20)
-# 46         step_count = 0
-# 47 
-# 48         while True:
-# 49             if step_count >= max_steps:
-# 50                 return SystemOutputSchema(
-# 51                     state="end",
-# 52                     previous_state=state.get("state"),
-# 53                     state_type=STATE_TYPE.END,
-# 54                     reason=REASON_TYPE.MAX_STEPS,
-# 55                     decision=STATE_DECISION_TYPE.UNKNOWN,
-# 56                     steps=step_count,
-# 57                     max_steps=max_steps,
-# 58                     summary=f"Max steps ({max_steps}) reached",
-# 59                     output=state,
-# 60                     provider_name=self.config.name
-# 61                 )
-# 62 
-# 63             step_count += 1
-# 64             current = state.get("state")
-# 65 
-# 66             if current == "end":
-# 67                 return SystemOutputSchema(
-# 68                     state="end",
-# 69                     previous_state=state.get("_last_state"),
-# 70                     state_type=STATE_TYPE.END,
-# 71                     reason=REASON_TYPE.SUCCESS,
-# 72                     decision=STATE_DECISION_TYPE.FINAL,
-# 73                     steps=step_count,
-# 74                     max_steps=max_steps,
-# 75                     summary=state.get("reason", "Completed"),
-# 76                     output=state,
-# 77                     provider_name=self.config.name
-# 78                 )
-# 79 
-# 80             if current == "start":
-# 81                 state = {**state, **self.transition(state, None), "_last_state": "start"}
-# 82                 continue
+# 6 import json
+# 7 
+# 8 from app.enums.system_enums import STATE_DECISION_TYPE
+# 9 from app.providers.fsm_provider_base import FSMProviderBase
+# 10 from app.db.schemas import SystemOutputSchema
+# 11 from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+# 12 
+# 13 
+# 14 class SystemProviderBase(FSMProviderBase):
+# 15     def __init__(
+# 16         self,
+# 17         config=None,
+# 18         context_provider=None,
+# 19         score_provider=None,
+# 20         tool_providers=None,
+# 21         state_providers: Dict[str, object] = None,
+# 22         called_by_type=None,
+# 23         called_by_id=None,
+# 24     ):
+# 25         super().__init__(
+# 26             config=config,
+# 27             called_by_type=called_by_type,
+# 28             called_by_id=called_by_id
+# 29         )
+# 30         self.context_provider = context_provider
+# 31         self.score_provider   = score_provider
+# 32         self.tool_providers   = tool_providers or []
+# 33         self._states = state_providers or {}
+# 34 
+# 35     def _run_provider(self, input: dict) -> SystemOutputSchema:
+# 36         session_id = input.get("session_id")
+# 37         max_steps = input.get("max_steps", 20)
+# 38 
+# 39         state = {
+# 40             "state": "start",
+# 41             "file_name": input.get("file_name"),
+# 42             "working_file": input.get("working_file"),
+# 43             "session_id": session_id,
+# 44             "system": input.get("system", "unknown"),
+# 45             "reason": input.get("reason", "start"),
+# 46             "steps": input.get("steps", 0),
+# 47             "retry_count": input.get("retry_count", 0),
+# 48             "_last_state": input.get("_last_state"),
+# 49         }
+# 50 
+# 51         step_count = 0
+# 52 
+# 53         while True:
+# 54             current = state.get("state")
+# 55 
+# 56             if step_count >= max_steps:
+# 57                 return SystemOutputSchema(
+# 58                     state="end",
+# 59                     previous_state=current,
+# 60                     state_type=STATE_TYPE.END,
+# 61                     reason=REASON_TYPE.MAX_STEPS,
+# 62                     decision=STATE_DECISION_TYPE.UNKNOWN,
+# 63                     steps=step_count,
+# 64                     max_steps=max_steps,
+# 65                     summary=f"Max steps ({max_steps}) reached",
+# 66                     output=state,
+# 67                     provider_name=self._config.name
+# 68                 )
+# 69 
+# 70             if current == "end":
+# 71                 return SystemOutputSchema(
+# 72                     state="end",
+# 73                     previous_state=state.get("_last_state"),
+# 74                     state_type=STATE_TYPE.END,
+# 75                     reason=REASON_TYPE.SUCCESS,
+# 76                     decision=STATE_DECISION_TYPE.FINAL,
+# 77                     steps=step_count,
+# 78                     max_steps=max_steps,
+# 79                     summary=state.get("reason", "Completed"),
+# 80                     output=state,
+# 81                     provider_name=self._config.name
+# 82                 )
 # 83 
-# 84             provider = self._states.get(current)
-# 85             if not provider:
-# 86                 raise ValueError(f"No state provider registered for state: {current}")
-# 87 
-# 88             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 89 
-# 90             output = provider.run(input=provider_input, session_id=session_id)
-# 91 
-# 92             transition_result = self.transition(state, output)
-# 93 
-# 94             state = {**state, **transition_result, "_last_state": current}
-# 95             if hasattr(output, "agent_output"):
-# 96                 state["agent_output"] = output.agent_output
+# 84             step_count += 1
+# 85 
+# 86             if current == "start":
+# 87                 transition = self.transition(state, None)
+# 88                 state.update(transition, _last_state="start")
+# 89                 continue
+# 90 
+# 91             provider = self._states.get(current)
+# 92             if not provider:
+# 93                 raise ValueError(f"No state provider registered for state: {current}")
+# 94 
+# 95             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 96             output = provider.run(input=provider_input, session_id=session_id)
 # 97 
-# 98     def transition(self, state: dict, agent_output: str | None) -> dict:
-# 99         next_state = self._transition(state, agent_output)
-# 100         state["steps"] = state.get("steps", 0) + 1
-# 101 
-# 102         self.logger.write(LOG_TYPE.STATE_TRANSITION, StateTransitionLogSchema(
-# 103             session_id=state.get("session_id"),
-# 104             entity_type=PROVIDER_TYPE.SYSTEM,
-# 105             entity_id=self.config.id,
-# 106             from_state=state.get("state"),
-# 107             to_state=next_state.get("state", "unknown"),
-# 108             reason=next_state.get("reason", TRANSITION_REASON_TYPE.CUSTOM_RULE),
-# 109             decision = STATE_DECISION_TYPE.REJECT if "accept" not in str(agent_output) else STATE_DECISION_TYPE.IMPROVED,
-# 110             triggered_by=self.config.name,
-# 111             step=state["steps"],
-# 112             transition_metadata={k: v for k, v in next_state.items() if k not in {"state", "reason", "decision"}},
-# 113             timestamp=datetime.now(timezone.utc)
-# 114         ))
-# 115         return next_state
-# 116 
-# 117 
-# 118     def update_working_file_from_snapshot(self, snapshot_path: str):
-# 119         after_file = Path(f"experiments/snapshots/{snapshot_path}.after")
-# 120         if after_file.exists():
-# 121             Path(self.working_file).write_text(after_file.read_text(encoding="utf-8"), encoding="utf-8")
-# 122 
-# 123     @abstractmethod
-# 124     def _transition(self, state: dict, agent_output: str | None) -> dict:
-# 125         raise NotImplementedError
+# 98             transition_result = self.transition(state, output)
+# 99             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 100 
+# 101             state = {
+# 102                 **state,
+# 103                 **transition_result,
+# 104                 "_last_state": current,
+# 105                 "output": flat_output.get("output", {})
+# 106             }
+# 107 
+# 108     @abstractmethod
+# 109     def _transition(self, state: dict, output: dict | None) -> dict:
+# 110         ...
 
 
 # providers\tool_provider_base.py
@@ -5357,7 +5334,7 @@
 # 65         self.db_path = Path(db_path)
 # 66         self.db_path.parent.mkdir(exist_ok=True, parents=True)
 # 67 
-# 68         self.conn = connection or get_connection()
+# 68         self._conn = connection or get_connection()
 # 69 
 # 70         self.output_path = Path(output_path) if output_path else None
 # 71         if self.output_path:
@@ -5365,103 +5342,119 @@
 # 73 
 # 74         self._initialized = True
 # 75 
-# 76     def _serialize(self, obj: Any) -> dict:
-# 77         def _safe(v: Any) -> Any:
-# 78             if isinstance(v, (Enum, Path)):
-# 79                 return str(v)
-# 80             elif isinstance(v, datetime):
-# 81                 return v.isoformat()
-# 82             elif isinstance(v, list):
-# 83                 return [_safe(i) for i in v]
-# 84             elif isinstance(v, dict):
-# 85                 return json.dumps({k: _safe(val) for k, val in v.items()})
-# 86             return v
+# 76     @property
+# 77     def conn(self):
+# 78         if getattr(self, "_conn", None) is None:
+# 79             from app.db import init_db
+# 80             self._conn = init_db(reset=False).raw_connection()
+# 81         try:
+# 82             self._conn.cursor()
+# 83         except Exception:
+# 84             from app.db import init_db
+# 85             self._conn = init_db(reset=False).raw_connection()
+# 86         return self._conn
 # 87 
-# 88         if not is_dataclass(obj) or isinstance(obj, type):
-# 89             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
-# 90         raw = asdict(obj)
-# 91         return {k: _safe(v) for k, v in raw.items()}
-# 92 
-# 93     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
-# 94         items = list(items)
-# 95         if not items:
-# 96             return
-# 97 
-# 98         keys = list(items[0].keys())
-# 99         cols = ",".join(keys)
-# 100         placeholders = ",".join(["?"] * len(keys))
-# 101         values = [tuple(i[k] for k in keys) for i in items]
-# 102         cur = self.conn.cursor()
-# 103         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
-# 104         self.conn.commit()
-# 105         if self.output_path:
-# 106             with self.output_path.open("a", encoding="utf-8") as fh:
-# 107                 for item in items:
-# 108                     fh.write(json.dumps(item) + "\n")
-# 109 
-# 110     def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> None:
-# 111         if not isinstance(entries, list):
-# 112             entries = [entries]
+# 88     def _serialize(self, obj: Any) -> dict:
+# 89         def _safe(v: Any) -> Any:
+# 90             if isinstance(v, (Enum, Path)):
+# 91                 return str(v)
+# 92             elif isinstance(v, datetime):
+# 93                 return v.isoformat()
+# 94             elif isinstance(v, list):
+# 95                 return [_safe(i) for i in v]
+# 96             elif isinstance(v, dict):
+# 97                 #  Turn any nested dict into a JSON string here:
+# 98                 return json.dumps({k: _safe(val) for k, val in v.items()}, default=str)
+# 99             return v
+# 100 
+# 101         if not is_dataclass(obj) or isinstance(obj, type):
+# 102             raise TypeError(f"Expected dataclass instance, got {type(obj)}")
+# 103 
+# 104         raw = asdict(obj)
+# 105         return {k: _safe(v) for k, v in raw.items()}
+# 106 
+# 107 
+# 108 
+# 109     def _insert_many(self, table: str, items: Iterable[dict]) -> None:
+# 110         items = list(items)
+# 111         if not items:
+# 112             return
 # 113 
-# 114         config = LOG_CONFIG_MAP.get(log_type)
-# 115         if config is None:
-# 116             raise ValueError(f"Unsupported log type: {log_type}")
-# 117 
-# 118         schema_cls = config["schema"]
-# 119         table_name = config["table"]
-# 120 
-# 121         #  Log and allow class name mismatches as a warning (helpful for shadowed classes)
-# 122         for entry in entries:
-# 123             if not is_dataclass(entry):
-# 124                 raise TypeError(f"Expected a dataclass instance, got {type(entry)}")
-# 125             if entry.__class__.__name__ != schema_cls.__name__:
-# 126                 logging.getLogger("LoggingProvider").warning(
-# 127                     f"⚠️ Log schema mismatch: expected {schema_cls.__name__}, got {entry.__class__.__name__}"
-# 128                 )
+# 114         keys = list(items[0].keys())
+# 115         cols = ",".join(keys)
+# 116         placeholders = ",".join(["?"] * len(keys))
+# 117         values = [tuple(i[k] for k in keys) for i in items]
+# 118         cur = self.conn.cursor()
+# 119         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
+# 120         self.conn.commit()
+# 121         if self.output_path:
+# 122             with self.output_path.open("a", encoding="utf-8") as fh:
+# 123                 for item in items:
+# 124                     fh.write(json.dumps(item) + "\n")
+# 125 
+# 126     def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> None:
+# 127         if not isinstance(entries, list):
+# 128             entries = [entries]
 # 129 
-# 130         serialized = [self._serialize(e) for e in entries]
-# 131         self._insert_many(table_name, serialized)
-# 132 
-# 133     def log_provider(self, log: ProviderLogSchema) -> None:
-# 134         self.write(LOG_TYPE.PROVIDER, log)
-# 135 
-# 136     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
-# 137         self.write(LOG_TYPE.STATE_TRANSITION, log)
-# 138 
-# 139     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
-# 140         self.write(LOG_TYPE.AGENT_CONVERSATION, log)
-# 141 
-# 142     def log_error(self, log: ErrorLogSchema) -> None:
-# 143         self.write(LOG_TYPE.ERROR, log)
-# 144 
-# 145     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
-# 146         self.write(LOG_TYPE.SNAPSHOT_METRICS, log)
-# 147 
-# 148     def close(self) -> None:
-# 149         self.conn.close()
-# 150 
+# 130         config = LOG_CONFIG_MAP.get(log_type)
+# 131         if config is None:
+# 132             raise ValueError(f"Unsupported log type: {log_type}")
+# 133 
+# 134         schema_cls = config["schema"]
+# 135         table_name = config["table"]
+# 136 
+# 137         #  Log and allow class name mismatches as a warning (helpful for shadowed classes)
+# 138         for entry in entries:
+# 139             if not is_dataclass(entry):
+# 140                 raise TypeError(f"Expected a dataclass instance, got {type(entry)}")
+# 141             if entry.__class__.__name__ != schema_cls.__name__:
+# 142                 logging.getLogger("LoggingProvider").warning(
+# 143                     f"⚠️ Log schema mismatch: expected {schema_cls.__name__}, got {entry.__class__.__name__}"
+# 144                 )
+# 145 
+# 146         serialized = [self._serialize(e) for e in entries]
+# 147         self._insert_many(table_name, serialized)
+# 148 
+# 149     def log_provider(self, log: ProviderLogSchema) -> None:
+# 150         self.write(LOG_TYPE.PROVIDER, log)
 # 151 
-# 152 class LoggingMixin:
-# 153     """Mixin to provide access to a shared LoggingProvider instance."""
+# 152     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
+# 153         self.write(LOG_TYPE.STATE_TRANSITION, log)
 # 154 
-# 155     def __init__(self, logger: LoggingProvider | None = None) -> None:
-# 156         self.logger = logger or LoggingProvider()
-# 157         self._log = logging.getLogger(self.__class__.__name__)
-# 158 
-# 159     def log_provider(self, log: ProviderLogSchema) -> None:
-# 160         self.logger.log_provider(log)
-# 161 
-# 162     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
-# 163         self.logger.log_state_transition(log)
-# 164 
-# 165     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
-# 166         self.logger.log_agent_conversation(log)
+# 155     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
+# 156         self.write(LOG_TYPE.AGENT_CONVERSATION, log)
+# 157 
+# 158     def log_error(self, log: ErrorLogSchema) -> None:
+# 159         self.write(LOG_TYPE.ERROR, log)
+# 160 
+# 161     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
+# 162         self.write(LOG_TYPE.SNAPSHOT_METRICS, log)
+# 163 
+# 164     def close(self) -> None:
+# 165         self.conn.close()
+# 166 
 # 167 
-# 168     def log_error(self, log: ErrorLogSchema) -> None:
-# 169         self.logger.log_error(log)
+# 168 class LoggingMixin:
+# 169     """Mixin to provide access to a shared LoggingProvider instance."""
 # 170 
-# 171     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
-# 172         self.logger.log_snapshot_metrics(log)
+# 171     def __init__(self, logger: LoggingProvider | None = None) -> None:
+# 172         self.logger = logger or LoggingProvider()
+# 173         self._log = logging.getLogger(self.__class__.__name__)
+# 174 
+# 175     def log_provider(self, log: ProviderLogSchema) -> None:
+# 176         self.logger.log_provider(log)
+# 177 
+# 178     def log_state_transition(self, log: StateTransitionLogSchema) -> None:
+# 179         self.logger.log_state_transition(log)
+# 180 
+# 181     def log_agent_conversation(self, log: AgentConversationLogSchema) -> None:
+# 182         self.logger.log_agent_conversation(log)
+# 183 
+# 184     def log_error(self, log: ErrorLogSchema) -> None:
+# 185         self.logger.log_error(log)
+# 186 
+# 187     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
+# 188         self.logger.log_snapshot_metrics(log)
 
 
 # utilities\metadata\snapshots\__init__.py

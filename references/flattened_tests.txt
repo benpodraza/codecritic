@@ -162,53 +162,13 @@
 
 # notebooks\eda\eda_agent_conversation_log.ipynb
 
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Agent Conversation Log"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load raw log entries"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf = pd.read_sql(\"SELECT * FROM agent_conversation_log WHERE session_id='agent-test-session'\", conn)\nprint(df.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Parse enum fields"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from app.enums import logging_enums, fsm_enums, agent_enums\nprint('Columns:', df.columns.tolist())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate field values"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.isnull().sum())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Basic counts"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.shape)\nprint(df['timestamp'].min(), df['timestamp'].max())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_agent_engine_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Agent Engine Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM agent_engine_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='agent_engine' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_agent_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Agent Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM agent_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='agent' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_context_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Context Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM context_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='context' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_controller_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Controller Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM controller_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='controller' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_error_log.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Error Log"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load raw log entries"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf = pd.read_sql(\"SELECT * FROM error_log WHERE session_id='agent-test-session'\", conn)\nprint(df.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Parse enum fields"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from app.enums import logging_enums, fsm_enums, agent_enums\nprint('Columns:', df.columns.tolist())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate field values"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.isnull().sum())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Basic counts"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.shape)\nprint(df['timestamp'].min(), df['timestamp'].max())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_program_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Program Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM program_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='program' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_prompt_providers.ipynb
-
-# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Prompt Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM prompt_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='prompt' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
-
-
-# notebooks\eda\eda_provider_log.ipynb
-
 # 1 {
 # 2  "cells": [
 # 3   {
 # 4    "cell_type": "markdown",
 # 5    "metadata": {},
 # 6    "source": [
-# 7     "#  EDA: Provider Log"
+# 7     "#  EDA: Agent Conversation Log"
 # 8    ]
 # 9   },
 # 10   {
@@ -229,10 +189,10 @@
 # 25      "output_type": "stream",
 # 26      "text": [
 # 27       "Working directory is now: C:\\Repos\\codecritic\n",
-# 28       "Seeded AgentPrompt 'generate' with ID: 1 and GUID: 1be40e2c-86b5-417b-ad73-47eceb4f3627\n",
-# 29       "Seeded AgentPrompt 'linting_generator_agent' with ID: 2 and GUID: 9f5700b8-563f-4113-9e79-6863c749092d\n",
-# 30       "Seeded SystemPrompt 'format' with ID: 1 and GUID: 764caea9-5c8c-4e2f-a02e-b14595204e29\n",
-# 31       "Seeded SystemPrompt 'linting_system' with ID: 2 and GUID: dcce9bcf-0253-4d6b-bdb5-e31aa1d02012\n",
+# 28       "Seeded AgentPrompt 'generate' with ID: 1 and GUID: 7133914f-60ee-4031-a763-b9f57a9c69c6\n",
+# 29       "Seeded AgentPrompt 'linting_generator_agent' with ID: 2 and GUID: 79398036-b208-43ae-b052-2c70eca191cd\n",
+# 30       "Seeded SystemPrompt 'format' with ID: 1 and GUID: d7aa05bc-a035-45b7-8dfc-f70cc5da43c5\n",
+# 31       "Seeded SystemPrompt 'linting_system' with ID: 2 and GUID: 27e0404f-393b-459d-9723-d736e04ff444\n",
 # 32       "Seeded prompt provider configurations successfully.\n",
 # 33       "Seeded tool configurations successfully.\n",
 # 34       "Seeded score providers successfully.\n",
@@ -310,193 +270,849 @@
 # 106   },
 # 107   {
 # 108    "cell_type": "code",
-# 109    "execution_count": 2,
-# 110    "id": "914cc4dd",
+# 109    "execution_count": 3,
+# 110    "id": "441c5edb",
 # 111    "metadata": {},
 # 112    "outputs": [
 # 113     {
-# 114      "ename": "AttributeError",
-# 115      "evalue": "'CodeStabilityAgentProvider' object has no attribute 'score_provider'",
-# 116      "output_type": "error",
-# 117      "traceback": [
-# 118       "\u001b[31m---------------------------------------------------------------------------\u001b[39m",
-# 119       "\u001b[31mAttributeError\u001b[39m                            Traceback (most recent call last)",
-# 120       "\u001b[36mCell\u001b[39m\u001b[36m \u001b[39m\u001b[32mIn[2]\u001b[39m\u001b[32m, line 27\u001b[39m\n\u001b[32m     25\u001b[39m \u001b[38;5;66;03m#  Run associated program\u001b[39;00m\n\u001b[32m     26\u001b[39m program = ProgramProviderFactory.create(\u001b[38;5;28mid\u001b[39m=session_row.program_provider_id)\n\u001b[32m---> \u001b[39m\u001b[32m27\u001b[39m result = \u001b[43mprogram\u001b[49m\u001b[43m.\u001b[49m\u001b[43mrun\u001b[49m\u001b[43m(\u001b[49m\u001b[43minput_data\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m     29\u001b[39m \u001b[38;5;28mprint\u001b[39m(\u001b[33m\"\u001b[39m\u001b[33m✅ Final Program Result (via SessionConfig):\u001b[39m\u001b[33m\"\u001b[39m)\n\u001b[32m     30\u001b[39m \u001b[38;5;28mprint\u001b[39m(json.dumps(result.model_dump(), indent=\u001b[32m2\u001b[39m))\n",
-# 121       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\base_provider.py:41\u001b[39m, in \u001b[36mBaseProvider.run\u001b[39m\u001b[34m(self, input, session_id)\u001b[39m\n\u001b[32m     38\u001b[39m output_schema = \u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     40\u001b[39m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[32m---> \u001b[39m\u001b[32m41\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run_provider\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     42\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mjson\u001b[39m\u001b[33m\"\u001b[39m):\n\u001b[32m     43\u001b[39m         output_schema = output.\u001b[34m__class__\u001b[39m.\u001b[34m__name__\u001b[39m\n",
-# 122       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\program_provider_base.py:103\u001b[39m, in \u001b[36mProgramProviderBase._run_provider\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m    100\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33mf\u001b[39m\u001b[33m\"\u001b[39m\u001b[33mNo controller registered for state: \u001b[39m\u001b[38;5;132;01m{\u001b[39;00mcurrent\u001b[38;5;132;01m}\u001b[39;00m\u001b[33m\"\u001b[39m)\n\u001b[32m    102\u001b[39m controller_input = {k: v \u001b[38;5;28;01mfor\u001b[39;00m k, v \u001b[38;5;129;01min\u001b[39;00m state.items() \u001b[38;5;28;01mif\u001b[39;00m k != \u001b[33m\"\u001b[39m\u001b[33mstate\u001b[39m\u001b[33m\"\u001b[39m}\n\u001b[32m--> \u001b[39m\u001b[32m103\u001b[39m output = \u001b[43mcontroller\u001b[49m\u001b[43m.\u001b[49m\u001b[43mrun\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m=\u001b[49m\u001b[43mcontroller_input\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m=\u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    105\u001b[39m transition_result = \u001b[38;5;28mself\u001b[39m.transition(state, output)\n\u001b[32m    106\u001b[39m flat_output = output.model_dump(exclude={\u001b[33m\"\u001b[39m\u001b[33moutput\u001b[39m\u001b[33m\"\u001b[39m}) \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mmodel_dump\u001b[39m\u001b[33m\"\u001b[39m) \u001b[38;5;28;01melse\u001b[39;00m \u001b[38;5;28mdict\u001b[39m(output)\n",
-# 123       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\base_provider.py:41\u001b[39m, in \u001b[36mBaseProvider.run\u001b[39m\u001b[34m(self, input, session_id)\u001b[39m\n\u001b[32m     38\u001b[39m output_schema = \u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     40\u001b[39m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[32m---> \u001b[39m\u001b[32m41\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run_provider\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     42\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mjson\u001b[39m\u001b[33m\"\u001b[39m):\n\u001b[32m     43\u001b[39m         output_schema = output.\u001b[34m__class__\u001b[39m.\u001b[34m__name__\u001b[39m\n",
-# 124       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\controller_provider_base.py:105\u001b[39m, in \u001b[36mControllerProviderBase._run_provider\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m    102\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33mf\u001b[39m\u001b[33m\"\u001b[39m\u001b[33mNo system provider registered for state \u001b[39m\u001b[33m'\u001b[39m\u001b[38;5;132;01m{\u001b[39;00mcurrent\u001b[38;5;132;01m}\u001b[39;00m\u001b[33m'\u001b[39m\u001b[33m\"\u001b[39m)\n\u001b[32m    104\u001b[39m inp = {k: v \u001b[38;5;28;01mfor\u001b[39;00m k, v \u001b[38;5;129;01min\u001b[39;00m state.items() \u001b[38;5;28;01mif\u001b[39;00m k != \u001b[33m\"\u001b[39m\u001b[33mstate\u001b[39m\u001b[33m\"\u001b[39m}\n\u001b[32m--> \u001b[39m\u001b[32m105\u001b[39m out = \u001b[43mprovider\u001b[49m\u001b[43m.\u001b[49m\u001b[43mrun\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m=\u001b[49m\u001b[43minp\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m=\u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m    107\u001b[39m nxt = \u001b[38;5;28mself\u001b[39m.transition(state, out)\n\u001b[32m    108\u001b[39m flat_output = out.model_dump(exclude={\u001b[33m\"\u001b[39m\u001b[33moutput\u001b[39m\u001b[33m\"\u001b[39m}) \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(out, \u001b[33m\"\u001b[39m\u001b[33mmodel_dump\u001b[39m\u001b[33m\"\u001b[39m) \u001b[38;5;28;01melse\u001b[39;00m \u001b[38;5;28mdict\u001b[39m(out)\n",
-# 125       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\base_provider.py:41\u001b[39m, in \u001b[36mBaseProvider.run\u001b[39m\u001b[34m(self, input, session_id)\u001b[39m\n\u001b[32m     38\u001b[39m output_schema = \u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     40\u001b[39m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[32m---> \u001b[39m\u001b[32m41\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run_provider\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     42\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mjson\u001b[39m\u001b[33m\"\u001b[39m):\n\u001b[32m     43\u001b[39m         output_schema = output.\u001b[34m__class__\u001b[39m.\u001b[34m__name__\u001b[39m\n",
-# 126       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\system_provider_base.py:90\u001b[39m, in \u001b[36mSystemProviderBase._run_provider\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m     86\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33mf\u001b[39m\u001b[33m\"\u001b[39m\u001b[33mNo state provider registered for state: \u001b[39m\u001b[38;5;132;01m{\u001b[39;00mcurrent\u001b[38;5;132;01m}\u001b[39;00m\u001b[33m\"\u001b[39m)\n\u001b[32m     88\u001b[39m provider_input = {k: v \u001b[38;5;28;01mfor\u001b[39;00m k, v \u001b[38;5;129;01min\u001b[39;00m state.items() \u001b[38;5;28;01mif\u001b[39;00m k != \u001b[33m\"\u001b[39m\u001b[33mstate\u001b[39m\u001b[33m\"\u001b[39m}\n\u001b[32m---> \u001b[39m\u001b[32m90\u001b[39m output = \u001b[43mprovider\u001b[49m\u001b[43m.\u001b[49m\u001b[43mrun\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m=\u001b[49m\u001b[43mprovider_input\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m=\u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m     92\u001b[39m transition_result = \u001b[38;5;28mself\u001b[39m.transition(state, output)\n\u001b[32m     94\u001b[39m state = {**state, **transition_result, \u001b[33m\"\u001b[39m\u001b[33m_last_state\u001b[39m\u001b[33m\"\u001b[39m: current}\n",
-# 127       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\base_provider.py:41\u001b[39m, in \u001b[36mBaseProvider.run\u001b[39m\u001b[34m(self, input, session_id)\u001b[39m\n\u001b[32m     38\u001b[39m output_schema = \u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     40\u001b[39m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[32m---> \u001b[39m\u001b[32m41\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run_provider\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     42\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mjson\u001b[39m\u001b[33m\"\u001b[39m):\n\u001b[32m     43\u001b[39m         output_schema = output.\u001b[34m__class__\u001b[39m.\u001b[34m__name__\u001b[39m\n",
-# 128       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\state_provider_base.py:94\u001b[39m, in \u001b[36mStateProviderBase._run_provider\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m     91\u001b[39m \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;129;01mnot\u001b[39;00m agent:\n\u001b[32m     92\u001b[39m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mValueError\u001b[39;00m(\u001b[33mf\u001b[39m\u001b[33m\"\u001b[39m\u001b[33mNo agent registered for state: \u001b[39m\u001b[38;5;132;01m{\u001b[39;00mcurrent\u001b[38;5;132;01m}\u001b[39;00m\u001b[33m\"\u001b[39m)\n\u001b[32m---> \u001b[39m\u001b[32m94\u001b[39m agent_output = \u001b[43magent\u001b[49m\u001b[43m.\u001b[49m\u001b[43mrun\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m=\u001b[49m\u001b[43mstate\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m=\u001b[49m\u001b[43msession_id\u001b[49m\u001b[43m)\u001b[49m\n\u001b[32m     95\u001b[39m transition = \u001b[38;5;28mself\u001b[39m.transition(state, agent_output)\n\u001b[32m     96\u001b[39m state.update({\n\u001b[32m     97\u001b[39m     **transition,\n\u001b[32m     98\u001b[39m     \u001b[33m\"\u001b[39m\u001b[33m_last_state\u001b[39m\u001b[33m\"\u001b[39m: current,\n\u001b[32m     99\u001b[39m     \u001b[33m\"\u001b[39m\u001b[33magent_output\u001b[39m\u001b[33m\"\u001b[39m: agent_output\n\u001b[32m    100\u001b[39m })\n",
-# 129       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\base_provider.py:41\u001b[39m, in \u001b[36mBaseProvider.run\u001b[39m\u001b[34m(self, input, session_id)\u001b[39m\n\u001b[32m     38\u001b[39m output_schema = \u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     40\u001b[39m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[32m---> \u001b[39m\u001b[32m41\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run_provider\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     42\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mhasattr\u001b[39m(output, \u001b[33m\"\u001b[39m\u001b[33mjson\u001b[39m\u001b[33m\"\u001b[39m):\n\u001b[32m     43\u001b[39m         output_schema = output.\u001b[34m__class__\u001b[39m.\u001b[34m__name__\u001b[39m\n",
-# 130       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\app\\providers\\agent_provider_base.py:37\u001b[39m, in \u001b[36mAgentProviderBase._run_provider\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m     36\u001b[39m \u001b[38;5;28;01mdef\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[34m_run_provider\u001b[39m(\u001b[38;5;28mself\u001b[39m, \u001b[38;5;28minput\u001b[39m: \u001b[38;5;28mdict\u001b[39m) -> AgentOutputSchema:\n\u001b[32m---> \u001b[39m\u001b[32m37\u001b[39m     output = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43m_run\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;28;43minput\u001b[39;49m\u001b[43m)\u001b[49m\n\u001b[32m     39\u001b[39m     \u001b[38;5;28mself\u001b[39m._log.debug(\u001b[33mf\u001b[39m\u001b[33m\"\u001b[39m\u001b[33m🧻 _run_provider called for: \u001b[39m\u001b[38;5;132;01m{\u001b[39;00m\u001b[38;5;28mself\u001b[39m.config.name\u001b[38;5;250m \u001b[39m\u001b[38;5;28;01mif\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[38;5;28mself\u001b[39m.config\u001b[38;5;250m \u001b[39m\u001b[38;5;28;01melse\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[33m'\u001b[39m\u001b[33munknown\u001b[39m\u001b[33m'\u001b[39m\u001b[38;5;132;01m}\u001b[39;00m\u001b[33m\"\u001b[39m)\n\u001b[32m     41\u001b[39m     \u001b[38;5;66;03m#  === Extract structured blocks ===\u001b[39;00m\n",
-# 131       "\u001b[36mFile \u001b[39m\u001b[32mC:\\Repos\\codecritic\\extensions\\1d5b0d17-5996-4969-b7bc-82ff2ddd3f2e.py:6\u001b[39m, in \u001b[36mCodeStabilityAgentProvider._run\u001b[39m\u001b[34m(self, input)\u001b[39m\n\u001b[32m      5\u001b[39m \u001b[38;5;28;01mdef\u001b[39;00m\u001b[38;5;250m \u001b[39m\u001b[34m_run\u001b[39m(\u001b[38;5;28mself\u001b[39m, \u001b[38;5;28minput\u001b[39m: \u001b[38;5;28mdict\u001b[39m) -> AgentOutputSchema:\n\u001b[32m----> \u001b[39m\u001b[32m6\u001b[39m     score_result = \u001b[38;5;28;43mself\u001b[39;49m\u001b[43m.\u001b[49m\u001b[43mscore_provider\u001b[49m.run(\u001b[38;5;28minput\u001b[39m, session_id=\u001b[38;5;28minput\u001b[39m[\u001b[33m\"\u001b[39m\u001b[33msession_id\u001b[39m\u001b[33m\"\u001b[39m])\n\u001b[32m      7\u001b[39m     \u001b[38;5;28;01mif\u001b[39;00m score_result.value >= \u001b[32m1.0\u001b[39m:\n\u001b[32m      8\u001b[39m         \u001b[38;5;28;01mreturn\u001b[39;00m AgentOutputSchema(\n\u001b[32m      9\u001b[39m             response=\u001b[33m\"\u001b[39m\u001b[33m[AGENT_DECISION]accept[/AGENT_DECISION]\u001b[39m\u001b[33m\"\u001b[39m,\n\u001b[32m     10\u001b[39m             log=\u001b[33m\"\u001b[39m\u001b[33mCode passed all stability checks.\u001b[39m\u001b[33m\"\u001b[39m,\n\u001b[32m     11\u001b[39m             decision=\u001b[33m\"\u001b[39m\u001b[33maccept\u001b[39m\u001b[33m\"\u001b[39m,\n\u001b[32m     12\u001b[39m             snapshot_id=\u001b[38;5;28;01mNone\u001b[39;00m\n\u001b[32m     13\u001b[39m         )\n",
-# 132       "\u001b[31mAttributeError\u001b[39m: 'CodeStabilityAgentProvider' object has no attribute 'score_provider'"
-# 133      ]
-# 134     }
-# 135    ],
-# 136    "source": [
-# 137     "#  🧪 Run Program Using SessionConfig\n",
-# 138     "\n",
-# 139     "from app.db.models import SessionConfig\n",
-# 140     "from app.factories.program_provider_factory import ProgramProviderFactory\n",
-# 141     "from sqlalchemy.orm import Session\n",
-# 142     "from pathlib import Path\n",
-# 143     "import json\n",
-# 144     "\n",
-# 145     "#  Fetch session config\n",
-# 146     "with Session(bind=engine) as db:\n",
-# 147     "    session_row = db.query(SessionConfig).filter_by(id=1).first()\n",
-# 148     "    assert session_row, \"❌ No session config found\"\n",
-# 149     "\n",
-# 150     "#  Prepare test file\n",
-# 151     "file = Path(\"tests/session_linked_execution.py\")\n",
-# 152     "file.write_text(\"def ping( user ):\\n return f\\\"pong {user}\\\"\")\n",
+# 114      "name": "stderr",
+# 115      "output_type": "stream",
+# 116      "text": [
+# 117       "📜 No conversation log entry block found in response.\n"
+# 118      ]
+# 119     },
+# 120     {
+# 121      "name": "stdout",
+# 122      "output_type": "stream",
+# 123      "text": [
+# 124       "✅ Final Program Result (via SessionConfig):\n",
+# 125       "{\n",
+# 126       "  \"state\": \"end\",\n",
+# 127       "  \"previous_state\": \"preprocessing\",\n",
+# 128       "  \"state_type\": \"end\",\n",
+# 129       "  \"reason\": \"success\",\n",
+# 130       "  \"decision\": \"final\",\n",
+# 131       "  \"steps\": 2,\n",
+# 132       "  \"max_steps\": 20,\n",
+# 133       "  \"summary\": \"preprocessing complete\",\n",
+# 134       "  \"output\": {\n",
+# 135       "    \"state\": \"end\",\n",
+# 136       "    \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 137       "    \"working_file\": null,\n",
+# 138       "    \"session_id\": 1,\n",
+# 139       "    \"system\": \"codecritic_test_session\",\n",
+# 140       "    \"reason\": \"preprocessing complete\",\n",
+# 141       "    \"steps\": 2,\n",
+# 142       "    \"retry_count\": 0,\n",
+# 143       "    \"_last_state\": \"preprocessing\",\n",
+# 144       "    \"output\": {}\n",
+# 145       "  },\n",
+# 146       "  \"provider_name\": \"codecritic_program\"\n",
+# 147       "}\n"
+# 148      ]
+# 149     }
+# 150    ],
+# 151    "source": [
+# 152     "#  🧪 Run Program Using SessionConfig\n",
 # 153     "\n",
-# 154     "#  Construct input using session metadata\n",
-# 155     "input_data = {\n",
-# 156     "    \"file_name\":  str(file),\n",
-# 157     "    \"session_id\": session_row.id,\n",
-# 158     "    \"system\":     session_row.name\n",
-# 159     "}\n",
-# 160     "\n",
-# 161     "#  Run associated program\n",
-# 162     "program = ProgramProviderFactory.create(id=session_row.program_provider_id)\n",
-# 163     "result = program.run(input_data)\n",
+# 154     "from app.db.models import SessionConfig\n",
+# 155     "from app.factories.program_provider_factory import ProgramProviderFactory\n",
+# 156     "from sqlalchemy.orm import Session\n",
+# 157     "from pathlib import Path\n",
+# 158     "import json\n",
+# 159     "\n",
+# 160     "#  Fetch session config\n",
+# 161     "with Session(bind=engine) as db:\n",
+# 162     "    session_row = db.query(SessionConfig).filter_by(id=1).first()\n",
+# 163     "    assert session_row, \"❌ No session config found\"\n",
 # 164     "\n",
-# 165     "print(\"✅ Final Program Result (via SessionConfig):\")\n",
-# 166     "print(json.dumps(result.model_dump(), indent=2))\n"
-# 167    ]
-# 168   },
-# 169   {
-# 170    "cell_type": "markdown",
-# 171    "metadata": {},
-# 172    "source": [
-# 173     "# # #  Load raw log entries"
-# 174    ]
-# 175   },
-# 176   {
-# 177    "cell_type": "code",
-# 178    "execution_count": null,
-# 179    "metadata": {},
-# 180    "outputs": [],
-# 181    "source": [
-# 182     "import sqlite3\n",
-# 183     "import pandas as pd\n",
-# 184     "import json\n",
-# 185     "from app.db.connection import DB_PATH\n",
-# 186     "\n",
-# 187     "#  Connect and query\n",
-# 188     "conn = sqlite3.connect(DB_PATH)\n",
-# 189     "df = pd.read_sql(\"SELECT * FROM provider_log WHERE session_id='1'\", conn)\n",
-# 190     "conn.close()\n",
-# 191     "\n",
-# 192     "#  Pretty-print each log entry\n",
-# 193     "for i, row in df.iterrows():\n",
-# 194     "    print(f\"\\n🔹 Entry {i + 1} — ID {row['id']}\")\n",
-# 195     "    print(f\"🕒 Timestamp: {row['timestamp']}\")\n",
-# 196     "    print(f\"🧩 Provider ID: {row['provider_id']} ({row['provider_type']})\")\n",
-# 197     "    print(f\"📦 Output Schema: {row['output_schema']}\")\n",
-# 198     "    print(f\"⏱️ Latency: {row['latency_ms']} ms\")\n",
-# 199     "    print(f\"📄 File Name: {row['file_name']}\")\n",
-# 200     "    print(f\"🔑 Config Hash: {row['config_hash']}\")\n",
-# 201     "    \n",
-# 202     "    #  🔁 Caller trace\n",
-# 203     "    called_by_type = row.get(\"called_by_type\", None)\n",
-# 204     "    called_by_id = row.get(\"called_by_id\", None)\n",
-# 205     "    if called_by_type or called_by_id:\n",
-# 206     "        print(f\"🧭 Called By: {called_by_type} (ID {called_by_id})\")\n",
-# 207     "\n",
-# 208     "    #  Safely parse JSON input/output if possible\n",
-# 209     "    try:\n",
-# 210     "        parsed_input = json.loads(row['input'])\n",
-# 211     "        parsed_output = json.loads(row['output'])\n",
-# 212     "        print(\"📥 Input:\")\n",
-# 213     "        print(json.dumps(parsed_input, indent=2))\n",
-# 214     "        print(\"📤 Output:\")\n",
-# 215     "        print(json.dumps(parsed_output, indent=2))\n",
-# 216     "    except Exception:\n",
-# 217     "        print(f\"📥 Input (raw): {row['input']}\")\n",
-# 218     "        print(f\"📤 Output (raw): {row['output']}\")\n",
-# 219     "\n",
-# 220     "    print(\"—\" * 80)\n"
-# 221    ]
-# 222   },
-# 223   {
-# 224    "cell_type": "markdown",
-# 225    "metadata": {},
+# 165     "#  Prepare test file\n",
+# 166     "file = Path(\"tests/session_linked_execution.py\")\n",
+# 167     "file.write_text(\"def ping( user ):\\n return f\\\"pong {user}\\\"\")\n",
+# 168     "\n",
+# 169     "#  Construct input using session metadata\n",
+# 170     "input_data = {\n",
+# 171     "    \"file_name\":  str(file),\n",
+# 172     "    \"session_id\": session_row.id,\n",
+# 173     "    \"system\":     session_row.name\n",
+# 174     "}\n",
+# 175     "\n",
+# 176     "#  Run associated program\n",
+# 177     "program = ProgramProviderFactory.create(id=session_row.program_provider_id)\n",
+# 178     "result = program.run(input_data)\n",
+# 179     "\n",
+# 180     "print(\"✅ Final Program Result (via SessionConfig):\")\n",
+# 181     "print(json.dumps(result.model_dump(), indent=2))\n"
+# 182    ]
+# 183   },
+# 184   {
+# 185    "cell_type": "markdown",
+# 186    "metadata": {},
+# 187    "source": [
+# 188     "# # #  Load raw log entries"
+# 189    ]
+# 190   },
+# 191   {
+# 192    "cell_type": "code",
+# 193    "execution_count": 4,
+# 194    "metadata": {},
+# 195    "outputs": [
+# 196     {
+# 197      "name": "stdout",
+# 198      "output_type": "stream",
+# 199      "text": [
+# 200       "Empty DataFrame\n",
+# 201       "Columns: [id, session_id, system, agent_provider_config_id, agent_type, content, timestamp]\n",
+# 202       "Index: []\n"
+# 203      ]
+# 204     }
+# 205    ],
+# 206    "source": [
+# 207     "import sqlite3, pandas as pd\n",
+# 208     "from app.db.connection import DB_PATH\n",
+# 209     "conn = sqlite3.connect(DB_PATH)\n",
+# 210     "df = pd.read_sql(\"SELECT * FROM agent_conversation_log WHERE session_id='agent-test-session'\", conn)\n",
+# 211     "print(df.head())"
+# 212    ]
+# 213   },
+# 214   {
+# 215    "cell_type": "markdown",
+# 216    "metadata": {},
+# 217    "source": [
+# 218     "# # #  Parse enum fields"
+# 219    ]
+# 220   },
+# 221   {
+# 222    "cell_type": "code",
+# 223    "execution_count": null,
+# 224    "metadata": {},
+# 225    "outputs": [],
 # 226    "source": [
-# 227     "# # #  Parse enum fields"
-# 228    ]
-# 229   },
-# 230   {
-# 231    "cell_type": "code",
-# 232    "execution_count": null,
+# 227     "from app.enums import logging_enums, fsm_enums, agent_enums\n",
+# 228     "print('Columns:', df.columns.tolist())"
+# 229    ]
+# 230   },
+# 231   {
+# 232    "cell_type": "markdown",
 # 233    "metadata": {},
-# 234    "outputs": [],
-# 235    "source": [
-# 236     "from app.enums import logging_enums, fsm_enums, agent_enums\n",
-# 237     "print('Columns:', df.columns.tolist())"
-# 238    ]
-# 239   },
-# 240   {
-# 241    "cell_type": "markdown",
-# 242    "metadata": {},
+# 234    "source": [
+# 235     "# # #  Validate field values"
+# 236    ]
+# 237   },
+# 238   {
+# 239    "cell_type": "code",
+# 240    "execution_count": null,
+# 241    "metadata": {},
+# 242    "outputs": [],
 # 243    "source": [
-# 244     "# # #  Validate field values"
+# 244     "print(df.isnull().sum())"
 # 245    ]
 # 246   },
 # 247   {
-# 248    "cell_type": "code",
-# 249    "execution_count": null,
-# 250    "metadata": {},
-# 251    "outputs": [],
-# 252    "source": [
-# 253     "print(df.isnull().sum())"
-# 254    ]
-# 255   },
-# 256   {
-# 257    "cell_type": "markdown",
-# 258    "metadata": {},
+# 248    "cell_type": "markdown",
+# 249    "metadata": {},
+# 250    "source": [
+# 251     "# # #  Basic counts"
+# 252    ]
+# 253   },
+# 254   {
+# 255    "cell_type": "code",
+# 256    "execution_count": null,
+# 257    "metadata": {},
+# 258    "outputs": [],
 # 259    "source": [
-# 260     "# # #  Basic counts"
-# 261    ]
-# 262   },
-# 263   {
-# 264    "cell_type": "code",
-# 265    "execution_count": null,
-# 266    "metadata": {},
-# 267    "outputs": [],
-# 268    "source": [
-# 269     "print(df.shape)\n",
-# 270     "print(df['timestamp'].min(), df['timestamp'].max())"
-# 271    ]
-# 272   }
-# 273  ],
-# 274  "metadata": {
-# 275   "kernelspec": {
-# 276    "display_name": ".venv",
-# 277    "language": "python",
-# 278    "name": "python3"
-# 279   },
-# 280   "language_info": {
-# 281    "codemirror_mode": {
-# 282     "name": "ipython",
-# 283     "version": 3
-# 284    },
-# 285    "file_extension": ".py",
-# 286    "mimetype": "text/x-python",
-# 287    "name": "python",
-# 288    "nbconvert_exporter": "python",
-# 289    "pygments_lexer": "ipython3",
-# 290    "version": "3.12.6"
-# 291   }
-# 292  },
-# 293  "nbformat": 4,
-# 294  "nbformat_minor": 5
-# 295 }
+# 260     "print(df.shape)\n",
+# 261     "print(df['timestamp'].min(), df['timestamp'].max())"
+# 262    ]
+# 263   }
+# 264  ],
+# 265  "metadata": {
+# 266   "kernelspec": {
+# 267    "display_name": ".venv",
+# 268    "language": "python",
+# 269    "name": "python3"
+# 270   },
+# 271   "language_info": {
+# 272    "codemirror_mode": {
+# 273     "name": "ipython",
+# 274     "version": 3
+# 275    },
+# 276    "file_extension": ".py",
+# 277    "mimetype": "text/x-python",
+# 278    "name": "python",
+# 279    "nbconvert_exporter": "python",
+# 280    "pygments_lexer": "ipython3",
+# 281    "version": "3.12.6"
+# 282   }
+# 283  },
+# 284  "nbformat": 4,
+# 285  "nbformat_minor": 5
+# 286 }
+
+
+# notebooks\eda\eda_agent_engine_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Agent Engine Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM agent_engine_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='agent_engine' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_agent_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Agent Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM agent_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='agent' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_context_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Context Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM context_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='context' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_controller_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Controller Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM controller_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='controller' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_error_log.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Error Log"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load raw log entries"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf = pd.read_sql(\"SELECT * FROM error_log WHERE session_id='agent-test-session'\", conn)\nprint(df.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Parse enum fields"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from app.enums import logging_enums, fsm_enums, agent_enums\nprint('Columns:', df.columns.tolist())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate field values"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.isnull().sum())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Basic counts"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df.shape)\nprint(df['timestamp'].min(), df['timestamp'].max())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_program_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Program Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM program_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='program' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_prompt_providers.ipynb
+
+# 1 {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["#  EDA: Prompt Providers"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# #  Setup\nReset database and seed base data."]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["from pathlib import Path\nimport os, sys\nfrom dotenv import load_dotenv\n\n#  Set working directory explicitly to project root\nPROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n\nos.chdir(PROJECT_ROOT)  #  Change current directory\nsys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n\nprint(\"Working directory is now:\", Path.cwd())\n\nfrom app.db.connection import DB_PATH, close_connection\nfrom sqlalchemy import create_engine\nfrom app.db.seeders.seed_score_providers import seed_score_providers\nfrom app.db.seeders.seed_tool_providers import seed_tool_providers\nfrom app.db.seeders.seed_prompt_providers import seed_prompt_providers\nfrom app.db.seeders.seed_prompts import seed_prompts\nfrom app.db.seeders.seed_context_providers import seed_context_providers\nfrom app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\nfrom app.db.seeders.seed_agent_providers import seed_agent_providers\nfrom app.db.seeders.seed_state_providers import seed_state_providers\nfrom app.db.seeders.seed_system_providers import seed_system_providers\nfrom app.db.seeders.seed_controller_providers import seed_controller_providers\nfrom app.db.seeders.seed_program_provider import seed_program_providers\nfrom app.db.seeders.seed_session_configs import seed_session_configs\nfrom app.db.base import Base\nfrom sqlalchemy.orm import Session\n\n#  \ud83e\uddf9 Reset DB\nclose_connection()\nengine = create_engine(f\"sqlite:///{DB_PATH}\")\nBase.metadata.drop_all(engine)\nBase.metadata.create_all(engine)\n\n#  \ud83c\udf31 Seed database records\nwith Session(bind=engine) as session:\n    seed_prompts(session)\n    seed_prompt_providers(session)\n    seed_tool_providers(session)\n    seed_score_providers(session)\n    seed_context_providers(session)\n    seed_agent_engine_providers(session)\n    seed_agent_providers(session)\n    seed_state_providers(session)\n    seed_system_providers(session)\n    seed_controller_providers(session)\n    seed_program_providers(session)\n    seed_session_configs(session)\n\n#  Load from env/.env relative to project root\ndotenv_path = Path(\"env/.env\").resolve()\nif dotenv_path.exists():\n    load_dotenv(dotenv_path)\n    print(\"\u2705 Loaded environment variables from env/.env\")\nelse:\n    raise FileNotFoundError(f\"\u274c Missing .env file at: {dotenv_path}\")\n"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Load provider configs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["import sqlite3, pandas as pd\nfrom app.db.connection import DB_PATH\nconn = sqlite3.connect(DB_PATH)\ndf_cfg = pd.read_sql('SELECT * FROM prompt_provider_config', conn)\nprint(df_cfg.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Inspect provider logs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["df_log = pd.read_sql(\"SELECT * FROM provider_log WHERE provider_type='prompt' AND session_id='agent-test-session'\", conn)\nprint(df_log.head())"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Validate provider IDs"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["missing = set(df_log['provider_id']) - set(df_cfg['id'])\nprint('Missing:', missing)"]}, {"cell_type": "markdown", "metadata": {}, "source": ["# # #  Log counts by provider_id"]}, {"cell_type": "code", "metadata": {}, "execution_count": null, "outputs": [], "source": ["print(df_log['provider_id'].value_counts())"]}], "metadata": {"kernelspec": {"display_name": ".venv", "language": "python", "name": "python3"}, "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py", "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python", "pygments_lexer": "ipython3", "version": "3.12.6"}}, "nbformat": 4, "nbformat_minor": 5}
+
+
+# notebooks\eda\eda_provider_log.ipynb
+
+# 1 {
+# 2  "cells": [
+# 3   {
+# 4    "cell_type": "markdown",
+# 5    "metadata": {},
+# 6    "source": [
+# 7     "#  EDA: Provider Log"
+# 8    ]
+# 9   },
+# 10   {
+# 11    "cell_type": "markdown",
+# 12    "metadata": {},
+# 13    "source": [
+# 14     "# #  Setup\n",
+# 15     "Reset database and seed base data."
+# 16    ]
+# 17   },
+# 18   {
+# 19    "cell_type": "code",
+# 20    "execution_count": 1,
+# 21    "id": "2522438b",
+# 22    "metadata": {},
+# 23    "outputs": [
+# 24     {
+# 25      "name": "stdout",
+# 26      "output_type": "stream",
+# 27      "text": [
+# 28       "Working directory is now: C:\\Repos\\codecritic\n",
+# 29       "Seeded AgentPrompt 'generate' with ID: 1 and GUID: ee08bdea-9087-48ff-b07c-4eb0b2c7eb8d\n",
+# 30       "Seeded AgentPrompt 'linting_generator_agent' with ID: 2 and GUID: 8eef5c35-ddcd-4536-84cc-40cbf74472b7\n",
+# 31       "Seeded SystemPrompt 'format' with ID: 1 and GUID: 77fe97f2-487b-4a2f-a8ff-190c797d0ad9\n",
+# 32       "Seeded SystemPrompt 'linting_system' with ID: 2 and GUID: d587494d-fa98-480f-9dd8-c8a138cc05db\n",
+# 33       "Seeded prompt provider configurations successfully.\n",
+# 34       "Seeded tool configurations successfully.\n",
+# 35       "Seeded score providers successfully.\n",
+# 36       "Seeded context provider configurations successfully.\n",
+# 37       "Seeded agent engine configurations successfully.\n",
+# 38       "Seeded agent provider configurations successfully.\n",
+# 39       "✅ Seeded state provider configurations successfully.\n",
+# 40       "Seeded system provider configurations successfully.\n",
+# 41       "✅ Seeded controller providers\n",
+# 42       "✅ Seeded program providers\n",
+# 43       "✅ Seeded session configs\n",
+# 44       "✅ Loaded environment variables from env/.env\n"
+# 45      ]
+# 46     }
+# 47    ],
+# 48    "source": [
+# 49     "from pathlib import Path\n",
+# 50     "import os, sys\n",
+# 51     "from dotenv import load_dotenv\n",
+# 52     "\n",
+# 53     "#  Set working directory explicitly to project root\n",
+# 54     "PROJECT_ROOT = Path(r\"C:\\Repos\\codecritic\").resolve()\n",
+# 55     "\n",
+# 56     "os.chdir(PROJECT_ROOT)  #  Change current directory\n",
+# 57     "sys.path.insert(0, str(PROJECT_ROOT))  #  Ensure imports resolve correctly\n",
+# 58     "\n",
+# 59     "print(\"Working directory is now:\", Path.cwd())\n",
+# 60     "\n",
+# 61     "from app.db.connection import DB_PATH, close_connection\n",
+# 62     "from sqlalchemy import create_engine\n",
+# 63     "from app.db.seeders.seed_score_providers import seed_score_providers\n",
+# 64     "from app.db.seeders.seed_tool_providers import seed_tool_providers\n",
+# 65     "from app.db.seeders.seed_prompt_providers import seed_prompt_providers\n",
+# 66     "from app.db.seeders.seed_prompts import seed_prompts\n",
+# 67     "from app.db.seeders.seed_context_providers import seed_context_providers\n",
+# 68     "from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers\n",
+# 69     "from app.db.seeders.seed_agent_providers import seed_agent_providers\n",
+# 70     "from app.db.seeders.seed_state_providers import seed_state_providers\n",
+# 71     "from app.db.seeders.seed_system_providers import seed_system_providers\n",
+# 72     "from app.db.seeders.seed_controller_providers import seed_controller_providers\n",
+# 73     "from app.db.seeders.seed_program_provider import seed_program_providers\n",
+# 74     "from app.db.seeders.seed_session_configs import seed_session_configs\n",
+# 75     "from app.db.base import Base\n",
+# 76     "from sqlalchemy.orm import Session\n",
+# 77     "\n",
+# 78     "#  🧹 Reset DB\n",
+# 79     "close_connection()\n",
+# 80     "engine = create_engine(f\"sqlite:///{DB_PATH}\")\n",
+# 81     "Base.metadata.drop_all(engine)\n",
+# 82     "Base.metadata.create_all(engine)\n",
+# 83     "\n",
+# 84     "#  🌱 Seed database records\n",
+# 85     "with Session(bind=engine) as session:\n",
+# 86     "    seed_prompts(session)\n",
+# 87     "    seed_prompt_providers(session)\n",
+# 88     "    seed_tool_providers(session)\n",
+# 89     "    seed_score_providers(session)\n",
+# 90     "    seed_context_providers(session)\n",
+# 91     "    seed_agent_engine_providers(session)\n",
+# 92     "    seed_agent_providers(session)\n",
+# 93     "    seed_state_providers(session)\n",
+# 94     "    seed_system_providers(session)\n",
+# 95     "    seed_controller_providers(session)\n",
+# 96     "    seed_program_providers(session)\n",
+# 97     "    seed_session_configs(session)\n",
+# 98     "\n",
+# 99     "#  Load from env/.env relative to project root\n",
+# 100     "dotenv_path = Path(\"env/.env\").resolve()\n",
+# 101     "if dotenv_path.exists():\n",
+# 102     "    load_dotenv(dotenv_path)\n",
+# 103     "    print(\"✅ Loaded environment variables from env/.env\")\n",
+# 104     "else:\n",
+# 105     "    raise FileNotFoundError(f\"❌ Missing .env file at: {dotenv_path}\")\n"
+# 106    ]
+# 107   },
+# 108   {
+# 109    "cell_type": "code",
+# 110    "execution_count": 2,
+# 111    "id": "914cc4dd",
+# 112    "metadata": {},
+# 113    "outputs": [
+# 114     {
+# 115      "name": "stderr",
+# 116      "output_type": "stream",
+# 117      "text": [
+# 118       "📜 No conversation log entry block found in response.\n"
+# 119      ]
+# 120     },
+# 121     {
+# 122      "name": "stdout",
+# 123      "output_type": "stream",
+# 124      "text": [
+# 125       "✅ Final Program Result (via SessionConfig):\n",
+# 126       "{\n",
+# 127       "  \"state\": \"end\",\n",
+# 128       "  \"previous_state\": \"preprocessing\",\n",
+# 129       "  \"state_type\": \"end\",\n",
+# 130       "  \"reason\": \"success\",\n",
+# 131       "  \"decision\": \"final\",\n",
+# 132       "  \"steps\": 2,\n",
+# 133       "  \"max_steps\": 20,\n",
+# 134       "  \"summary\": \"preprocessing complete\",\n",
+# 135       "  \"output\": {\n",
+# 136       "    \"state\": \"end\",\n",
+# 137       "    \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 138       "    \"working_file\": null,\n",
+# 139       "    \"session_id\": 1,\n",
+# 140       "    \"system\": \"codecritic_test_session\",\n",
+# 141       "    \"reason\": \"preprocessing complete\",\n",
+# 142       "    \"steps\": 2,\n",
+# 143       "    \"retry_count\": 0,\n",
+# 144       "    \"_last_state\": \"preprocessing\",\n",
+# 145       "    \"output\": {}\n",
+# 146       "  },\n",
+# 147       "  \"provider_name\": \"codecritic_program\"\n",
+# 148       "}\n"
+# 149      ]
+# 150     }
+# 151    ],
+# 152    "source": [
+# 153     "#  🧪 Run Program Using SessionConfig\n",
+# 154     "\n",
+# 155     "from app.db.models import SessionConfig\n",
+# 156     "from app.factories.program_provider_factory import ProgramProviderFactory\n",
+# 157     "from sqlalchemy.orm import Session\n",
+# 158     "from pathlib import Path\n",
+# 159     "import json\n",
+# 160     "\n",
+# 161     "#  Fetch session config\n",
+# 162     "with Session(bind=engine) as db:\n",
+# 163     "    session_row = db.query(SessionConfig).filter_by(id=1).first()\n",
+# 164     "    assert session_row, \"❌ No session config found\"\n",
+# 165     "\n",
+# 166     "#  Prepare test file\n",
+# 167     "file = Path(\"tests/session_linked_execution.py\")\n",
+# 168     "file.write_text(\"def ping( user ):\\n return f\\\"pong {user}\\\"\")\n",
+# 169     "\n",
+# 170     "#  Construct input using session metadata\n",
+# 171     "input_data = {\n",
+# 172     "    \"file_name\":  str(file),\n",
+# 173     "    \"session_id\": session_row.id,\n",
+# 174     "    \"system\":     session_row.name\n",
+# 175     "}\n",
+# 176     "\n",
+# 177     "#  Run associated program\n",
+# 178     "program = ProgramProviderFactory.create(id=session_row.program_provider_id)\n",
+# 179     "result = program.run(input_data, session_id=session_row.id)\n",
+# 180     "\n",
+# 181     "print(\"✅ Final Program Result (via SessionConfig):\")\n",
+# 182     "print(json.dumps(result.model_dump(), indent=2))\n"
+# 183    ]
+# 184   },
+# 185   {
+# 186    "cell_type": "markdown",
+# 187    "id": "5b69097d",
+# 188    "metadata": {},
+# 189    "source": [
+# 190     "# # #  Load raw log entries"
+# 191    ]
+# 192   },
+# 193   {
+# 194    "cell_type": "code",
+# 195    "execution_count": 3,
+# 196    "id": "4be77c00",
+# 197    "metadata": {},
+# 198    "outputs": [
+# 199     {
+# 200      "name": "stdout",
+# 201      "output_type": "stream",
+# 202      "text": [
+# 203       "\n",
+# 204       "🔹 Entry 1 — ID 1\n",
+# 205       "🕒 Timestamp: 2025-06-03T22:20:35.940838+00:00\n",
+# 206       "🧩 Provider ID: 1 (tool)\n",
+# 207       "📦 Output Schema: ToolOutputSchema\n",
+# 208       "⏱️ Latency: 254 ms\n",
+# 209       "📄 File Name: 35cf1734-a44e-4119-a987-c4f93998c35d.py\n",
+# 210       "🔑 Config Hash: None\n",
+# 211       "🧭 Called By: score (ID 2.0)\n",
+# 212       "📥 Input:\n",
+# 213       "{\n",
+# 214       "  \"target\": \"C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\",\n",
+# 215       "  \"check\": true\n",
+# 216       "}\n",
+# 217       "📤 Output:\n",
+# 218       "{\n",
+# 219       "  \"return_code\": 0,\n",
+# 220       "  \"stdout\": \"--- C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\\t2025-06-03 22:20:35.235026+00:00\\n+++ C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\\t2025-06-03 22:20:36.150089+00:00\\n@@ -1,2 +1,2 @@\\n-def ping( user ):\\n- return f\\\"pong {user}\\\"\\n\\\\ No newline at end of file\\n+def ping(user):\\n+    return f\\\"pong {user}\\\"\",\n",
+# 221       "  \"stderr\": \"Identified `C:\\\\Repos\\\\codecritic` as project root containing a .git directory.\\nFound input source: \\\"C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\\\"\\nwould reformat C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\\n\\nOh no! \\ud83d\\udca5 \\ud83d\\udc94 \\ud83d\\udca5\\n1 file would be reformatted.\",\n",
+# 222       "  \"violations\": [\n",
+# 223       "    \"Would reformat C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\"\n",
+# 224       "  ],\n",
+# 225       "  \"metrics\": \"{\\\"files_checked\\\": 1, \\\"files_reformatted\\\": 1, \\\"lines_changed\\\": 1}\",\n",
+# 226       "  \"summary\": \"Black check failed\"\n",
+# 227       "}\n",
+# 228       "————————————————————————————————————————————————————————————————————————————————\n",
+# 229       "\n",
+# 230       "🔹 Entry 2 — ID 2\n",
+# 231       "🕒 Timestamp: 2025-06-03T22:20:36.200044+00:00\n",
+# 232       "🧩 Provider ID: 7 (tool)\n",
+# 233       "📦 Output Schema: ToolOutputSchema\n",
+# 234       "⏱️ Latency: 0 ms\n",
+# 235       "📄 File Name: 8c0b86b1-d5d9-4c6c-b423-42a1035d8df0.py\n",
+# 236       "🔑 Config Hash: None\n",
+# 237       "🧭 Called By: score (ID 2.0)\n",
+# 238       "📥 Input:\n",
+# 239       "{\n",
+# 240       "  \"target\": \"C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\"\n",
+# 241       "}\n",
+# 242       "📤 Output:\n",
+# 243       "{\n",
+# 244       "  \"return_code\": 1,\n",
+# 245       "  \"stdout\": \"{\\n  \\\"session_linked_execution.ping\\\": {\\n    \\\"name\\\": \\\"ping\\\",\\n    \\\"type\\\": \\\"function\\\",\\n    \\\"file\\\": \\\"C:\\\\\\\\Repos\\\\\\\\codecritic\\\\\\\\tests\\\\\\\\session_linked_execution.py\\\",\\n    \\\"lineno\\\": 1,\\n    \\\"col_offset\\\": 0,\\n    \\\"end_lineno\\\": 2,\\n    \\\"end_col_offset\\\": 22,\\n    \\\"scope\\\": \\\"session_linked_execution\\\",\\n    \\\"calls\\\": []\\n  }\\n}\",\n",
+# 246       "  \"stderr\": null,\n",
+# 247       "  \"violations\": null,\n",
+# 248       "  \"metrics\": \"{\\\"session_linked_execution.ping\\\": {\\\"name\\\": \\\"ping\\\", \\\"type\\\": \\\"function\\\", \\\"file\\\": \\\"C:\\\\\\\\Repos\\\\\\\\codecritic\\\\\\\\tests\\\\\\\\session_linked_execution.py\\\", \\\"lineno\\\": 1, \\\"col_offset\\\": 0, \\\"end_lineno\\\": 2, \\\"end_col_offset\\\": 22, \\\"scope\\\": \\\"session_linked_execution\\\", \\\"calls\\\": []}}\",\n",
+# 249       "  \"summary\": \"Symbol graph extraction successful\"\n",
+# 250       "}\n",
+# 251       "————————————————————————————————————————————————————————————————————————————————\n",
+# 252       "\n",
+# 253       "🔹 Entry 3 — ID 3\n",
+# 254       "🕒 Timestamp: 2025-06-03T22:20:36.205078+00:00\n",
+# 255       "🧩 Provider ID: 5 (tool)\n",
+# 256       "📦 Output Schema: ToolOutputSchema\n",
+# 257       "⏱️ Latency: 422 ms\n",
+# 258       "📄 File Name: 9e42ebb8-b75c-4170-9835-34d08c409a2e.py\n",
+# 259       "🔑 Config Hash: None\n",
+# 260       "🧭 Called By: score (ID 2.0)\n",
+# 261       "📥 Input:\n",
+# 262       "{\n",
+# 263       "  \"target\": \"C:\\\\Repos\\\\codecritic\\\\tests\\\\session_linked_execution.py\"\n",
+# 264       "}\n",
+# 265       "📤 Output:\n",
+# 266       "{\n",
+# 267       "  \"return_code\": 0,\n",
+# 268       "  \"stdout\": \"tests\\\\session_linked_execution.py:1: \\u001b[1m\\u001b[91merror:\\u001b[0m Function is missing a type annotation  \\u001b[0m\\u001b[93m[no-untyped-def]\\u001b[0m\\n\\u001b[1m\\u001b[91mFound 1 error in 1 file (checked 1 source file)\\u001b[0m\",\n",
+# 269       "  \"stderr\": null,\n",
+# 270       "  \"violations\": [\n",
+# 271       "    \"tests\\\\session_linked_execution.py:1: \\u001b[1m\\u001b[91merror:\\u001b[0m Function is missing a type annotation  \\u001b[0m\\u001b[93m[no-untyped-def]\\u001b[0m\",\n",
+# 272       "    \"\\u001b[1m\\u001b[91mFound 1 error in 1 file (checked 1 source file)\\u001b[0m\"\n",
+# 273       "  ],\n",
+# 274       "  \"metrics\": \"{\\\"error_count\\\": 2}\",\n",
+# 275       "  \"summary\": \"Mypy strict violations detected\"\n",
+# 276       "}\n",
+# 277       "————————————————————————————————————————————————————————————————————————————————\n",
+# 278       "\n",
+# 279       "🔹 Entry 4 — ID 4\n",
+# 280       "🕒 Timestamp: 2025-06-03T22:20:35.938826+00:00\n",
+# 281       "🧩 Provider ID: 2 (score)\n",
+# 282       "📦 Output Schema: ScoreOutputSchema\n",
+# 283       "⏱️ Latency: 694 ms\n",
+# 284       "📄 File Name: 2ec7a498-75a2-41d2-bd4d-503b400ad8dd.py\n",
+# 285       "🔑 Config Hash: 1b647994448738282cd3340596eed1f8\n",
+# 286       "🧭 Called By: agent (ID 4.0)\n",
+# 287       "📥 Input:\n",
+# 288       "{\n",
+# 289       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 290       "  \"working_file\": \"tests\\\\session_linked_execution_working.py\",\n",
+# 291       "  \"session_id\": 1,\n",
+# 292       "  \"system\": \"codecritic_test_session\",\n",
+# 293       "  \"reason\": \"entering stability check\",\n",
+# 294       "  \"steps\": 4,\n",
+# 295       "  \"retry_count\": 0,\n",
+# 296       "  \"_last_state\": \"start\"\n",
+# 297       "}\n",
+# 298       "📤 Output:\n",
+# 299       "{\n",
+# 300       "  \"name\": \"code_stability_score\",\n",
+# 301       "  \"value\": 0.65,\n",
+# 302       "  \"components\": \"{\\\"utf8_valid\\\": 1.0, \\\"syntax_ok\\\": 1.0, \\\"can_compile\\\": 1.0, \\\"py_compile_ok\\\": 1.0, \\\"can_import\\\": 1.0, \\\"formatter_idempotent\\\": 0.0, \\\"symbol_graph_valid\\\": 0.0, \\\"mypy_ok\\\": 0.0}\",\n",
+# 303       "  \"summary\": \"\\u274c Below threshold (0.85): formatter_idempotent, symbol_graph_valid, mypy_ok\"\n",
+# 304       "}\n",
+# 305       "————————————————————————————————————————————————————————————————————————————————\n",
+# 306       "\n",
+# 307       "🔹 Entry 5 — ID 5\n",
+# 308       "🕒 Timestamp: 2025-06-03T22:20:35.938826+00:00\n",
+# 309       "🧩 Provider ID: 4 (agent)\n",
+# 310       "📦 Output Schema: AgentOutputSchema\n",
+# 311       "⏱️ Latency: 704 ms\n",
+# 312       "📄 File Name: 318f1447-1ce2-4db8-8b88-88df018c6efc.py\n",
+# 313       "🔑 Config Hash: a45805f143e84f088bfe2f82623ba3cc\n",
+# 314       "🧭 Called By: state (ID 3.0)\n",
+# 315       "📥 Input:\n",
+# 316       "{\n",
+# 317       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 318       "  \"working_file\": \"tests\\\\session_linked_execution_working.py\",\n",
+# 319       "  \"session_id\": 1,\n",
+# 320       "  \"system\": \"codecritic_test_session\",\n",
+# 321       "  \"reason\": \"entering stability check\",\n",
+# 322       "  \"steps\": 4,\n",
+# 323       "  \"retry_count\": 0,\n",
+# 324       "  \"_last_state\": \"start\"\n",
+# 325       "}\n",
+# 326       "📤 Output:\n",
+# 327       "{\n",
+# 328       "  \"response\": \"[AGENT_DECISION]reject[/AGENT_DECISION]\",\n",
+# 329       "  \"log\": \"No conversation log entry found. Agent decision was: reject.\",\n",
+# 330       "  \"decision\": \"reject\",\n",
+# 331       "  \"snapshot_id\": null\n",
+# 332       "}\n",
+# 333       "————————————————————————————————————————————————————————————————————————————————\n",
+# 334       "\n",
+# 335       "🔹 Entry 6 — ID 6\n",
+# 336       "🕒 Timestamp: 2025-06-03T22:20:35.933803+00:00\n",
+# 337       "🧩 Provider ID: 3 (state)\n",
+# 338       "📦 Output Schema: StateOutputSchema\n",
+# 339       "⏱️ Latency: 717 ms\n",
+# 340       "📄 File Name: 2a5d6587-d09d-4e45-a3ac-99e0808b92f2.py\n",
+# 341       "🔑 Config Hash: 3f930c027791bf556ea64807a2e5fae6\n",
+# 342       "🧭 Called By: system (ID 1.0)\n",
+# 343       "📥 Input:\n",
+# 344       "{\n",
+# 345       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 346       "  \"working_file\": \"tests\\\\session_linked_execution_working.py\",\n",
+# 347       "  \"session_id\": 1,\n",
+# 348       "  \"system\": \"codecritic_test_session\",\n",
+# 349       "  \"reason\": \"initial stability check\",\n",
+# 350       "  \"steps\": 3,\n",
+# 351       "  \"retry_count\": 0,\n",
+# 352       "  \"_last_state\": \"start\"\n",
+# 353       "}\n",
+# 354       "📤 Output:\n",
+# 355       "{\n",
+# 356       "  \"state\": \"end\",\n",
+# 357       "  \"previous_state\": \"code_stability\",\n",
+# 358       "  \"state_type\": \"end\",\n",
+# 359       "  \"reason\": \"success\",\n",
+# 360       "  \"decision\": \"final\",\n",
+# 361       "  \"steps\": 2,\n",
+# 362       "  \"max_steps\": 20,\n",
+# 363       "  \"summary\": \"stability failed\",\n",
+# 364       "  \"output\": \"{\\\"state\\\": \\\"end\\\", \\\"file_name\\\": \\\"tests\\\\\\\\session_linked_execution.py\\\", \\\"working_file\\\": \\\"tests\\\\\\\\session_linked_execution_working.py\\\", \\\"session_id\\\": 1, \\\"system\\\": \\\"codecritic_test_session\\\", \\\"reason\\\": \\\"stability failed\\\", \\\"steps\\\": 5, \\\"retry_count\\\": 0, \\\"_last_state\\\": \\\"code_stability\\\", \\\"result\\\": \\\"fail\\\", \\\"agent_output\\\": {}}\",\n",
+# 365       "  \"provider_name\": \"CodeStabilityStateProvider\"\n",
+# 366       "}\n",
+# 367       "————————————————————————————————————————————————————————————————————————————————\n",
+# 368       "\n",
+# 369       "🔹 Entry 7 — ID 7\n",
+# 370       "🕒 Timestamp: 2025-06-03T22:20:35.930802+00:00\n",
+# 371       "🧩 Provider ID: 1 (system)\n",
+# 372       "📦 Output Schema: SystemOutputSchema\n",
+# 373       "⏱️ Latency: 727 ms\n",
+# 374       "📄 File Name: d960aa32-9097-4ba4-86d9-3769362a33ed.py\n",
+# 375       "🔑 Config Hash: e6c9c0a27dd52627ba7bcb44b2ce2735\n",
+# 376       "🧭 Called By: controller (ID 1.0)\n",
+# 377       "📥 Input:\n",
+# 378       "{\n",
+# 379       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 380       "  \"working_file\": \"tests\\\\session_linked_execution_working.py\",\n",
+# 381       "  \"session_id\": 1,\n",
+# 382       "  \"system\": \"codecritic_test_session\",\n",
+# 383       "  \"reason\": \"kickoff\",\n",
+# 384       "  \"steps\": 2,\n",
+# 385       "  \"retry_count\": 0,\n",
+# 386       "  \"_last_state\": \"start\"\n",
+# 387       "}\n",
+# 388       "📤 Output:\n",
+# 389       "{\n",
+# 390       "  \"state\": \"end\",\n",
+# 391       "  \"previous_state\": \"code_stability\",\n",
+# 392       "  \"state_type\": \"end\",\n",
+# 393       "  \"reason\": \"success\",\n",
+# 394       "  \"decision\": \"final\",\n",
+# 395       "  \"steps\": 2,\n",
+# 396       "  \"max_steps\": 20,\n",
+# 397       "  \"summary\": \"initial stability failed\\u2014rejecting\",\n",
+# 398       "  \"output\": \"{\\\"state\\\": \\\"end\\\", \\\"file_name\\\": \\\"tests\\\\\\\\session_linked_execution.py\\\", \\\"working_file\\\": \\\"tests\\\\\\\\session_linked_execution_working.py\\\", \\\"session_id\\\": 1, \\\"system\\\": \\\"codecritic_test_session\\\", \\\"reason\\\": \\\"initial stability failed\\\\u2014rejecting\\\", \\\"steps\\\": 4, \\\"retry_count\\\": 0, \\\"_last_state\\\": \\\"code_stability\\\", \\\"output\\\": {}}\",\n",
+# 399       "  \"provider_name\": \"linting_system_provider\"\n",
+# 400       "}\n",
+# 401       "————————————————————————————————————————————————————————————————————————————————\n",
+# 402       "\n",
+# 403       "🔹 Entry 8 — ID 8\n",
+# 404       "🕒 Timestamp: 2025-06-03T22:20:35.925294+00:00\n",
+# 405       "🧩 Provider ID: 1 (controller)\n",
+# 406       "📦 Output Schema: ControllerOutputSchema\n",
+# 407       "⏱️ Latency: 744 ms\n",
+# 408       "📄 File Name: 224468c5-9d32-4f46-85f4-58adcdc7d147.py\n",
+# 409       "🔑 Config Hash: 4c6224205b0117d11e365ee3b8169c3b\n",
+# 410       "🧭 Called By: program (ID 1.0)\n",
+# 411       "📥 Input:\n",
+# 412       "{\n",
+# 413       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 414       "  \"working_file\": null,\n",
+# 415       "  \"session_id\": 1,\n",
+# 416       "  \"system\": \"codecritic_test_session\",\n",
+# 417       "  \"reason\": \"start of program\",\n",
+# 418       "  \"steps\": 1,\n",
+# 419       "  \"retry_count\": 0,\n",
+# 420       "  \"_last_state\": \"start\"\n",
+# 421       "}\n",
+# 422       "📤 Output:\n",
+# 423       "{\n",
+# 424       "  \"state\": \"end\",\n",
+# 425       "  \"previous_state\": \"preprocess\",\n",
+# 426       "  \"state_type\": \"end\",\n",
+# 427       "  \"reason\": \"success\",\n",
+# 428       "  \"decision\": \"final\",\n",
+# 429       "  \"steps\": 2,\n",
+# 430       "  \"max_steps\": 20,\n",
+# 431       "  \"summary\": \"after preprocessing\",\n",
+# 432       "  \"output\": \"{\\\"state\\\": \\\"end\\\", \\\"file_name\\\": \\\"tests\\\\\\\\session_linked_execution.py\\\", \\\"working_file\\\": \\\"tests\\\\\\\\session_linked_execution_working.py\\\", \\\"session_id\\\": 1, \\\"system\\\": \\\"codecritic_test_session\\\", \\\"reason\\\": \\\"after preprocessing\\\", \\\"steps\\\": 3, \\\"retry_count\\\": 0, \\\"_last_state\\\": \\\"preprocess\\\", \\\"output\\\": {}}\",\n",
+# 433       "  \"provider_name\": \"preprocessing_controller\"\n",
+# 434       "}\n",
+# 435       "————————————————————————————————————————————————————————————————————————————————\n",
+# 436       "\n",
+# 437       "🔹 Entry 9 — ID 9\n",
+# 438       "🕒 Timestamp: 2025-06-03T22:20:35.917142+00:00\n",
+# 439       "🧩 Provider ID: 1 (program)\n",
+# 440       "📦 Output Schema: ProgramOutputSchema\n",
+# 441       "⏱️ Latency: 762 ms\n",
+# 442       "📄 File Name: bc74757a-fead-4ac3-880c-35317e1830ee.py\n",
+# 443       "🔑 Config Hash: 3e7d13641b1321169516a47fefdc8e71\n",
+# 444       "🧭 Called By: None (ID nan)\n",
+# 445       "📥 Input:\n",
+# 446       "{\n",
+# 447       "  \"file_name\": \"tests\\\\session_linked_execution.py\",\n",
+# 448       "  \"session_id\": 1,\n",
+# 449       "  \"system\": \"codecritic_test_session\"\n",
+# 450       "}\n",
+# 451       "📤 Output:\n",
+# 452       "{\n",
+# 453       "  \"state\": \"end\",\n",
+# 454       "  \"previous_state\": \"preprocessing\",\n",
+# 455       "  \"state_type\": \"end\",\n",
+# 456       "  \"reason\": \"success\",\n",
+# 457       "  \"decision\": \"final\",\n",
+# 458       "  \"steps\": 2,\n",
+# 459       "  \"max_steps\": 20,\n",
+# 460       "  \"summary\": \"preprocessing complete\",\n",
+# 461       "  \"output\": \"{\\\"state\\\": \\\"end\\\", \\\"file_name\\\": \\\"tests\\\\\\\\session_linked_execution.py\\\", \\\"working_file\\\": null, \\\"session_id\\\": 1, \\\"system\\\": \\\"codecritic_test_session\\\", \\\"reason\\\": \\\"preprocessing complete\\\", \\\"steps\\\": 2, \\\"retry_count\\\": 0, \\\"_last_state\\\": \\\"preprocessing\\\", \\\"output\\\": {}}\",\n",
+# 462       "  \"provider_name\": \"codecritic_program\"\n",
+# 463       "}\n",
+# 464       "————————————————————————————————————————————————————————————————————————————————\n"
+# 465      ]
+# 466     }
+# 467    ],
+# 468    "source": [
+# 469     "import sqlite3\n",
+# 470     "import pandas as pd\n",
+# 471     "import json\n",
+# 472     "from app.db.connection import DB_PATH\n",
+# 473     "\n",
+# 474     "#  Connect and query\n",
+# 475     "conn = sqlite3.connect(DB_PATH)\n",
+# 476     "df = pd.read_sql(\"SELECT * FROM provider_log WHERE session_id='1'\", conn)\n",
+# 477     "conn.close()\n",
+# 478     "\n",
+# 479     "#  Pretty-print each log entry\n",
+# 480     "for i, row in df.iterrows():\n",
+# 481     "    print(f\"\\n🔹 Entry {i + 1} — ID {row['id']}\")\n",
+# 482     "    print(f\"🕒 Timestamp: {row['timestamp']}\")\n",
+# 483     "    print(f\"🧩 Provider ID: {row['provider_id']} ({row['provider_type']})\")\n",
+# 484     "    print(f\"📦 Output Schema: {row['output_schema']}\")\n",
+# 485     "    print(f\"⏱️ Latency: {row['latency_ms']} ms\")\n",
+# 486     "    print(f\"📄 File Name: {row['file_name']}\")\n",
+# 487     "    print(f\"🔑 Config Hash: {row['config_hash']}\")\n",
+# 488     "    \n",
+# 489     "    #  🔁 Caller trace\n",
+# 490     "    called_by_type = row.get(\"called_by_type\", None)\n",
+# 491     "    called_by_id = row.get(\"called_by_id\", None)\n",
+# 492     "    if called_by_type or called_by_id:\n",
+# 493     "        print(f\"🧭 Called By: {called_by_type} (ID {called_by_id})\")\n",
+# 494     "\n",
+# 495     "    #  Safely parse JSON input/output if possible\n",
+# 496     "    try:\n",
+# 497     "        parsed_input = json.loads(row['input'])\n",
+# 498     "        parsed_output = json.loads(row['output'])\n",
+# 499     "        print(\"📥 Input:\")\n",
+# 500     "        print(json.dumps(parsed_input, indent=2))\n",
+# 501     "        print(\"📤 Output:\")\n",
+# 502     "        print(json.dumps(parsed_output, indent=2))\n",
+# 503     "    except Exception:\n",
+# 504     "        print(f\"📥 Input (raw): {row['input']}\")\n",
+# 505     "        print(f\"📤 Output (raw): {row['output']}\")\n",
+# 506     "\n",
+# 507     "    print(\"—\" * 80)\n"
+# 508    ]
+# 509   },
+# 510   {
+# 511    "cell_type": "markdown",
+# 512    "id": "f5ec6abd",
+# 513    "metadata": {},
+# 514    "source": [
+# 515     "# # #  Parse enum fields"
+# 516    ]
+# 517   },
+# 518   {
+# 519    "cell_type": "code",
+# 520    "execution_count": 4,
+# 521    "id": "523a44df",
+# 522    "metadata": {},
+# 523    "outputs": [
+# 524     {
+# 525      "name": "stdout",
+# 526      "output_type": "stream",
+# 527      "text": [
+# 528       "Columns: ['id', 'session_id', 'timestamp', 'provider_id', 'provider_type', 'input', 'output', 'output_schema', 'latency_ms', 'config_hash', 'file_name', 'called_by_type', 'called_by_id']\n"
+# 529      ]
+# 530     }
+# 531    ],
+# 532    "source": [
+# 533     "from app.enums import logging_enums, fsm_enums, agent_enums\n",
+# 534     "print('Columns:', df.columns.tolist())"
+# 535    ]
+# 536   },
+# 537   {
+# 538    "cell_type": "markdown",
+# 539    "id": "8125f31a",
+# 540    "metadata": {},
+# 541    "source": [
+# 542     "# # #  Validate field values"
+# 543    ]
+# 544   },
+# 545   {
+# 546    "cell_type": "code",
+# 547    "execution_count": 5,
+# 548    "id": "b4eac47e",
+# 549    "metadata": {},
+# 550    "outputs": [
+# 551     {
+# 552      "name": "stdout",
+# 553      "output_type": "stream",
+# 554      "text": [
+# 555       "id                0\n",
+# 556       "session_id        0\n",
+# 557       "timestamp         0\n",
+# 558       "provider_id       0\n",
+# 559       "provider_type     0\n",
+# 560       "input             0\n",
+# 561       "output            0\n",
+# 562       "output_schema     0\n",
+# 563       "latency_ms        0\n",
+# 564       "config_hash       3\n",
+# 565       "file_name         0\n",
+# 566       "called_by_type    1\n",
+# 567       "called_by_id      1\n",
+# 568       "dtype: int64\n"
+# 569      ]
+# 570     }
+# 571    ],
+# 572    "source": [
+# 573     "print(df.isnull().sum())"
+# 574    ]
+# 575   },
+# 576   {
+# 577    "cell_type": "markdown",
+# 578    "id": "2f23f140",
+# 579    "metadata": {},
+# 580    "source": [
+# 581     "# # #  Basic counts"
+# 582    ]
+# 583   },
+# 584   {
+# 585    "cell_type": "code",
+# 586    "execution_count": 6,
+# 587    "id": "395ba601",
+# 588    "metadata": {},
+# 589    "outputs": [
+# 590     {
+# 591      "name": "stdout",
+# 592      "output_type": "stream",
+# 593      "text": [
+# 594       "(9, 13)\n",
+# 595       "2025-06-03T22:20:35.917142+00:00 2025-06-03T22:20:36.205078+00:00\n"
+# 596      ]
+# 597     }
+# 598    ],
+# 599    "source": [
+# 600     "print(df.shape)\n",
+# 601     "print(df['timestamp'].min(), df['timestamp'].max())"
+# 602    ]
+# 603   }
+# 604  ],
+# 605  "metadata": {
+# 606   "kernelspec": {
+# 607    "display_name": ".venv",
+# 608    "language": "python",
+# 609    "name": "python3"
+# 610   },
+# 611   "language_info": {
+# 612    "codemirror_mode": {
+# 613     "name": "ipython",
+# 614     "version": 3
+# 615    },
+# 616    "file_extension": ".py",
+# 617    "mimetype": "text/x-python",
+# 618    "name": "python",
+# 619    "nbconvert_exporter": "python",
+# 620    "pygments_lexer": "ipython3",
+# 621    "version": "3.12.6"
+# 622   }
+# 623  },
+# 624  "nbformat": 4,
+# 625  "nbformat_minor": 5
+# 626 }
 
 
 # notebooks\eda\eda_score_providers.ipynb

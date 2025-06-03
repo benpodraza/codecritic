@@ -1,6 +1,7 @@
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 
+
 class LintingGeneratorAgentProvider(AgentProviderBase):
     """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
     def _run(self, input: dict) -> AgentOutputSchema:
@@ -32,20 +33,21 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
             session_id=session_id
         )
 
+        response = engine_output.response
         decision = (
-            "accept" if "[AGENT_DECISION]accept" in engine_output.response else
-            "reject" if "[AGENT_DECISION]reject" in engine_output.response else
+            "accept" if "[AGENT_DECISION]accept" in response else
+            "reject" if "[AGENT_DECISION]reject" in response else
             "unknown"
         )
 
         log = None
-        if "[CONVERSATION_LOG_ENTRY]" in engine_output.response:
-            start = engine_output.response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
-            end = engine_output.response.find("[/CONVERSATION_LOG_ENTRY]")
-            log = engine_output.response[start:end].strip() if start < end else None
+        if "[CONVERSATION_LOG_ENTRY]" in response:
+            start = response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
+            end = response.find("[/CONVERSATION_LOG_ENTRY]")
+            log = response[start:end].strip() if start < end else None
 
         return AgentOutputSchema(
-            response=engine_output.response,
+            response=response,
             log=log,
             decision=decision,
             snapshot_id=None

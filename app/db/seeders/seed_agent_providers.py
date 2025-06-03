@@ -84,7 +84,8 @@ def seed_agent_providers(db_session: Session):
             description=entry["description"],
             artifact_path=dest_filename,
             tags=entry["tags"],
-            config=entry["config"]
+            config=entry["config"],
+            agent_type=entry["agent_type"]
         )
 
         db_session.add(config)

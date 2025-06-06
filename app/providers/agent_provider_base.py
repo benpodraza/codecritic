@@ -115,9 +115,6 @@ class AgentProviderBase(BaseProvider):
         ))
         self._log.debug("✅ AGENT_CONVERSATION log write complete")
 
-        output.log = log_content
-        output.decision = decision
-        output.snapshot_id = snapshot_id
         return output
 
     def _infer_decision(self, text: str) -> DECISION_TYPE:

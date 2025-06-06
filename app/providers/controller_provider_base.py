@@ -1,25 +1,22 @@
 from __future__ import annotations
-
 from abc import abstractmethod
-from typing import Dict
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-import shutil, json
+import shutil
+from typing import Dict
 
-from app.enums.system_enums import STATE_DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ControllerOutputSchema
-from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
-
 
 class ControllerProviderBase(FSMProviderBase):
     def __init__(
         self,
         config=None,
+        system_providers: Dict[str, object] = None,
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        system_providers: Dict[str, object] = None,
         called_by_type=None,
         called_by_id=None,
     ):
@@ -28,42 +25,53 @@ class ControllerProviderBase(FSMProviderBase):
             called_by_type=called_by_type,
             called_by_id=called_by_id
         )
+        self._systems = system_providers or {}
         self.context_provider = context_provider
-        self.score_provider   = score_provider
-        self.tool_providers   = tool_providers or []
-        self._states = system_providers or {}
+        self.score_provider = score_provider
+        self.tool_providers = tool_providers or []
 
     def _run_provider(self, input: dict) -> ControllerOutputSchema:
         session_id = input.get("session_id")
-        src = Path(input["file_name"])
         max_steps = input.get("max_steps", 20)
 
-        self.working_file = src.with_name(f"{src.stem}_working{src.suffix}")
+        incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+
+        if not incoming_file:
+            raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
+
+        self.incoming_file = incoming_file
+
+        src = Path(incoming_file).resolve()
+        # derive base name without any suffixes or appended labels
+        root = src.stem.split('.')[0]
+        timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+        working_dir = Path("working_files").resolve()
+        working_dir.mkdir(parents=True, exist_ok=True)
+        self.working_file = working_dir / f"{root}.__ctrl_{timestamp}{src.suffix}"
         shutil.copy(src, self.working_file)
 
         state = {
             "state": "start",
-            "file_name": input["file_name"],
-            "working_file": str(self.working_file),
+            "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
             "reason": input.get("reason", "start"),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
+            "_last_state": input.get("_last_state"),
         }
 
         step_count = 0
 
         while True:
-            current = state["state"]
+            current = state.get("state")
 
             if step_count >= max_steps:
                 return ControllerOutputSchema(
                     state="end",
                     previous_state=current,
                     state_type=STATE_TYPE.END,
-                    reason=REASON_TYPE.MAX_STEPS,
-                    decision=STATE_DECISION_TYPE.UNKNOWN,
+                    decision=DECISION_TYPE.UNKNOWN,
                     steps=step_count,
                     max_steps=max_steps,
                     summary=f"Max steps ({max_steps}) reached",
@@ -76,11 +84,10 @@ class ControllerProviderBase(FSMProviderBase):
                     state="end",
                     previous_state=state.get("_last_state"),
                     state_type=STATE_TYPE.END,
-                    reason=REASON_TYPE.SUCCESS,
-                    decision=STATE_DECISION_TYPE.FINAL,
+                    decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
                     max_steps=max_steps,
-                    summary=state.get("reason", "Completed"),
+                    summary=state.get("summary", "Completed"),
                     output=state,
                     provider_name=self._config.name
                 )
@@ -88,27 +95,38 @@ class ControllerProviderBase(FSMProviderBase):
             step_count += 1
 
             if current == "start":
-                nxt = self.transition(state, None)
-                state.update(nxt, _last_state="start")
+                transition = self.transition(state, None)
+                state.update(transition, _last_state="start")
                 continue
 
-            provider = self._states.get(current)
+            provider = self._systems.get(current)
             if not provider:
-                raise ValueError(f"No system provider registered for state '{current}'")
+                raise ValueError(f"No system provider registered for state: {current}")
 
-            inp = {k: v for k, v in state.items() if k != "state"}
-            out = provider.run(input=inp, session_id=session_id)
+            provider_input = {k: v for k, v in state.items() if k != "state"}
+            output = provider.run(input=provider_input, session_id=session_id)
 
-            nxt = self.transition(state, out)
-            flat_output = out.model_dump(exclude={"output"}) if hasattr(out, "model_dump") else dict(out)
-            clean_nxt = {k: v for k, v in nxt.items() if k != "output"}
+            transition_result = self.transition(state, output)
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
 
-            # Flatten controller's state output
-            state.update(clean_nxt, _last_state=current)
-            state["output"] = flat_output.get("output", {})  # only keep what's in `.output`
+            # if the provider accepted, update the working copy
+            if getattr(output, "decision", None) == DECISION_TYPE.ACCEPT:
+                new_path = getattr(output, "file_path", None) or provider_input.get("file_path")
+                if new_path:
+                    new_path = Path(new_path).resolve()
+                    current_path = Path(state["file_path"]).resolve()
+                    if new_path != current_path and new_path.exists():
+                        shutil.copy(new_path, current_path)
 
+            state = {
+                **state,
+                **transition_result,
+                "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+                "score": getattr(output, "score", None),
+                "_last_state": current,
+                "state_output": flat_output,
+            }
 
     @abstractmethod
-    def _transition(self, state: dict, sys_output: dict | None) -> dict:
-        """Return next state dict: {'state': '...', 'reason': '...'}. Do not return an output schema."""
+    def _transition(self, state: dict, output: dict | None) -> dict:
         ...

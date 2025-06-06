@@ -46,7 +46,6 @@ class AgentEngineProviderBase(BaseProvider):
         agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
         agent_id = input.get("agent_id", -1)
 
-
         before_code = ""
         prior_notes = ""
         if file_path:
@@ -79,13 +78,20 @@ class AgentEngineProviderBase(BaseProvider):
                 "unknown"
             )
 
-            if not code_block or not before_code or code_block == before_code:
+            def normalize_code(code: str) -> str:
+                return "\n".join(line.strip() for line in code.strip().splitlines() if line.strip())
+
+            # 🛑 Bail out if output is missing or semantically unchanged
+            if not code_block or not before_code or normalize_code(code_block) == normalize_code(before_code):
+                self._log.debug("🟡 Generator returned output matching input (normalized)")
+                self._log.debug(f"🔍 BEFORE:\n{before_code}")
+                self._log.debug(f"🆕 AFTER:\n{code_block}")
                 return AgentEngineOutput(
                     response=response_text,
                     token_count=token_count,
                     cost_usd=cost_usd,
                     snapshot_id=None,
-                    summary="No change detected",
+                    summary="No change detected (normalized)",
                 )
 
             after_code = code_block.rstrip()
@@ -175,7 +181,7 @@ class AgentEngineProviderBase(BaseProvider):
             summary = log_block or "Snapshot successfully written"
 
         except Exception as exc:
-            self._log.error(f"Error during agent run: {exc}")
+            self._log.error(f"❌ Error during agent run: {exc}")
             summary = f"Error: {str(exc)}"
             cost_usd = 0.0
 
@@ -186,6 +192,7 @@ class AgentEngineProviderBase(BaseProvider):
             snapshot_id=snapshot_id,
             summary=summary,
         )
+
 
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
         start = text.find(start_tag)

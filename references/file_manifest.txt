@@ -172,8 +172,8 @@ codecritic
       - codecritic_program_example.py
       - codecritic_program_example_working.py
       - context_example.py
-      - example1.py
-      - example1_working.py
+      - example1-11.py
+      - example1_working-11.py
       - example_black_target.py
       - example_lint_target.py
       - notebooks
@@ -209,3 +209,82 @@ codecritic
       - system_linting_example.py
       - system_linting_example_working.py
    - utilities.ipynb
+   - working_files
+      - 04fd648c69134e62bad5370843e109b5_stripped.py
+      - 064a50db19f947e28d4156dd5ac8366d_stripped.py
+      - 13ee01ee866f4804a5c6267c2743af70_stripped.py
+      - 16206d7a1bd646b0a1dd83a9502badcb_stripped.py
+      - 19cd6b33cd474fa2b23ab1b3d6134080_stripped.py
+      - 1a1a192ea8ed45f88e29e92a8f1e72a1_stripped.py
+      - 1ebcf24256434a17b2c01c71bb8e7ca5.py
+      - 2143254857e545df873f86e18f8253d9_stripped.py
+      - 273b91a2c37c47139802bfa3b5e35957_stripped.py
+      - 2fde7bb8d0474976896df2e08f1628f3_stripped.py
+      - 34b9735d780347daa04faf88ef456ec5_stripped.py
+      - 366985c9e481441ea8e52ff16aefe9cc_stripped.py
+      - 38641265a6944ab1b0bbf96099e34a2b_stripped.py
+      - 3ec5c03d777e4654b67d2771ff4c3fff_stripped.py
+      - 40bdb074b23140e7a40a1b74b994331c_stripped.py
+      - 4de8f9ded132428c9512d4f683e99500_stripped.py
+      - 583e42b75380465ca13b5132ee7c120a.py
+      - 5bd484d4f66b4cd7b7f58866b2d6600a_stripped.py
+      - 601ad5f3b3cd42d2b029fc6a5d8ebb67_stripped.py
+      - 672bf17df0c14f3091a136b7a0f2ac54_stripped.py
+      - 6d8211cd3e4b4bfb896ed98fbf9f180f_stripped.py
+      - 80b87a4dd93c46e79bee9cec742c2efa.py
+      - 84f4fcf2db364a3f8afc873bc500eb8b_stripped.py
+      - b04c5bcbc88946b993012185dc577508_stripped.py
+      - b0ee49755d244d85bc7dc0c507b3c8fc.py
+      - b163de0a8e6d4eed9745ea5291bf18b5_stripped.py
+      - b6d9c780566946439d3b6fd2f6960fe3_stripped.py
+      - bee35f3ee28b43598840c28ddf445b5b.py
+      - c3d55617cd1c456ba6035afc97e5f9b8_stripped.py
+      - c58fc0f017e6477abe40fff5b33860e4_stripped.py
+      - cc6bba8999814b19bfcc484b83d70999_stripped.py
+      - ccb160d4fcf04bce820d996cef307ef6_stripped.py
+      - ecc6f0503a20445e9b9036184fc7a556.py
+      - ef94c3dee07f483da6710e386fe15a55_stripped.py
+      - f786ffa2e66b4b0a994b73b40fa4dbb2_stripped.py
+      - fc923ad02b3b4a9caae811a725b52929_stripped.py
+      - session_linked_execution.__ctrl_1209535164.py
+      - session_linked_execution.__ctrl_1213378437.py
+      - session_linked_execution.__ctrl_1216440283.py
+      - session_linked_execution.__ctrl_1226321785.py
+      - session_linked_execution.__ctrl_1235373058.py
+      - session_linked_execution.__ctrl_1237573999.py
+      - session_linked_execution.__prog_1209535067.py
+      - session_linked_execution.__prog_1213378349.py
+      - session_linked_execution.__prog_1216440203.py
+      - session_linked_execution.__prog_1226321690.py
+      - session_linked_execution.__prog_1235372979.py
+      - session_linked_execution.__prog_1237573899.py
+      - session_linked_execution.__state_1209535301.py
+      - session_linked_execution.__state_1209535583.py
+      - session_linked_execution.__state_1210050036.py
+      - session_linked_execution.__state_1210050399.py
+      - session_linked_execution.__state_1213378547.py
+      - session_linked_execution.__state_1213378834.py
+      - session_linked_execution.__state_1213433477.py
+      - session_linked_execution.__state_1213433794.py
+      - session_linked_execution.__state_1216440393.py
+      - session_linked_execution.__state_1216440674.py
+      - session_linked_execution.__state_1216480571.py
+      - session_linked_execution.__state_1216480857.py
+      - session_linked_execution.__state_1226321899.py
+      - session_linked_execution.__state_1226322209.py
+      - session_linked_execution.__state_1226379552.py
+      - session_linked_execution.__state_1226379818.py
+      - session_linked_execution.__state_1235373172.py
+      - session_linked_execution.__state_1235373458.py
+      - session_linked_execution.__state_1235423434.py
+      - session_linked_execution.__state_1235423708.py
+      - session_linked_execution.__state_1237574139.py
+      - session_linked_execution.__state_1237574464.py
+      - session_linked_execution.__state_1238027354.py
+      - session_linked_execution.__state_1238027630.py
+      - session_linked_execution.__sys_1209535241.py
+      - session_linked_execution.__sys_1213378491.py
+      - session_linked_execution.__sys_1216440338.py
+      - session_linked_execution.__sys_1226321837.py
+      - session_linked_execution.__sys_1235373112.py
+      - session_linked_execution.__sys_1237574059.py

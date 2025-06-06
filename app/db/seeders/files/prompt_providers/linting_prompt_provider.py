@@ -1,10 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
-import textwrap
+
 import json
+from pathlib import Path
 
 from app.providers.prompt_provider_base import PromptProviderBase
 from app.db.schemas import PromptOutputSchema
+
 
 class LintingPromptProvider(PromptProviderBase):
     def _run(self, input: dict) -> PromptOutputSchema:
@@ -18,39 +19,33 @@ class LintingPromptProvider(PromptProviderBase):
         if not self.agent_text or not self.system_text or not self._context_provider:
             raise ValueError("Missing required prompt text or context provider")
 
-        context_output = self._context_provider.run({
-            "file_path": file_path,
-            "session_id": session_id,
-            "system": system
-        })
+        context_output = self._context_provider.run(
+            {
+                "file_path": file_path,
+                "system": system
+            },
+            session_id=session_id
+        )
         context = context_output.context if hasattr(context_output, "context") else json.loads(context_output)
 
         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
-        score = context.get("score", {}).get("value", "unknown")
-        source_code = context.get("source_code", "")
 
-        full_prompt = textwrap.dedent(f"""\
+        full_prompt = f"""
+{self.system_text}
 
-            {self.agent_text}
+---
 
-            ---
+{self.agent_text}
 
-            {self.system_text}
+---
 
-            ---
+[CONTEXT]
+{json.dumps(context, indent=2)}
 
-            Score: {score}
-            Conversation Log:
-            {convo_section}
+---
 
-            ---
+[CONVERSATION LOG]
+{convo_section}
+""".strip()
 
-            [SOURCE_CODE]
-            {source_code.rstrip()}
-            [/SOURCE_CODE]
-        """)
-
-        return PromptOutputSchema(
-            prompt=full_prompt,
-            summary=f"Prompt for file: {Path(file_path).name} with score {score}"
-        )
+        return PromptOutputSchema(prompt=full_prompt)

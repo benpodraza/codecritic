@@ -28,7 +28,7 @@ def suppress_output():
 
 class CodeStabilityScoreProvider(ScoreProviderBase):
     def _run(self, input: dict) -> ScoreOutputSchema:
-        file_name = Path(input["file_name"]).resolve()
+        file_name = Path(input["file_path"]).resolve()
         components: Dict[str, bool] = {}
 
         try:
@@ -69,59 +69,17 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
                 components["can_import"] = False
                 return self._final_score(components)
 
-        # Optional tool checks
-        available = {tool._config.name: tool for tool in getattr(self, "tool_providers", [])}
-
-        def safe_check(name: str, callback) -> bool:
-            try:
-                return callback()
-            except Exception:
-                return False
-
-        components["formatter_idempotent"] = safe_check("black", lambda: (
-            json.loads(available["black"].run({"target": str(file_name), "check": True}, session_id=self._session_id))["return_code"] == 0
-        ))
-
-        components["symbol_graph_valid"] = safe_check("symbol_graph", lambda: (
-            lambda res: bool(res) and all(node.get("name") and node.get("lineno") for node in res.values())
-        )(json.loads(available["symbol_graph"].run({"target": str(file_name)}, session_id=self._session_id))))
-
-        components["mypy_ok"] = safe_check("mypy", lambda: (
-            json.loads(available["mypy"].run({"target": str(file_name)}, session_id=self._session_id))["return_code"] in (0, 1)
-        ))
-
         return self._final_score(components)
 
     def _final_score(self, components: Dict[str, bool]) -> ScoreOutputSchema:
-        weights = {
-            "utf8_valid": 0.15,
-            "syntax_ok": 0.15,
-            "can_compile": 0.15,
-            "py_compile_ok": 0.10,
-            "can_import": 0.10,
-            "formatter_idempotent": 0.15,
-            "symbol_graph_valid": 0.10,
-            "mypy_ok": 0.10
-        }
-
-        # Compute weighted score
-        score = round(
-            sum(weights[k] for k, v in components.items() if v and k in weights),
-            3
-        )
-
-        # Apply pass/fail threshold
-        threshold = 0.85
-        summary = (
-            "✅ All critical checks passed." if score >= threshold
-            else f"❌ Below threshold ({threshold}): " +
-                ", ".join(k for k, v in components.items() if not v)
-        )
+        critical_keys = ["utf8_valid", "syntax_ok", "can_compile", "py_compile_ok", "can_import"]
+        passed = all(components.get(k, False) for k in critical_keys)
+        value = 1.0 if passed else 0.0
+        summary = "✅ Executable" if passed else "❌ Not executable"
 
         return ScoreOutputSchema(
             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
-            value=score,
+            value=value,
             components={k: float(v) for k, v in components.items()},
             summary=summary
         )
-

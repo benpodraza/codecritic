@@ -16,6 +16,7 @@ SYSTEM_PROVIDERS = [
         "description": "System to iteratively lint and evaluate Python code.",
         "tags": ["linting", "system"],
         "config": {
+            "score_provider_id": 1,
             "states": {
                 "generate": 1,     
                 "discriminate": 2,

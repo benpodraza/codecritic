@@ -306,12 +306,12 @@ class AgentEngineOutput(BaseModel):
     snapshot_id: Optional[str] = None
     summary: Optional[str] = None
 
-# app/db/schemas.py
 class AgentOutputSchema(BaseModel):
-    response: str
+    decision: DECISION_TYPE
+    score: Optional[float] = None
+    response: Optional[str] = None 
     log: Optional[str] = None
-    decision: Optional[str] = None
-    snapshot_id: Optional[str] = None
+    file_path: Optional[str] = None
 
 class ContextOutputSchema(BaseModel):
     context: dict
@@ -325,8 +325,7 @@ class FSMOutputSchema(BaseModel):
     state: str
     previous_state: Optional[str] = None
     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
-    reason: REASON_TYPE = REASON_TYPE.UNSPECIFIED
-    decision: Optional[STATE_DECISION_TYPE] = STATE_DECISION_TYPE.UNKNOWN
+    decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
     steps: int = Field(..., ge=0)
     max_steps: int = Field(..., gt=0)
     summary: Optional[str] = None

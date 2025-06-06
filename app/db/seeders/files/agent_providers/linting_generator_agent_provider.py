@@ -40,15 +40,29 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
             "unknown"
         )
 
+        # Try to extract log and code blocks
         log = None
         if "[CONVERSATION_LOG_ENTRY]" in response:
             start = response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
             end = response.find("[/CONVERSATION_LOG_ENTRY]")
             log = response[start:end].strip() if start < end else None
 
+        code = self._extract_block(response, "[CODE]", "[/CODE]")
+        log_entry = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+
+        # 🧠 Infer accept if valid code and log but no explicit decision
+        if decision == "unknown" and code and log_entry:
+            decision = "accept"
+            self._log.debug("✅ Generator decision inferred as 'accept' based on presence of code and log.")
+        elif decision == "unknown":
+            self._log.warning("⚠️ Generator decision remained 'unknown'; [AGENT_DECISION] tag may be missing.")
+
         return AgentOutputSchema(
             response=response,
             log=log,
             decision=decision,
-            snapshot_id=None
+            snapshot_id=engine_output.snapshot_id,
+            file_path=engine_output.file_path if hasattr(engine_output, "file_path") else None,
+            score=engine_output.score if hasattr(engine_output, "score") else None
         )
+

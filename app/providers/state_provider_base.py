@@ -1,12 +1,13 @@
 from __future__ import annotations
-
 from abc import abstractmethod
+from datetime import datetime
+from pathlib import Path
+import shutil
 from typing import Dict
-from app.enums.system_enums import STATE_DECISION_TYPE
-from app.enums.fsm_enums import STATE_TYPE, REASON_TYPE
+
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import StateOutputSchema
-
 
 class StateProviderBase(FSMProviderBase):
     def __init__(
@@ -19,11 +20,7 @@ class StateProviderBase(FSMProviderBase):
         called_by_type=None,
         called_by_id=None,
     ):
-        super().__init__(
-            config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id
-        )
+        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
         self._states = agent_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
@@ -31,13 +28,27 @@ class StateProviderBase(FSMProviderBase):
 
     def _run_provider(self, input: dict) -> StateOutputSchema:
         session_id = input.get("session_id")
-        max_steps = input.get("max_steps", 20)
+        max_steps = input.get("max_steps", 10)
+
+        incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+
+        if not incoming_file:
+            raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
+
+        self.incoming_file = incoming_file
+
+        src = Path(incoming_file).resolve()
+        timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+        working_dir = Path("working_files").resolve()
+        working_dir.mkdir(parents=True, exist_ok=True)
+        root = src.name.partition('.')[0]
+        self.working_file = working_dir / f"{root}.__state_{timestamp}{src.suffix}"
+        shutil.copy(src, self.working_file)
 
         state = {
             "state": "start",
-            "file_name": input.get("file_name"),
-            "working_file": input.get("working_file"),
-            "session_id": session_id,
+            "file_path": str(self.working_file),
+            "session_id": input.get("session_id"),
             "system": input.get("system", "unknown"),
             "reason": input.get("reason", "start"),
             "steps": input.get("steps", 0),
@@ -55,8 +66,7 @@ class StateProviderBase(FSMProviderBase):
                     state="end",
                     previous_state=current,
                     state_type=STATE_TYPE.END,
-                    reason=REASON_TYPE.MAX_STEPS,
-                    decision=STATE_DECISION_TYPE.UNKNOWN,
+                    decision=DECISION_TYPE.UNKNOWN,
                     steps=step_count,
                     max_steps=max_steps,
                     summary=f"Max steps ({max_steps}) reached",
@@ -69,11 +79,10 @@ class StateProviderBase(FSMProviderBase):
                     state="end",
                     previous_state=state.get("_last_state"),
                     state_type=STATE_TYPE.END,
-                    reason=REASON_TYPE.SUCCESS,
-                    decision=STATE_DECISION_TYPE.FINAL,
+                    decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
                     max_steps=max_steps,
-                    summary=state.get("reason", "Completed"),
+                    summary=state.get("summary", "Completed"),
                     output=state,
                     provider_name=self._config.name
                 )
@@ -87,19 +96,43 @@ class StateProviderBase(FSMProviderBase):
 
             provider = self._states.get(current)
             if not provider:
-                raise ValueError(f"No agent provider registered for state: {current}")
+                raise ValueError(f"No state provider registered for state: {current}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, session_id=session_id)
 
-            transition_result = self.transition(state, output)
+            # Promote from nested output BEFORE flattening
+            nested_output = getattr(output, "output", {})
+            if isinstance(nested_output, str):
+                try:
+                    import json
+                    nested_output = json.loads(nested_output)
+                except Exception:
+                    nested_output = {}
+
+            if isinstance(nested_output, dict):
+                nested_file_path = nested_output.get("file_path")
+                if nested_file_path:
+                    output.file_path = nested_file_path
+                output.score = nested_output.get("score", getattr(output, "score", None))
+                output.decision = nested_output.get("decision", getattr(output, "decision", None))
+
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+
+            # File overwriting protocol
+            if hasattr(output, "file_path") and output.file_path:
+                new_path = Path(output.file_path).resolve()
+                current_path = Path(state["file_path"]).resolve()
+                if new_path != current_path:
+                    shutil.copy(new_path, current_path)
 
             state = {
                 **state,
-                **transition_result,
+                **self.transition(state, output),
+                "file_path": getattr(output, "file_path", state.get("file_path")),
+                "score": getattr(output, "score", None),
                 "_last_state": current,
-                "agent_output": flat_output.get("output", {})
+                "state_output": flat_output,
             }
 
     @abstractmethod

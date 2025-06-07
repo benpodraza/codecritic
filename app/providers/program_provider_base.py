@@ -8,6 +8,7 @@ from typing import Dict
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ProgramOutputSchema
+from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 
 class ProgramProviderBase(FSMProviderBase):
@@ -41,7 +42,7 @@ class ProgramProviderBase(FSMProviderBase):
         self.incoming_file = incoming_file
 
         src = Path(incoming_file).resolve()
-        root = src.stem.split('.')[0]
+        root = extract_base_filename(src)
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
         working_dir = Path("working_files").resolve()
         working_dir.mkdir(parents=True, exist_ok=True)
@@ -94,16 +95,8 @@ class ProgramProviderBase(FSMProviderBase):
                     session_id=session_id
                 )
 
-                print("")
-                print("PROGRAM TEST")
-                print("file1 ", state.get("file_path"))
-                print("file2 ", self.incoming_file)
-
-                print("BEST FILE: ", best_file)
-                print("")
-
                 # 🏁 Copy to new final file
-                final_path = Path("working_files") / f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                final_path = Path("working_files") / f"final_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
                 shutil.copy(Path(best_file).resolve(), final_path)
                 state["file_path"] = str(final_path)
                 state["decision"] = final_decision

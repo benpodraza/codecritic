@@ -7,6 +7,7 @@ from typing import Dict
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import SystemOutputSchema
+from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 
 
@@ -45,7 +46,7 @@ class SystemProviderBase(FSMProviderBase):
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
         working_dir = Path("working_files").resolve()
         working_dir.mkdir(parents=True, exist_ok=True)
-        root = src.name.partition('.')[0]
+        root = extract_base_filename(src)
         self.working_file = working_dir / f"{root}.__sys_{timestamp}{src.suffix}"
         shutil.copy(src, self.working_file)
         self._generated_files.append(self.working_file)
@@ -89,7 +90,7 @@ class SystemProviderBase(FSMProviderBase):
                     session_id=session_id
                 )
 
-                final_path = Path("working_files") / f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                final_path = Path("working_files") / f"final_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
                 shutil.copy(Path(best_file), final_path)
                 state["file_path"] = str(final_path)
 

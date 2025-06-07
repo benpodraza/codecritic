@@ -129,6 +129,7 @@ codecritic
          - __init__.py
          - diff_utils.py
          - extension_loader.py
+         - extract_base_filename.py
          - file_management
             - __init__.py
          - metadata
@@ -154,7 +155,9 @@ codecritic
       - CodeCritic - Specification - 5-17-2025.md
    - env
    - htmlcov
+   - lib
    - mypy.ini
+   - provider_tree.html
    - pytest
    - pytest.ini
    - references
@@ -181,21 +184,8 @@ codecritic
          - .mypy_cache
          - __init__.py
          - eda
-            - eda_agent_conversation_log.ipynb
-            - eda_agent_engine_providers.ipynb
-            - eda_agent_providers.ipynb
-            - eda_context_providers.ipynb
-            - eda_controller_providers.ipynb
-            - eda_error_log.ipynb
-            - eda_program_providers.ipynb
-            - eda_prompt_providers.ipynb
             - eda_provider_log.ipynb
-            - eda_score_providers.ipynb
-            - eda_snapshot_metrics.ipynb
-            - eda_state_providers.ipynb
             - eda_state_transition_log.ipynb
-            - eda_system_providers.ipynb
-            - eda_tool_providers.ipynb
          - functional_tests
          - insights
          - system_development
@@ -211,12 +201,4 @@ codecritic
       - system_linting_example_working.py
    - utilities.ipynb
    - working_files
-      - 122d09b4746b4f77bef234e7d19565d1_stripped.py
-      - 2da3beba357144c48f948709be73d35d_stripped.py
-      - 3182535c31114479a3a521a556faca26_stripped.py
-      - c8ebbf117e2445d2a7c5fa670d2ca21e_stripped.py
-      - d4ba6b257cd844569d4ffc174c0d1be4_stripped.py
-      - fe5abe2b34c842f2831e812f0a4163f0_stripped.py
-      - final_0752007448.py
-      - final_0752039118.py
-      - final_0752054681.py
+      - final_prog_1753403055.py

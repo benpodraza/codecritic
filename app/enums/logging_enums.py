@@ -18,6 +18,7 @@ class PROVIDER_TYPE(str, Enum):
     SYSTEM = "system"
     CONTROLLER = "controller"
     PROGRAM = "program"
+    SESSION = "session"
     UNKNOWN = "unknown"
 
 class ERROR_TYPE(str, Enum):

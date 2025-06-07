@@ -18,6 +18,7 @@ PROGRAM_PROVIDERS = [
         "description": "Top-level orchestration of all system controllers.",
         "tags": ["program", "codecritic"],
         "config": {
+            "score_provider_id": 1,
             "controllers": {
                 "preprocessing": 1
             }

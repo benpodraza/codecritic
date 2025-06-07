@@ -18,6 +18,7 @@ CONTROLLER_PROVIDERS = [
         "description": "Runs only the preprocessing step (e.g. linting).",
         "tags": ["preprocessing", "controller"],
         "config": {
+            "score_provider_id": 1,
             "systems": {
                 "preprocess": 1   # ID of your linting_system_provider
             }

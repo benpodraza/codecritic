@@ -16,6 +16,7 @@ STATE_PROVIDERS = [
         "Runs the generator agent in its own FSM wrapper.",
         ["linting", "generator"],
         {
+            "score_provider_id": 1,
             "agents": {
                 "generate": 2
             }
@@ -28,6 +29,7 @@ STATE_PROVIDERS = [
         "Runs the discriminator agent in its own FSM wrapper.",
         ["linting", "discriminator"],
         {
+            "score_provider_id": 1,
             "agents": {
                 "discriminate": 3
             }
@@ -40,6 +42,7 @@ STATE_PROVIDERS = [
         "Gates code based on parse, compile, import, and static validation success.",
         ["stability"],
         {
+            "score_provider_id": 1,
             "agents": {
                 "code_stability": 4  # Agent ID of CodeStabilityAgentProvider
             }

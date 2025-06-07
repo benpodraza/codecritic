@@ -26,9 +26,6 @@ class LintingSystemProvider(SystemProviderBase):
             else:
                 result = getattr(output_obj, "decision", None)
 
-        if result == "pass":
-            result = "accept"
-
         transition = {}
 
         if current == "start":
@@ -74,59 +71,11 @@ class LintingSystemProvider(SystemProviderBase):
 
         elif current == "discriminate":
             if result == "accept":
-                session_id = state.get("session_id", "")
-                system = state.get("system", "unknown")
-
-                working_file = str(Path(self.working_file).resolve())
-                original_file = str(Path(self.incoming_file).resolve())
-                new_file = state_output.output.get("file_path") if state_output.output else None
-
-                discriminator_score = state_output.output.get("score") if state_output.output else None
-
-                working_score = self.score_provider.run(
-                    {"file_path": working_file, "system": system},
-                    session_id=session_id
-                ).value
-
-                original_score = self.score_provider.run(
-                    {"file_path": original_file, "system": system},
-                    session_id=session_id
-                ).value
-
-                scores = {
-                    "discriminator": discriminator_score,
-                    "working": working_score,
-                    "original": original_score
+                transition = {
+                    "state": "end",
+                    "reason": "discriminator accepted generation",
+                    "file_path": state.get("file_path")
                 }
-
-                best_label, best_score = max(scores.items(), key=lambda kv: kv[1])
-                best_file = {
-                    "discriminator": new_file,
-                    "working": working_file,
-                    "original": original_file
-                }.get(best_label, working_file)
-
-                if best_file is None:
-                    best_file = working_file
-
-                # 🧠 THIS IS THE POLICY ENFORCEMENT POINT
-                self.working_file = str(Path(best_file).resolve())  # ← Update the working_file permanently
-
-                if best_score >= self.SCORE_THRESHOLD:
-                    transition = {
-                        "state": "end",
-                        "reason": f"best file = {best_label}, score = {best_score}",
-                        "decision": DECISION_TYPE.ACCEPT if best_label != "original" else DECISION_TYPE.REJECT,
-                        "score": best_score,
-                        "file_path": best_file
-                    }
-                else:
-                    transition = {
-                        "state": "generate",
-                        "reason": "all scores below threshold—retrying with best available file",
-                        "file_path": best_file
-                    }
-
             else:
                 transition = {
                     "state": "generate",

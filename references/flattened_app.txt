@@ -925,123 +925,107 @@
 # 11 
 # 12 class LintingDiscriminatorAgentProvider(AgentProviderBase):
 # 13     def _run(self, input: dict) -> AgentOutputSchema:
-# 14         print('LINTING DISCRIMINATOR ACTIVATED')
-# 15         snapshot = read_latest_snapshot(session_id=self._session_id)
-# 16 
-# 17         if not snapshot:
-# 18             print("")
-# 19             print("SNAPSHOT NOT FOUND")
-# 20             print("")
-# 21             return AgentOutputSchema(
-# 22                 decision="reject",
-# 23                 log="No snapshot found.",
-# 24                 response=(
-# 25                     "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-# 26                     "[CONVERSATION_LOG_ENTRY]No snapshot found.[/CONVERSATION_LOG_ENTRY]"
-# 27                 ),
-# 28                 file_path=None,
-# 29                 score=None
-# 30             )
-# 31 
-# 32         #  Extract both content and paths
-# 33         before_code = snapshot["before"]
-# 34         after_code = snapshot["after"]
-# 35         before_path = snapshot["before_path"]
-# 36         after_path = snapshot["after_path"]
-# 37 
-# 38         print('')
-# 39         print('LINTING DISCRIMINATOR ACTIVATED')
-# 40         print('before path:', before_path)
-# 41         print('after path', after_path)
-# 42         print('')
-# 43 
-# 44         before_score = self._score_provider.run({"file_path": before_path}, session_id=self._session_id).value
-# 45         after_score = self._score_provider.run({"file_path": after_path}, session_id=self._session_id).value
-# 46 
-# 47         print('')
-# 48         print('LINTING DISCRIMINATOR SCORES')
-# 49         print('before score:', before_score)
-# 50         print('after score', after_score)
-# 51         print('')
-# 52 
-# 53         if before_code == after_code:
-# 54             if before_score >= LINTING_PASS_THRESHOLD:
-# 55                 return AgentOutputSchema(
-# 56                     decision="accept",
-# 57                     log="No meaningful change, but score already passing.",
-# 58                     response=(
-# 59                         "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
-# 60                         "[CONVERSATION_LOG_ENTRY]No meaningful change, but score already passing.[/CONVERSATION_LOG_ENTRY]"
-# 61                     ),
-# 62                     file_path=before_path,
-# 63                     score=before_score
-# 64                 )
-# 65             else:
-# 66                 return AgentOutputSchema(
-# 67                     decision="reject",
-# 68                     log="No meaningful change and score below threshold.",
-# 69                     response=(
-# 70                         "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-# 71                         "[CONVERSATION_LOG_ENTRY]No meaningful change and score below threshold.[/CONVERSATION_LOG_ENTRY]"
-# 72                     ),
-# 73                     file_path=before_path,
-# 74                     score=before_score
-# 75                 )
-# 76 
-# 77         summary = summarize_diff(before_code, after_code).strip()
-# 78         if not summary:
-# 79             if before_score >= LINTING_PASS_THRESHOLD:
-# 80                 return AgentOutputSchema(
-# 81                     decision="accept",
-# 82                     log="Diff not available, but prior version passes.",
-# 83                     response=(
-# 84                         "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
-# 85                         "[CONVERSATION_LOG_ENTRY]Diff could not be summarized, but prior version passes.[/CONVERSATION_LOG_ENTRY]"
-# 86                     ),
-# 87                     file_path=before_path,
-# 88                     score=before_score
-# 89                 )
-# 90             else:
-# 91                 return AgentOutputSchema(
-# 92                     decision="reject",
-# 93                     log="Diff could not be summarized and prior version fails.",
-# 94                     response=(
-# 95                         "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-# 96                         "[CONVERSATION_LOG_ENTRY]Diff could not be summarized and prior version fails.[/CONVERSATION_LOG_ENTRY]"
-# 97                     ),
-# 98                     file_path=before_path,
-# 99                     score=before_score
-# 100                 )
-# 101 
-# 102         #  Determine winner based on score and threshold
-# 103         if after_score > before_score and after_score >= LINTING_PASS_THRESHOLD:
-# 104             decision = "accept"
-# 105             chosen_code = after_code
-# 106             score = after_score
-# 107         elif before_score >= LINTING_PASS_THRESHOLD:
-# 108             decision = "accept"
-# 109             chosen_code = before_code
-# 110             score = before_score
-# 111         else:
-# 112             decision = "reject"
-# 113             chosen_code = after_code
-# 114             score = after_score
-# 115 
-# 116         #  Write chosen_code to disk for downstream use
-# 117         output_path = Path("working_files") / f"{uuid.uuid4().hex}.py"
-# 118         output_path.parent.mkdir(parents=True, exist_ok=True)
-# 119         output_path.write_text(chosen_code, encoding="utf-8")
-# 120 
-# 121         return AgentOutputSchema(
-# 122             decision=decision,
-# 123             log=summary,
-# 124             response=(
-# 125                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 126                 f"[CONVERSATION_LOG_ENTRY]{summary}[/CONVERSATION_LOG_ENTRY]"
-# 127             ),
-# 128             file_path=str(output_path),
-# 129             score=score
-# 130         )
+# 14         snapshot = read_latest_snapshot(session_id=self._session_id)
+# 15 
+# 16         if not snapshot:
+# 17             return AgentOutputSchema(
+# 18                 decision="reject",
+# 19                 log="No snapshot found.",
+# 20                 response=(
+# 21                     "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
+# 22                     "[CONVERSATION_LOG_ENTRY]No snapshot found.[/CONVERSATION_LOG_ENTRY]"
+# 23                 ),
+# 24                 file_path=None,
+# 25                 score=None
+# 26             )
+# 27 
+# 28         #  Extract both content and paths
+# 29         before_code = snapshot["before"]
+# 30         after_code = snapshot["after"]
+# 31         before_path = snapshot["before_path"]
+# 32         after_path = snapshot["after_path"]
+# 33 
+# 34         before_score = self._score_provider.run({"file_path": before_path}, session_id=self._session_id).value
+# 35         after_score = self._score_provider.run({"file_path": after_path}, session_id=self._session_id).value
+# 36 
+# 37         if before_code == after_code:
+# 38             if before_score >= LINTING_PASS_THRESHOLD:
+# 39                 return AgentOutputSchema(
+# 40                     decision="accept",
+# 41                     log="No meaningful change, but score already passing.",
+# 42                     response=(
+# 43                         "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
+# 44                         "[CONVERSATION_LOG_ENTRY]No meaningful change, but score already passing.[/CONVERSATION_LOG_ENTRY]"
+# 45                     ),
+# 46                     file_path=before_path,
+# 47                     score=before_score
+# 48                 )
+# 49             else:
+# 50                 return AgentOutputSchema(
+# 51                     decision="reject",
+# 52                     log="No meaningful change and score below threshold.",
+# 53                     response=(
+# 54                         "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
+# 55                         "[CONVERSATION_LOG_ENTRY]No meaningful change and score below threshold.[/CONVERSATION_LOG_ENTRY]"
+# 56                     ),
+# 57                     file_path=before_path,
+# 58                     score=before_score
+# 59                 )
+# 60 
+# 61         summary = summarize_diff(before_code, after_code).strip()
+# 62         if not summary:
+# 63             if before_score >= LINTING_PASS_THRESHOLD:
+# 64                 return AgentOutputSchema(
+# 65                     decision="accept",
+# 66                     log="Diff not available, but prior version passes.",
+# 67                     response=(
+# 68                         "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
+# 69                         "[CONVERSATION_LOG_ENTRY]Diff could not be summarized, but prior version passes.[/CONVERSATION_LOG_ENTRY]"
+# 70                     ),
+# 71                     file_path=before_path,
+# 72                     score=before_score
+# 73                 )
+# 74             else:
+# 75                 return AgentOutputSchema(
+# 76                     decision="reject",
+# 77                     log="Diff could not be summarized and prior version fails.",
+# 78                     response=(
+# 79                         "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
+# 80                         "[CONVERSATION_LOG_ENTRY]Diff could not be summarized and prior version fails.[/CONVERSATION_LOG_ENTRY]"
+# 81                     ),
+# 82                     file_path=before_path,
+# 83                     score=before_score
+# 84                 )
+# 85 
+# 86         #  Determine winner based on score and threshold
+# 87         if after_score > before_score and after_score >= LINTING_PASS_THRESHOLD:
+# 88             decision = "accept"
+# 89             chosen_code = after_code
+# 90             score = after_score
+# 91         elif before_score >= LINTING_PASS_THRESHOLD:
+# 92             decision = "accept"
+# 93             chosen_code = before_code
+# 94             score = before_score
+# 95         else:
+# 96             decision = "reject"
+# 97             chosen_code = after_code
+# 98             score = after_score
+# 99 
+# 100         #  Write chosen_code to disk for downstream use
+# 101         output_path = Path("working_files") / f"{uuid.uuid4().hex}.py"
+# 102         output_path.parent.mkdir(parents=True, exist_ok=True)
+# 103         output_path.write_text(chosen_code, encoding="utf-8")
+# 104 
+# 105         return AgentOutputSchema(
+# 106             decision=decision,
+# 107             log=summary,
+# 108             response=(
+# 109                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 110                 f"[CONVERSATION_LOG_ENTRY]{summary}[/CONVERSATION_LOG_ENTRY]"
+# 111             ),
+# 112             file_path=str(output_path),
+# 113             score=score
+# 114         )
 
 
 # db\seeders\files\agent_providers\linting_generator_agent_provider.py
@@ -1055,69 +1039,65 @@
 # 7     def _run(self, input: dict) -> AgentOutputSchema:
 # 8         session_id = self._session_id
 # 9         file_path = input["file_path"]
-# 10         print('')
-# 11         print("this linting generator agent provider is evaluating this file")
-# 12         print(f"{file_path}")
-# 13         print('')
-# 14         system = input.get("system", "linting")
-# 15 
-# 16         if not self._prompt_provider:
-# 17             raise ValueError("Prompt provider is not set")
-# 18         if not self._agent_engine:
-# 19             raise ValueError("Agent engine is not set")
-# 20 
-# 21         #  Build prompt
-# 22         final_prompt = self._prompt_provider.run(
-# 23             input=input,
-# 24             session_id=session_id
-# 25         )
-# 26 
-# 27         #  Run engine
-# 28         engine_output = self._agent_engine.run(
-# 29             input={
-# 30                 "prompt": final_prompt,
-# 31                 "before": file_path,
-# 32                 "agent_type": self._config.agent_type,
-# 33                 "agent_id": self._config.id,
-# 34                 "system": system,
-# 35                 "state_context": input.get("state_context", {}),
-# 36             },
-# 37             session_id=session_id
-# 38         )
-# 39 
-# 40         response = engine_output.response
-# 41         decision = (
-# 42             "accept" if "[AGENT_DECISION]accept" in response else
-# 43             "reject" if "[AGENT_DECISION]reject" in response else
-# 44             "unknown"
-# 45         )
-# 46 
-# 47         #  Try to extract log and code blocks
-# 48         log = None
-# 49         if "[CONVERSATION_LOG_ENTRY]" in response:
-# 50             start = response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
-# 51             end = response.find("[/CONVERSATION_LOG_ENTRY]")
-# 52             log = response[start:end].strip() if start < end else None
-# 53 
-# 54         code = self._extract_block(response, "[CODE]", "[/CODE]")
-# 55         log_entry = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 56 
-# 57         #  🧠 Infer accept if valid code and log but no explicit decision
-# 58         if decision == "unknown" and code and log_entry:
-# 59             decision = "accept"
-# 60             self._log.debug("✅ Generator decision inferred as 'accept' based on presence of code and log.")
-# 61         elif decision == "unknown":
-# 62             self._log.warning("⚠️ Generator decision remained 'unknown'; [AGENT_DECISION] tag may be missing.")
-# 63 
-# 64         return AgentOutputSchema(
-# 65             response=response,
-# 66             log=log,
-# 67             decision=decision,
-# 68             snapshot_id=engine_output.snapshot_id,
-# 69             file_path=engine_output.file_path if hasattr(engine_output, "file_path") else None,
-# 70             score=engine_output.score if hasattr(engine_output, "score") else None
-# 71         )
-# 72 
+# 10         system = input.get("system", "linting")
+# 11 
+# 12         if not self._prompt_provider:
+# 13             raise ValueError("Prompt provider is not set")
+# 14         if not self._agent_engine:
+# 15             raise ValueError("Agent engine is not set")
+# 16 
+# 17         #  Build prompt
+# 18         final_prompt = self._prompt_provider.run(
+# 19             input=input,
+# 20             session_id=session_id
+# 21         )
+# 22 
+# 23         #  Run engine
+# 24         engine_output = self._agent_engine.run(
+# 25             input={
+# 26                 "prompt": final_prompt,
+# 27                 "before": file_path,
+# 28                 "agent_type": self._config.agent_type,
+# 29                 "agent_id": self._config.id,
+# 30                 "system": system,
+# 31                 "state_context": input.get("state_context", {}),
+# 32             },
+# 33             session_id=session_id
+# 34         )
+# 35 
+# 36         response = engine_output.response
+# 37         decision = (
+# 38             "accept" if "[AGENT_DECISION]accept" in response else
+# 39             "reject" if "[AGENT_DECISION]reject" in response else
+# 40             "unknown"
+# 41         )
+# 42 
+# 43         #  Try to extract log and code blocks
+# 44         log = None
+# 45         if "[CONVERSATION_LOG_ENTRY]" in response:
+# 46             start = response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
+# 47             end = response.find("[/CONVERSATION_LOG_ENTRY]")
+# 48             log = response[start:end].strip() if start < end else None
+# 49 
+# 50         code = self._extract_block(response, "[CODE]", "[/CODE]")
+# 51         log_entry = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 52 
+# 53         #  🧠 Infer accept if valid code and log but no explicit decision
+# 54         if decision == "unknown" and code and log_entry:
+# 55             decision = "accept"
+# 56             self._log.debug("✅ Generator decision inferred as 'accept' based on presence of code and log.")
+# 57         elif decision == "unknown":
+# 58             self._log.warning("⚠️ Generator decision remained 'unknown'; [AGENT_DECISION] tag may be missing.")
+# 59 
+# 60         return AgentOutputSchema(
+# 61             response=response,
+# 62             log=log,
+# 63             decision=decision,
+# 64             snapshot_id=engine_output.snapshot_id,
+# 65             file_path=engine_output.file_path if hasattr(engine_output, "file_path") else None,
+# 66             score=engine_output.score if hasattr(engine_output, "score") else None
+# 67         )
+# 68 
 
 
 # db\seeders\files\context_providers\__init__.py
@@ -1476,70 +1456,57 @@
 # 30 
 # 31         #  Build a dict of available tools, keyed by exactly tool.config.name.lower()
 # 32         available = {tool._config.name.lower(): tool for tool in self.tool_providers}
-# 33         print("Available linting tools:", list(available.keys()))
-# 34 
-# 35         def run_tool(name: str, collect_violations: bool = False):
-# 36             if name not in available:
-# 37                 print(f"  → Tool '{name}' not found among: {list(available.keys())}")
-# 38                 return 0.0, []
-# 39 
-# 40             try:
-# 41                 raw = available[name].run({"target": str(stripped_path), "check": True}, session_id=session_id)
-# 42                 parsed = raw.model_dump()
-# 43             except Exception as e:
-# 44                 print(f"  → Exception running '{name}': {e}")
-# 45                 return 0.0, []
-# 46 
-# 47             score = 1.0 if parsed.get("return_code", 0) else 0.0
-# 48             if collect_violations:
-# 49                 return score, parsed.get("violations", []) or []
-# 50             else:
-# 51                 return score, []
-# 52 
-# 53         #  Run each tool exactly once
-# 54         ruff_score, ruff_violations = run_tool("ruff", collect_violations=True)
-# 55         black_score, _ = run_tool("black", collect_violations=False)
-# 56         mypy_score, _ = run_tool("mypy", collect_violations=False)
+# 33 
+# 34         def run_tool(name: str, collect_violations: bool = False):
+# 35             if name not in available:
+# 36                 return 0.0, []
+# 37 
+# 38             try:
+# 39                 raw = available[name].run({"target": str(stripped_path), "check": True}, session_id=session_id)
+# 40                 parsed = raw.model_dump()
+# 41             except Exception as e:
+# 42                 return 0.0, []
+# 43 
+# 44             score = 1.0 if parsed.get("return_code", 0) else 0.0
+# 45             if collect_violations:
+# 46                 return score, parsed.get("violations", []) or []
+# 47             else:
+# 48                 return score, []
+# 49 
+# 50         #  Run each tool exactly once
+# 51         ruff_score, ruff_violations = run_tool("ruff", collect_violations=True)
+# 52         black_score, _ = run_tool("black", collect_violations=False)
+# 53         mypy_score, _ = run_tool("mypy", collect_violations=False)
+# 54 
+# 55         #  Compute weighted score
+# 56         weighted = round(ruff_score * 0.7 + black_score * 0.2 + mypy_score * 0.1, 3)
 # 57 
-# 58         #  Compute weighted score
-# 59         weighted = round(ruff_score * 0.7 + black_score * 0.2 + mypy_score * 0.1, 3)
-# 60 
-# 61         components = {
-# 62             "ruff": ruff_score,
-# 63             "black": black_score,
-# 64             "mypy": mypy_score
-# 65         }
-# 66 
-# 67         #  Top Ruff Violations
-# 68         top_violations = []
-# 69         if ruff_violations:
-# 70             freq = {}
-# 71             for code in ruff_violations:
-# 72                 freq[code] = freq.get(code, 0) + 1
-# 73             sorted_codes = sorted(freq.items(), key=lambda kv: kv[1], reverse=True)
-# 74             top_violations = [code for code, _ in sorted_codes[:3]]
-# 75 
-# 76         summary = (
-# 77             f"Top Ruff Violations: {', '.join(top_violations)}"
-# 78             if top_violations else "No Ruff violations"
-# 79         )
-# 80 
-# 81         print("")
-# 82         print("score provider - summary")
-# 83         print("")
-# 84         print("summary")
-# 85         print(summary)
-# 86         print("")
-# 87         print("components")
-# 88         print(components)
-# 89         print("")
-# 90 
-# 91         return ScoreOutputSchema(
-# 92             name=SCORING_METRIC_TYPE.LINTING_SCORE,
-# 93             value=weighted,
-# 94             components=components,
-# 95             summary=summary
-# 96         )
+# 58         components = {
+# 59             "ruff": ruff_score,
+# 60             "black": black_score,
+# 61             "mypy": mypy_score
+# 62         }
+# 63 
+# 64         #  Top Ruff Violations
+# 65         top_violations = []
+# 66         if ruff_violations:
+# 67             freq = {}
+# 68             for code in ruff_violations:
+# 69                 freq[code] = freq.get(code, 0) + 1
+# 70             sorted_codes = sorted(freq.items(), key=lambda kv: kv[1], reverse=True)
+# 71             top_violations = [code for code, _ in sorted_codes[:3]]
+# 72 
+# 73         summary = (
+# 74             f"Top Ruff Violations: {', '.join(top_violations)}"
+# 75             if top_violations else "No Ruff violations"
+# 76         )
+# 77 
+# 78         return ScoreOutputSchema(
+# 79             name=SCORING_METRIC_TYPE.LINTING_SCORE,
+# 80             value=weighted,
+# 81             components=components,
+# 82             summary=summary
+# 83         )
 
 
 # db\seeders\files\state_providers\__init__.py
@@ -1669,146 +1636,78 @@
 # 11         current = state.get("state")
 # 12         last = state.get("_last_state")
 # 13 
-# 14         print(f"[LintingSystemProvider] Enter _transition")
-# 15         print(f"  current state: {current}, last: {last}")
-# 16         print(f"  full state dict: {state}")
-# 17 
-# 18         result = None
-# 19 
-# 20         if state_output and hasattr(state_output, "output"):
-# 21             output_obj = state_output.output
-# 22             if isinstance(output_obj, str):
-# 23                 try:
-# 24                     output_obj = json.loads(output_obj)
-# 25                 except Exception:
-# 26                     output_obj = {}
-# 27 
-# 28             if isinstance(output_obj, dict):
-# 29                 result = output_obj.get("decision") or output_obj.get("result")
-# 30             else:
-# 31                 result = getattr(output_obj, "decision", None)
-# 32 
-# 33         if result == "pass":
-# 34             result = "accept"
-# 35 
-# 36         transition = {}
-# 37 
-# 38         if current == "start":
-# 39             transition = {
-# 40                 "state": "code_stability",
-# 41                 "reason": "initial stability check"
-# 42             }
-# 43 
-# 44         elif current == "code_stability":
-# 45             if last == "start":
-# 46                 if result == "accept":
-# 47                     transition = {
-# 48                         "state": "generate",
-# 49                         "reason": "initial stability passed, now generate",
-# 50                         "file_path": state.get("file_path")
-# 51                     }
-# 52                 else:
+# 14         result = None
+# 15 
+# 16         if state_output and hasattr(state_output, "output"):
+# 17             output_obj = state_output.output
+# 18             if isinstance(output_obj, str):
+# 19                 try:
+# 20                     output_obj = json.loads(output_obj)
+# 21                 except Exception:
+# 22                     output_obj = {}
+# 23 
+# 24             if isinstance(output_obj, dict):
+# 25                 result = output_obj.get("decision") or output_obj.get("result")
+# 26             else:
+# 27                 result = getattr(output_obj, "decision", None)
+# 28 
+# 29         transition = {}
+# 30 
+# 31         if current == "start":
+# 32             transition = {
+# 33                 "state": "code_stability",
+# 34                 "reason": "initial stability check"
+# 35             }
+# 36 
+# 37         elif current == "code_stability":
+# 38             if last == "start":
+# 39                 if result == "accept":
+# 40                     transition = {
+# 41                         "state": "generate",
+# 42                         "reason": "initial stability passed, now generate",
+# 43                         "file_path": state.get("file_path")
+# 44                     }
+# 45                 else:
+# 46                     transition = {
+# 47                         "state": "end",
+# 48                         "reason": "initial stability failed—rejecting original code",
+# 49                         "decision": DECISION_TYPE.REJECT
+# 50                     }
+# 51             elif last == "generate":
+# 52                 if result == "accept":
 # 53                     transition = {
-# 54                         "state": "end",
-# 55                         "reason": "initial stability failed—rejecting original code",
-# 56                         "decision": DECISION_TYPE.REJECT
+# 54                         "state": "discriminate",
+# 55                         "reason": "post-generation stability passed, now discriminate",
+# 56                         "file_path": state.get("file_path")
 # 57                     }
-# 58             elif last == "generate":
-# 59                 if result == "accept":
-# 60                     transition = {
-# 61                         "state": "discriminate",
-# 62                         "reason": "post-generation stability passed, now discriminate",
-# 63                         "file_path": state.get("file_path")
-# 64                     }
-# 65                 else:
-# 66                     transition = {
-# 67                         "state": "generate",
-# 68                         "reason": "stability failed—retrying generation",
-# 69                         "file_path": state.get("file_path")
-# 70                     }
+# 58                 else:
+# 59                     transition = {
+# 60                         "state": "generate",
+# 61                         "reason": "stability failed—retrying generation",
+# 62                         "file_path": state.get("file_path")
+# 63                     }
+# 64 
+# 65         elif current == "generate":
+# 66             transition = {
+# 67                 "state": "code_stability",
+# 68                 "reason": "post-generation stability check",
+# 69                 "file_path": state.get("file_path")
+# 70             }
 # 71 
-# 72         elif current == "generate":
-# 73             transition = {
-# 74                 "state": "code_stability",
-# 75                 "reason": "post-generation stability check",
-# 76                 "file_path": state.get("file_path")
-# 77             }
-# 78 
-# 79         elif current == "discriminate":
-# 80             if result == "accept":
-# 81                 session_id = state.get("session_id", "")
-# 82                 system = state.get("system", "unknown")
-# 83 
-# 84                 working_file = str(Path(self.working_file).resolve())
-# 85                 original_file = str(Path(self.incoming_file).resolve())
-# 86                 new_file = state_output.output.get("file_path") if state_output.output else None
-# 87 
-# 88                 print("\nSYSTEM PROVIDER FILES")
-# 89                 print("WORKING: ", working_file)
-# 90                 print("ORIGINAL: ", original_file)
-# 91                 print("NEW FILE: ", new_file or "⛔ MISSING")
-# 92                 print(state_output)
-# 93                 print("")
-# 94 
-# 95                 discriminator_score = state_output.output.get("score") if state_output.output else None
-# 96 
-# 97                 working_score = self.score_provider.run(
-# 98                     {"file_path": working_file, "system": system},
-# 99                     session_id=session_id
-# 100                 ).value
-# 101 
-# 102                 original_score = self.score_provider.run(
-# 103                     {"file_path": original_file, "system": system},
-# 104                     session_id=session_id
-# 105                 ).value
-# 106 
-# 107                 scores = {
-# 108                     "discriminator": discriminator_score,
-# 109                     "working": working_score,
-# 110                     "original": original_score
-# 111                 }
-# 112 
-# 113                 print(f"[LintingSystemProvider] Score comparison: {scores}")
-# 114                 print(state_output)
-# 115 
-# 116                 best_label, best_score = max(scores.items(), key=lambda kv: kv[1])
-# 117                 best_file = {
-# 118                     "discriminator": new_file,
-# 119                     "working": working_file,
-# 120                     "original": original_file
-# 121                 }.get(best_label, working_file)
-# 122 
-# 123                 if best_file is None:
-# 124                     print("⚠️ No valid file returned by best_file logic — defaulting to working_file")
-# 125                     best_file = working_file
-# 126 
-# 127                 #  🧠 THIS IS THE POLICY ENFORCEMENT POINT
-# 128                 self.working_file = str(Path(best_file).resolve())  #  ← Update the working_file permanently
-# 129 
-# 130                 if best_score >= self.SCORE_THRESHOLD:
-# 131                     transition = {
-# 132                         "state": "end",
-# 133                         "reason": f"best file = {best_label}, score = {best_score}",
-# 134                         "decision": DECISION_TYPE.ACCEPT if best_label != "original" else DECISION_TYPE.REJECT,
-# 135                         "score": best_score,
-# 136                         "file_path": best_file
-# 137                     }
-# 138                 else:
-# 139                     transition = {
-# 140                         "state": "generate",
-# 141                         "reason": "all scores below threshold—retrying with best available file",
-# 142                         "file_path": best_file
-# 143                     }
-# 144 
-# 145             else:
-# 146                 transition = {
-# 147                     "state": "generate",
-# 148                     "reason": "discriminator rejected—retrying generation",
-# 149                     "file_path": state.get("file_path")
-# 150                 }
-# 151         
-# 152         print(f"[LintingSystemProvider] Transition: {transition}")
-# 153         return transition
+# 72         elif current == "discriminate":
+# 73             if result == "accept":
+# 74                 transition = {
+# 75                     "state": "end",
+# 76                     "reason": "discriminator accepted generation"
+# 77                 }
+# 78             else:
+# 79                 transition = {
+# 80                     "state": "generate",
+# 81                     "reason": "discriminator rejected—retrying generation",
+# 82                     "file_path": state.get("file_path")
+# 83                 }
+# 84         
+# 85         return transition
 
 
 # db\seeders\files\tool_providers\__init__.py
@@ -1905,11 +1804,7 @@
 # 86             metrics=metrics or None,
 # 87             summary=summary,
 # 88         )
-# 89         print("")
-# 90         print("BLACK TOOL")
-# 91         print(response)
-# 92         print("")
-# 93         return response
+# 89         return response
 
 
 # db\seeders\files\tool_providers\docformatter_tool.py
@@ -2604,35 +2499,36 @@
 # 18         "description": "Runs only the preprocessing step (e.g. linting).",
 # 19         "tags": ["preprocessing", "controller"],
 # 20         "config": {
-# 21             "systems": {
-# 22                 "preprocess": 1   #  ID of your linting_system_provider
-# 23             }
-# 24         }
-# 25     }
-# 26 ]
-# 27 
-# 28 def seed_controller_providers(db_session: Session):
-# 29     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 30     for entry in CONTROLLER_PROVIDERS:
-# 31         guid      = str(uuid4())
-# 32         src       = SEED_FILES_DIR / entry["filename"]
-# 33         dest      = EXTENSIONS_DIR / f"{guid}.py"
-# 34         if not src.exists():
-# 35             raise FileNotFoundError(f"Missing script: {src}")
-# 36         shutil.copy(src, dest)
-# 37 
-# 38         rec = ControllerProviderConfig(
-# 39             id            = entry["id"],
-# 40             guid          = guid,
-# 41             name          = entry["name"],
-# 42             description   = entry["description"],
-# 43             config        = entry["config"],
-# 44             artifact_path = dest.name,
-# 45             tags          = entry["tags"],
-# 46         )
-# 47         db_session.add(rec)
-# 48     db_session.commit()
-# 49     print("✅ Seeded controller providers")
+# 21             "score_provider_id": 1,
+# 22             "systems": {
+# 23                 "preprocess": 1   #  ID of your linting_system_provider
+# 24             }
+# 25         }
+# 26     }
+# 27 ]
+# 28 
+# 29 def seed_controller_providers(db_session: Session):
+# 30     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 31     for entry in CONTROLLER_PROVIDERS:
+# 32         guid      = str(uuid4())
+# 33         src       = SEED_FILES_DIR / entry["filename"]
+# 34         dest      = EXTENSIONS_DIR / f"{guid}.py"
+# 35         if not src.exists():
+# 36             raise FileNotFoundError(f"Missing script: {src}")
+# 37         shutil.copy(src, dest)
+# 38 
+# 39         rec = ControllerProviderConfig(
+# 40             id            = entry["id"],
+# 41             guid          = guid,
+# 42             name          = entry["name"],
+# 43             description   = entry["description"],
+# 44             config        = entry["config"],
+# 45             artifact_path = dest.name,
+# 46             tags          = entry["tags"],
+# 47         )
+# 48         db_session.add(rec)
+# 49     db_session.commit()
+# 50     print("✅ Seeded controller providers")
 
 
 # db\seeders\seed_program_provider.py
@@ -2657,39 +2553,40 @@
 # 18         "description": "Top-level orchestration of all system controllers.",
 # 19         "tags": ["program", "codecritic"],
 # 20         "config": {
-# 21             "controllers": {
-# 22                 "preprocessing": 1
-# 23             }
-# 24         }
-# 25     }
-# 26 ]
-# 27 
-# 28 def seed_program_providers(db_session: Session):
-# 29     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 30 
-# 31     for entry in PROGRAM_PROVIDERS:
-# 32         guid = str(uuid4())
-# 33         src  = SEED_FILES_DIR / entry["filename"]
-# 34         dst  = EXTENSIONS_DIR / f"{guid}.py"
-# 35 
-# 36         if not src.exists():
-# 37             raise FileNotFoundError(f"❌ Missing file: {src}")
-# 38 
-# 39         shutil.copy(src, dst)
-# 40 
-# 41         record = ProgramProviderConfig(
-# 42             id            = entry["id"],
-# 43             guid          = guid,
-# 44             name          = entry["name"],
-# 45             description   = entry["description"],
-# 46             config        = entry["config"],
-# 47             artifact_path = dst.name,
-# 48             tags          = entry["tags"],
-# 49         )
-# 50         db_session.add(record)
-# 51 
-# 52     db_session.commit()
-# 53     print("✅ Seeded program providers")
+# 21             "score_provider_id": 1,
+# 22             "controllers": {
+# 23                 "preprocessing": 1
+# 24             }
+# 25         }
+# 26     }
+# 27 ]
+# 28 
+# 29 def seed_program_providers(db_session: Session):
+# 30     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 31 
+# 32     for entry in PROGRAM_PROVIDERS:
+# 33         guid = str(uuid4())
+# 34         src  = SEED_FILES_DIR / entry["filename"]
+# 35         dst  = EXTENSIONS_DIR / f"{guid}.py"
+# 36 
+# 37         if not src.exists():
+# 38             raise FileNotFoundError(f"❌ Missing file: {src}")
+# 39 
+# 40         shutil.copy(src, dst)
+# 41 
+# 42         record = ProgramProviderConfig(
+# 43             id            = entry["id"],
+# 44             guid          = guid,
+# 45             name          = entry["name"],
+# 46             description   = entry["description"],
+# 47             config        = entry["config"],
+# 48             artifact_path = dst.name,
+# 49             tags          = entry["tags"],
+# 50         )
+# 51         db_session.add(record)
+# 52 
+# 53     db_session.commit()
+# 54     print("✅ Seeded program providers")
 
 
 # db\seeders\seed_prompt_providers.py
@@ -3362,16 +3259,17 @@
 # 18     SYSTEM = "system"
 # 19     CONTROLLER = "controller"
 # 20     PROGRAM = "program"
-# 21     UNKNOWN = "unknown"
-# 22 
-# 23 class ERROR_TYPE(str, Enum):
-# 24     RUNTIME = "runtime"
-# 25     VALIDATION = "validation"
-# 26     CONFIGURATION = "configuration"
-# 27     CONNECTION = "connection"
-# 28     AUTHENTICATION = "authentication"
-# 29     TIMEOUT = "timeout"
-# 30     UNKNOWN = "unknown"
+# 21     SESSION = "session"
+# 22     UNKNOWN = "unknown"
+# 23 
+# 24 class ERROR_TYPE(str, Enum):
+# 25     RUNTIME = "runtime"
+# 26     VALIDATION = "validation"
+# 27     CONFIGURATION = "configuration"
+# 28     CONNECTION = "connection"
+# 29     AUTHENTICATION = "authentication"
+# 30     TIMEOUT = "timeout"
+# 31     UNKNOWN = "unknown"
 
 
 # enums\scoring_enums.py
@@ -4707,15 +4605,15 @@
 # providers\controller_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 from abc import abstractmethod
-# 3 from datetime import datetime
-# 4 from pathlib import Path
-# 5 import shutil
-# 6 from typing import Dict
-# 7 
-# 8 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import ControllerOutputSchema
+# 2 from datetime import datetime
+# 3 from pathlib import Path
+# 4 import shutil
+# 5 from typing import Dict
+# 6 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import ControllerOutputSchema
+# 9 from app.utilities.select_best_file_by_score import select_best_file_by_score
+# 10 
 # 11 
 # 12 class ControllerProviderBase(FSMProviderBase):
 # 13     def __init__(
@@ -4731,116 +4629,132 @@
 # 23         super().__init__(
 # 24             config=config,
 # 25             called_by_type=called_by_type,
-# 26             called_by_id=called_by_id
+# 26             called_by_id=called_by_id,
 # 27         )
 # 28         self._systems = system_providers or {}
 # 29         self.context_provider = context_provider
 # 30         self.score_provider = score_provider
 # 31         self.tool_providers = tool_providers or []
-# 32 
-# 33     def _run_provider(self, input: dict) -> ControllerOutputSchema:
-# 34         session_id = input.get("session_id")
-# 35         max_steps = input.get("max_steps", 20)
-# 36 
-# 37         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 38         print(f"🔍 Controller received file: {incoming_file}")
-# 39 
-# 40         if not incoming_file:
-# 41             raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
-# 42 
-# 43         self.incoming_file = incoming_file
-# 44 
-# 45         src = Path(incoming_file).resolve()
-# 46         #  derive base name without any suffixes or appended labels
-# 47         root = src.stem.split('.')[0]
-# 48         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 49         working_dir = Path("working_files").resolve()
-# 50         working_dir.mkdir(parents=True, exist_ok=True)
-# 51         self.working_file = working_dir / f"{root}.__ctrl_{timestamp}{src.suffix}"
-# 52         shutil.copy(src, self.working_file)
-# 53         print(f"📂 Controller working file created: {self.working_file}")
-# 54 
-# 55         state = {
-# 56             "state": "start",
-# 57             "file_path": str(self.working_file),
-# 58             "session_id": session_id,
-# 59             "system": input.get("system", "unknown"),
-# 60             "reason": input.get("reason", "start"),
-# 61             "steps": input.get("steps", 0),
-# 62             "retry_count": input.get("retry_count", 0),
-# 63             "_last_state": input.get("_last_state"),
-# 64         }
+# 32         self._generated_files: list[Path] = []
+# 33 
+# 34     def _run_provider(self, input: dict) -> ControllerOutputSchema:
+# 35         session_id = input.get("session_id")
+# 36         max_steps = input.get("max_steps", 10)
+# 37 
+# 38         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 39         if not incoming_file:
+# 40             raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
+# 41 
+# 42         self.incoming_file = incoming_file
+# 43         src = Path(incoming_file).resolve()
+# 44         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 45         working_dir = Path("working_files").resolve()
+# 46         working_dir.mkdir(parents=True, exist_ok=True)
+# 47         root = src.name.partition('.')[0]
+# 48         self.working_file = working_dir / f"{root}.__ctrl_{timestamp}{src.suffix}"
+# 49         shutil.copy(src, self.working_file)
+# 50         self._generated_files.append(self.working_file)
+# 51 
+# 52         state = {
+# 53             "state": "start",
+# 54             "file_path": str(self.working_file),
+# 55             "session_id": session_id,
+# 56             "system": input.get("system", "unknown"),
+# 57             "reason": input.get("reason", "start"),
+# 58             "steps": input.get("steps", 0),
+# 59             "retry_count": input.get("retry_count", 0),
+# 60             "_last_state": input.get("_last_state"),
+# 61             "decision": DECISION_TYPE.UNKNOWN
+# 62         }
+# 63 
+# 64         step_count = 0
 # 65 
-# 66         step_count = 0
-# 67 
-# 68         while True:
-# 69             current = state.get("state")
-# 70 
-# 71             if step_count >= max_steps:
-# 72                 return ControllerOutputSchema(
-# 73                     state="end",
-# 74                     previous_state=current,
-# 75                     state_type=STATE_TYPE.END,
-# 76                     decision=DECISION_TYPE.UNKNOWN,
-# 77                     steps=step_count,
-# 78                     max_steps=max_steps,
-# 79                     summary=f"Max steps ({max_steps}) reached",
-# 80                     output=state,
-# 81                     provider_name=self._config.name
-# 82                 )
-# 83 
-# 84             if current == "end":
-# 85                 return ControllerOutputSchema(
-# 86                     state="end",
-# 87                     previous_state=state.get("_last_state"),
-# 88                     state_type=STATE_TYPE.END,
-# 89                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 90                     steps=step_count,
-# 91                     max_steps=max_steps,
-# 92                     summary=state.get("summary", "Completed"),
-# 93                     output=state,
-# 94                     provider_name=self._config.name
-# 95                 )
-# 96 
-# 97             step_count += 1
-# 98 
-# 99             if current == "start":
-# 100                 transition = self.transition(state, None)
-# 101                 state.update(transition, _last_state="start")
-# 102                 continue
-# 103 
-# 104             provider = self._systems.get(current)
-# 105             if not provider:
-# 106                 raise ValueError(f"No system provider registered for state: {current}")
-# 107 
-# 108             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 109             output = provider.run(input=provider_input, session_id=session_id)
-# 110 
-# 111             transition_result = self.transition(state, output)
-# 112             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 66         while True:
+# 67             current = state.get("state")
+# 68 
+# 69             if step_count >= max_steps:
+# 70                 return ControllerOutputSchema(
+# 71                     state="end",
+# 72                     previous_state=current,
+# 73                     state_type=STATE_TYPE.END,
+# 74                     decision=DECISION_TYPE.REJECT,
+# 75                     steps=step_count,
+# 76                     max_steps=max_steps,
+# 77                     summary=f"Max steps ({max_steps}) reached",
+# 78                     output=state,
+# 79                     provider_name=self._config.name
+# 80                 )
+# 81 
+# 82             if current == "end":
+# 83                 best_file = select_best_file_by_score(
+# 84                     file_a=state["file_path"],
+# 85                     file_b=self.incoming_file,
+# 86                     score_provider=self.score_provider,
+# 87                     system=state.get("system", "unknown"),
+# 88                     session_id=session_id
+# 89                 )
+# 90 
+# 91                 final_path = Path("working_files") / f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 92                 shutil.copy(Path(best_file), final_path)
+# 93                 state["file_path"] = str(final_path)
+# 94 
+# 95                 for path in self._generated_files:
+# 96                     if path.exists():
+# 97                         try:
+# 98                             path.unlink()
+# 99                         except Exception:
+# 100                             pass
+# 101 
+# 102                 return ControllerOutputSchema(
+# 103                     state="end",
+# 104                     previous_state=state.get("_last_state"),
+# 105                     state_type=STATE_TYPE.END,
+# 106                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 107                     steps=step_count,
+# 108                     max_steps=max_steps,
+# 109                     summary=state.get("summary", "Completed"),
+# 110                     output=state,
+# 111                     provider_name=self._config.name
+# 112                 )
 # 113 
-# 114             #  if the provider accepted, update the working copy
-# 115             if getattr(output, "decision", None) == DECISION_TYPE.ACCEPT:
-# 116                 new_path = getattr(output, "file_path", None) or provider_input.get("file_path")
-# 117                 if new_path:
-# 118                     new_path = Path(new_path).resolve()
-# 119                     current_path = Path(state["file_path"]).resolve()
-# 120                     if new_path != current_path and new_path.exists():
-# 121                         shutil.copy(new_path, current_path)
-# 122                         print(f"📝 Working file updated from: {new_path}")
-# 123 
-# 124             state = {
-# 125                 **state,
-# 126                 **transition_result,
-# 127                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 128                 "score": getattr(output, "score", None),
-# 129                 "_last_state": current,
-# 130                 "state_output": flat_output,
-# 131             }
+# 114             step_count += 1
+# 115 
+# 116             if current == "start":
+# 117                 transition = self.transition(state, None)
+# 118                 state.update(transition, _last_state="start")
+# 119                 continue
+# 120 
+# 121             provider = self._systems.get(current)
+# 122             if not provider:
+# 123                 raise ValueError(f"No system provider registered for state: {current}")
+# 124 
+# 125             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 126             output = provider.run(input=provider_input, session_id=session_id)
+# 127 
+# 128             new_file_path = getattr(output, "file_path", None)
+# 129             if new_file_path:
+# 130                 new_file_path = Path(new_file_path).resolve()
+# 131                 current_path = Path(state["file_path"]).resolve()
 # 132 
-# 133     @abstractmethod
-# 134     def _transition(self, state: dict, output: dict | None) -> dict:
-# 135         ...
+# 133                 if new_file_path != current_path:
+# 134                     shutil.copy(new_file_path, current_path)
+# 135                     self._generated_files.append(new_file_path)
+# 136                     state["file_path"] = str(new_file_path)
+# 137 
+# 138             if hasattr(output, "decision") and output.decision:
+# 139                 state["decision"] = output.decision
+# 140 
+# 141             transition_result = self.transition(state, output)
+# 142             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 143 
+# 144             state = {
+# 145                 **state,
+# 146                 **transition_result,
+# 147                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+# 148                 "score": getattr(output, "score", None),
+# 149                 "_last_state": current,
+# 150                 "state_output": flat_output,
+# 151             }
 
 
 # providers\fsm_provider_base.py
@@ -4912,15 +4826,15 @@
 # providers\program_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 from abc import abstractmethod
-# 3 from datetime import datetime
-# 4 from pathlib import Path
-# 5 import shutil
-# 6 from typing import Dict
-# 7 
-# 8 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import ProgramOutputSchema
+# 2 from datetime import datetime
+# 3 from pathlib import Path
+# 4 import shutil
+# 5 from typing import Dict
+# 6 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import ProgramOutputSchema
+# 9 from app.utilities.select_best_file_by_score import select_best_file_by_score
+# 10 
 # 11 
 # 12 class ProgramProviderBase(FSMProviderBase):
 # 13     def __init__(
@@ -4936,115 +4850,132 @@
 # 23         super().__init__(
 # 24             config=config,
 # 25             called_by_type=called_by_type,
-# 26             called_by_id=called_by_id
+# 26             called_by_id=called_by_id,
 # 27         )
-# 28         self._states = controller_providers or {}
+# 28         self._controllers = controller_providers or {}
 # 29         self.context_provider = context_provider
 # 30         self.score_provider = score_provider
 # 31         self.tool_providers = tool_providers or []
-# 32 
-# 33     def _run_provider(self, input: dict) -> ProgramOutputSchema:
-# 34         session_id = input.get("session_id")
-# 35         max_steps = input.get("max_steps", 20)
-# 36 
-# 37         incoming_file = input.get("file_path")
-# 38         print(f"🔍 Program received file: {incoming_file}")
-# 39 
-# 40         self.incoming_file = incoming_file
+# 32         self._generated_files: list[Path] = []
+# 33 
+# 34     def _run_provider(self, input: dict) -> ProgramOutputSchema:
+# 35         session_id = input.get("session_id")
+# 36         max_steps = input.get("max_steps", 20)
+# 37 
+# 38         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 39         if not incoming_file:
+# 40             raise ValueError("❌ ProgramProvider requires 'file_path', 'file_name', or 'before' in input")
 # 41 
-# 42         src = Path(incoming_file).resolve()
-# 43         root = src.stem.split('.')[0]
+# 42         self.incoming_file = incoming_file
+# 43         src = Path(incoming_file).resolve()
 # 44         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
 # 45         working_dir = Path("working_files").resolve()
 # 46         working_dir.mkdir(parents=True, exist_ok=True)
-# 47         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
-# 48         shutil.copy(src, self.working_file)
-# 49         print(f"📂 Program working file created: {self.working_file}")
-# 50 
-# 51         state = {
-# 52             "state": "start",
-# 53             "file_path": str(self.working_file),
-# 54             "session_id": session_id,
-# 55             "system": input.get("system", "unknown"),
-# 56             "reason": input.get("reason", "start"),
-# 57             "steps": input.get("steps", 0),
-# 58             "retry_count": input.get("retry_count", 0),
-# 59             "_last_state": input.get("_last_state"),
-# 60         }
-# 61 
-# 62         step_count = 0
+# 47         root = src.name.partition('.')[0]
+# 48         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
+# 49         shutil.copy(src, self.working_file)
+# 50         self._generated_files.append(self.working_file)
+# 51 
+# 52         state = {
+# 53             "state": "start",
+# 54             "file_path": str(self.working_file),
+# 55             "session_id": session_id,
+# 56             "system": input.get("system", "unknown"),
+# 57             "reason": input.get("reason", "start"),
+# 58             "steps": input.get("steps", 0),
+# 59             "retry_count": input.get("retry_count", 0),
+# 60             "_last_state": input.get("_last_state"),
+# 61             "decision": DECISION_TYPE.UNKNOWN
+# 62         }
 # 63 
-# 64         while True:
-# 65             current = state.get("state")
-# 66 
-# 67             if step_count >= max_steps:
-# 68                 return ProgramOutputSchema(
-# 69                     state="end",
-# 70                     previous_state=current,
-# 71                     state_type=STATE_TYPE.END,
-# 72                     decision=DECISION_TYPE.UNKNOWN,
-# 73                     steps=step_count,
-# 74                     max_steps=max_steps,
-# 75                     summary=f"Max steps ({max_steps}) reached",
-# 76                     output=state,
-# 77                     provider_name=self._config.name
-# 78                 )
-# 79 
-# 80             if current == "end":
-# 81                 return ProgramOutputSchema(
-# 82                     state="end",
-# 83                     previous_state=state.get("_last_state"),
-# 84                     state_type=STATE_TYPE.END,
-# 85                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 86                     steps=step_count,
-# 87                     max_steps=max_steps,
-# 88                     summary=state.get("reason", "Completed"),
-# 89                     output=state,
-# 90                     provider_name=self._config.name
-# 91                 )
-# 92 
-# 93             step_count += 1
+# 64         step_count = 0
+# 65 
+# 66         while True:
+# 67             current = state.get("state")
+# 68 
+# 69             if step_count >= max_steps:
+# 70                 return ProgramOutputSchema(
+# 71                     state="end",
+# 72                     previous_state=current,
+# 73                     state_type=STATE_TYPE.END,
+# 74                     decision=DECISION_TYPE.REJECT,
+# 75                     steps=step_count,
+# 76                     max_steps=max_steps,
+# 77                     summary=f"Max steps ({max_steps}) reached",
+# 78                     output=state,
+# 79                     provider_name=self._config.name
+# 80                 )
+# 81 
+# 82             if current == "end":
+# 83                 best_file = select_best_file_by_score(
+# 84                     file_a=state["file_path"],
+# 85                     file_b=self.incoming_file,
+# 86                     score_provider=self.score_provider,
+# 87                     system=state.get("system", "unknown"),
+# 88                     session_id=session_id
+# 89                 )
+# 90 
+# 91                 final_path = Path("working_files") / f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 92                 shutil.copy(Path(best_file), final_path)
+# 93                 state["file_path"] = str(final_path)
 # 94 
-# 95             if current == "start":
-# 96                 transition = self.transition(state, None)
-# 97                 state.update(transition)
-# 98                 state["_last_state"] = "start"
-# 99                 continue
-# 100 
-# 101             provider = self._states.get(current)
-# 102             if not provider:
-# 103                 raise ValueError(f"No controller provider registered for state: {current}")
-# 104 
-# 105             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 106             print(f"➡️ Program sending to controller: {provider_input}")
-# 107             output = provider.run(input=provider_input, session_id=session_id)
-# 108 
-# 109             transition_result = self.transition(state, output.model_dump() if hasattr(output, "model_dump") else dict(output))
-# 110 
-# 111             if getattr(output, "decision", None) == DECISION_TYPE.ACCEPT:
-# 112                 new_path = getattr(output, "file_path", None)
-# 113                 if new_path:
-# 114                     new_path = Path(new_path).resolve()
-# 115                     current_path = Path(state["file_path"]).resolve()
-# 116                     if new_path != current_path and new_path.exists():
-# 117                         shutil.copy(new_path, current_path)
-# 118                         print(f"📝 Working file updated from: {new_path}")
-# 119 
-# 120             nested_output = getattr(output, "output", {})
-# 121 
-# 122             state = {
-# 123                 **state,
-# 124                 **transition_result,
-# 125                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 126                 "decision": transition_result.get("decision", state.get("decision")),
-# 127                 "score": transition_result.get("score", getattr(output, "score", None)),
-# 128                 "_last_state": current,
-# 129                 "output": nested_output if isinstance(nested_output, dict) else {},
-# 130             }
-# 131 
-# 132     @abstractmethod
-# 133     def _transition(self, state: dict, output: dict | None) -> dict:
-# 134         ...
+# 95                 for path in self._generated_files:
+# 96                     if path.exists():
+# 97                         try:
+# 98                             path.unlink()
+# 99                         except Exception:
+# 100                             pass
+# 101 
+# 102                 return ProgramOutputSchema(
+# 103                     state="end",
+# 104                     previous_state=state.get("_last_state"),
+# 105                     state_type=STATE_TYPE.END,
+# 106                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 107                     steps=step_count,
+# 108                     max_steps=max_steps,
+# 109                     summary=state.get("summary", "Completed"),
+# 110                     output=state,
+# 111                     provider_name=self._config.name
+# 112                 )
+# 113 
+# 114             step_count += 1
+# 115 
+# 116             if current == "start":
+# 117                 transition = self.transition(state, None)
+# 118                 state.update(transition, _last_state="start")
+# 119                 continue
+# 120 
+# 121             provider = self._controllers.get(current)
+# 122             if not provider:
+# 123                 raise ValueError(f"No controller provider registered for state: {current}")
+# 124 
+# 125             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 126             output = provider.run(input=provider_input, session_id=session_id)
+# 127 
+# 128             new_file_path = getattr(output, "file_path", None)
+# 129             if new_file_path:
+# 130                 new_file_path = Path(new_file_path).resolve()
+# 131                 current_path = Path(state["file_path"]).resolve()
+# 132 
+# 133                 if new_file_path != current_path:
+# 134                     shutil.copy(new_file_path, current_path)
+# 135                     self._generated_files.append(new_file_path)
+# 136                     state["file_path"] = str(new_file_path)
+# 137 
+# 138             if hasattr(output, "decision") and output.decision:
+# 139                 state["decision"] = output.decision
+# 140 
+# 141             transition_result = self.transition(state, output)
+# 142             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 143 
+# 144             state = {
+# 145                 **state,
+# 146                 **transition_result,
+# 147                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+# 148                 "score": getattr(output, "score", None),
+# 149                 "_last_state": current,
+# 150                 "state_output": flat_output,
+# 151             }
 
 
 # providers\prompt_provider_base.py
@@ -5134,15 +5065,15 @@
 # providers\state_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 from abc import abstractmethod
-# 3 from datetime import datetime
-# 4 from pathlib import Path
-# 5 import shutil
-# 6 from typing import Dict
-# 7 
-# 8 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import StateOutputSchema
+# 2 from datetime import datetime
+# 3 from pathlib import Path
+# 4 import shutil
+# 5 from typing import Dict
+# 6 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import StateOutputSchema
+# 9 from app.utilities.select_best_file_by_score import select_best_file_by_score
+# 10 
 # 11 
 # 12 class StateProviderBase(FSMProviderBase):
 # 13     def __init__(
@@ -5155,258 +5086,320 @@
 # 20         called_by_type=None,
 # 21         called_by_id=None,
 # 22     ):
-# 23         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
-# 24         self._states = agent_providers or {}
-# 25         self.context_provider = context_provider
-# 26         self.score_provider = score_provider
-# 27         self.tool_providers = tool_providers or []
-# 28 
-# 29     def _run_provider(self, input: dict) -> StateOutputSchema:
-# 30         session_id = input.get("session_id")
-# 31         max_steps = input.get("max_steps", 10)
-# 32 
-# 33         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 34         print(f"🔍 State received file: {incoming_file}")
-# 35 
-# 36         if not incoming_file:
-# 37             raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
-# 38 
-# 39         self.incoming_file = incoming_file
-# 40 
-# 41         src = Path(incoming_file).resolve()
-# 42         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 43         working_dir = Path("working_files").resolve()
-# 44         working_dir.mkdir(parents=True, exist_ok=True)
-# 45         root = src.name.partition('.')[0]
-# 46         self.working_file = working_dir / f"{root}.__state_{timestamp}{src.suffix}"
-# 47         shutil.copy(src, self.working_file)
-# 48         print(f"📂 State working file explicitly created: {self.working_file}")
-# 49 
-# 50         state = {
-# 51             "state": "start",
-# 52             "file_path": str(self.working_file),
-# 53             "session_id": input.get("session_id"),
-# 54             "system": input.get("system", "unknown"),
-# 55             "reason": input.get("reason", "start"),
-# 56             "steps": input.get("steps", 0),
-# 57             "retry_count": input.get("retry_count", 0),
-# 58             "_last_state": input.get("_last_state"),
-# 59         }
-# 60 
-# 61         step_count = 0
-# 62 
-# 63         while True:
-# 64             current = state.get("state")
-# 65 
-# 66             if step_count >= max_steps:
-# 67                 return StateOutputSchema(
-# 68                     state="end",
-# 69                     previous_state=current,
-# 70                     state_type=STATE_TYPE.END,
-# 71                     decision=DECISION_TYPE.UNKNOWN,
-# 72                     steps=step_count,
-# 73                     max_steps=max_steps,
-# 74                     summary=f"Max steps ({max_steps}) reached",
-# 75                     output=state,
-# 76                     provider_name=self._config.name
-# 77                 )
-# 78 
-# 79             if current == "end":
-# 80                 return StateOutputSchema(
-# 81                     state="end",
-# 82                     previous_state=state.get("_last_state"),
-# 83                     state_type=STATE_TYPE.END,
-# 84                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 85                     steps=step_count,
-# 86                     max_steps=max_steps,
-# 87                     summary=state.get("summary", "Completed"),
-# 88                     output=state,
-# 89                     provider_name=self._config.name
-# 90                 )
-# 91 
-# 92             step_count += 1
-# 93 
-# 94             if current == "start":
-# 95                 transition = self.transition(state, None)
-# 96                 state.update(transition, _last_state="start")
-# 97                 continue
-# 98 
-# 99             provider = self._states.get(current)
-# 100             if not provider:
-# 101                 raise ValueError(f"No state provider registered for state: {current}")
-# 102 
-# 103             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 104             output = provider.run(input=provider_input, session_id=session_id)
-# 105 
-# 106             #  Promote from nested output BEFORE flattening
-# 107             nested_output = getattr(output, "output", {})
-# 108             if isinstance(nested_output, str):
-# 109                 try:
-# 110                     import json
-# 111                     nested_output = json.loads(nested_output)
-# 112                 except Exception:
-# 113                     nested_output = {}
-# 114 
-# 115             if isinstance(nested_output, dict):
-# 116                 nested_file_path = nested_output.get("file_path")
-# 117                 if nested_file_path:
-# 118                     output.file_path = nested_file_path
-# 119                 output.score = nested_output.get("score", getattr(output, "score", None))
-# 120                 output.decision = nested_output.get("decision", getattr(output, "decision", None))
-# 121 
-# 122             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 123 
-# 124             #  File overwriting protocol
-# 125             if hasattr(output, "file_path") and output.file_path:
-# 126                 new_path = Path(output.file_path).resolve()
-# 127                 current_path = Path(state["file_path"]).resolve()
-# 128                 if new_path != current_path:
-# 129                     shutil.copy(new_path, current_path)
-# 130                     print(f"🗘️ Working file updated from: {new_path}")
-# 131 
-# 132             state = {
-# 133                 **state,
-# 134                 **self.transition(state, output),
-# 135                 "file_path": getattr(output, "file_path", state.get("file_path")),
-# 136                 "score": getattr(output, "score", None),
-# 137                 "_last_state": current,
-# 138                 "state_output": flat_output,
-# 139             }
-# 140 
-# 141     @abstractmethod
-# 142     def _transition(self, state: dict, output: dict | None) -> dict:
-# 143         ...
+# 23         super().__init__(
+# 24             config=config,
+# 25             called_by_type=called_by_type,
+# 26             called_by_id=called_by_id,
+# 27         )
+# 28         self.agent_providers = agent_providers or {}
+# 29         self.context_provider = context_provider
+# 30         self.score_provider = score_provider
+# 31         self.tool_providers = tool_providers or []
+# 32         self._generated_files: list[Path] = []
+# 33 
+# 34     def _run_provider(self, input: dict) -> StateOutputSchema:
+# 35         session_id = input.get("session_id")
+# 36         max_steps = input.get("max_steps", 10)
+# 37 
+# 38         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 39         if not incoming_file:
+# 40             raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
+# 41 
+# 42         self.incoming_file = incoming_file
+# 43         src = Path(incoming_file).resolve()
+# 44         working_dir = Path("working_files").resolve()
+# 45         working_dir.mkdir(parents=True, exist_ok=True)
+# 46         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 47         root = src.stem.split('.')[0]
+# 48         #  copy initial working file
+# 49         self.working_file = working_dir / f"{root}.__state_{timestamp}{src.suffix}"
+# 50         shutil.copy(src, self.working_file)
+# 51         self._generated_files.append(self.working_file)
+# 52 
+# 53         state = {
+# 54             "state": "start",
+# 55             "file_path": str(self.working_file),
+# 56             "session_id": session_id,
+# 57             "system": input.get("system", "unknown"),
+# 58             "reason": input.get("reason", "start"),
+# 59             "steps": input.get("steps", 0),
+# 60             "retry_count": input.get("retry_count", 0),
+# 61             "_last_state": input.get("_last_state"),
+# 62             "decision": DECISION_TYPE.UNKNOWN
+# 63         }
+# 64 
+# 65         step_count = 0
+# 66         while True:
+# 67             current = state.get("state")
+# 68             if step_count >= max_steps:
+# 69                 return StateOutputSchema(
+# 70                     state="end",
+# 71                     previous_state=current,
+# 72                     state_type=STATE_TYPE.END,
+# 73                     decision=DECISION_TYPE.REJECT,
+# 74                     steps=step_count,
+# 75                     max_steps=max_steps,
+# 76                     summary=f"Max steps ({max_steps}) reached",
+# 77                     output=state,
+# 78                     provider_name=self._config.name
+# 79                 )
+# 80 
+# 81             if current == "end":
+# 82                 #  1) Remove all previous finals to ensure one final per run
+# 83                 for old in working_dir.glob("final_*.py"):
+# 84                     try:
+# 85                         old.unlink()
+# 86                     except Exception:
+# 87                         pass
+# 88                 #  optional: remove any stripped intermediates
+# 89                 for s in working_dir.glob("*_stripped.py"):
+# 90                     try:
+# 91                         s.unlink()
+# 92                     except Exception:
+# 93                         pass
+# 94 
+# 95                 #  2) Determine and copy best file
+# 96                 final_name = f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 97                 final_path = working_dir / final_name
+# 98                 if self.score_provider:
+# 99                     best_file = select_best_file_by_score(
+# 100                         file_a=state["file_path"],
+# 101                         file_b=self.incoming_file,
+# 102                         scoring_fn=self.score_provider.run,
+# 103                         system=state.get("system", "unknown"),
+# 104                         session_id=session_id
+# 105                     )
+# 106                     shutil.copy(Path(best_file), final_path)
+# 107                 else:
+# 108                     shutil.copy(Path(state["file_path"]), final_path)
+# 109                 state["file_path"] = str(final_path)
+# 110 
+# 111                 #  3) Cleanup all generated working files
+# 112                 for f in self._generated_files:
+# 113                     if f.exists():
+# 114                         try:
+# 115                             f.unlink()
+# 116                         except Exception:
+# 117                             pass
+# 118 
+# 119                 return StateOutputSchema(
+# 120                     state="end",
+# 121                     previous_state=state.get("_last_state"),
+# 122                     state_type=STATE_TYPE.END,
+# 123                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 124                     steps=step_count,
+# 125                     max_steps=max_steps,
+# 126                     summary=state.get("summary", "Completed"),
+# 127                     output=state,
+# 128                     provider_name=self._config.name
+# 129                 )
+# 130 
+# 131             if current == "start":
+# 132                 transition = self._transition(state, None)
+# 133                 state.update(transition, _last_state="start")
+# 134                 step_count += 1
+# 135                 continue
+# 136 
+# 137             #  run agent for this state
+# 138             agent = self.agent_providers.get(current)
+# 139             agent_output = agent.run(input=state, session_id=session_id) if agent else None
+# 140             transition = self._transition(state, agent_output)
+# 141 
+# 142             #  handle new file from transition or agent
+# 143             new_fp = transition.get("file_path") or getattr(agent_output, "file_path", None)
+# 144             if new_fp:
+# 145                 new_path = Path(new_fp).resolve()
+# 146                 curr_path = Path(state["file_path"]).resolve()
+# 147                 if new_path != curr_path:
+# 148                     shutil.copy(new_path, curr_path)
+# 149                     self._generated_files.append(new_path)
+# 150                     state["file_path"] = str(new_path)
+# 151 
+# 152             #  propagate decision
+# 153             if agent_output and getattr(agent_output, "decision", None):
+# 154                 state["decision"] = agent_output.decision
+# 155 
+# 156             flat = agent_output.model_dump(exclude={"output"}) if agent_output and hasattr(agent_output, "model_dump") else {}
+# 157             #  apply transition
+# 158             state = {
+# 159                 **state,
+# 160                 **transition,
+# 161                 "file_path": transition.get("file_path", state.get("file_path")),
+# 162                 "score": transition.get("score", getattr(agent_output, "score", None)),
+# 163                 "_last_state": current,
+# 164                 "state_output": flat,
+# 165             }
+# 166             step_count += 1
 
 
 # providers\system_provider_base.py
 
 # 1 from __future__ import annotations
-# 2 from abc import abstractmethod
-# 3 from datetime import datetime
-# 4 from pathlib import Path
-# 5 import shutil
-# 6 from typing import Dict
-# 7 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
-# 8 from app.providers.fsm_provider_base import FSMProviderBase
-# 9 from app.db.schemas import SystemOutputSchema
+# 2 from datetime import datetime
+# 3 from pathlib import Path
+# 4 import shutil
+# 5 from typing import Dict
+# 6 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 7 from app.providers.fsm_provider_base import FSMProviderBase
+# 8 from app.db.schemas import SystemOutputSchema
+# 9 from app.utilities.select_best_file_by_score import select_best_file_by_score
 # 10 
-# 11 
-# 12 class SystemProviderBase(FSMProviderBase):
-# 13     def __init__(
-# 14         self,
-# 15         config=None,
-# 16         state_providers: Dict[str, object] = None,
-# 17         context_provider=None,
-# 18         score_provider=None,
-# 19         tool_providers=None,
-# 20         called_by_type=None,
-# 21         called_by_id=None,
-# 22     ):
-# 23         super().__init__(
-# 24             config=config,
-# 25             called_by_type=called_by_type,
-# 26             called_by_id=called_by_id
-# 27         )
-# 28         self._states = state_providers or {}
-# 29         self.context_provider = context_provider
-# 30         self.score_provider = score_provider
-# 31         self.tool_providers = tool_providers or []
+# 11 class SystemProviderBase(FSMProviderBase):
+# 12     def __init__(
+# 13         self,
+# 14         config=None,
+# 15         state_providers: Dict[str, object] = None,
+# 16         context_provider=None,
+# 17         score_provider=None,
+# 18         tool_providers=None,
+# 19         called_by_type=None,
+# 20         called_by_id=None,
+# 21     ):
+# 22         super().__init__(
+# 23             config=config,
+# 24             called_by_type=called_by_type,
+# 25             called_by_id=called_by_id
+# 26         )
+# 27         self._states = state_providers or {}
+# 28         self.context_provider = context_provider
+# 29         self.score_provider = score_provider
+# 30         self.tool_providers = tool_providers or []
+# 31         self._generated_files: list[Path] = []
 # 32 
 # 33     def _run_provider(self, input: dict) -> SystemOutputSchema:
 # 34         session_id = input.get("session_id")
 # 35         max_steps = input.get("max_steps", 10)
 # 36 
 # 37         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 38         print(f"🔍 State received file_path: {incoming_file}")
-# 39 
-# 40         if not incoming_file:
-# 41             raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
-# 42 
-# 43         self.incoming_file = incoming_file
-# 44 
-# 45         src = Path(incoming_file).resolve()
+# 38         if not incoming_file:
+# 39             raise ValueError("❌ SystemProvider requires 'file_path', 'file_name', or 'before' in input")
+# 40 
+# 41         #  make initial working copy
+# 42         self.incoming_file = incoming_file
+# 43         src = Path(incoming_file).resolve()
+# 44         working_dir = Path("working_files").resolve()
+# 45         working_dir.mkdir(parents=True, exist_ok=True)
 # 46         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 47         working_dir = Path("working_files").resolve()
-# 48         working_dir.mkdir(parents=True, exist_ok=True)
-# 49         #  Extract base name before any suffix (e.g., strip "__ctrl_...", "__prog_...", etc.)
-# 50         root = src.name.partition('.')[0]
-# 51         self.working_file = working_dir / f"{root}.__sys_{timestamp}{src.suffix}"
-# 52         shutil.copy(src, self.working_file)
-# 53         print(f"📂 State working file explicitly created: {self.working_file}")
-# 54 
-# 55         state = {
-# 56             "state": "start",
-# 57             "file_path": str(self.working_file),
-# 58             "session_id": input.get("session_id"),
-# 59             "system": input.get("system", "unknown"),
-# 60             "reason": input.get("reason", "start"),
-# 61             "steps": input.get("steps", 0),
-# 62             "retry_count": input.get("retry_count", 0),
-# 63             "_last_state": input.get("_last_state"),
-# 64         }
-# 65 
-# 66         step_count = 0
+# 47         root = src.stem
+# 48         self.working_file = working_dir / f"{root}.__sys_{timestamp}{src.suffix}"
+# 49         shutil.copy(src, self.working_file)
+# 50         self._generated_files.append(self.working_file)
+# 51 
+# 52         state = {
+# 53             "state": "start",
+# 54             "file_path": str(self.working_file),
+# 55             "session_id": session_id,
+# 56             "system": input.get("system", "unknown"),
+# 57             "reason": input.get("reason", "start"),
+# 58             "steps": input.get("steps", 0),
+# 59             "retry_count": input.get("retry_count", 0),
+# 60             "_last_state": input.get("_last_state"),
+# 61             "decision": DECISION_TYPE.UNKNOWN
+# 62         }
+# 63 
+# 64         step_count = 0
+# 65         while True:
+# 66             current = state["state"]
 # 67 
-# 68         while True:
-# 69             current = state.get("state")
-# 70 
-# 71             if step_count >= max_steps:
-# 72                 return SystemOutputSchema(
-# 73                     state="end",
-# 74                     previous_state=current,
-# 75                     state_type=STATE_TYPE.END,
-# 76                     decision=DECISION_TYPE.UNKNOWN,
-# 77                     steps=step_count,
-# 78                     max_steps=max_steps,
-# 79                     summary=f"Max steps ({max_steps}) reached",
-# 80                     output=state,
-# 81                     provider_name=self._config.name
-# 82                 )
-# 83 
-# 84             if current == "end":
-# 85                 return SystemOutputSchema(
-# 86                     state="end",
-# 87                     previous_state=state.get("_last_state"),
-# 88                     state_type=STATE_TYPE.END,
-# 89                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 90                     steps=step_count,
-# 91                     max_steps=max_steps,
-# 92                     summary=state.get("summary", "Completed"),
-# 93                     output=state,
-# 94                     provider_name=self._config.name
-# 95                 )
-# 96 
-# 97             step_count += 1
-# 98 
-# 99             if current == "start":
-# 100                 transition = self.transition(state, None)
-# 101                 state.update(transition, _last_state="start")
-# 102                 continue
+# 68             #  --- Timeout
+# 69             if step_count >= max_steps:
+# 70                 return SystemOutputSchema(
+# 71                     state="end",
+# 72                     previous_state=current,
+# 73                     state_type=STATE_TYPE.END,
+# 74                     decision=DECISION_TYPE.REJECT,
+# 75                     steps=step_count,
+# 76                     max_steps=max_steps,
+# 77                     summary=f"Max steps ({max_steps}) reached",
+# 78                     output=state,
+# 79                     provider_name=self._config.name
+# 80                 )
+# 81 
+# 82             #  --- Finalize
+# 83             if current == "end":
+# 84                 #  1) delete any existing final_*.py
+# 85                 for old in working_dir.glob("final_*.py"):
+# 86                     try: old.unlink()
+# 87                     except: pass
+# 88 
+# 89                 #  2) pick the best file
+# 90                 final_name = f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 91                 final_path = working_dir / final_name
+# 92                 if self.score_provider:
+# 93                     best = select_best_file_by_score(
+# 94                         file_a=state["file_path"],
+# 95                         file_b=self.incoming_file,
+# 96                         score_provider=self.score_provider,            #  <-- matches util signature :contentReference[oaicite:0]{index=0}
+# 97                         system=state["system"],
+# 98                         session_id=session_id
+# 99                     )
+# 100                     shutil.copy(Path(best), final_path)
+# 101                 else:
+# 102                     shutil.copy(Path(state["file_path"]), final_path)
 # 103 
-# 104             provider = self._states.get(current)
-# 105             if not provider:
-# 106                 raise ValueError(f"No state provider registered for state: {current}")
-# 107 
-# 108             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 109             output = provider.run(input=provider_input, session_id=session_id)
-# 110 
-# 111             #  --- Update working file if provider returned a new file_path
-# 112             new_file_path = getattr(output, "file_path", None)
-# 113             if new_file_path and new_file_path != state.get("file_path"):
-# 114                 #  Replace current working file with the new one
-# 115                 shutil.copy(Path(new_file_path).resolve(), Path(state.get("file_path")))
-# 116 
-# 117             transition_result = self.transition(state, output)
-# 118             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 119 
-# 120             state = {
-# 121                 **state,
-# 122                 **transition_result,
-# 123                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 124                 "score": getattr(output, "score", None),
-# 125                 "_last_state": current,
-# 126                 "state_output": flat_output,
-# 127             }
+# 104                 state["file_path"] = str(final_path)
+# 105 
+# 106                 #  3) cleanup all intermediate files
+# 107                 for f in self._generated_files:
+# 108                     if f.exists():
+# 109                         try: f.unlink()
+# 110                         except: pass
+# 111 
+# 112                 return SystemOutputSchema(
+# 113                     state="end",
+# 114                     previous_state=state["_last_state"],
+# 115                     state_type=STATE_TYPE.END,
+# 116                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 117                     steps=step_count,
+# 118                     max_steps=max_steps,
+# 119                     summary=state.get("summary", "Completed"),
+# 120                     output=state,
+# 121                     provider_name=self._config.name
+# 122                 )
+# 123 
+# 124             step_count += 1
+# 125 
+# 126             #  --- First transition
+# 127             if current == "start":
+# 128                 transition = self.transition(state, None)
+# 129                 state.update(transition, _last_state="start")
+# 130                 continue
+# 131 
+# 132             #  --- Delegate to state provider
+# 133             provider = self._states.get(current)
+# 134             if not provider:
+# 135                 raise ValueError(f"No state provider registered for state: {current}")
+# 136 
+# 137             out = provider.run(
+# 138                 {k: v for k, v in state.items() if k != "state"},
+# 139                 session_id=session_id
+# 140             )
+# 141 
+# 142             #  handle any new file
+# 143             new_fp = getattr(out, "file_path", None)
+# 144             if new_fp:
+# 145                 new_path = Path(new_fp).resolve()
+# 146                 curr = Path(state["file_path"]).resolve()
+# 147                 if new_path != curr:
+# 148                     shutil.copy(new_path, curr)
+# 149                     self._generated_files.append(new_path)
+# 150                     state["file_path"] = str(new_path)
+# 151 
+# 152             #  propagate decision
+# 153             if getattr(out, "decision", None):
+# 154                 state["decision"] = out.decision
+# 155 
+# 156             #  transition
+# 157             tr = self.transition(state, out)
+# 158             flat = out.model_dump(exclude={"output"}) if hasattr(out, "model_dump") else dict(out)
+# 159             state = {
+# 160                 **state,
+# 161                 **tr,
+# 162                 "file_path": tr.get("file_path", state["file_path"]),
+# 163                 "score": tr.get("score", getattr(out, "score", None)),
+# 164                 "_last_state": current,
+# 165                 "state_output": flat,
+# 166             }
 
 
 # providers\tool_provider_base.py
@@ -5872,26 +5865,24 @@
 # 7     session_root = session_root
 # 8     
 # 9     if not session_root.exists():
-# 10         print(f"⚠️ Snapshot session directory does not exist: {session_root}")
-# 11         return None
-# 12 
-# 13     snapshots = sorted(session_root.glob("*.before"), key=lambda p: p.stat().st_mtime, reverse=True)
-# 14 
-# 15     if not snapshots:
-# 16         print(f"⚠️ No snapshots found in: {session_root}")
-# 17         return None
-# 18 
-# 19     latest_snapshot_id = snapshots[0].stem
-# 20     before_path = session_root / f"{latest_snapshot_id}.before"
-# 21     after_path = session_root / f"{latest_snapshot_id}.after"
-# 22 
-# 23     return {
-# 24         "before": before_path.read_text(encoding="utf-8"),
-# 25         "after": after_path.read_text(encoding="utf-8"),
-# 26         "before_path": str(before_path),
-# 27         "after_path": str(after_path)
-# 28     }
-# 29 
+# 10         return None
+# 11 
+# 12     snapshots = sorted(session_root.glob("*.before"), key=lambda p: p.stat().st_mtime, reverse=True)
+# 13 
+# 14     if not snapshots:
+# 15         return None
+# 16 
+# 17     latest_snapshot_id = snapshots[0].stem
+# 18     before_path = session_root / f"{latest_snapshot_id}.before"
+# 19     after_path = session_root / f"{latest_snapshot_id}.after"
+# 20 
+# 21     return {
+# 22         "before": before_path.read_text(encoding="utf-8"),
+# 23         "after": after_path.read_text(encoding="utf-8"),
+# 24         "before_path": str(before_path),
+# 25         "after_path": str(after_path)
+# 26     }
+# 27 
 
 
 # utilities\metadata\snapshots\snapshot_writer.py
@@ -5914,22 +5905,21 @@
 # 16     ) -> str:
 # 17 
 # 18         if before == after:
-# 19             print("⛔ Snapshot skipped: before == after")
-# 20             return ""
-# 21 
-# 22         session_root = self.root / session_id
-# 23         session_root.mkdir(parents=True, exist_ok=True)
-# 24 
-# 25         snapshot_id = str(uuid.uuid4())
-# 26         (session_root / f"{snapshot_id}.before").write_text(before, encoding="utf-8")
-# 27         (session_root / f"{snapshot_id}.after").write_text(after, encoding="utf-8")
-# 28 
-# 29         if metadata:
-# 30             metadata.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
-# 31             meta_path = session_root / f"{snapshot_id}.meta.json"
-# 32             meta_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-# 33 
-# 34         return snapshot_id
+# 19             return ""
+# 20 
+# 21         session_root = self.root / session_id
+# 22         session_root.mkdir(parents=True, exist_ok=True)
+# 23 
+# 24         snapshot_id = str(uuid.uuid4())
+# 25         (session_root / f"{snapshot_id}.before").write_text(before, encoding="utf-8")
+# 26         (session_root / f"{snapshot_id}.after").write_text(after, encoding="utf-8")
+# 27 
+# 28         if metadata:
+# 29             metadata.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+# 30             meta_path = session_root / f"{snapshot_id}.meta.json"
+# 31             meta_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+# 32 
+# 33         return snapshot_id
 
 
 # utilities\pydantic_compat.py
@@ -6073,6 +6063,44 @@
 # 78 
 # 79 #      def model_dump(self, **kwargs) -> dict:
 # 80 #          return super().model_dump(**kwargs)
+
+
+# utilities\select_best_file_by_score.py
+
+# 1 from pathlib import Path
+# 2 from typing import Callable
+# 3 
+# 4 from app.providers.score_provider_base import ScoreProviderBase
+# 5 
+# 6 
+# 7 def select_best_file_by_score(
+# 8     file_a: str,
+# 9     file_b: str,
+# 10     score_provider: ScoreProviderBase,
+# 11     system: str = "unknown",
+# 12     session_id: str = "",
+# 13 ) -> str:
+# 14     """
+# 15     Compare two file paths using a scoring provider (with .run(input, session_id).value)
+# 16     and return the file path with the higher score.
+# 17 
+# 18     Args:
+# 19         file_a (str): First file path to compare.
+# 20         file_b (str): Second file path to compare.
+# 21         scoring_provider: Object with a .run(dict, session_id) method that returns .value.
+# 22         system (str): System identifier passed into the scoring input.
+# 23         session_id (str): Session identifier passed into the scoring call.
+# 24 
+# 25     Returns:
+# 26         str: File path with the higher score.
+# 27     """
+# 28     path_a = Path(file_a).resolve()
+# 29     path_b = Path(file_b).resolve()
+# 30 
+# 31     score_a = score_provider.run({"file_path": str(path_a), "system": system}, session_id).value
+# 32     score_b = score_provider.run({"file_path": str(path_b), "system": system}, session_id).value
+# 33 
+# 34     return str(path_a if score_a >= score_b else path_b)
 
 
 

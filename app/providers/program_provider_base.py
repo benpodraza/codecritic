@@ -8,6 +8,7 @@ from typing import Dict
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ProgramOutputSchema
+from app.utilities.select_best_file_by_score import select_best_file_by_score
 
 class ProgramProviderBase(FSMProviderBase):
     def __init__(
@@ -29,6 +30,7 @@ class ProgramProviderBase(FSMProviderBase):
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
+        self._generated_files: list[Path] = []
 
     def _run_provider(self, input: dict) -> ProgramOutputSchema:
         session_id = input.get("session_id")
@@ -45,6 +47,7 @@ class ProgramProviderBase(FSMProviderBase):
         working_dir.mkdir(parents=True, exist_ok=True)
         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
         shutil.copy(src, self.working_file)
+        self._generated_files.append(self.working_file)
 
         state = {
             "state": "start",
@@ -77,14 +80,54 @@ class ProgramProviderBase(FSMProviderBase):
 
             if current == "end":
                 final_decision = state.get("decision")
-                final_file_path = state.get("file_path")
                 nested = state.get("output") or {}
+
                 if isinstance(nested, dict):
                     final_decision = final_decision or nested.get("decision")
-                    final_file_path = nested.get("file_path", final_file_path)
 
+                # 🧠 Choose best between current file and original input
+                best_file = select_best_file_by_score(
+                    file_a=state.get("file_path"),
+                    file_b=self.incoming_file,
+                    score_provider=self.score_provider,
+                    system=state.get("system", "unknown"),
+                    session_id=session_id
+                )
+
+                print("")
+                print("PROGRAM TEST")
+                print("file1 ", state.get("file_path"))
+                print("file2 ", self.incoming_file)
+
+                print("BEST FILE: ", best_file)
+                print("")
+
+                # 🏁 Copy to new final file
+                final_path = Path("working_files") / f"final_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                shutil.copy(Path(best_file).resolve(), final_path)
+                state["file_path"] = str(final_path)
                 state["decision"] = final_decision
-                state["file_path"] = final_file_path
+
+                # 🧼 Cleanup
+                for f in Path("working_files").glob("final_*.py"):
+                    if f.resolve() != final_path.resolve():
+                        try:
+                            f.unlink()
+                        except Exception:
+                            pass
+
+                for f in Path("working_files").glob("*_stripped.py"):
+                    try:
+                        f.unlink()
+                    except Exception:
+                        pass
+
+                for path in self._generated_files:
+                    if path.exists():
+                        try:
+                            path.unlink()
+                        except Exception:
+                            pass
 
                 return ProgramOutputSchema(
                     state="end",
@@ -97,6 +140,7 @@ class ProgramProviderBase(FSMProviderBase):
                     output=state,
                     provider_name=self._config.name
                 )
+
 
             step_count += 1
 
@@ -113,26 +157,16 @@ class ProgramProviderBase(FSMProviderBase):
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, session_id=session_id)
 
-            transition_result = self.transition(state, output.model_dump() if hasattr(output, "model_dump") else dict(output))
-
-            if getattr(output, "decision", None) == DECISION_TYPE.ACCEPT:
-                new_path = getattr(output, "file_path", None)
-                if new_path:
-                    new_path = Path(new_path).resolve()
-                    current_path = Path(state["file_path"]).resolve()
-                    if new_path != current_path and new_path.exists():
-                        shutil.copy(new_path, current_path)
-
-            nested_output = getattr(output, "output", {})
+            transition_result = self.transition(state, output)
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
 
             state = {
                 **state,
                 **transition_result,
                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-                "decision": transition_result.get("decision", state.get("decision")),
-                "score": transition_result.get("score", getattr(output, "score", None)),
+                "score": getattr(output, "score", None),
                 "_last_state": current,
-                "output": nested_output if isinstance(nested_output, dict) else {},
+                "state_output": flat_output,
             }
 
     @abstractmethod

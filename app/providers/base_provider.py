@@ -5,6 +5,7 @@ import json
 import time
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 from app.db import init_db
 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE
@@ -33,6 +34,7 @@ class BaseProvider(LoggingMixin):
 
         self._session_id = session_id
         self._system = input.get("system", "unknown")
+        self._run_id = str(uuid4()) 
 
         start_clock = time.perf_counter()
         start_time = datetime.now(timezone.utc)
@@ -55,6 +57,7 @@ class BaseProvider(LoggingMixin):
                         latency_ms=latency_ms,
                         called_by_type=self._called_by_type.value if self._called_by_type else None,
                         called_by_id=self._called_by_id,
+                        run_id=self._run_id,
                     ),
                 )
             except Exception:
@@ -104,6 +107,7 @@ class BaseProvider(LoggingMixin):
                     timestamp=start_time,
                     called_by_type=self._called_by_type.value if self._called_by_type else None,
                     called_by_id=self._called_by_id,
+                    run_id=self._run_id,
                 ),
             )
         except Exception:

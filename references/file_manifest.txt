@@ -157,7 +157,6 @@ codecritic
    - htmlcov
    - lib
    - mypy.ini
-   - provider_tree.html
    - pytest
    - pytest.ini
    - references
@@ -201,4 +200,3 @@ codecritic
       - system_linting_example_working.py
    - utilities.ipynb
    - working_files
-      - final_prog_1753403055.py

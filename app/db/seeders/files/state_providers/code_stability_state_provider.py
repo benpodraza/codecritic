@@ -1,4 +1,4 @@
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.state_provider_base import StateProviderBase
 from app.db.schemas import AgentOutputSchema
 
@@ -7,16 +7,18 @@ class CodeStabilityStateProvider(StateProviderBase):
         if state.get("state") == "start":
             return {
                 "state": "code_stability",
-                "reason": "entering stability check"
+                "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
             }
 
         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
-        result = "pass" if decision == DECISION_TYPE.ACCEPT else "fail"
 
         return {
             "state": "end",
             "state_type": STATE_TYPE.END,
             "decision": decision,
-            "reason": "stability passed" if result == "pass" else "stability failed",
-            "result": result
+            "reason": (
+                TRANSITION_REASON_TYPE.STABILITY_PASSED
+                if decision == DECISION_TYPE.ACCEPT
+                else TRANSITION_REASON_TYPE.STABILITY_FAILED
+            )
         }

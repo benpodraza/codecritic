@@ -1,4 +1,4 @@
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.state_provider_base import StateProviderBase
 from app.db.schemas import AgentOutputSchema
 
@@ -10,7 +10,7 @@ class LintingGeneratorStateProvider(StateProviderBase):
         if current == "start":
             return {
                 "state": "generate",
-                "reason": "entering generation step"
+                "reason": TRANSITION_REASON_TYPE.GENERATION_STARTED
             }
 
         if current == "generate":
@@ -18,14 +18,12 @@ class LintingGeneratorStateProvider(StateProviderBase):
                 "state": "end",
                 "state_type": STATE_TYPE.END,
                 "decision": decision,
-                "reason": "generation complete",
-                "result": "pass"
+                "reason": TRANSITION_REASON_TYPE.GENERATION_COMPLETED
             }
 
         return {
             "state": "end",
             "state_type": STATE_TYPE.END,
             "decision": DECISION_TYPE.UNKNOWN,
-            "reason": "unknown state",
-            "result": "fail"
+            "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE
         }

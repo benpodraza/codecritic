@@ -1,4 +1,4 @@
-from app.enums.fsm_enums import DECISION_TYPE
+from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.program_provider_base import ProgramProviderBase
 
 class CodeCriticProgramProvider(ProgramProviderBase):
@@ -8,27 +8,26 @@ class CodeCriticProgramProvider(ProgramProviderBase):
         if state["state"] == "start":
             transition = {
                 "state": "preprocessing",
-                "reason": "start of program"
+                "reason": TRANSITION_REASON_TYPE.PROGRAM_INIT
             }
 
         elif state["state"] == "preprocessing":
             transition = {
                 "state": "end",
-                "reason": "preprocessing complete"
+                "reason": TRANSITION_REASON_TYPE.PREPROCESSING_COMPLETE
             }
 
         else:
             transition = {
                 "state": "end",
-                "reason": "unexpected state"
+                "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE
             }
 
-        # 🔁 Propagate controller output fields
+        # 🔁 Propagate controller output fields (minus score)
         if ctrl_output:
             if hasattr(ctrl_output, "output") and isinstance(ctrl_output.output, dict):
                 output_dict = ctrl_output.output
                 transition["file_path"] = output_dict.get("file_path") or state.get("file_path")
                 transition["decision"] = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
-                transition["score"] = output_dict.get("score")
 
         return transition

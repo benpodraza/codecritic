@@ -68,13 +68,5 @@ class SYSTEM_TYPE(str, Enum):
     UNKNOWN = "unknown"
 
 
-class STATE_DECISION_TYPE(str, Enum):
-    INITIAL = "initial"
-    IMPROVED = "improved"
-    ROLLBACK = "rollback"
-    REJECT = "reject"
-    FINAL = "final"
-    UNKNOWN = "unknown"
-
 
 

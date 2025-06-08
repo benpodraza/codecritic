@@ -5,10 +5,10 @@ from pathlib import Path
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 from app.enums.agent_enums import AGENT_TYPE
-from app.enums.fsm_enums import DECISION_TYPE, REASON_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-from app.enums.system_enums import STATE_DECISION_TYPE, SYSTEM_TYPE
+from app.enums.system_enums import SYSTEM_TYPE
 from app.enums.agent_engine_enums import AGENT_ENGINE_MODEL
 
 
@@ -222,6 +222,7 @@ class ProviderLogSchema:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     called_by_type: Optional[PROVIDER_TYPE] = None
     called_by_id: Optional[int] = None
+    run_id: str = field(default_factory=lambda: str(uuid4()))
 
 @dataclass
 class StateTransitionLogSchema:
@@ -236,6 +237,7 @@ class StateTransitionLogSchema:
     step: int | None = None
     transition_metadata: dict | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    run_id: str = field(default_factory=lambda: str(uuid4()))
 
 @dataclass
 class AgentConversationLogSchema:
@@ -245,6 +247,7 @@ class AgentConversationLogSchema:
     agent_provider_config_id: int
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    run_id: str = field(default_factory=lambda: str(uuid4()))
 
 @dataclass
 class ErrorLogSchema:
@@ -258,6 +261,7 @@ class ErrorLogSchema:
     latency_ms: Optional[int] = None
     called_by_type: Optional[PROVIDER_TYPE] = None
     called_by_id: Optional[int] = None
+    run_id: str = field(default_factory=lambda: str(uuid4()))
     
 @dataclass
 class SnapshotMetricsSchema:

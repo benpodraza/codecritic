@@ -14,23 +14,12 @@ class STATE_TYPE(str, Enum):
     END = "end"
 
 
-class REASON_TYPE(str, Enum):
-    """
-    Reasons for state transitions in FSMs.
-
-    - KICKOFF: Initial start of the flow
-    - SUCCESS: Task completed successfully
-    - FAILURE: Task failed or was rejected
-    - MAX_STEPS: Step limit reached
-    - MANUAL_EXIT: User-initiated termination
-    - UNSPECIFIED: Reason not explicitly stated
-    """
-    KICKOFF = "kickoff"
-    SUCCESS = "success"
-    FAILURE = "failure"
-    MAX_STEPS = "max_steps"
-    MANUAL_EXIT = "manual_exit"
-    UNSPECIFIED = "unspecified"
+class STATE_DECISION_TYPE(str, Enum):
+    INITIAL = "initial"
+    IMPROVED = "improved"
+    REJECTED = "rejected"
+    FINAL = "final"
+    UNKNOWN = "unknown"
 
 
 class DECISION_TYPE(str, Enum):
@@ -47,15 +36,22 @@ class DECISION_TYPE(str, Enum):
 
 
 class TRANSITION_REASON_TYPE(str, Enum):
-    """
-    Enumerated reasons for FSM state transitions.
-    """
-    FIRST_ROUND = "first_round"
+    PROGRAM_INIT = "program_init"
+    PREPROCESSING_COMPLETE = "preprocessing_complete"
+    KICKOFF = "kickoff"
+    CONTROLLER_FINISHED = "controller_finished"
+    STABILITY_CHECK = "stability_check"
+    STABILITY_PASSED = "stability_passed"
+    STABILITY_FAILED = "stability_failed"
+    GENERATION_STARTED = "generation_started"
+    GENERATION_COMPLETED = "generation_completed"
+    POST_GEN_STABILITY_PASSED = "post_gen_stability_passed"
+    POST_GEN_STABILITY_FAILED = "post_gen_stability_failed"
+    DISCRIMINATOR_STARTED = "discriminator_started"
+    DISCRIMINATOR_ACCEPTED = "discriminator_accepted"
+    DISCRIMINATOR_REJECTED = "discriminator_rejected"
     MAX_ITERATIONS_REACHED = "max_iterations_reached"
-    SCORE_THRESHOLD_MET = "score_threshold_met"
-    SCORE_STAGNATION = "score_stagnation"
-    AGENT_FAILURE = "agent_failure"
-    MEDIATOR_OVERRIDE = "mediator_override"
-    PATCH_RETRY = "patch_retry"
-    CUSTOM_RULE = "custom_rule"
     END_REACHED = "end_reached"
+    AGENT_FAILURE = "agent_failure"
+    CUSTOM_RULE = "custom_rule"
+

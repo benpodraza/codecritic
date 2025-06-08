@@ -1,7 +1,8 @@
 from pathlib import Path
-from app.enums.fsm_enums import DECISION_TYPE
-from app.providers.system_provider_base import SystemProviderBase
 import json
+
+from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.providers.system_provider_base import SystemProviderBase
 
 
 class LintingSystemProvider(SystemProviderBase):
@@ -31,7 +32,7 @@ class LintingSystemProvider(SystemProviderBase):
         if current == "start":
             transition = {
                 "state": "code_stability",
-                "reason": "initial stability check"
+                "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
             }
 
         elif current == "code_stability":
@@ -39,33 +40,32 @@ class LintingSystemProvider(SystemProviderBase):
                 if result == "accept":
                     transition = {
                         "state": "generate",
-                        "reason": "initial stability passed, now generate",
+                        "reason": TRANSITION_REASON_TYPE.STABILITY_PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
                         "state": "end",
-                        "reason": "initial stability failed—rejecting original code",
-                        "decision": DECISION_TYPE.REJECT
+                        "reason": TRANSITION_REASON_TYPE.STABILITY_FAILED
                     }
             elif last == "generate":
                 if result == "accept":
                     transition = {
                         "state": "discriminate",
-                        "reason": "post-generation stability passed, now discriminate",
+                        "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
                         "state": "generate",
-                        "reason": "stability failed—retrying generation",
+                        "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_FAILED,
                         "file_path": state.get("file_path")
                     }
 
         elif current == "generate":
             transition = {
                 "state": "code_stability",
-                "reason": "post-generation stability check",
+                "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK,
                 "file_path": state.get("file_path")
             }
 
@@ -73,14 +73,14 @@ class LintingSystemProvider(SystemProviderBase):
             if result == "accept":
                 transition = {
                     "state": "end",
-                    "reason": "discriminator accepted generation",
+                    "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_ACCEPTED,
                     "file_path": state.get("file_path")
                 }
             else:
                 transition = {
                     "state": "generate",
-                    "reason": "discriminator rejected—retrying generation",
+                    "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_REJECTED,
                     "file_path": state.get("file_path")
                 }
-        
+
         return transition

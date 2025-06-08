@@ -46,9 +46,16 @@ class StateProviderBase(FSMProviderBase):
         working_dir = Path("working_files").resolve()
         working_dir.mkdir(parents=True, exist_ok=True)
         root = extract_base_filename(src)
-        self.working_file = working_dir / f"{root}.__state_{timestamp}{src.suffix}"
+        self.working_file = working_dir / f"{root}__state_{timestamp}{src.suffix}"
         shutil.copy(src, self.working_file)
         self._generated_files.append(self.working_file)
+
+        input_path = Path(input.get("file_path") or input.get("file_name") or input.get("before"))
+        try:
+            relative_path = str(input_path.relative_to(Path.cwd()))
+        except ValueError:
+            # Fall back to the original string if it's not a subpath of CWD
+            relative_path = str(input_path)
 
         state = {
             "state": "start",
@@ -59,7 +66,9 @@ class StateProviderBase(FSMProviderBase):
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state"),
-            "decision": DECISION_TYPE.UNKNOWN
+            "decision": DECISION_TYPE.UNKNOWN,
+            "original_file": relative_path,
+            "run_id": self._run_id,
         }
 
         step_count = 0
@@ -154,11 +163,18 @@ class StateProviderBase(FSMProviderBase):
 
             flat_output = agent_output.model_dump(exclude={"output"}) if hasattr(agent_output, "model_dump") else dict(agent_output or {})
 
+            # 🧠 Capture flattened agent output and file_path into transition_metadata
+            transition_metadata = transition_result.get("transition_metadata", {}) or {}
+            transition_metadata.update({
+                "agent_output": flat_output.get("output", {}),
+                "file_path": flat_output.get("file_path"),
+            })
+            transition_result["transition_metadata"] = transition_metadata
+
             state = {
                 **state,
                 **transition_result,
                 "file_path": transition_result.get("file_path") or state.get("file_path"),
-                "score": transition_result.get("score") or getattr(agent_output, "score", None),
                 "_last_state": current,
                 "state_output": flat_output,
             }

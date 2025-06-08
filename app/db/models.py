@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, JSON
+from sqlalchemy import Column, DateTime, Enum, Float, Integer, String, JSON
 from sqlalchemy.dialects.sqlite import TEXT
 from app.db.base import Base
 from uuid import uuid4
@@ -174,6 +174,7 @@ class ProviderLog(Base):
     file_name = Column(String, nullable=True)
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True)
+    run_id = Column(TEXT, nullable=False, index=True)
 
     
 class StateTransitionLog(Base):
@@ -193,7 +194,7 @@ class StateTransitionLog(Base):
     transition_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     input_snapshot_id = Column(String, nullable=True)
     output_snapshot_id = Column(String, nullable=True)
-
+    run_id = Column(TEXT, nullable=False, index=True)
 
 class AgentConversationLog(Base):
     __tablename__ = "agent_conversation_log"
@@ -205,6 +206,7 @@ class AgentConversationLog(Base):
     agent_type = Column(String, nullable=False)  # NEW: replaces `agent_name`
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+    run_id = Column(TEXT, nullable=False, index=True)
 
 class ErrorLog(Base):
     __tablename__ = "error_log"
@@ -220,6 +222,7 @@ class ErrorLog(Base):
     file_path = Column(String, nullable=True)
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True)
+    run_id = Column(TEXT, nullable=False, index=True)
 
 class SnapshotMetrics(Base):
     __tablename__ = "snapshot_metrics"

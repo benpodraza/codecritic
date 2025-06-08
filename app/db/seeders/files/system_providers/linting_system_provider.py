@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.system_provider_base import SystemProviderBase
 
 
@@ -9,8 +9,8 @@ class LintingSystemProvider(SystemProviderBase):
     SCORE_THRESHOLD = 0.85
 
     def _transition(self, state: dict, state_output: dict | None) -> dict:
-        current = state.get("state")
-        last = state.get("_last_state")
+        current = STATE(state.get("state"))
+        last = STATE(state.get("_last_state")) if state.get("_last_state") else None
 
         result = None
 
@@ -29,56 +29,56 @@ class LintingSystemProvider(SystemProviderBase):
 
         transition = {}
 
-        if current == "start":
+        if current == STATE.START:
             transition = {
-                "state": "code_stability",
+                "state": STATE.CODE_STABILITY,
                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
             }
 
-        elif current == "code_stability":
-            if last == "start":
+        elif current == STATE.CODE_STABILITY:
+            if last == STATE.START:
                 if result == "accept":
                     transition = {
-                        "state": "generate",
+                        "state": STATE.GENERATE,
                         "reason": TRANSITION_REASON_TYPE.STABILITY_PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
-                        "state": "end",
+                        "state": STATE.END,
                         "reason": TRANSITION_REASON_TYPE.STABILITY_FAILED
                     }
-            elif last == "generate":
+            elif last == STATE.GENERATE:
                 if result == "accept":
                     transition = {
-                        "state": "discriminate",
+                        "state": STATE.DISCRIMINATE,
                         "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
-                        "state": "generate",
+                        "state": STATE.GENERATE,
                         "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_FAILED,
                         "file_path": state.get("file_path")
                     }
 
-        elif current == "generate":
+        elif current == STATE.GENERATE:
             transition = {
-                "state": "code_stability",
+                "state": STATE.CODE_STABILITY,
                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK,
                 "file_path": state.get("file_path")
             }
 
-        elif current == "discriminate":
+        elif current == STATE.DISCRIMINATE:
             if result == "accept":
                 transition = {
-                    "state": "end",
+                    "state": STATE.END,
                     "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_ACCEPTED,
                     "file_path": state.get("file_path")
                 }
             else:
                 transition = {
-                    "state": "generate",
+                    "state": STATE.GENERATE,
                     "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_REJECTED,
                     "file_path": state.get("file_path")
                 }

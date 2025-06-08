@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import StateProviderConfig
+from app.enums.fsm_enums import STATE  # ✅ Import FSM state enum
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/state_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -18,7 +19,7 @@ STATE_PROVIDERS = [
         {
             "score_provider_id": 1,
             "agents": {
-                "generate": 2
+                STATE.GENERATE.value: 2  # ✅ Enum-backed key
             }
         }
     ),
@@ -31,7 +32,7 @@ STATE_PROVIDERS = [
         {
             "score_provider_id": 1,
             "agents": {
-                "discriminate": 3
+                STATE.DISCRIMINATE.value: 3  # ✅ Enum-backed key
             }
         }
     ),
@@ -44,7 +45,7 @@ STATE_PROVIDERS = [
         {
             "score_provider_id": 1,
             "agents": {
-                "code_stability": 4  # Agent ID of CodeStabilityAgentProvider
+                STATE.CODE_STABILITY.value: 4  # ✅ Enum-backed key
             }
         }
     )

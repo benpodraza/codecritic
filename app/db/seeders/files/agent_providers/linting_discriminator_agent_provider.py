@@ -25,65 +25,57 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 score=None
             )
 
-        # Extract both content and paths
         before_code = snapshot["before"]
         after_code = snapshot["after"]
-        before_path = snapshot["before_path"]
-        after_path = snapshot["after_path"]
+        before_path = Path(snapshot["before_path"]).resolve()
+        after_path = Path(snapshot["after_path"]).resolve()
 
-        before_score = self._score_provider.run({"file_path": before_path}, session_id=self._session_id).value
-        after_score = self._score_provider.run({"file_path": after_path}, session_id=self._session_id).value
+        before_score = self._score_provider.run({"file_path": str(before_path)}, session_id=self._session_id).value
+        after_score = self._score_provider.run({"file_path": str(after_path)}, session_id=self._session_id).value
+
+        def safe_relative(path: Path) -> str:
+            try:
+                return str(path.relative_to(Path.cwd()))
+            except ValueError:
+                return str(path)
 
         if before_code == after_code:
-            if before_score >= LINTING_PASS_THRESHOLD:
-                return AgentOutputSchema(
-                    decision="accept",
-                    log="No meaningful change, but score already passing.",
-                    response=(
-                        "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
-                        "[CONVERSATION_LOG_ENTRY]No meaningful change, but score already passing.[/CONVERSATION_LOG_ENTRY]"
-                    ),
-                    file_path=before_path,
-                    score=before_score
-                )
-            else:
-                return AgentOutputSchema(
-                    decision="reject",
-                    log="No meaningful change and score below threshold.",
-                    response=(
-                        "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-                        "[CONVERSATION_LOG_ENTRY]No meaningful change and score below threshold.[/CONVERSATION_LOG_ENTRY]"
-                    ),
-                    file_path=before_path,
-                    score=before_score
-                )
+            decision = "accept" if before_score >= LINTING_PASS_THRESHOLD else "reject"
+            log_msg = (
+                "No meaningful change, but score already passing."
+                if decision == "accept"
+                else "No meaningful change and score below threshold."
+            )
+            return AgentOutputSchema(
+                decision=decision,
+                log=log_msg,
+                response=(
+                    f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+                    f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+                ),
+                file_path=safe_relative(before_path),
+                score=before_score
+            )
 
         summary = summarize_diff(before_code, after_code).strip()
         if not summary:
-            if before_score >= LINTING_PASS_THRESHOLD:
-                return AgentOutputSchema(
-                    decision="accept",
-                    log="Diff not available, but prior version passes.",
-                    response=(
-                        "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
-                        "[CONVERSATION_LOG_ENTRY]Diff could not be summarized, but prior version passes.[/CONVERSATION_LOG_ENTRY]"
-                    ),
-                    file_path=before_path,
-                    score=before_score
-                )
-            else:
-                return AgentOutputSchema(
-                    decision="reject",
-                    log="Diff could not be summarized and prior version fails.",
-                    response=(
-                        "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-                        "[CONVERSATION_LOG_ENTRY]Diff could not be summarized and prior version fails.[/CONVERSATION_LOG_ENTRY]"
-                    ),
-                    file_path=before_path,
-                    score=before_score
-                )
+            decision = "accept" if before_score >= LINTING_PASS_THRESHOLD else "reject"
+            log_msg = (
+                "Diff could not be summarized, but prior version passes."
+                if decision == "accept"
+                else "Diff could not be summarized and prior version fails."
+            )
+            return AgentOutputSchema(
+                decision=decision,
+                log=log_msg,
+                response=(
+                    f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+                    f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+                ),
+                file_path=safe_relative(before_path),
+                score=before_score
+            )
 
-        # Determine winner based on score and threshold
         if after_score > before_score and after_score >= LINTING_PASS_THRESHOLD:
             decision = "accept"
             chosen_code = after_code
@@ -97,7 +89,6 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
             chosen_code = after_code
             score = after_score
 
-        # Write chosen_code to disk for downstream use
         output_path = Path("working_files") / f"{uuid.uuid4().hex}.py"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(chosen_code, encoding="utf-8")
@@ -109,6 +100,6 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
                 f"[CONVERSATION_LOG_ENTRY]{summary}[/CONVERSATION_LOG_ENTRY]"
             ),
-            file_path=str(output_path),
+            file_path=safe_relative(output_path),
             score=score
         )

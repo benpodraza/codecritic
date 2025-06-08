@@ -1,23 +1,24 @@
-from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.controller_provider_base import ControllerProviderBase
 
 class PreprocessingControllerProvider(ControllerProviderBase):
     def _transition(self, state, sys_output):
+        current = STATE(state["state"])
         transition = {}
 
-        if state["state"] == "start":
+        if current == STATE.START:
             transition = {
-                "state": "preprocess",
+                "state": STATE.PREPROCESS,
                 "reason": TRANSITION_REASON_TYPE.KICKOFF,
             }
-        elif state["state"] == "preprocess":
+        elif current == STATE.PREPROCESS:
             transition = {
-                "state": "end",
+                "state": STATE.END.value,
                 "reason": TRANSITION_REASON_TYPE.PREPROCESSING_COMPLETE,
             }
         else:
             transition = {
-                "state": "end",
+                "state": STATE.END,
                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
             }
 

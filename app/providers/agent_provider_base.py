@@ -45,7 +45,13 @@ class AgentProviderBase(BaseProvider):
         snapshot_id = None
         file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
         if file_name and (code_block := self._extract_code(response)):
-            before_path = Path(file_name).resolve()
+            before_path = Path(file_name)
+            try:
+                relative_path = before_path.relative_to(Path.cwd())
+            except ValueError:
+                relative_path = before_path
+            before_path = relative_path
+
             if before_path.exists():
                 before_code = before_path.read_text(encoding="utf-8")
                 after_code = code_block
@@ -57,15 +63,18 @@ class AgentProviderBase(BaseProvider):
                 metadata = {
                     "system": self._system,
                     "agent": self._config.name if self._config else "unknown",
-                    "score": self._score_provider.run(
-                        {"file_name": str(before_path)}, session_id=self._session_id
-                    ).value if self._score_provider else None,
-                    "state": input.get("state_context", {}).get("state", "unknown"),
+                    "score": (
+                        self._score_provider.run(
+                            {"file_name": str(before_path)}, session_id=self._session_id
+                        ).value
+                        if self._score_provider else None
+                    ),
+                    "state": str(input.get("state_context", {}).get("state", "unknown")),
                     "decision": decision.value,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     **{f"{k}_before": v for k, v in before_metrics.items()},
                     **{f"{k}_after": v for k, v in after_metrics.items()},
-                    **deltas
+                    **deltas,
                 }
 
                 after_code = append_agent_note(
@@ -89,7 +98,7 @@ class AgentProviderBase(BaseProvider):
                         agent=self._config.name,
                         score=metadata.get("score"),
                         state=metadata.get("state"),
-                        decision=metadata.get("decision"),
+                        decision=DECISION_TYPE(metadata.get("decision", "unknown")),
                         timestamp=datetime.fromisoformat(metadata["timestamp"]),
                         **{
                             k: metadata.get(k)

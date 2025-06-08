@@ -1,9 +1,10 @@
+from pathlib import Path
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 
 
 class LintingGeneratorAgentProvider(AgentProviderBase):
-    """Runs a GPT-4o generation round using the linting system prompt, context, and snapshot."""
+    """Runs a generation round using the linting system prompt, context, and snapshot."""
     def _run(self, input: dict) -> AgentOutputSchema:
         session_id = self._session_id
         file_path = input["file_path"]
@@ -14,13 +15,11 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
         if not self._agent_engine:
             raise ValueError("Agent engine is not set")
 
-        # Build prompt
         final_prompt = self._prompt_provider.run(
             input=input,
             session_id=session_id
         )
 
-        # Run engine
         engine_output = self._agent_engine.run(
             input={
                 "prompt": final_prompt,
@@ -40,7 +39,6 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
             "unknown"
         )
 
-        # Try to extract log and code blocks
         log = None
         if "[CONVERSATION_LOG_ENTRY]" in response:
             start = response.find("[CONVERSATION_LOG_ENTRY]") + len("[CONVERSATION_LOG_ENTRY]")
@@ -50,19 +48,25 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
         code = self._extract_block(response, "[CODE]", "[/CODE]")
         log_entry = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
 
-        # 🧠 Infer accept if valid code and log but no explicit decision
         if decision == "unknown" and code and log_entry:
             decision = "accept"
             self._log.debug("✅ Generator decision inferred as 'accept' based on presence of code and log.")
         elif decision == "unknown":
             self._log.warning("⚠️ Generator decision remained 'unknown'; [AGENT_DECISION] tag may be missing.")
 
+        # Ensure relative path if file_path is present
+        relative_file_path = None
+        if hasattr(engine_output, "file_path") and engine_output.file_path:
+            try:
+                relative_file_path = str(Path(engine_output.file_path).resolve().relative_to(Path.cwd()))
+            except ValueError:
+                relative_file_path = str(engine_output.file_path)
+
         return AgentOutputSchema(
             response=response,
             log=log,
             decision=decision,
             snapshot_id=engine_output.snapshot_id,
-            file_path=engine_output.file_path if hasattr(engine_output, "file_path") else None,
+            file_path=relative_file_path,
             score=engine_output.score if hasattr(engine_output, "score") else None
         )
-

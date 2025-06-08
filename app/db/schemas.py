@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 from app.enums.agent_enums import AGENT_TYPE
-from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import DECISION_TYPE, STATE, STATE_TYPE, TRANSITION_REASON_TYPE
 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 from app.enums.system_enums import SYSTEM_TYPE
@@ -299,9 +299,10 @@ class ToolOutputSchema(BaseModel):
     return_code: int
     stdout: Optional[str] = None
     stderr: Optional[str] = None
-    violations: Optional[list[str]] = None  # for linters like ruff
+    violations: Optional[List[str]] = None  # for linters like ruff
     metrics: Optional[Dict[str, Any]] = None  # for tools like sonarcloud
     summary: Optional[str] = None  # optional human-readable summary
+
 
 class AgentEngineOutput(BaseModel):
     response: str
@@ -310,30 +311,34 @@ class AgentEngineOutput(BaseModel):
     snapshot_id: Optional[str] = None
     summary: Optional[str] = None
 
+
 class AgentOutputSchema(BaseModel):
-    decision: DECISION_TYPE
+    decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
     score: Optional[float] = None
-    response: Optional[str] = None 
+    response: Optional[str] = None
     log: Optional[str] = None
     file_path: Optional[str] = None
 
+
 class ContextOutputSchema(BaseModel):
-    context: dict
+    context: Dict[str, Any]
     summary: Optional[str] = None
+
 
 class PromptOutputSchema(BaseModel):
     prompt: str
     summary: Optional[str] = None
 
+
 class FSMOutputSchema(BaseModel):
-    state: str
-    previous_state: Optional[str] = None
+    state: STATE
+    previous_state: Optional[STATE] = None
     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
     steps: int = Field(..., ge=0)
     max_steps: int = Field(..., gt=0)
     summary: Optional[str] = None
-    output: Optional[dict] = None
+    output: Optional[Dict[str, Any]] = None
     provider_name: Optional[str] = None
 
 class StateOutputSchema(FSMOutputSchema): pass

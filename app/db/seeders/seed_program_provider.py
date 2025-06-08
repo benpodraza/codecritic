@@ -1,10 +1,9 @@
-# app/db/seeders/seed_program_providers.py
-
 from uuid import uuid4
 from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ProgramProviderConfig
+from app.enums.fsm_enums import STATE  # ✅ Import your FSM state enum
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -20,7 +19,7 @@ PROGRAM_PROVIDERS = [
         "config": {
             "score_provider_id": 1,
             "controllers": {
-                "preprocessing": 1
+                STATE.PREPROCESS.value: 1  # ✅ Enum-safe
             }
         }
     }

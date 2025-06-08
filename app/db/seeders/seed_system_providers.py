@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import SystemProviderConfig
+from app.enums.fsm_enums import STATE  # ✅ Import FSM state enum
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -18,9 +19,9 @@ SYSTEM_PROVIDERS = [
         "config": {
             "score_provider_id": 1,
             "states": {
-                "generate": 1,     
-                "discriminate": 2,
-                "code_stability": 3  
+                STATE.GENERATE.value: 1,
+                STATE.DISCRIMINATE.value: 2,
+                STATE.CODE_STABILITY.value: 3
             }
         }
     }
@@ -53,4 +54,4 @@ def seed_system_providers(db_session: Session):
         db_session.add(record)
 
     db_session.commit()
-    print("Seeded system provider configurations successfully.")
+    print("✅ Seeded system provider configurations successfully.")

@@ -1,19 +1,21 @@
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.state_provider_base import StateProviderBase
 from app.db.schemas import AgentOutputSchema
 
 class CodeStabilityStateProvider(StateProviderBase):
     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
-        if state.get("state") == "start":
+        current = STATE(state.get("state"))
+
+        if current == STATE.START:
             return {
-                "state": "code_stability",
+                "state": STATE.CODE_STABILITY,
                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
             }
 
         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
 
         return {
-            "state": "end",
+            "state": STATE.END,
             "state_type": STATE_TYPE.END,
             "decision": decision,
             "reason": (

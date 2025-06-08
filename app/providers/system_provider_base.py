@@ -4,7 +4,8 @@ from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Dict
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+
+from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import SystemOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
@@ -39,7 +40,7 @@ class SystemProviderBase(FSMProviderBase):
 
         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
         if not incoming_file:
-            raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
+            raise ValueError("❌ SystemProvider requires 'file_path', 'file_name', or 'before' in input")
 
         self.incoming_file = incoming_file
         src = Path(incoming_file).resolve()
@@ -51,23 +52,21 @@ class SystemProviderBase(FSMProviderBase):
         shutil.copy(src, self.working_file)
         self._generated_files.append(self.working_file)
 
-        input_path = Path(input.get("file_path") or input.get("file_name") or input.get("before"))
+        input_path = Path(incoming_file)
         try:
             relative_path = str(input_path.relative_to(Path.cwd()))
         except ValueError:
-            # Fall back to the original string if it's not a subpath of CWD
             relative_path = str(input_path)
 
-
         state = {
-            "state": "start",
+            "state": STATE.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
-            "reason": input.get("reason", "start"),
+            "reason": input.get("reason", STATE.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
-            "_last_state": input.get("_last_state"),
+            "_last_state": input.get("_last_state", STATE.START),
             "decision": DECISION_TYPE.UNKNOWN,
             "original_file": relative_path,
             "run_id": self._run_id,
@@ -76,11 +75,11 @@ class SystemProviderBase(FSMProviderBase):
         step_count = 0
 
         while True:
-            current = state.get("state")
+            current = state["state"]
 
             if step_count >= max_steps:
                 return SystemOutputSchema(
-                    state="end",
+                    state=STATE.END,
                     previous_state=current,
                     state_type=STATE_TYPE.END,
                     decision=DECISION_TYPE.REJECT,
@@ -91,7 +90,7 @@ class SystemProviderBase(FSMProviderBase):
                     provider_name=self._config.name
                 )
 
-            if current == "end":
+            if current == STATE.END:
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,
@@ -104,7 +103,6 @@ class SystemProviderBase(FSMProviderBase):
                 shutil.copy(Path(best_file), final_path)
                 state["file_path"] = str(final_path)
 
-                # 🧼 Remove all other final_*.py and *_stripped.py files
                 for f in Path("working_files").glob("final_*.py"):
                     if f.resolve() != final_path.resolve():
                         try:
@@ -125,10 +123,9 @@ class SystemProviderBase(FSMProviderBase):
                         except Exception:
                             pass
 
-
                 return SystemOutputSchema(
-                    state="end",
-                    previous_state=state.get("_last_state"),
+                    state=STATE.END,
+                    previous_state=state.get("_last_state", STATE.START),
                     state_type=STATE_TYPE.END,
                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
@@ -140,14 +137,15 @@ class SystemProviderBase(FSMProviderBase):
 
             step_count += 1
 
-            if current == "start":
+            if current == STATE.START:
                 transition = self.transition(state, None)
-                state.update(transition, _last_state="start")
+                state.update(transition)
+                state["_last_state"] = STATE.START
                 continue
 
-            provider = self._states.get(current)
+            provider = self._states.get(current.value)
             if not provider:
-                raise ValueError(f"No state provider registered for state: {current}")
+                raise ValueError(f"No state provider registered for state: {current.value}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, session_id=session_id)
@@ -162,7 +160,6 @@ class SystemProviderBase(FSMProviderBase):
             transition_result = self.transition(state, output)
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
 
-            # 🧠 Capture flattened agent output and file_path into transition_metadata
             transition_metadata = transition_result.get("transition_metadata", {}) or {}
             transition_metadata.update({
                 "agent_output": flat_output.get("output", {}),
@@ -170,10 +167,18 @@ class SystemProviderBase(FSMProviderBase):
             })
             transition_result["transition_metadata"] = transition_metadata
 
+            raw_state = transition_result.get("state", current)
+            state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
+
             state = {
                 **state,
                 **transition_result,
+                "state": state_enum,
                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
                 "_last_state": current,
                 "state_output": flat_output,
             }
+
+    @abstractmethod
+    def _transition(self, state: dict, output: dict | None) -> dict:
+        ...

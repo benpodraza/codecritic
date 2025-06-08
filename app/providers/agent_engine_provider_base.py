@@ -42,8 +42,8 @@ class AgentEngineProviderBase(BaseProvider):
     def _run_provider(self, input: dict) -> AgentEngineOutput:
         file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
         session_id = input.get("session_id", "")
-        system = input.get("system", "unknown")
-        agent_type = input.get("agent_type", AGENT_TYPE.UNKNOWN)
+        system = SYSTEM_TYPE(input.get("system", SYSTEM_TYPE.UNKNOWN))
+        agent_type = AGENT_TYPE(input.get("agent_type", AGENT_TYPE.UNKNOWN))
         agent_id = input.get("agent_id", -1)
 
         before_code = ""
@@ -72,16 +72,17 @@ class AgentEngineProviderBase(BaseProvider):
 
             code_block = self._extract_block(response_text, "[CODE]", "[/CODE]")
             log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-            agent_decision = (
-                "accept" if "[AGENT_DECISION]accept" in response_text else
-                "reject" if "[AGENT_DECISION]reject" in response_text else
-                "unknown"
-            )
+
+            if "[AGENT_DECISION]accept" in response_text:
+                decision = DECISION_TYPE.ACCEPT
+            elif "[AGENT_DECISION]reject" in response_text:
+                decision = DECISION_TYPE.REJECT
+            else:
+                decision = DECISION_TYPE.UNKNOWN
 
             def normalize_code(code: str) -> str:
                 return "\n".join(line.strip() for line in code.strip().splitlines() if line.strip())
 
-            # 🛑 Bail out if output is missing or semantically unchanged
             if not code_block or not before_code or normalize_code(code_block) == normalize_code(before_code):
                 self._log.debug("🟡 Generator returned output matching input (normalized)")
                 self._log.debug(f"🔍 BEFORE:\n{before_code}")
@@ -98,7 +99,7 @@ class AgentEngineProviderBase(BaseProvider):
             if prior_notes:
                 after_code += f"\n\n{prior_notes}"
             if log_block:
-                after_code = append_agent_note(after_code, system=system, agent_name=self._config.name, note=log_block)
+                after_code = append_agent_note(after_code, system=system.value, agent_name=self._config.name, note=log_block)
 
             before_metrics = analyze_code(before_code)
             after_metrics = analyze_code(after_code)
@@ -106,13 +107,13 @@ class AgentEngineProviderBase(BaseProvider):
 
             timestamp = datetime.now(timezone.utc)
             metadata = {
-                "system": system,
+                "system": system.value,
                 "agent": self._config.name,
-                "agent_type": agent_type,
+                "agent_type": agent_type.value,
                 "agent_id": agent_id,
                 "score": None,
-                "state": input.get("state_context", {}).get("state", "unknown"),
-                "decision": agent_decision,
+                "state": str(input.get("state_context", {}).get("state", "unknown")),
+                "decision": decision.value,
                 "timestamp": timestamp.isoformat(),
                 **{f"{k}_before": v for k, v in before_metrics.items()},
                 **{f"{k}_after": v for k, v in after_metrics.items()},
@@ -126,18 +127,17 @@ class AgentEngineProviderBase(BaseProvider):
                 metadata=metadata,
             )
 
-            # Write to DB
             with Session(bind=self._engine) as session:
                 entry = SnapshotMetrics(
                     session_id=session_id,
                     snapshot_id=snapshot_id,
-                    system=system,
+                    system=system.value,
                     agent=self._config.name,
-                    agent_type=agent_type,
+                    agent_type=agent_type.value,
                     agent_id=agent_id,
                     score=None,
                     state=metadata["state"],
-                    decision=metadata["decision"],
+                    decision=decision.value,
                     timestamp=timestamp,
                     **{
                         k: metadata.get(k)
@@ -148,17 +148,16 @@ class AgentEngineProviderBase(BaseProvider):
                 session.add(entry)
                 session.commit()
 
-            # Log to metrics stream
             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
                 session_id=session_id,
                 snapshot_id=snapshot_id,
-                system=SYSTEM_TYPE(system),
+                system=system,
                 agent=self._config.name,
                 agent_type=agent_type,
                 agent_id=agent_id,
-                score=metadata["score"],
+                score=None,
                 state=metadata["state"],
-                decision=DECISION_TYPE(metadata["decision"]),
+                decision=decision,
                 timestamp=timestamp,
                 line_count_before=metadata["line_count_before"],
                 line_count_after=metadata["line_count_after"],
@@ -192,7 +191,6 @@ class AgentEngineProviderBase(BaseProvider):
             snapshot_id=snapshot_id,
             summary=summary,
         )
-
 
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
         start = text.find(start_tag)

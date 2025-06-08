@@ -3,7 +3,7 @@
 from enum import Enum
 
 
-class CONTROLLER_TYPE(str, Enum):
+class CONTROLLER(str, Enum):
     """
     Enum of high-level controllers grouping related SystemTypes.
 
@@ -17,6 +17,10 @@ class CONTROLLER_TYPE(str, Enum):
     - SAFETY: Security checks, policy compliance, license audits
     - MISC: Patching, prompt refinement, agent recommendation, semantic diff, context filtering
     """
+
+    START = "start"
+    END = "end"
+
     PREPROCESSING = "preprocessing_controller"
     TESTING = "testing_controller"
     OBSERVABILITY = "observability_controller"

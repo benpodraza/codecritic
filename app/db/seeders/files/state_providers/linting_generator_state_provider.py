@@ -1,28 +1,29 @@
-from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.agent_enums import AGENT
 from app.providers.state_provider_base import StateProviderBase
 from app.db.schemas import AgentOutputSchema
 
 class LintingGeneratorStateProvider(StateProviderBase):
     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
-        current = STATE(state.get("state"))
+        current = AGENT(state.get("state"))
         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
 
-        if current == STATE.START:
+        if current == AGENT.START:
             return {
-                "state": STATE.GENERATE,
-                "reason": TRANSITION_REASON_TYPE.GENERATION_STARTED
+                "state": AGENT.GENERATOR,
+                "reason": TRANSITION_REASON_TYPE.INITIALIZATION
             }
 
-        if current == STATE.GENERATE:
+        if current == AGENT.GENERATOR:
             return {
-                "state": STATE.END,
+                "state": AGENT.END,
                 "state_type": STATE_TYPE.END,
-                "decision": decision,
-                "reason": TRANSITION_REASON_TYPE.GENERATION_COMPLETED
+                "decision": DECISION_TYPE.UNKNOWN,
+                "reason": TRANSITION_REASON_TYPE.SUCCESSFUL
             }
 
         return {
-            "state": STATE.END,
+            "state": AGENT.END,
             "state_type": STATE_TYPE.END,
             "decision": DECISION_TYPE.UNKNOWN,
             "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE

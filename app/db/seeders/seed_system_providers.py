@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import SystemProviderConfig
-from app.enums.fsm_enums import STATE  # ✅ Import FSM state enum
+from app.enums.state_enums import STATE
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent

@@ -1,7 +1,8 @@
 from pathlib import Path
 import json
 
-from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.fsm_enums import TRANSITION_REASON_TYPE
+from app.enums.state_enums import STATE
 from app.providers.system_provider_base import SystemProviderBase
 
 
@@ -32,7 +33,7 @@ class LintingSystemProvider(SystemProviderBase):
         if current == STATE.START:
             transition = {
                 "state": STATE.CODE_STABILITY,
-                "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
+                "reason": TRANSITION_REASON_TYPE.EVALUATING
             }
 
         elif current == STATE.CODE_STABILITY:
@@ -40,32 +41,32 @@ class LintingSystemProvider(SystemProviderBase):
                 if result == "accept":
                     transition = {
                         "state": STATE.GENERATE,
-                        "reason": TRANSITION_REASON_TYPE.STABILITY_PASSED,
+                        "reason": TRANSITION_REASON_TYPE.PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
                         "state": STATE.END,
-                        "reason": TRANSITION_REASON_TYPE.STABILITY_FAILED
+                        "reason": TRANSITION_REASON_TYPE.FAILED
                     }
             elif last == STATE.GENERATE:
                 if result == "accept":
                     transition = {
                         "state": STATE.DISCRIMINATE,
-                        "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_PASSED,
+                        "reason": TRANSITION_REASON_TYPE.PASSED,
                         "file_path": state.get("file_path")
                     }
                 else:
                     transition = {
                         "state": STATE.GENERATE,
-                        "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_FAILED,
+                        "reason": TRANSITION_REASON_TYPE.FAILED,
                         "file_path": state.get("file_path")
                     }
 
         elif current == STATE.GENERATE:
             transition = {
                 "state": STATE.CODE_STABILITY,
-                "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK,
+                "reason": TRANSITION_REASON_TYPE.EVALUATING,
                 "file_path": state.get("file_path")
             }
 
@@ -73,13 +74,13 @@ class LintingSystemProvider(SystemProviderBase):
             if result == "accept":
                 transition = {
                     "state": STATE.END,
-                    "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_ACCEPTED,
+                    "reason": TRANSITION_REASON_TYPE.PASSED,
                     "file_path": state.get("file_path")
                 }
             else:
                 transition = {
                     "state": STATE.GENERATE,
-                    "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_REJECTED,
+                    "reason": TRANSITION_REASON_TYPE.FAILED,
                     "file_path": state.get("file_path")
                 }
 

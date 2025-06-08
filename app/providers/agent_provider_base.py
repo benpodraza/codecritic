@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import SnapshotMetrics
 from app.enums.logging_enums import LOG_TYPE
-from app.enums.agent_enums import AGENT_TYPE
-from app.enums.system_enums import SYSTEM_TYPE
+from app.enums.agent_enums import AGENT
 from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.base_provider import BaseProvider
 from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
@@ -117,7 +116,7 @@ class AgentProviderBase(BaseProvider):
         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
             session_id=self._session_id,
             system=self._system,
-            agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT_TYPE.BASIC,
+            agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
             agent_provider_config_id=self._config.id if self._config else -1,
             content=log_content,
             timestamp=datetime.now(timezone.utc),

@@ -60,6 +60,7 @@ class FSMProviderBase(BaseProvider):
         else:
             decision = STATE_DECISION_TYPE.INITIAL
 
+        # Log the state transition with relevant details
         self.logger.write(
             LOG_TYPE.STATE_TRANSITION,
             StateTransitionLogSchema(
@@ -75,9 +76,12 @@ class FSMProviderBase(BaseProvider):
                 transition_metadata=transition_metadata,
                 timestamp=datetime.now(timezone.utc),
                 run_id=self._run_id,
+                called_by_type=self._called_by_type if self._called_by_type else None,
+                called_by_id=self._called_by_id,
             ),
         )
         return next_state
+
 
     @abstractmethod
     def _transition(self, state: dict, result: dict | None) -> dict:

@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ProgramProviderConfig
-from app.enums.fsm_enums import STATE  # ✅ Import your FSM state enum
+from app.enums.controller_enums import CONTROLLER  # ✅ Import your FSM state enum
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -19,7 +19,7 @@ PROGRAM_PROVIDERS = [
         "config": {
             "score_provider_id": 1,
             "controllers": {
-                STATE.PREPROCESS.value: 1  # ✅ Enum-safe
+                CONTROLLER.PREPROCESSING.value: 1
             }
         }
     }

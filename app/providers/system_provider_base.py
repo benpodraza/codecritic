@@ -5,7 +5,8 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.state_enums import STATE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import SystemOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename

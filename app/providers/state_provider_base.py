@@ -5,7 +5,9 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.state_enums import STATE
+from app.enums.agent_enums import AGENT
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import StateOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
@@ -59,14 +61,14 @@ class StateProviderBase(FSMProviderBase):
             relative_path = str(input_path)
 
         state = {
-            "state": STATE.START,
+            "state": AGENT.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
-            "reason": input.get("reason", STATE.START.value),
+            "reason": input.get("reason", AGENT.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
-            "_last_state": input.get("_last_state", STATE.START),
+            "_last_state": input.get("_last_state", AGENT.START),
             "decision": DECISION_TYPE.UNKNOWN,
             "original_file": relative_path,
             "run_id": self._run_id,
@@ -79,7 +81,7 @@ class StateProviderBase(FSMProviderBase):
 
             if step_count >= max_steps:
                 return StateOutputSchema(
-                    state=STATE.END,
+                    state=AGENT.END,
                     previous_state=current,
                     state_type=STATE_TYPE.END,
                     decision=DECISION_TYPE.REJECT,
@@ -125,8 +127,8 @@ class StateProviderBase(FSMProviderBase):
                             pass
 
                 return StateOutputSchema(
-                    state=STATE.END,
-                    previous_state=state.get("_last_state", STATE.START),
+                    state=AGENT.END,
+                    previous_state=state.get("_last_state", AGENT.START),
                     state_type=STATE_TYPE.END,
                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
@@ -138,10 +140,10 @@ class StateProviderBase(FSMProviderBase):
 
             step_count += 1
 
-            if current == STATE.START:
+            if current == AGENT.START:
                 transition = self._transition(state, None)
                 state.update(transition)
-                state["_last_state"] = STATE.START
+                state["_last_state"] = AGENT.START
                 continue
 
             provider = self.agent_providers.get(current.value)
@@ -171,7 +173,7 @@ class StateProviderBase(FSMProviderBase):
             transition_result["transition_metadata"] = transition_metadata
 
             raw_state = transition_result.get("state", current)
-            state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
+            state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
 
             state = {
                 **state,

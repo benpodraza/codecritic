@@ -5,7 +5,8 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import DECISION_TYPE
+from app.enums.system_enums import SYSTEM
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ControllerOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
@@ -59,14 +60,14 @@ class ControllerProviderBase(FSMProviderBase):
             relative_path = str(input_path)
 
         state = {
-            "state": STATE.START,
+            "state": SYSTEM.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
-            "reason": input.get("reason", STATE.START.value),
+            "reason": input.get("reason",SYSTEM.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
-            "_last_state": input.get("_last_state", STATE.START),
+            "_last_state": input.get("_last_state", SYSTEM.START),
             "decision": DECISION_TYPE.UNKNOWN,
             "original_file": relative_path,
             "run_id": self._run_id,
@@ -79,9 +80,9 @@ class ControllerProviderBase(FSMProviderBase):
 
             if step_count >= max_steps:
                 return ControllerOutputSchema(
-                    state=STATE.END,
+                    state=SYSTEM.END,
                     previous_state=current,
-                    state_type=STATE_TYPE.END,
+                    state_type=SYSTEM.END,
                     decision=DECISION_TYPE.REJECT,
                     steps=step_count,
                     max_steps=max_steps,
@@ -90,7 +91,7 @@ class ControllerProviderBase(FSMProviderBase):
                     provider_name=self._config.name,
                 )
 
-            if current == STATE.END:
+            if current == SYSTEM.END:
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,
@@ -124,9 +125,9 @@ class ControllerProviderBase(FSMProviderBase):
                             pass
 
                 return ControllerOutputSchema(
-                    state=STATE.END,
-                    previous_state=state.get("_last_state", STATE.START),
-                    state_type=STATE_TYPE.END,
+                    state=SYSTEM.END,
+                    previous_state=state.get("_last_state", SYSTEM.START),
+                    state_type=SYSTEM.END,
                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
                     max_steps=max_steps,
@@ -137,10 +138,10 @@ class ControllerProviderBase(FSMProviderBase):
 
             step_count += 1
 
-            if current == STATE.START:
+            if current == SYSTEM.START:
                 transition = self.transition(state, None)
                 state.update(transition)
-                state["_last_state"] = STATE.START
+                state["_last_state"] = SYSTEM.START
                 continue
 
             provider = self._systems.get(current.value)
@@ -173,7 +174,7 @@ class ControllerProviderBase(FSMProviderBase):
             transition_result["transition_metadata"] = transition_metadata
 
             raw_state = transition_result.get("state", current)
-            state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
+            state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
 
             state = {
                 **state,

@@ -3,7 +3,12 @@ from __future__ import annotations
 from enum import Enum
 
 
-class SYSTEM_TYPE(str, Enum):
+class SYSTEM(str, Enum):
+    # For use in FSM management
+    
+    START = "start"
+    END = "end"
+
     # Core Code Transformation
     LINTING = "linting"
     FORMATTING = "formatting"

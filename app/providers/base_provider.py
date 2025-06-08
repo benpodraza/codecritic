@@ -4,7 +4,7 @@ import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 from uuid import uuid4
 
 from app.db import init_db
@@ -12,13 +12,12 @@ from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TY
 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
 
-
 class BaseProvider(LoggingMixin):
     def __init__(
         self,
+        called_by_type: PROVIDER_TYPE,  
+        called_by_id: int,  
         config=None,
-        called_by_type: Optional[PROVIDER_TYPE] = None,
-        called_by_id: Optional[int] = None,
     ) -> None:
         super().__init__()
         assert config is not None, "🚨 engine must be injected into BaseProvider"
@@ -34,7 +33,7 @@ class BaseProvider(LoggingMixin):
 
         self._session_id = session_id
         self._system = input.get("system", "unknown")
-        self._run_id = str(uuid4()) 
+        self._run_id = str(uuid4())
 
         start_clock = time.perf_counter()
         start_time = datetime.now(timezone.utc)
@@ -105,7 +104,7 @@ class BaseProvider(LoggingMixin):
                     if getattr(self._config, "artifact_path", None)
                     else None,
                     timestamp=start_time,
-                    called_by_type=self._called_by_type.value if self._called_by_type else None,
+                    called_by_type=self._called_by_type if self._called_by_type else None,
                     called_by_id=self._called_by_id,
                     run_id=self._run_id,
                 ),

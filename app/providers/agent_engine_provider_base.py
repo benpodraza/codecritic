@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import SnapshotMetrics
 from app.db.schemas import AgentEngineOutput, SnapshotMetricsSchema
-from app.enums.system_enums import SYSTEM_TYPE
-from app.enums.agent_enums import AGENT_TYPE
+from app.enums.system_enums import SYSTEM
+from app.enums.agent_enums import AGENT
 from app.enums.fsm_enums import DECISION_TYPE
 from app.enums.logging_enums import LOG_TYPE
 
@@ -42,8 +42,8 @@ class AgentEngineProviderBase(BaseProvider):
     def _run_provider(self, input: dict) -> AgentEngineOutput:
         file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
         session_id = input.get("session_id", "")
-        system = SYSTEM_TYPE(input.get("system", SYSTEM_TYPE.UNKNOWN))
-        agent_type = AGENT_TYPE(input.get("agent_type", AGENT_TYPE.UNKNOWN))
+        system = SYSTEM(input.get("system", SYSTEM.UNKNOWN))
+        agent_type = AGENT(input.get("agent_type", AGENT.UNKNOWN))
         agent_id = input.get("agent_id", -1)
 
         before_code = ""

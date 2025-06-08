@@ -5,8 +5,8 @@ from sqlalchemy.dialects.sqlite import TEXT
 from app.db.base import Base
 from uuid import uuid4
 
-from app.enums.agent_enums import AGENT_TYPE
-from app.enums.system_enums import SYSTEM_TYPE
+from app.enums.agent_enums import AGENT
+from app.enums.system_enums import SYSTEM
 from sqlalchemy.orm import Mapped, mapped_column
 
 ## PROMPT CONFIGS
@@ -25,7 +25,7 @@ class SystemPrompt(Base):
     id = Column(Integer, primary_key=True, index=True)
     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False)
-    system_type = Column(Enum(SYSTEM_TYPE), nullable=False) 
+    system_type = Column(Enum(SYSTEM), nullable=False) 
     description = Column(String)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
@@ -195,6 +195,8 @@ class StateTransitionLog(Base):
     input_snapshot_id = Column(String, nullable=True)
     output_snapshot_id = Column(String, nullable=True)
     run_id = Column(TEXT, nullable=False, index=True)
+    called_by_type = Column(String, nullable=True)
+    called_by_id = Column(Integer, nullable=True) 
 
 class AgentConversationLog(Base):
     __tablename__ = "agent_conversation_log"
@@ -232,7 +234,7 @@ class SnapshotMetrics(Base):
     snapshot_id = Column(String, nullable=False)
     system = Column(String, nullable=True)
     agent = Column(String, nullable=True)
-    agent_type = Column(Enum(AGENT_TYPE), nullable=True)
+    agent_type = Column(Enum(AGENT), nullable=True)
     agent_id = Column(Integer, nullable=True)
     score = Column(Float, nullable=True)
     state = Column(String, nullable=True)

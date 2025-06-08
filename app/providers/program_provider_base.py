@@ -5,7 +5,8 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
+from app.enums.controller_enums import CONTROLLER
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ProgramOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
@@ -57,14 +58,14 @@ class ProgramProviderBase(FSMProviderBase):
             relative_path = str(input_path)
 
         state = {
-            "state": STATE.START,
+            "state": CONTROLLER.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
-            "reason": input.get("reason", STATE.START.value),
+            "reason": input.get("reason", CONTROLLER.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
-            "_last_state": input.get("_last_state", STATE.START),
+            "_last_state": input.get("_last_state", CONTROLLER.START),
             "original_file": relative_path,
             "run_id": self._run_id,
         }
@@ -76,7 +77,7 @@ class ProgramProviderBase(FSMProviderBase):
 
             if step_count >= max_steps:
                 return ProgramOutputSchema(
-                    state=STATE.END,
+                    state=CONTROLLER.END,
                     previous_state=current,
                     state_type=STATE_TYPE.END,
                     decision=DECISION_TYPE.UNKNOWN,
@@ -87,7 +88,7 @@ class ProgramProviderBase(FSMProviderBase):
                     provider_name=self._config.name
                 )
 
-            if current == STATE.END:
+            if current == CONTROLLER.END:
                 final_decision = state.get("decision")
                 nested = state.get("output") or {}
 
@@ -128,8 +129,8 @@ class ProgramProviderBase(FSMProviderBase):
                             pass
 
                 return ProgramOutputSchema(
-                    state=STATE.END,
-                    previous_state=state.get("_last_state", STATE.START),
+                    state=CONTROLLER.END,
+                    previous_state=state.get("_last_state", CONTROLLER.START),
                     state_type=STATE_TYPE.END,
                     decision=final_decision or DECISION_TYPE.UNKNOWN,
                     steps=step_count,
@@ -141,10 +142,10 @@ class ProgramProviderBase(FSMProviderBase):
 
             step_count += 1
 
-            if current == STATE.START:
+            if current == CONTROLLER.START:
                 transition = self.transition(state, None)
                 state.update(transition)
-                state["_last_state"] = STATE.START
+                state["_last_state"] = CONTROLLER.START
                 continue
 
             provider = self._states.get(current)
@@ -167,7 +168,7 @@ class ProgramProviderBase(FSMProviderBase):
             state = {
                 **state,
                 **transition_result,
-                "state": STATE(transition_result.get("state", current)),
+                "state": CONTROLLER(transition_result.get("state", current)),
                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
                 "_last_state": current,
                 "state_output": flat_output,

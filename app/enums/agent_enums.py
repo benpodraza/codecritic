@@ -3,7 +3,10 @@ from __future__ import annotations
 from enum import Enum
 
 
-class AGENT_TYPE(str, Enum):
+class AGENT(str, Enum):
+    START = "start"
+    END = "end"
+
     GENERATOR = "generator"
     DISCRIMINATOR = "discriminator"
     MEDIATOR = "mediator"

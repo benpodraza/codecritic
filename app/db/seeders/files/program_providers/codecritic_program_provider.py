@@ -1,30 +1,30 @@
-from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.controller_enums import CONTROLLER
+from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.providers.program_provider_base import ProgramProviderBase
 
 class CodeCriticProgramProvider(ProgramProviderBase):
     def _transition(self, state, ctrl_output):
-        current = STATE(state["state"])
+        current = CONTROLLER(state["state"])
         transition = {}
 
-        if current == STATE.START:
+        if current == CONTROLLER.START:
             transition = {
-                "state": STATE.PREPROCESS,
-                "reason": TRANSITION_REASON_TYPE.PROGRAM_INIT,
+                "state": CONTROLLER.PREPROCESSING,
+                "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
             }
 
-        elif current == STATE.PREPROCESS:
+        elif current == CONTROLLER.PREPROCESSING:
             transition = {
-                "state": STATE.END,
-                "reason": TRANSITION_REASON_TYPE.PREPROCESSING_COMPLETE,
+                "state": CONTROLLER.END,
+                "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
             }
 
         else:
             transition = {
-                "state": STATE.END,
+                "state": CONTROLLER.END,
                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
             }
 
-        # 🔁 Propagate controller output fields (minus score)
         if ctrl_output:
             if hasattr(ctrl_output, "output") and isinstance(ctrl_output.output, dict):
                 output_dict = ctrl_output.output

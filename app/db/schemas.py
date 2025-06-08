@@ -4,11 +4,12 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
-from app.enums.agent_enums import AGENT_TYPE
+from app.enums.agent_enums import AGENT
+from app.enums.controller_enums import CONTROLLER
 from app.enums.fsm_enums import DECISION_TYPE, STATE, STATE_TYPE, TRANSITION_REASON_TYPE
 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-from app.enums.system_enums import SYSTEM_TYPE
+from app.enums.system_enums import SYSTEM
 from app.enums.agent_engine_enums import AGENT_ENGINE_MODEL
 
 
@@ -31,7 +32,7 @@ class SystemPromptSchema(BaseModel):
     id: Optional[int] = None
     guid: UUID = Field(default_factory=uuid4)
     name: str
-    system_type: SYSTEM_TYPE
+    system_type: SYSTEM
     description: Optional[str] = None
     artifact_path: Path
     tags: Optional[List[str]] = None
@@ -127,7 +128,7 @@ class AgentProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[list[str]] = None
-    agent_type: AGENT_TYPE = AGENT_TYPE.UNKNOWN 
+    agent_type: AGENT = AGENT.UNKNOWN 
 
     @field_validator("artifact_path")
     @classmethod
@@ -238,12 +239,14 @@ class StateTransitionLogSchema:
     transition_metadata: dict | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     run_id: str = field(default_factory=lambda: str(uuid4()))
+    called_by_type: PROVIDER_TYPE | None = None
+    called_by_id: int | None = None 
 
 @dataclass
 class AgentConversationLogSchema:
     session_id: str
-    system: SYSTEM_TYPE
-    agent_type: AGENT_TYPE
+    system: SYSTEM
+    agent_type: AGENT
     agent_provider_config_id: int
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -267,9 +270,9 @@ class ErrorLogSchema:
 class SnapshotMetricsSchema:
     session_id: str
     snapshot_id: str
-    system: SYSTEM_TYPE
+    system: SYSTEM
     agent: str
-    agent_type: AGENT_TYPE 
+    agent_type: AGENT 
     agent_id: int
     score: float
     state: str  # could be FSM state, usually freeform like "generate" or "stability"
@@ -341,10 +344,14 @@ class FSMOutputSchema(BaseModel):
     output: Optional[Dict[str, Any]] = None
     provider_name: Optional[str] = None
 
-class StateOutputSchema(FSMOutputSchema): pass
 class SystemOutputSchema(FSMOutputSchema): pass
-class ControllerOutputSchema(FSMOutputSchema): pass
-class ProgramOutputSchema(FSMOutputSchema): pass
+
+class StateOutputSchema(FSMOutputSchema): 
+    previous_state: Optional[AGENT] = None
+class ProgramOutputSchema(FSMOutputSchema):
+    previous_state: Optional[CONTROLLER] = None
+class ControllerOutputSchema(FSMOutputSchema): 
+    previous_state: Optional[SYSTEM] = None
 
 
 # DTOs

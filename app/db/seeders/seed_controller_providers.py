@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ControllerProviderConfig
-from app.enums.fsm_enums import STATE  # ✅ Import STATE enum
+from app.enums.system_enums import SYSTEM 
 
 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -19,7 +19,7 @@ CONTROLLER_PROVIDERS = [
         "config": {
             "score_provider_id": 1,
             "systems": {
-                STATE.PREPROCESS.value: 1  # ✅ Enum-based key
+                SYSTEM.LINTING.value: 1
             }
         }
     }

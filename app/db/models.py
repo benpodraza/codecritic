@@ -95,7 +95,7 @@ class AgentProviderConfig(Base):
     guid = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    agent_type = Column(String, nullable=False, default="unknown")
+    agent_type = Column(Enum(AGENT), nullable=False) 
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
@@ -129,7 +129,7 @@ class ControllerProviderConfig(Base):
     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    config = Column(JSON, nullable=True)        # expects {"systems": {"name": id, …}, …}
+    config = Column(JSON, nullable=True)   
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
 
@@ -205,7 +205,7 @@ class AgentConversationLog(Base):
     session_id = Column(String, nullable=False)
     system = Column(String, nullable=False)
     agent_provider_config_id = Column(Integer, nullable=False)
-    agent_type = Column(String, nullable=False)  # NEW: replaces `agent_name`
+    agent_type = Column(String, nullable=False) 
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
     run_id = Column(TEXT, nullable=False, index=True)

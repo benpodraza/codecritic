@@ -6,7 +6,6 @@ from app.db.schemas import AgentOutputSchema
 class LintingGeneratorStateProvider(StateProviderBase):
     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
         current = AGENT(state.get("state"))
-        decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
 
         if current == AGENT.START:
             return {

@@ -1,57 +1,24 @@
 from enum import Enum
 
-
-class STATE(str, Enum):
-    START = "start"
-    PREPROCESS = "preprocess"
-    CODE_STABILITY = "code_stability"
-    GENERATE = "generate"
-    DISCRIMINATE = "discriminate"
-    END = "end"
-
-
 class STATE_TYPE(str, Enum):
-    """
-    Types of states within a finite state machine.
-
-    - START: Entry point to the FSM
-    - INTERMEDIATE: Transitional state with more steps to come
-    - END: Final terminating state
-    """
     START = "start"
     INTERMEDIATE = "intermediate"
     END = "end"
 
 
-class STATE_DECISION_TYPE(str, Enum):
+class DECISION_TYPE(str, Enum):
     INITIAL = "initial"
     IMPROVED = "improved"
+    ACCEPTED = "accepted"
     REJECTED = "rejected"
-    FINAL = "final"
     UNKNOWN = "unknown"
-
-
-class DECISION_TYPE(str, Enum):
-    """
-    Discriminator or agent decision about a code action.
-
-    - ACCEPT: Changes are valid and accepted
-    - REJECT: Changes are invalid or insufficient
-    - UNKNOWN: No decision made or undecidable
-    """
-    ACCEPT = "accept"
-    REJECT = "reject"
-    UNKNOWN = "unknown"
-
 
 class TRANSITION_REASON_TYPE(str, Enum):
     INITIALIZATION = "initialization"
     SUCCESSFUL = "completed successfully"
     UNSUCCESSFUL = "completed unsuccessfully"
     GENERATING = "generating"
-    EVALUATING = "evaluating"
-    PASSED = "passed"
-    FAILED = "failed"    
+    EVALUATING = "evaluating" 
     ERROR = "error"
     CUSTOM_RULE = "custom_rule"
 

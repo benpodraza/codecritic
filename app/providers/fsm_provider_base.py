@@ -4,7 +4,7 @@ from abc import abstractmethod
 from datetime import datetime, timezone
 from typing import Optional
 
-from app.enums.fsm_enums import TRANSITION_REASON_TYPE, STATE_DECISION_TYPE
+from app.enums.fsm_enums import TRANSITION_REASON_TYPE, DECISION_TYPE
 from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
 from app.db.schemas import StateTransitionLogSchema
 from app.providers.base_provider import BaseProvider
@@ -51,14 +51,7 @@ class FSMProviderBase(BaseProvider):
 
         is_terminal = next_state.get("state_type") == "end" or next_state.get("state") == "end"
 
-        raw_decision = getattr(result, "decision", "").lower()
-
-        if raw_decision == "accept":
-            decision = STATE_DECISION_TYPE.FINAL if is_terminal else STATE_DECISION_TYPE.IMPROVED
-        elif raw_decision == "reject":
-            decision = STATE_DECISION_TYPE.REJECTED
-        else:
-            decision = STATE_DECISION_TYPE.INITIAL
+        decision = getattr(result, "decision", DECISION_TYPE.UNKNOWN)
 
         # Log the state transition with relevant details
         self.logger.write(

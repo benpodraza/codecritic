@@ -74,9 +74,9 @@ class AgentEngineProviderBase(BaseProvider):
             log_block = self._extract_block(response_text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
 
             if "[AGENT_DECISION]accept" in response_text:
-                decision = DECISION_TYPE.ACCEPT
+                decision = DECISION_TYPE.ACCEPTED
             elif "[AGENT_DECISION]reject" in response_text:
-                decision = DECISION_TYPE.REJECT
+                decision = DECISION_TYPE.REJECTED
             else:
                 decision = DECISION_TYPE.UNKNOWN
 

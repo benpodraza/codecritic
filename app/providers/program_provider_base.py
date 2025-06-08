@@ -42,6 +42,9 @@ class ProgramProviderBase(FSMProviderBase):
         incoming_file = input.get("file_path")
         self.incoming_file = incoming_file
 
+        # Optional output path from input dictionary
+        output_path = input.get("output_path", "working_files")
+
         src = Path(incoming_file).resolve()
         root = extract_base_filename(src)
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
@@ -103,12 +106,15 @@ class ProgramProviderBase(FSMProviderBase):
                     session_id=session_id
                 )
 
-                final_path = Path("working_files") / f"final_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                # If an output_path is provided, use that path, otherwise default to working_files
+                final_path = Path(output_path) / Path(self.incoming_file).name
+  
                 shutil.copy(Path(best_file).resolve(), final_path)
                 state["file_path"] = str(final_path)
                 state["decision"] = final_decision
 
-                for f in Path("working_files").glob("final_*.py"):
+                # Delete old files in working directory
+                for f in Path("working_files").glob("temp_*.py"):
                     if f.resolve() != final_path.resolve():
                         try:
                             f.unlink()

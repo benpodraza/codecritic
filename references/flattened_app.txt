@@ -77,8 +77,8 @@
 # 5 from app.db.base import Base
 # 6 from uuid import uuid4
 # 7 
-# 8 from app.enums.agent_enums import AGENT_TYPE
-# 9 from app.enums.system_enums import SYSTEM_TYPE
+# 8 from app.enums.agent_enums import AGENT
+# 9 from app.enums.system_enums import SYSTEM
 # 10 from sqlalchemy.orm import Mapped, mapped_column
 # 11 
 # 12 # #  PROMPT CONFIGS
@@ -97,7 +97,7 @@
 # 25     id = Column(Integer, primary_key=True, index=True)
 # 26     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
 # 27     name = Column(String, nullable=False)
-# 28     system_type = Column(Enum(SYSTEM_TYPE), nullable=False) 
+# 28     system_type = Column(Enum(SYSTEM), nullable=False) 
 # 29     description = Column(String)
 # 30     artifact_path = Column(String, nullable=False)
 # 31     tags = Column(JSON, nullable=True)
@@ -167,7 +167,7 @@
 # 95     guid = Column(String, unique=True, nullable=False)
 # 96     name = Column(String, nullable=False)
 # 97     description = Column(String, nullable=True)
-# 98     agent_type = Column(String, nullable=False, default="unknown")
+# 98     agent_type = Column(Enum(AGENT), nullable=False) 
 # 99     config = Column(JSON, nullable=True)
 # 100     artifact_path = Column(String, nullable=False)
 # 101     tags = Column(JSON, nullable=True)
@@ -201,7 +201,7 @@
 # 129     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
 # 130     name = Column(String, nullable=False)
 # 131     description = Column(String, nullable=True)
-# 132     config = Column(JSON, nullable=True)        #  expects {"systems": {"name": id, …}, …}
+# 132     config = Column(JSON, nullable=True)   
 # 133     artifact_path = Column(String, nullable=False)
 # 134     tags = Column(JSON, nullable=True)
 # 135 
@@ -267,70 +267,72 @@
 # 195     input_snapshot_id = Column(String, nullable=True)
 # 196     output_snapshot_id = Column(String, nullable=True)
 # 197     run_id = Column(TEXT, nullable=False, index=True)
-# 198 
-# 199 class AgentConversationLog(Base):
-# 200     __tablename__ = "agent_conversation_log"
-# 201 
-# 202     id = Column(Integer, primary_key=True, index=True)
-# 203     session_id = Column(String, nullable=False)
-# 204     system = Column(String, nullable=False)
-# 205     agent_provider_config_id = Column(Integer, nullable=False)
-# 206     agent_type = Column(String, nullable=False)  #  NEW: replaces `agent_name`
-# 207     content = Column(String, nullable=False)
-# 208     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 209     run_id = Column(TEXT, nullable=False, index=True)
-# 210 
-# 211 class ErrorLog(Base):
-# 212     __tablename__ = "error_log"
-# 213 
-# 214     id = Column(Integer, primary_key=True, index=True)
-# 215     session_id = Column(String, nullable=False)
-# 216     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 217     latency_ms = Column(Integer, nullable=True) 
-# 218     provider_id = Column(Integer, nullable=True)
-# 219     provider_type = Column(String, nullable=True)
-# 220     error_type = Column(String, nullable=False)
-# 221     message = Column(String, nullable=False)
-# 222     file_path = Column(String, nullable=True)
-# 223     called_by_type = Column(String, nullable=True)
-# 224     called_by_id = Column(Integer, nullable=True)
-# 225     run_id = Column(TEXT, nullable=False, index=True)
-# 226 
-# 227 class SnapshotMetrics(Base):
-# 228     __tablename__ = "snapshot_metrics"
-# 229 
-# 230     id = Column(Integer, primary_key=True)
-# 231     session_id = Column(String, nullable=False)
-# 232     snapshot_id = Column(String, nullable=False)
-# 233     system = Column(String, nullable=True)
-# 234     agent = Column(String, nullable=True)
-# 235     agent_type = Column(Enum(AGENT_TYPE), nullable=True)
-# 236     agent_id = Column(Integer, nullable=True)
-# 237     score = Column(Float, nullable=True)
-# 238     state = Column(String, nullable=True)
-# 239     decision = Column(String, nullable=True)
-# 240     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 241 
-# 242     #  structural metrics
-# 243     line_count_before = Column(Integer)
-# 244     line_count_after = Column(Integer)
-# 245     function_count_before = Column(Integer)
-# 246     function_count_after = Column(Integer)
-# 247     symbol_count_before = Column(Integer)
-# 248     symbol_count_after = Column(Integer)
-# 249     branch_count_before = Column(Integer)
-# 250     branch_count_after = Column(Integer)
-# 251     comment_count_before = Column(Integer)
-# 252     comment_count_after = Column(Integer)
-# 253 
-# 254     #  deltas
-# 255     line_count_delta = Column(Integer)
-# 256     function_count_delta = Column(Integer)
-# 257     symbol_count_delta = Column(Integer)
-# 258     branch_count_delta = Column(Integer)
-# 259     comment_count_delta = Column(Integer)
-# 260 
-# 261 
+# 198     called_by_type = Column(String, nullable=True)
+# 199     called_by_id = Column(Integer, nullable=True) 
+# 200 
+# 201 class AgentConversationLog(Base):
+# 202     __tablename__ = "agent_conversation_log"
+# 203 
+# 204     id = Column(Integer, primary_key=True, index=True)
+# 205     session_id = Column(String, nullable=False)
+# 206     system = Column(String, nullable=False)
+# 207     agent_provider_config_id = Column(Integer, nullable=False)
+# 208     agent_type = Column(String, nullable=False) 
+# 209     content = Column(String, nullable=False)
+# 210     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 211     run_id = Column(TEXT, nullable=False, index=True)
+# 212 
+# 213 class ErrorLog(Base):
+# 214     __tablename__ = "error_log"
+# 215 
+# 216     id = Column(Integer, primary_key=True, index=True)
+# 217     session_id = Column(String, nullable=False)
+# 218     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 219     latency_ms = Column(Integer, nullable=True) 
+# 220     provider_id = Column(Integer, nullable=True)
+# 221     provider_type = Column(String, nullable=True)
+# 222     error_type = Column(String, nullable=False)
+# 223     message = Column(String, nullable=False)
+# 224     file_path = Column(String, nullable=True)
+# 225     called_by_type = Column(String, nullable=True)
+# 226     called_by_id = Column(Integer, nullable=True)
+# 227     run_id = Column(TEXT, nullable=False, index=True)
+# 228 
+# 229 class SnapshotMetrics(Base):
+# 230     __tablename__ = "snapshot_metrics"
+# 231 
+# 232     id = Column(Integer, primary_key=True)
+# 233     session_id = Column(String, nullable=False)
+# 234     snapshot_id = Column(String, nullable=False)
+# 235     system = Column(String, nullable=True)
+# 236     agent = Column(String, nullable=True)
+# 237     agent_type = Column(Enum(AGENT), nullable=True)
+# 238     agent_id = Column(Integer, nullable=True)
+# 239     score = Column(Float, nullable=True)
+# 240     state = Column(String, nullable=True)
+# 241     decision = Column(String, nullable=True)
+# 242     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 243 
+# 244     #  structural metrics
+# 245     line_count_before = Column(Integer)
+# 246     line_count_after = Column(Integer)
+# 247     function_count_before = Column(Integer)
+# 248     function_count_after = Column(Integer)
+# 249     symbol_count_before = Column(Integer)
+# 250     symbol_count_after = Column(Integer)
+# 251     branch_count_before = Column(Integer)
+# 252     branch_count_after = Column(Integer)
+# 253     comment_count_before = Column(Integer)
+# 254     comment_count_after = Column(Integer)
+# 255 
+# 256     #  deltas
+# 257     line_count_delta = Column(Integer)
+# 258     function_count_delta = Column(Integer)
+# 259     symbol_count_delta = Column(Integer)
+# 260     branch_count_delta = Column(Integer)
+# 261     comment_count_delta = Column(Integer)
+# 262 
+# 263 
 
 
 # db\schemas.py
@@ -341,366 +343,375 @@
 # 4 from pathlib import Path
 # 5 from uuid import UUID, uuid4
 # 6 from pydantic import BaseModel, Field, field_validator
-# 7 from app.enums.agent_enums import AGENT_TYPE
-# 8 from app.enums.fsm_enums import DECISION_TYPE, STATE, STATE_TYPE, TRANSITION_REASON_TYPE
+# 7 
+# 8 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
 # 9 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
 # 10 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-# 11 from app.enums.system_enums import SYSTEM_TYPE
-# 12 from app.enums.agent_engine_enums import AGENT_ENGINE_MODEL
-# 13 
-# 14 
-# 15 class AgentPromptSchema(BaseModel):
-# 16     id: Optional[int] = None
-# 17     guid: UUID = Field(default_factory=uuid4)
-# 18     name: str
-# 19     description: Optional[str] = None
-# 20     artifact_path: Path
-# 21     tags: Optional[List[str]] = None
-# 22 
-# 23     @field_validator("artifact_path")
-# 24     @classmethod
-# 25     def validate_artifact_path(cls, v: Path) -> Path:
-# 26         if not v.is_absolute() and ".." in v.parts:
-# 27             raise ValueError("Invalid artifact path")
-# 28         return v
-# 29 
-# 30 class SystemPromptSchema(BaseModel):
-# 31     id: Optional[int] = None
-# 32     guid: UUID = Field(default_factory=uuid4)
-# 33     name: str
-# 34     system_type: SYSTEM_TYPE
-# 35     description: Optional[str] = None
-# 36     artifact_path: Path
-# 37     tags: Optional[List[str]] = None
-# 38 
-# 39     @field_validator("artifact_path")
-# 40     @classmethod
-# 41     def validate_artifact_path(cls, v: Path) -> Path:
-# 42         if not v.is_absolute() and ".." in v.parts:
-# 43             raise ValueError("Invalid artifact path")
-# 44         return v
-# 45 
-# 46 class PromptProviderConfig(BaseModel):
-# 47     id: Optional[int] = None
-# 48     guid: UUID = Field(default_factory=uuid4)
-# 49     name: str
-# 50     description: Optional[str] = None
-# 51     artifact_path: Path
-# 52     config: Optional[Dict[str, Any]] = None
-# 53     tags: Optional[List[str]] = Field(default_factory=list)
-# 54 
-# 55     @field_validator("artifact_path")
-# 56     @classmethod
-# 57     def validate_artifact_path(cls, v: Path) -> Path:
-# 58         if not v.is_absolute() and ".." in v.parts:
-# 59             raise ValueError("Invalid artifact path")
-# 60         return v
-# 61 
-# 62 class ToolProviderConfig(BaseModel):
-# 63     id: Optional[int] = None
-# 64     guid: UUID = Field(default_factory=uuid4)
-# 65     name: str
-# 66     description: Optional[str] = None
-# 67     config: Optional[Dict[str, Any]] = None
-# 68     artifact_path: Path
-# 69     tags: Optional[List[str]] = None
-# 70 
-# 71     @field_validator("artifact_path")
-# 72     @classmethod
-# 73     def validate_artifact_path(cls, v: Path) -> Path:
-# 74         if not v.is_absolute() and ".." in v.parts:
-# 75             raise ValueError("Invalid artifact path")
-# 76         return v
-# 77 
-# 78 class ScoreOutputSchema(BaseModel):
-# 79     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
-# 80     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
-# 81     components: Dict[str, float] = Field(..., description="Tool/component-specific scores")
-# 82     summary: Optional[str] = None
-# 83 
-# 84 
-# 85 class ScoreProviderConfig(BaseModel):
-# 86     id: Optional[int] = None
-# 87     guid: UUID = Field(default_factory=uuid4)
-# 88     name: str
-# 89     description: Optional[str] = None
-# 90     artifact_path: Optional[Path] = None
-# 91     tags: Optional[List[str]] = None
-# 92     table_name: str = "score_provider"
-# 93 
-# 94     @field_validator("artifact_path")
-# 95     @classmethod
-# 96     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 97         if v is None:
-# 98             return v
-# 99         if not v.is_absolute() and ".." in v.parts:
-# 100             raise ValueError("Invalid artifact path")
-# 101         return v
-# 102         
-# 103 class AgentEngineProviderConfig(BaseModel):
-# 104     id: Optional[int] = None
-# 105     guid: UUID = Field(default_factory=uuid4)
-# 106     name: str
-# 107     description: Optional[str] = None
-# 108     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
-# 109     config: Optional[Dict[str, Any]] = None
-# 110     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
-# 111     artifact_path: Path
-# 112     tags: Optional[List[str]] = None
-# 113 
-# 114     @field_validator("artifact_path")
-# 115     @classmethod
-# 116     def validate_artifact_path(cls, v: Path) -> Path:
-# 117         if not v.is_absolute() and ".." in v.parts:
-# 118             raise ValueError("Invalid artifact path")
-# 119         return v
-# 120 
-# 121 
-# 122 class AgentProviderConfigSchema(BaseModel):
-# 123     id: Optional[int] = None
-# 124     guid: UUID = Field(default_factory=uuid4)
-# 125     name: str
-# 126     description: Optional[str] = None
-# 127     config: Optional[Dict[str, Any]] = None
-# 128     artifact_path: Path
-# 129     tags: Optional[list[str]] = None
-# 130     agent_type: AGENT_TYPE = AGENT_TYPE.UNKNOWN 
-# 131 
-# 132     @field_validator("artifact_path")
-# 133     @classmethod
-# 134     def validate_artifact_path(cls, v: Path) -> Path:
-# 135         if not v.is_absolute() and ".." in v.parts:
-# 136             raise ValueError("Invalid artifact path")
-# 137         return v
-# 138 
-# 139 class StateProviderConfigSchema(BaseModel):
-# 140     id: Optional[int] = None
-# 141     guid: UUID = Field(default_factory=uuid4)
-# 142     name: str
-# 143     description: Optional[str] = None
-# 144     config: Optional[Dict[str, Any]] = None
-# 145     artifact_path: Path
-# 146     tags: Optional[list[str]] = None
-# 147 
-# 148     @classmethod
-# 149     def validate_artifact_path(cls, v: Path) -> Path:
-# 150         if not v.is_absolute() and ".." in v.parts:
-# 151             raise ValueError("Invalid artifact path")
-# 152         return v
-# 153 
-# 154 class SystemProviderConfigSchema(BaseModel):
-# 155     id: Optional[int] = None
-# 156     guid: UUID = Field(default_factory=uuid4)
-# 157     name: str
-# 158     description: Optional[str] = None
-# 159     config: Optional[Dict[str, Any]] = None
-# 160     artifact_path: Path
-# 161     tags: Optional[list[str]] = None
-# 162 
-# 163     @classmethod
-# 164     def validate_artifact_path(cls, v: Path) -> Path:
-# 165         if not v.is_absolute() and ".." in v.parts:
-# 166             raise ValueError("Invalid artifact path")
-# 167         return v
-# 168 
-# 169 class ControllerProviderConfigSchema(BaseModel):
-# 170     id: Optional[int] = None
-# 171     guid: UUID = Field(default_factory=uuid4)
-# 172     name: str
-# 173     description: Optional[str] = None
-# 174     config: Optional[Dict[str, Any]] = None
-# 175     artifact_path: Path
-# 176     tags: Optional[list[str]] = None
-# 177 
-# 178     @classmethod
-# 179     def validate_artifact_path(cls, v: Path) -> Path:
-# 180         if not v.is_absolute() and ".." in v.parts:
-# 181             raise ValueError("Invalid artifact path")
-# 182         return v
-# 183 
-# 184 class ProgramProviderConfigSchema(BaseModel):
-# 185     id: Optional[int] = None
-# 186     guid: UUID = Field(default_factory=uuid4)
-# 187     name: str
-# 188     description: Optional[str] = None
-# 189     config: Optional[Dict[str, Any]] = None
-# 190     artifact_path: Path
-# 191     tags: Optional[List[str]] = None
-# 192 
-# 193     @classmethod
-# 194     def validate_artifact_path(cls, v: Path) -> Path:
-# 195         if not v.is_absolute() and ".." in v.parts:
-# 196             raise ValueError("Invalid artifact path")
-# 197         return v
-# 198 
-# 199 class SessionConfigSchema(BaseModel):
-# 200     id: Optional[int] = None
-# 201     session_id: str
-# 202     name: str
-# 203     description: Optional[str] = None
-# 204     environment_type: str  #  e.g., "experiment", "live", "staging"
-# 205     config: Optional[Dict[str, Any]] = None
-# 206     tags: Optional[List[str]] = None
-# 207     
-# 208 
-# 209 #  LOGS
-# 210 
-# 211 @dataclass
-# 212 class ProviderLogSchema:
-# 213     session_id: str
-# 214     provider_id: int
-# 215     provider_type: PROVIDER_TYPE
-# 216     input: Optional[str] = None
-# 217     output: Optional[str] = None
-# 218     output_schema: Optional[str] = None
-# 219     latency_ms: Optional[int] = None
-# 220     config_hash: Optional[str] = None
-# 221     file_name: Optional[str] = None
-# 222     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 223     called_by_type: Optional[PROVIDER_TYPE] = None
-# 224     called_by_id: Optional[int] = None
-# 225     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 226 
-# 227 @dataclass
-# 228 class StateTransitionLogSchema:
-# 229     session_id: str
-# 230     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
-# 231     entity_id: int
-# 232     from_state: str
-# 233     to_state: str
-# 234     reason: TRANSITION_REASON_TYPE
-# 235     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 236     triggered_by: str | None = None
-# 237     step: int | None = None
-# 238     transition_metadata: dict | None = None
-# 239     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 240     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 241 
-# 242 @dataclass
-# 243 class AgentConversationLogSchema:
-# 244     session_id: str
-# 245     system: SYSTEM_TYPE
-# 246     agent_type: AGENT_TYPE
-# 247     agent_provider_config_id: int
-# 248     content: str
-# 249     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 250     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 251 
-# 252 @dataclass
-# 253 class ErrorLogSchema:
-# 254     session_id: str
-# 255     error_type: ERROR_TYPE
-# 256     message: str
-# 257     file_path: str | None = None
-# 258     provider_id: int | None = None
-# 259     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
-# 260     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 261     latency_ms: Optional[int] = None
-# 262     called_by_type: Optional[PROVIDER_TYPE] = None
-# 263     called_by_id: Optional[int] = None
-# 264     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 265     
-# 266 @dataclass
-# 267 class SnapshotMetricsSchema:
-# 268     session_id: str
-# 269     snapshot_id: str
-# 270     system: SYSTEM_TYPE
-# 271     agent: str
-# 272     agent_type: AGENT_TYPE 
-# 273     agent_id: int
-# 274     score: float
-# 275     state: str  #  could be FSM state, usually freeform like "generate" or "stability"
-# 276     decision: DECISION_TYPE
-# 277     timestamp: datetime
-# 278 
-# 279     line_count_before: int
-# 280     line_count_after: int
-# 281     function_count_before: int
-# 282     function_count_after: int
-# 283     symbol_count_before: int
-# 284     symbol_count_after: int
-# 285     branch_count_before: int
-# 286     branch_count_after: int
-# 287     comment_count_before: int
-# 288     comment_count_after: int
-# 289 
-# 290     line_count_delta: int
-# 291     function_count_delta: int
-# 292     symbol_count_delta: int
-# 293     branch_count_delta: int
-# 294     comment_count_delta: int
-# 295 
-# 296 #  Provider output schemas (for logs)
-# 297 
-# 298 class ToolOutputSchema(BaseModel):
-# 299     return_code: int
-# 300     stdout: Optional[str] = None
-# 301     stderr: Optional[str] = None
-# 302     violations: Optional[List[str]] = None  #  for linters like ruff
-# 303     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
-# 304     summary: Optional[str] = None  #  optional human-readable summary
-# 305 
-# 306 
-# 307 class AgentEngineOutput(BaseModel):
-# 308     response: str
-# 309     token_count: int
-# 310     cost_usd: float
-# 311     snapshot_id: Optional[str] = None
-# 312     summary: Optional[str] = None
-# 313 
-# 314 
-# 315 class AgentOutputSchema(BaseModel):
-# 316     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 317     score: Optional[float] = None
-# 318     response: Optional[str] = None
-# 319     log: Optional[str] = None
-# 320     file_path: Optional[str] = None
-# 321 
-# 322 
-# 323 class ContextOutputSchema(BaseModel):
-# 324     context: Dict[str, Any]
-# 325     summary: Optional[str] = None
+# 11 from app.enums.controller_enums import CONTROLLER
+# 12 from app.enums.system_enums import SYSTEM
+# 13 from app.enums.state_enums import STATE
+# 14 from app.enums.agent_enums import AGENT
+# 15 from app.enums.agent_engine_enums import AGENT_ENGINE_MODEL
+# 16 
+# 17 
+# 18 class AgentPromptSchema(BaseModel):
+# 19     id: Optional[int] = None
+# 20     guid: UUID = Field(default_factory=uuid4)
+# 21     name: str
+# 22     description: Optional[str] = None
+# 23     artifact_path: Path
+# 24     tags: Optional[List[str]] = None
+# 25 
+# 26     @field_validator("artifact_path")
+# 27     @classmethod
+# 28     def validate_artifact_path(cls, v: Path) -> Path:
+# 29         if not v.is_absolute() and ".." in v.parts:
+# 30             raise ValueError("Invalid artifact path")
+# 31         return v
+# 32 
+# 33 class SystemPromptSchema(BaseModel):
+# 34     id: Optional[int] = None
+# 35     guid: UUID = Field(default_factory=uuid4)
+# 36     name: str
+# 37     system_type: SYSTEM
+# 38     description: Optional[str] = None
+# 39     artifact_path: Path
+# 40     tags: Optional[List[str]] = None
+# 41 
+# 42     @field_validator("artifact_path")
+# 43     @classmethod
+# 44     def validate_artifact_path(cls, v: Path) -> Path:
+# 45         if not v.is_absolute() and ".." in v.parts:
+# 46             raise ValueError("Invalid artifact path")
+# 47         return v
+# 48 
+# 49 class PromptProviderConfig(BaseModel):
+# 50     id: Optional[int] = None
+# 51     guid: UUID = Field(default_factory=uuid4)
+# 52     name: str
+# 53     description: Optional[str] = None
+# 54     artifact_path: Path
+# 55     config: Optional[Dict[str, Any]] = None
+# 56     tags: Optional[List[str]] = Field(default_factory=list)
+# 57 
+# 58     @field_validator("artifact_path")
+# 59     @classmethod
+# 60     def validate_artifact_path(cls, v: Path) -> Path:
+# 61         if not v.is_absolute() and ".." in v.parts:
+# 62             raise ValueError("Invalid artifact path")
+# 63         return v
+# 64 
+# 65 class ToolProviderConfig(BaseModel):
+# 66     id: Optional[int] = None
+# 67     guid: UUID = Field(default_factory=uuid4)
+# 68     name: str
+# 69     description: Optional[str] = None
+# 70     config: Optional[Dict[str, Any]] = None
+# 71     artifact_path: Path
+# 72     tags: Optional[List[str]] = None
+# 73 
+# 74     @field_validator("artifact_path")
+# 75     @classmethod
+# 76     def validate_artifact_path(cls, v: Path) -> Path:
+# 77         if not v.is_absolute() and ".." in v.parts:
+# 78             raise ValueError("Invalid artifact path")
+# 79         return v
+# 80 
+# 81 class ScoreOutputSchema(BaseModel):
+# 82     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
+# 83     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
+# 84     components: Dict[str, float] = Field(..., description="Tool/component-specific scores")
+# 85     summary: Optional[str] = None
+# 86 
+# 87 
+# 88 class ScoreProviderConfig(BaseModel):
+# 89     id: Optional[int] = None
+# 90     guid: UUID = Field(default_factory=uuid4)
+# 91     name: str
+# 92     description: Optional[str] = None
+# 93     artifact_path: Optional[Path] = None
+# 94     tags: Optional[List[str]] = None
+# 95     table_name: str = "score_provider"
+# 96 
+# 97     @field_validator("artifact_path")
+# 98     @classmethod
+# 99     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 100         if v is None:
+# 101             return v
+# 102         if not v.is_absolute() and ".." in v.parts:
+# 103             raise ValueError("Invalid artifact path")
+# 104         return v
+# 105         
+# 106 class AgentEngineProviderConfig(BaseModel):
+# 107     id: Optional[int] = None
+# 108     guid: UUID = Field(default_factory=uuid4)
+# 109     name: str
+# 110     description: Optional[str] = None
+# 111     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
+# 112     config: Optional[Dict[str, Any]] = None
+# 113     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
+# 114     artifact_path: Path
+# 115     tags: Optional[List[str]] = None
+# 116 
+# 117     @field_validator("artifact_path")
+# 118     @classmethod
+# 119     def validate_artifact_path(cls, v: Path) -> Path:
+# 120         if not v.is_absolute() and ".." in v.parts:
+# 121             raise ValueError("Invalid artifact path")
+# 122         return v
+# 123 
+# 124 
+# 125 class AgentProviderConfigSchema(BaseModel):
+# 126     id: Optional[int] = None
+# 127     guid: UUID = Field(default_factory=uuid4)
+# 128     name: str
+# 129     description: Optional[str] = None
+# 130     config: Optional[Dict[str, Any]] = None
+# 131     artifact_path: Path
+# 132     tags: Optional[list[str]] = None
+# 133     agent_type: AGENT = AGENT.UNKNOWN 
+# 134 
+# 135     @field_validator("artifact_path")
+# 136     @classmethod
+# 137     def validate_artifact_path(cls, v: Path) -> Path:
+# 138         if not v.is_absolute() and ".." in v.parts:
+# 139             raise ValueError("Invalid artifact path")
+# 140         return v
+# 141 
+# 142 class StateProviderConfigSchema(BaseModel):
+# 143     id: Optional[int] = None
+# 144     guid: UUID = Field(default_factory=uuid4)
+# 145     name: str
+# 146     description: Optional[str] = None
+# 147     config: Optional[Dict[str, Any]] = None
+# 148     artifact_path: Path
+# 149     tags: Optional[list[str]] = None
+# 150 
+# 151     @classmethod
+# 152     def validate_artifact_path(cls, v: Path) -> Path:
+# 153         if not v.is_absolute() and ".." in v.parts:
+# 154             raise ValueError("Invalid artifact path")
+# 155         return v
+# 156 
+# 157 class SystemProviderConfigSchema(BaseModel):
+# 158     id: Optional[int] = None
+# 159     guid: UUID = Field(default_factory=uuid4)
+# 160     name: str
+# 161     description: Optional[str] = None
+# 162     config: Optional[Dict[str, Any]] = None
+# 163     artifact_path: Path
+# 164     tags: Optional[list[str]] = None
+# 165 
+# 166     @classmethod
+# 167     def validate_artifact_path(cls, v: Path) -> Path:
+# 168         if not v.is_absolute() and ".." in v.parts:
+# 169             raise ValueError("Invalid artifact path")
+# 170         return v
+# 171 
+# 172 class ControllerProviderConfigSchema(BaseModel):
+# 173     id: Optional[int] = None
+# 174     guid: UUID = Field(default_factory=uuid4)
+# 175     name: str
+# 176     description: Optional[str] = None
+# 177     config: Optional[Dict[str, Any]] = None
+# 178     artifact_path: Path
+# 179     tags: Optional[list[str]] = None
+# 180 
+# 181     @classmethod
+# 182     def validate_artifact_path(cls, v: Path) -> Path:
+# 183         if not v.is_absolute() and ".." in v.parts:
+# 184             raise ValueError("Invalid artifact path")
+# 185         return v
+# 186 
+# 187 class ProgramProviderConfigSchema(BaseModel):
+# 188     id: Optional[int] = None
+# 189     guid: UUID = Field(default_factory=uuid4)
+# 190     name: str
+# 191     description: Optional[str] = None
+# 192     config: Optional[Dict[str, Any]] = None
+# 193     artifact_path: Path
+# 194     tags: Optional[List[str]] = None
+# 195 
+# 196     @classmethod
+# 197     def validate_artifact_path(cls, v: Path) -> Path:
+# 198         if not v.is_absolute() and ".." in v.parts:
+# 199             raise ValueError("Invalid artifact path")
+# 200         return v
+# 201 
+# 202 class SessionConfigSchema(BaseModel):
+# 203     id: Optional[int] = None
+# 204     session_id: str
+# 205     name: str
+# 206     description: Optional[str] = None
+# 207     environment_type: str  #  e.g., "experiment", "live", "staging"
+# 208     config: Optional[Dict[str, Any]] = None
+# 209     tags: Optional[List[str]] = None
+# 210     
+# 211 
+# 212 #  LOGS
+# 213 
+# 214 @dataclass
+# 215 class ProviderLogSchema:
+# 216     session_id: str
+# 217     provider_id: int
+# 218     provider_type: PROVIDER_TYPE
+# 219     input: Optional[str] = None
+# 220     output: Optional[str] = None
+# 221     output_schema: Optional[str] = None
+# 222     latency_ms: Optional[int] = None
+# 223     config_hash: Optional[str] = None
+# 224     file_name: Optional[str] = None
+# 225     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 226     called_by_type: Optional[PROVIDER_TYPE] = None
+# 227     called_by_id: Optional[int] = None
+# 228     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 229 
+# 230 @dataclass
+# 231 class StateTransitionLogSchema:
+# 232     session_id: str
+# 233     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
+# 234     entity_id: int
+# 235     from_state: str
+# 236     to_state: str
+# 237     reason: TRANSITION_REASON_TYPE
+# 238     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 239     triggered_by: str | None = None
+# 240     step: int | None = None
+# 241     transition_metadata: dict | None = None
+# 242     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 243     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 244     called_by_type: PROVIDER_TYPE | None = None
+# 245     called_by_id: int | None = None 
+# 246 
+# 247 @dataclass
+# 248 class AgentConversationLogSchema:
+# 249     session_id: str
+# 250     system: SYSTEM
+# 251     agent_type: AGENT
+# 252     agent_provider_config_id: int
+# 253     content: str
+# 254     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 255     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 256 
+# 257 @dataclass
+# 258 class ErrorLogSchema:
+# 259     session_id: str
+# 260     error_type: ERROR_TYPE
+# 261     message: str
+# 262     file_path: str | None = None
+# 263     provider_id: int | None = None
+# 264     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
+# 265     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 266     latency_ms: Optional[int] = None
+# 267     called_by_type: Optional[PROVIDER_TYPE] = None
+# 268     called_by_id: Optional[int] = None
+# 269     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 270     
+# 271 @dataclass
+# 272 class SnapshotMetricsSchema:
+# 273     session_id: str
+# 274     snapshot_id: str
+# 275     system: SYSTEM
+# 276     agent: str
+# 277     agent_type: AGENT 
+# 278     agent_id: int
+# 279     score: float
+# 280     state: str  #  could be FSM state, usually freeform like "generate" or "stability"
+# 281     decision: DECISION_TYPE
+# 282     timestamp: datetime
+# 283 
+# 284     line_count_before: int
+# 285     line_count_after: int
+# 286     function_count_before: int
+# 287     function_count_after: int
+# 288     symbol_count_before: int
+# 289     symbol_count_after: int
+# 290     branch_count_before: int
+# 291     branch_count_after: int
+# 292     comment_count_before: int
+# 293     comment_count_after: int
+# 294 
+# 295     line_count_delta: int
+# 296     function_count_delta: int
+# 297     symbol_count_delta: int
+# 298     branch_count_delta: int
+# 299     comment_count_delta: int
+# 300 
+# 301 #  Provider output schemas (for logs)
+# 302 
+# 303 class ToolOutputSchema(BaseModel):
+# 304     return_code: int
+# 305     stdout: Optional[str] = None
+# 306     stderr: Optional[str] = None
+# 307     violations: Optional[List[str]] = None  #  for linters like ruff
+# 308     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
+# 309     summary: Optional[str] = None  #  optional human-readable summary
+# 310 
+# 311 
+# 312 class AgentEngineOutput(BaseModel):
+# 313     response: str
+# 314     token_count: int
+# 315     cost_usd: float
+# 316     snapshot_id: Optional[str] = None
+# 317     summary: Optional[str] = None
+# 318 
+# 319 
+# 320 class AgentOutputSchema(BaseModel):
+# 321     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 322     score: Optional[float] = None
+# 323     response: Optional[str] = None
+# 324     log: Optional[str] = None
+# 325     file_path: Optional[str] = None
 # 326 
 # 327 
-# 328 class PromptOutputSchema(BaseModel):
-# 329     prompt: str
+# 328 class ContextOutputSchema(BaseModel):
+# 329     context: Dict[str, Any]
 # 330     summary: Optional[str] = None
 # 331 
 # 332 
-# 333 class FSMOutputSchema(BaseModel):
-# 334     state: STATE
-# 335     previous_state: Optional[STATE] = None
-# 336     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
-# 337     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
-# 338     steps: int = Field(..., ge=0)
-# 339     max_steps: int = Field(..., gt=0)
-# 340     summary: Optional[str] = None
-# 341     output: Optional[Dict[str, Any]] = None
-# 342     provider_name: Optional[str] = None
-# 343 
-# 344 class StateOutputSchema(FSMOutputSchema): pass
-# 345 class SystemOutputSchema(FSMOutputSchema): pass
-# 346 class ControllerOutputSchema(FSMOutputSchema): pass
-# 347 class ProgramOutputSchema(FSMOutputSchema): pass
+# 333 class PromptOutputSchema(BaseModel):
+# 334     prompt: str
+# 335     summary: Optional[str] = None
+# 336 
+# 337 
+# 338 class FSMOutputSchema(BaseModel):
+# 339     state: STATE
+# 340     previous_state: Optional[STATE] = None
+# 341     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
+# 342     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
+# 343     steps: int = Field(..., ge=0)
+# 344     max_steps: int = Field(..., gt=0)
+# 345     summary: Optional[str] = None
+# 346     output: Optional[Dict[str, Any]] = None
+# 347     provider_name: Optional[str] = None
 # 348 
-# 349 
-# 350 #  DTOs
-# 351 
-# 352 class Snapshot(BaseModel):
-# 353     timestamp: datetime
-# 354     file: str
-# 355     score: float
-# 356     decision: DECISION_TYPE
+# 349 class SystemOutputSchema(FSMOutputSchema): pass
+# 350 
+# 351 class StateOutputSchema(FSMOutputSchema): 
+# 352     previous_state: Optional[AGENT] = None
+# 353 class ProgramOutputSchema(FSMOutputSchema):
+# 354     previous_state: Optional[CONTROLLER] = None
+# 355 class ControllerOutputSchema(FSMOutputSchema): 
+# 356     previous_state: Optional[SYSTEM] = None
 # 357 
-# 358 class SystemState(BaseModel):
-# 359     system: str
-# 360     file_path: str
-# 361     working_file: str
-# 362     final_file: Optional[str] = None
-# 363     snapshots: List[Snapshot]
-# 364     state: Optional[str] = "active"
-# 365 
+# 358 
+# 359 #  DTOs
+# 360 
+# 361 class Snapshot(BaseModel):
+# 362     timestamp: datetime
+# 363     file: str
+# 364     score: float
+# 365     decision: DECISION_TYPE
 # 366 
+# 367 class SystemState(BaseModel):
+# 368     system: str
+# 369     file_path: str
+# 370     working_file: str
+# 371     final_file: Optional[str] = None
+# 372     snapshots: List[Snapshot]
+# 373     state: Optional[str] = "active"
+# 374 
+# 375 
 
 
 # db\seed.py
@@ -1202,38 +1213,39 @@
 
 # db\seeders\files\controller_providers\preprocessing_controller_provider.py
 
-# 1 from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 2 from app.providers.controller_provider_base import ControllerProviderBase
-# 3 
-# 4 class PreprocessingControllerProvider(ControllerProviderBase):
-# 5     def _transition(self, state, sys_output):
-# 6         current = STATE(state["state"])
-# 7         transition = {}
-# 8 
-# 9         if current == STATE.START:
-# 10             transition = {
-# 11                 "state": STATE.PREPROCESS,
-# 12                 "reason": TRANSITION_REASON_TYPE.KICKOFF,
-# 13             }
-# 14         elif current == STATE.PREPROCESS:
-# 15             transition = {
-# 16                 "state": STATE.END.value,
-# 17                 "reason": TRANSITION_REASON_TYPE.PREPROCESSING_COMPLETE,
-# 18             }
-# 19         else:
-# 20             transition = {
-# 21                 "state": STATE.END,
-# 22                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
-# 23             }
-# 24 
-# 25         #  🔁 Propagate outputs from system FSM (without score)
-# 26         if sys_output:
-# 27             if hasattr(sys_output, "output") and isinstance(sys_output.output, dict):
-# 28                 output_dict = sys_output.output
-# 29                 transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
-# 30                 transition["decision"] = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
-# 31 
-# 32         return transition
+# 1 from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+# 2 from app.enums.system_enums import SYSTEM
+# 3 from app.providers.controller_provider_base import ControllerProviderBase
+# 4 
+# 5 class PreprocessingControllerProvider(ControllerProviderBase):
+# 6     def _transition(self, state, sys_output):
+# 7         current = SYSTEM(state["state"])
+# 8         transition = {}
+# 9 
+# 10         if current == SYSTEM.START:
+# 11             transition = {
+# 12                 "state": SYSTEM.LINTING,
+# 13                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
+# 14             }
+# 15         elif current == SYSTEM.LINTING:
+# 16             transition = {
+# 17                 "state": SYSTEM.END,
+# 18                 "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
+# 19             }
+# 20         else:
+# 21             transition = {
+# 22                 "state": SYSTEM.END,
+# 23                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
+# 24             }
+# 25 
+# 26         #  🔁 Propagate outputs from system FSM (without score)
+# 27         if sys_output:
+# 28             if hasattr(sys_output, "output") and isinstance(sys_output.output, dict):
+# 29                 output_dict = sys_output.output
+# 30                 transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
+# 31                 transition["decision"] = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
+# 32 
+# 33         return transition
 
 
 # db\seeders\files\program_providers\__init__.py
@@ -1242,33 +1254,33 @@
 
 # db\seeders\files\program_providers\codecritic_program_provider.py
 
-# 1 from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 2 from app.providers.program_provider_base import ProgramProviderBase
-# 3 
-# 4 class CodeCriticProgramProvider(ProgramProviderBase):
-# 5     def _transition(self, state, ctrl_output):
-# 6         current = STATE(state["state"])
-# 7         transition = {}
-# 8 
-# 9         if current == STATE.START:
-# 10             transition = {
-# 11                 "state": STATE.PREPROCESS,
-# 12                 "reason": TRANSITION_REASON_TYPE.PROGRAM_INIT,
-# 13             }
-# 14 
-# 15         elif current == STATE.PREPROCESS:
-# 16             transition = {
-# 17                 "state": STATE.END,
-# 18                 "reason": TRANSITION_REASON_TYPE.PREPROCESSING_COMPLETE,
-# 19             }
-# 20 
-# 21         else:
-# 22             transition = {
-# 23                 "state": STATE.END,
-# 24                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
-# 25             }
-# 26 
-# 27         #  🔁 Propagate controller output fields (minus score)
+# 1 from app.enums.controller_enums import CONTROLLER
+# 2 from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+# 3 from app.providers.program_provider_base import ProgramProviderBase
+# 4 
+# 5 class CodeCriticProgramProvider(ProgramProviderBase):
+# 6     def _transition(self, state, ctrl_output):
+# 7         current = CONTROLLER(state["state"])
+# 8         transition = {}
+# 9 
+# 10         if current == CONTROLLER.START:
+# 11             transition = {
+# 12                 "state": CONTROLLER.PREPROCESSING,
+# 13                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
+# 14             }
+# 15 
+# 16         elif current == CONTROLLER.PREPROCESSING:
+# 17             transition = {
+# 18                 "state": CONTROLLER.END,
+# 19                 "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
+# 20             }
+# 21 
+# 22         else:
+# 23             transition = {
+# 24                 "state": CONTROLLER.END,
+# 25                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
+# 26             }
+# 27 
 # 28         if ctrl_output:
 # 29             if hasattr(ctrl_output, "output") and isinstance(ctrl_output.output, dict):
 # 30                 output_dict = ctrl_output.output
@@ -1559,95 +1571,98 @@
 
 # db\seeders\files\state_providers\code_stability_state_provider.py
 
-# 1 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 2 from app.providers.state_provider_base import StateProviderBase
-# 3 from app.db.schemas import AgentOutputSchema
-# 4 
-# 5 class CodeStabilityStateProvider(StateProviderBase):
-# 6     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
-# 7         current = STATE(state.get("state"))
-# 8 
-# 9         if current == STATE.START:
-# 10             return {
-# 11                 "state": STATE.CODE_STABILITY,
-# 12                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
-# 13             }
-# 14 
-# 15         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
-# 16 
-# 17         return {
-# 18             "state": STATE.END,
-# 19             "state_type": STATE_TYPE.END,
-# 20             "decision": decision,
-# 21             "reason": (
-# 22                 TRANSITION_REASON_TYPE.STABILITY_PASSED
-# 23                 if decision == DECISION_TYPE.ACCEPT
-# 24                 else TRANSITION_REASON_TYPE.STABILITY_FAILED
-# 25             )
-# 26         }
+# 1 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+# 2 from app.enums.agent_enums import AGENT
+# 3 from app.providers.state_provider_base import StateProviderBase
+# 4 from app.db.schemas import AgentOutputSchema
+# 5 
+# 6 class CodeStabilityStateProvider(StateProviderBase):
+# 7     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
+# 8         current = AGENT(state.get("state"))
+# 9 
+# 10         if current == AGENT.START:
+# 11             return {
+# 12                 "state": AGENT.STABILITY,
+# 13                 "reason": TRANSITION_REASON_TYPE.EVALUATING
+# 14             }
+# 15 
+# 16         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
+# 17 
+# 18         return {
+# 19             "state": AGENT.END,
+# 20             "state_type": STATE_TYPE.END,
+# 21             "decision": decision,
+# 22             "reason": (
+# 23                 TRANSITION_REASON_TYPE.PASSED
+# 24                 if decision == DECISION_TYPE.ACCEPT
+# 25                 else TRANSITION_REASON_TYPE.FAILED
+# 26             )
+# 27         }
 
 
 # db\seeders\files\state_providers\linting_discriminator_state_provider.py
 
-# 1 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 2 from app.providers.state_provider_base import StateProviderBase
-# 3 from app.db.schemas import AgentOutputSchema
-# 4 
-# 5 class LintingDiscriminatorStateProvider(StateProviderBase):
-# 6     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
-# 7         if agent_output is None:
-# 8             return {
-# 9                 "state": STATE.DISCRIMINATE,
-# 10                 "reason": TRANSITION_REASON_TYPE.KICKOFF
-# 11             }
-# 12 
-# 13         if agent_output.decision == DECISION_TYPE.ACCEPT:
-# 14             return {
-# 15                 "state": STATE.END,
-# 16                 "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_ACCEPTED,
-# 17                 "decision": DECISION_TYPE.ACCEPT,
-# 18                 "file_path": agent_output.file_path,
-# 19             }
-# 20 
-# 21         return {
-# 22             "state": STATE.END,
-# 23             "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_REJECTED,
-# 24             "decision": DECISION_TYPE.REJECT,
-# 25             "file_path": agent_output.file_path,
-# 26         }
+# 1 from app.enums.fsm_enums import DECISION_TYPE, TRANSITION_REASON_TYPE
+# 2 from app.enums.agent_enums import AGENT
+# 3 from app.providers.state_provider_base import StateProviderBase
+# 4 from app.db.schemas import AgentOutputSchema
+# 5 
+# 6 class LintingDiscriminatorStateProvider(StateProviderBase):
+# 7     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
+# 8         if agent_output is None:
+# 9             return {
+# 10                 "state": AGENT.DISCRIMINATOR,
+# 11                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION
+# 12             }
+# 13 
+# 14         if agent_output.decision == DECISION_TYPE.ACCEPT:
+# 15             return {
+# 16                 "state": AGENT.END,
+# 17                 "reason": TRANSITION_REASON_TYPE.PASSED,
+# 18                 "decision": DECISION_TYPE.ACCEPT,
+# 19                 "file_path": agent_output.file_path,
+# 20             }
+# 21 
+# 22         return {
+# 23             "state": AGENT.END,
+# 24             "reason": TRANSITION_REASON_TYPE.FAILED,
+# 25             "decision": DECISION_TYPE.REJECT,
+# 26             "file_path": agent_output.file_path,
+# 27         }
 
 
 # db\seeders\files\state_providers\linting_generator_state_provider.py
 
-# 1 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 2 from app.providers.state_provider_base import StateProviderBase
-# 3 from app.db.schemas import AgentOutputSchema
-# 4 
-# 5 class LintingGeneratorStateProvider(StateProviderBase):
-# 6     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
-# 7         current = STATE(state.get("state"))
-# 8         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
-# 9 
-# 10         if current == STATE.START:
-# 11             return {
-# 12                 "state": STATE.GENERATE,
-# 13                 "reason": TRANSITION_REASON_TYPE.GENERATION_STARTED
-# 14             }
-# 15 
-# 16         if current == STATE.GENERATE:
-# 17             return {
-# 18                 "state": STATE.END,
-# 19                 "state_type": STATE_TYPE.END,
-# 20                 "decision": decision,
-# 21                 "reason": TRANSITION_REASON_TYPE.GENERATION_COMPLETED
-# 22             }
-# 23 
-# 24         return {
-# 25             "state": STATE.END,
-# 26             "state_type": STATE_TYPE.END,
-# 27             "decision": DECISION_TYPE.UNKNOWN,
-# 28             "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE
-# 29         }
+# 1 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+# 2 from app.enums.agent_enums import AGENT
+# 3 from app.providers.state_provider_base import StateProviderBase
+# 4 from app.db.schemas import AgentOutputSchema
+# 5 
+# 6 class LintingGeneratorStateProvider(StateProviderBase):
+# 7     def _transition(self, state: dict, agent_output: AgentOutputSchema | None) -> dict:
+# 8         current = AGENT(state.get("state"))
+# 9         decision = getattr(agent_output, "decision", DECISION_TYPE.UNKNOWN)
+# 10 
+# 11         if current == AGENT.START:
+# 12             return {
+# 13                 "state": AGENT.GENERATOR,
+# 14                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION
+# 15             }
+# 16 
+# 17         if current == AGENT.GENERATOR:
+# 18             return {
+# 19                 "state": AGENT.END,
+# 20                 "state_type": STATE_TYPE.END,
+# 21                 "decision": DECISION_TYPE.UNKNOWN,
+# 22                 "reason": TRANSITION_REASON_TYPE.SUCCESSFUL
+# 23             }
+# 24 
+# 25         return {
+# 26             "state": AGENT.END,
+# 27             "state_type": STATE_TYPE.END,
+# 28             "decision": DECISION_TYPE.UNKNOWN,
+# 29             "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE
+# 30         }
 
 
 # db\seeders\files\system_providers\__init__.py
@@ -1659,89 +1674,90 @@
 # 1 from pathlib import Path
 # 2 import json
 # 3 
-# 4 from app.enums.fsm_enums import STATE, DECISION_TYPE, TRANSITION_REASON_TYPE
-# 5 from app.providers.system_provider_base import SystemProviderBase
-# 6 
+# 4 from app.enums.fsm_enums import TRANSITION_REASON_TYPE
+# 5 from app.enums.state_enums import STATE
+# 6 from app.providers.system_provider_base import SystemProviderBase
 # 7 
-# 8 class LintingSystemProvider(SystemProviderBase):
-# 9     SCORE_THRESHOLD = 0.85
-# 10 
-# 11     def _transition(self, state: dict, state_output: dict | None) -> dict:
-# 12         current = STATE(state.get("state"))
-# 13         last = STATE(state.get("_last_state")) if state.get("_last_state") else None
-# 14 
-# 15         result = None
-# 16 
-# 17         if state_output and hasattr(state_output, "output"):
-# 18             output_obj = state_output.output
-# 19             if isinstance(output_obj, str):
-# 20                 try:
-# 21                     output_obj = json.loads(output_obj)
-# 22                 except Exception:
-# 23                     output_obj = {}
-# 24 
-# 25             if isinstance(output_obj, dict):
-# 26                 result = output_obj.get("decision") or output_obj.get("result")
-# 27             else:
-# 28                 result = getattr(output_obj, "decision", None)
-# 29 
-# 30         transition = {}
-# 31 
-# 32         if current == STATE.START:
-# 33             transition = {
-# 34                 "state": STATE.CODE_STABILITY,
-# 35                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK
-# 36             }
-# 37 
-# 38         elif current == STATE.CODE_STABILITY:
-# 39             if last == STATE.START:
-# 40                 if result == "accept":
-# 41                     transition = {
-# 42                         "state": STATE.GENERATE,
-# 43                         "reason": TRANSITION_REASON_TYPE.STABILITY_PASSED,
-# 44                         "file_path": state.get("file_path")
-# 45                     }
-# 46                 else:
-# 47                     transition = {
-# 48                         "state": STATE.END,
-# 49                         "reason": TRANSITION_REASON_TYPE.STABILITY_FAILED
-# 50                     }
-# 51             elif last == STATE.GENERATE:
-# 52                 if result == "accept":
-# 53                     transition = {
-# 54                         "state": STATE.DISCRIMINATE,
-# 55                         "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_PASSED,
-# 56                         "file_path": state.get("file_path")
-# 57                     }
-# 58                 else:
-# 59                     transition = {
-# 60                         "state": STATE.GENERATE,
-# 61                         "reason": TRANSITION_REASON_TYPE.POST_GEN_STABILITY_FAILED,
-# 62                         "file_path": state.get("file_path")
-# 63                     }
-# 64 
-# 65         elif current == STATE.GENERATE:
-# 66             transition = {
-# 67                 "state": STATE.CODE_STABILITY,
-# 68                 "reason": TRANSITION_REASON_TYPE.STABILITY_CHECK,
-# 69                 "file_path": state.get("file_path")
-# 70             }
-# 71 
-# 72         elif current == STATE.DISCRIMINATE:
-# 73             if result == "accept":
-# 74                 transition = {
-# 75                     "state": STATE.END,
-# 76                     "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_ACCEPTED,
-# 77                     "file_path": state.get("file_path")
-# 78                 }
-# 79             else:
-# 80                 transition = {
-# 81                     "state": STATE.GENERATE,
-# 82                     "reason": TRANSITION_REASON_TYPE.DISCRIMINATOR_REJECTED,
-# 83                     "file_path": state.get("file_path")
-# 84                 }
-# 85 
-# 86         return transition
+# 8 
+# 9 class LintingSystemProvider(SystemProviderBase):
+# 10     SCORE_THRESHOLD = 0.85
+# 11 
+# 12     def _transition(self, state: dict, state_output: dict | None) -> dict:
+# 13         current = STATE(state.get("state"))
+# 14         last = STATE(state.get("_last_state")) if state.get("_last_state") else None
+# 15 
+# 16         result = None
+# 17 
+# 18         if state_output and hasattr(state_output, "output"):
+# 19             output_obj = state_output.output
+# 20             if isinstance(output_obj, str):
+# 21                 try:
+# 22                     output_obj = json.loads(output_obj)
+# 23                 except Exception:
+# 24                     output_obj = {}
+# 25 
+# 26             if isinstance(output_obj, dict):
+# 27                 result = output_obj.get("decision") or output_obj.get("result")
+# 28             else:
+# 29                 result = getattr(output_obj, "decision", None)
+# 30 
+# 31         transition = {}
+# 32 
+# 33         if current == STATE.START:
+# 34             transition = {
+# 35                 "state": STATE.CODE_STABILITY,
+# 36                 "reason": TRANSITION_REASON_TYPE.EVALUATING
+# 37             }
+# 38 
+# 39         elif current == STATE.CODE_STABILITY:
+# 40             if last == STATE.START:
+# 41                 if result == "accept":
+# 42                     transition = {
+# 43                         "state": STATE.GENERATE,
+# 44                         "reason": TRANSITION_REASON_TYPE.PASSED,
+# 45                         "file_path": state.get("file_path")
+# 46                     }
+# 47                 else:
+# 48                     transition = {
+# 49                         "state": STATE.END,
+# 50                         "reason": TRANSITION_REASON_TYPE.FAILED
+# 51                     }
+# 52             elif last == STATE.GENERATE:
+# 53                 if result == "accept":
+# 54                     transition = {
+# 55                         "state": STATE.DISCRIMINATE,
+# 56                         "reason": TRANSITION_REASON_TYPE.PASSED,
+# 57                         "file_path": state.get("file_path")
+# 58                     }
+# 59                 else:
+# 60                     transition = {
+# 61                         "state": STATE.GENERATE,
+# 62                         "reason": TRANSITION_REASON_TYPE.FAILED,
+# 63                         "file_path": state.get("file_path")
+# 64                     }
+# 65 
+# 66         elif current == STATE.GENERATE:
+# 67             transition = {
+# 68                 "state": STATE.CODE_STABILITY,
+# 69                 "reason": TRANSITION_REASON_TYPE.EVALUATING,
+# 70                 "file_path": state.get("file_path")
+# 71             }
+# 72 
+# 73         elif current == STATE.DISCRIMINATE:
+# 74             if result == "accept":
+# 75                 transition = {
+# 76                     "state": STATE.END,
+# 77                     "reason": TRANSITION_REASON_TYPE.PASSED,
+# 78                     "file_path": state.get("file_path")
+# 79                 }
+# 80             else:
+# 81                 transition = {
+# 82                     "state": STATE.GENERATE,
+# 83                     "reason": TRANSITION_REASON_TYPE.FAILED,
+# 84                     "file_path": state.get("file_path")
+# 85                 }
+# 86 
+# 87         return transition
 
 
 # db\seeders\files\tool_providers\__init__.py
@@ -2518,7 +2534,7 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ControllerProviderConfig
-# 6 from app.enums.fsm_enums import STATE  #  ✅ Import STATE enum
+# 6 from app.enums.system_enums import SYSTEM 
 # 7 
 # 8 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
 # 9 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -2534,7 +2550,7 @@
 # 19         "config": {
 # 20             "score_provider_id": 1,
 # 21             "systems": {
-# 22                 STATE.PREPROCESS.value: 1  #  ✅ Enum-based key
+# 22                 SYSTEM.LINTING.value: 1
 # 23             }
 # 24         }
 # 25     }
@@ -2571,7 +2587,7 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ProgramProviderConfig
-# 6 from app.enums.fsm_enums import STATE  #  ✅ Import your FSM state enum
+# 6 from app.enums.controller_enums import CONTROLLER  #  ✅ Import your FSM state enum
 # 7 
 # 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
 # 9 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -2587,7 +2603,7 @@
 # 19         "config": {
 # 20             "score_provider_id": 1,
 # 21             "controllers": {
-# 22                 STATE.PREPROCESS.value: 1  #  ✅ Enum-safe
+# 22                 CONTROLLER.PREPROCESSING.value: 1
 # 23             }
 # 24         }
 # 25     }
@@ -2696,7 +2712,7 @@
 # 3 from sqlalchemy.orm import Session
 # 4 from uuid import uuid4
 # 5 from app.db.models import AgentPrompt, SystemPrompt
-# 6 from app.enums.system_enums import SYSTEM_TYPE
+# 6 from app.enums.system_enums import SYSTEM
 # 7 
 # 8 #  Define paths relative to this script's file location explicitly
 # 9 CURRENT_DIR = Path(__file__).resolve().parent
@@ -2727,7 +2743,7 @@
 # 34         "id": 1,
 # 35         "name": "format",
 # 36         "filename": "default_system_prompt.txt",
-# 37         "system_type": SYSTEM_TYPE.LINTING,
+# 37         "system_type": SYSTEM.LINTING,
 # 38         "description": "Default prompt for formatting tasks.",
 # 39         "tags": ["formatting", "default"]
 # 40     },
@@ -2735,7 +2751,7 @@
 # 42         "id": 2,
 # 43         "name": "linting_system",
 # 44         "filename": "linting_system_prompt.txt",
-# 45         "system_type": SYSTEM_TYPE.LINTING,
+# 45         "system_type": SYSTEM.LINTING,
 # 46         "description": "System prompt governing the linting subsystem.",
 # 47         "tags": ["linting", "system"]
 # 48     }
@@ -2907,82 +2923,83 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import StateProviderConfig
-# 6 from app.enums.fsm_enums import STATE  #  ✅ Import FSM state enum
-# 7 
-# 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/state_providers"
-# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 11 
-# 12 STATE_PROVIDERS = [
-# 13     (
-# 14         1,
-# 15         "linting_generator_state_provider.py",
-# 16         "LintingGeneratorStateProvider",
-# 17         "Runs the generator agent in its own FSM wrapper.",
-# 18         ["linting", "generator"],
-# 19         {
-# 20             "score_provider_id": 1,
-# 21             "agents": {
-# 22                 STATE.GENERATE.value: 2  #  ✅ Enum-backed key
-# 23             }
-# 24         }
-# 25     ),
-# 26     (
-# 27         2,
-# 28         "linting_discriminator_state_provider.py",
-# 29         "LintingDiscriminatorStateProvider",
-# 30         "Runs the discriminator agent in its own FSM wrapper.",
-# 31         ["linting", "discriminator"],
-# 32         {
-# 33             "score_provider_id": 1,
-# 34             "agents": {
-# 35                 STATE.DISCRIMINATE.value: 3  #  ✅ Enum-backed key
-# 36             }
-# 37         }
-# 38     ),
-# 39     (
-# 40         3,
-# 41         "code_stability_state_provider.py",
-# 42         "CodeStabilityStateProvider",
-# 43         "Gates code based on parse, compile, import, and static validation success.",
-# 44         ["stability"],
-# 45         {
-# 46             "score_provider_id": 1,
-# 47             "agents": {
-# 48                 STATE.CODE_STABILITY.value: 4  #  ✅ Enum-backed key
-# 49             }
-# 50         }
-# 51     )
-# 52 ]
-# 53 
-# 54 def seed_state_providers(db_session: Session):
-# 55     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 56 
-# 57     for id, filename, name, description, tags, config in STATE_PROVIDERS:
-# 58         guid = str(uuid4())
-# 59         source_file = SEED_FILES_DIR / filename
-# 60         dest_filename = f"{guid}.py"
-# 61         dest_file = EXTENSIONS_DIR / dest_filename
-# 62 
-# 63         if not source_file.exists():
-# 64             raise FileNotFoundError(f"State provider script not found: {source_file}")
-# 65 
-# 66         shutil.copy(source_file, dest_file)
-# 67 
-# 68         record = StateProviderConfig(
-# 69             id=id,
-# 70             guid=guid,
-# 71             name=name,
-# 72             description=description,
-# 73             config=config,
-# 74             artifact_path=dest_filename,
-# 75             tags=tags,
-# 76         )
-# 77 
-# 78         db_session.add(record)
-# 79 
-# 80     db_session.commit()
-# 81     print("✅ Seeded state provider configurations successfully.")
+# 6 from app.enums.state_enums import STATE
+# 7 from app.enums.agent_enums import AGENT
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/state_providers"
+# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 STATE_PROVIDERS = [
+# 14     (
+# 15         1,
+# 16         "linting_generator_state_provider.py",
+# 17         "LintingGeneratorStateProvider",
+# 18         "Runs the generator agent in its own FSM wrapper.",
+# 19         ["linting", "generator"],
+# 20         {
+# 21             "score_provider_id": 1,
+# 22             "agents": {
+# 23                 AGENT.GENERATOR.value: 2 
+# 24             }
+# 25         }
+# 26     ),
+# 27     (
+# 28         2,
+# 29         "linting_discriminator_state_provider.py",
+# 30         "LintingDiscriminatorStateProvider",
+# 31         "Runs the discriminator agent in its own FSM wrapper.",
+# 32         ["linting", "discriminator"],
+# 33         {
+# 34             "score_provider_id": 1,
+# 35             "agents": {
+# 36                 AGENT.DISCRIMINATOR.value: 3 
+# 37             }
+# 38         }
+# 39     ),
+# 40     (
+# 41         3,
+# 42         "code_stability_state_provider.py",
+# 43         "CodeStabilityStateProvider",
+# 44         "Gates code based on parse, compile, import, and static validation success.",
+# 45         ["stability"],
+# 46         {
+# 47             "score_provider_id": 1,
+# 48             "agents": {
+# 49                 AGENT.STABILITY.value: 4 
+# 50             }
+# 51         }
+# 52     )
+# 53 ]
+# 54 
+# 55 def seed_state_providers(db_session: Session):
+# 56     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 57 
+# 58     for id, filename, name, description, tags, config in STATE_PROVIDERS:
+# 59         guid = str(uuid4())
+# 60         source_file = SEED_FILES_DIR / filename
+# 61         dest_filename = f"{guid}.py"
+# 62         dest_file = EXTENSIONS_DIR / dest_filename
+# 63 
+# 64         if not source_file.exists():
+# 65             raise FileNotFoundError(f"State provider script not found: {source_file}")
+# 66 
+# 67         shutil.copy(source_file, dest_file)
+# 68 
+# 69         record = StateProviderConfig(
+# 70             id=id,
+# 71             guid=guid,
+# 72             name=name,
+# 73             description=description,
+# 74             config=config,
+# 75             artifact_path=dest_filename,
+# 76             tags=tags,
+# 77         )
+# 78 
+# 79         db_session.add(record)
+# 80 
+# 81     db_session.commit()
+# 82     print("✅ Seeded state provider configurations successfully.")
 
 
 # db\seeders\seed_system_providers.py
@@ -2992,7 +3009,7 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import SystemProviderConfig
-# 6 from app.enums.fsm_enums import STATE  #  ✅ Import FSM state enum
+# 6 from app.enums.state_enums import STATE
 # 7 
 # 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
 # 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -3163,120 +3180,75 @@
 # 3 from enum import Enum
 # 4 
 # 5 
-# 6 class AGENT_TYPE(str, Enum):
-# 7     GENERATOR = "generator"
-# 8     DISCRIMINATOR = "discriminator"
-# 9     MEDIATOR = "mediator"
-# 10     STABILITY = "stability"
-# 11     BASIC = "basic"
-# 12     UNKNOWN = "unknown"
-# 13 
-# 14 class AGENT_STATE(Enum):
-# 15     INIT = "init"
-# 16     RUNNING = "running"
-# 17     COMPLETE = "complete"
+# 6 class AGENT(str, Enum):
+# 7     START = "start"
+# 8     END = "end"
+# 9     GENERATOR = "generator"
+# 10     DISCRIMINATOR = "discriminator"
+# 11     MEDIATOR = "mediator"
+# 12     STABILITY = "stability"
+# 13     BASIC = "basic"
+# 14     UNKNOWN = "unknown"
+# 15 
+# 16 class AGENT_STATE(Enum):
+# 17     INIT = "init"
+# 18     RUNNING = "running"
+# 19     COMPLETE = "complete"
 
 
 # enums\controller_enums.py
 
-# 1 
+# 1 from enum import Enum
 # 2 
-# 3 from enum import Enum
-# 4 
-# 5 
-# 6 class CONTROLLER_TYPE(str, Enum):
-# 7     """
-# 8     Enum of high-level controllers grouping related SystemTypes.
-# 9 
-# 10     - PREPROCESSING: Core code transformation systems (linting, formatting, docstrings, etc.)
-# 11     - TESTING: Unit, edge, integration tests and related fix generation
-# 12     - OBSERVABILITY: Logging injection, trace annotation, error handling
-# 13     - DOCUMENTATION: Inline comments, function/file/change summarization
-# 14     - REVIEW: Code review, static analysis, regression analysis, mediator reconciliation
-# 15     - PLANNING: Symbol graphs, dependency mapping, restructuring, function splitting
-# 16     - MLOPS: Data validation, metadata, model docs, pipeline testing, training config audits, feature traceability
-# 17     - SAFETY: Security checks, policy compliance, license audits
-# 18     - MISC: Patching, prompt refinement, agent recommendation, semantic diff, context filtering
-# 19     """
-# 20     PREPROCESSING = "preprocessing_controller"
-# 21     TESTING = "testing_controller"
-# 22     OBSERVABILITY = "observability_controller"
-# 23     DOCUMENTATION = "documentation_controller"
-# 24     REVIEW = "review_controller"
-# 25     PLANNING = "planning_controller"
-# 26     MLOPS = "mlops_controller"
-# 27     SAFETY = "safety_controller"
-# 28     MISC = "misc_controller"
+# 3 class CONTROLLER(str, Enum):
+# 4     START = "start"
+# 5     END = "end"
+# 6     PREPROCESSING = "preprocessing_controller"
+# 7     TESTING = "testing_controller"
+# 8     OBSERVABILITY = "observability_controller"
+# 9     DOCUMENTATION = "documentation_controller"
+# 10     REVIEW = "review_controller"
+# 11     PLANNING = "planning_controller"
+# 12     MLOPS = "mlops_controller"
+# 13     SAFETY = "safety_controller"
+# 14     MISC = "misc_controller"
 
 
 # enums\fsm_enums.py
 
 # 1 from enum import Enum
 # 2 
-# 3 
-# 4 class STATE(str, Enum):
-# 5     START = "start"
-# 6     PREPROCESS = "preprocess"
-# 7     CODE_STABILITY = "code_stability"
-# 8     GENERATE = "generate"
-# 9     DISCRIMINATE = "discriminate"
-# 10     END = "end"
-# 11 
-# 12 
-# 13 class STATE_TYPE(str, Enum):
-# 14     """
-# 15     Types of states within a finite state machine.
+# 3 class STATE_TYPE(str, Enum):
+# 4     START = "start"
+# 5     INTERMEDIATE = "intermediate"
+# 6     END = "end"
+# 7 
+# 8 
+# 9 class STATE_DECISION_TYPE(str, Enum):
+# 10     INITIAL = "initial"
+# 11     IMPROVED = "improved"
+# 12     REJECTED = "rejected"
+# 13     FINAL = "final"
+# 14     UNKNOWN = "unknown"
+# 15 
 # 16 
-# 17     - START: Entry point to the FSM
-# 18     - INTERMEDIATE: Transitional state with more steps to come
-# 19     - END: Final terminating state
-# 20     """
-# 21     START = "start"
-# 22     INTERMEDIATE = "intermediate"
-# 23     END = "end"
-# 24 
-# 25 
-# 26 class STATE_DECISION_TYPE(str, Enum):
-# 27     INITIAL = "initial"
-# 28     IMPROVED = "improved"
-# 29     REJECTED = "rejected"
-# 30     FINAL = "final"
-# 31     UNKNOWN = "unknown"
-# 32 
+# 17 class DECISION_TYPE(str, Enum):
+# 18     ACCEPT = "accept"
+# 19     REJECT = "reject"
+# 20     UNKNOWN = "unknown"
+# 21 
+# 22 
+# 23 class TRANSITION_REASON_TYPE(str, Enum):
+# 24     INITIALIZATION = "initialization"
+# 25     SUCCESSFUL = "completed successfully"
+# 26     UNSUCCESSFUL = "completed unsuccessfully"
+# 27     GENERATING = "generating"
+# 28     EVALUATING = "evaluating"
+# 29     PASSED = "passed"
+# 30     FAILED = "failed"    
+# 31     ERROR = "error"
+# 32     CUSTOM_RULE = "custom_rule"
 # 33 
-# 34 class DECISION_TYPE(str, Enum):
-# 35     """
-# 36     Discriminator or agent decision about a code action.
-# 37 
-# 38     - ACCEPT: Changes are valid and accepted
-# 39     - REJECT: Changes are invalid or insufficient
-# 40     - UNKNOWN: No decision made or undecidable
-# 41     """
-# 42     ACCEPT = "accept"
-# 43     REJECT = "reject"
-# 44     UNKNOWN = "unknown"
-# 45 
-# 46 
-# 47 class TRANSITION_REASON_TYPE(str, Enum):
-# 48     PROGRAM_INIT = "program_init"
-# 49     PREPROCESSING_COMPLETE = "preprocessing_complete"
-# 50     KICKOFF = "kickoff"
-# 51     CONTROLLER_FINISHED = "controller_finished"
-# 52     STABILITY_CHECK = "stability_check"
-# 53     STABILITY_PASSED = "stability_passed"
-# 54     STABILITY_FAILED = "stability_failed"
-# 55     GENERATION_STARTED = "generation_started"
-# 56     GENERATION_COMPLETED = "generation_completed"
-# 57     POST_GEN_STABILITY_PASSED = "post_gen_stability_passed"
-# 58     POST_GEN_STABILITY_FAILED = "post_gen_stability_failed"
-# 59     DISCRIMINATOR_STARTED = "discriminator_started"
-# 60     DISCRIMINATOR_ACCEPTED = "discriminator_accepted"
-# 61     DISCRIMINATOR_REJECTED = "discriminator_rejected"
-# 62     MAX_ITERATIONS_REACHED = "max_iterations_reached"
-# 63     END_REACHED = "end_reached"
-# 64     AGENT_FAILURE = "agent_failure"
-# 65     CUSTOM_RULE = "custom_rule"
-# 66 
 
 
 # enums\logging_enums.py
@@ -3323,80 +3295,95 @@
 # 5     CODE_STABILITY_SCORE = "code_stability_score"
 
 
+# enums\state_enums.py
+
+# 1 from enum import Enum
+# 2 
+# 3 class STATE(str, Enum):
+# 4     START = "start"
+# 5     END = "end"
+# 6     PREPROCESS = "preprocess"
+# 7     CODE_STABILITY = "code_stability"
+# 8     GENERATE = "generate"
+# 9     DISCRIMINATE = "discriminate"
+
+
 # enums\system_enums.py
 
 # 1 from __future__ import annotations
-# 2 
-# 3 from enum import Enum
+# 2 from enum import Enum
+# 3 
 # 4 
-# 5 
-# 6 class SYSTEM_TYPE(str, Enum):
-# 7     #  Core Code Transformation
-# 8     LINTING = "linting"
-# 9     FORMATTING = "formatting"
-# 10     DOCSTRING = "docstring"
-# 11     TYPE_ANNOTATION = "type_annotation"
-# 12     REFACTORING = "refactoring"
-# 13     DEAD_CODE_REMOVAL = "dead_code_removal"
-# 14     COMPLEXITY_REDUCTION = "complexity_reduction"
-# 15 
-# 16     #  Testing and Validation
-# 17     UNIT_TESTING = "unit_testing"
-# 18     EDGE_TESTING = "edge_testing"
-# 19     INTEGRATION_TESTING = "integration_testing"
-# 20     TEST_FIX_GENERATION = "test_fix_generation"
-# 21     MOCK_GENERATION = "mock_generation"
-# 22     STUB_EXTRACTION = "stub_extraction"
-# 23 
-# 24     #  Observability and Instrumentation
-# 25     LOGGING_INJECTION = "logging_injection"
-# 26     TRACE_ANNOTATION = "trace_annotation"
-# 27     ERROR_HANDLING = "error_handling"
-# 28 
-# 29     #  Documentation and Explanation
-# 30     INLINE_COMMENTING = "inline_commenting"
-# 31     FUNCTION_SUMMARIZATION = "function_summarization"
-# 32     FILE_SUMMARIZATION = "file_summarization"
-# 33     CHANGE_SUMMARIZATION = "change_summarization"
-# 34 
-# 35     #  Review and Oversight
-# 36     CODE_REVIEW = "code_review"
-# 37     STATIC_ANALYSIS = "static_analysis"
-# 38     REGRESSION_ANALYSIS = "regression_analysis"
-# 39     MEDIATOR_RECONCILIATION = "mediator_reconciliation"
-# 40     SCORING_EVALUATION = "scoring_evaluation"
-# 41 
-# 42     #  Planning and Organization
-# 43     SYMBOL_GRAPH_GENERATION = "symbol_graph_generation"
-# 44     DEPENDENCY_MAPPING = "dependency_mapping"
-# 45     FILE_RESTRUCTURING = "file_restructuring"
-# 46     FUNCTION_SPLITTING = "function_splitting"
-# 47 
-# 48     #  MLOps-Specific
-# 49     DATA_VALIDATION = "data_validation"
-# 50     METADATA_ANNOTATION = "metadata_annotation"
-# 51     MODEL_DOC_GENERATION = "model_doc_generation"
-# 52     PIPELINE_TESTING = "pipeline_testing"
-# 53     TRAINING_CONFIG_AUDIT = "training_config_audit"
-# 54     FEATURE_TRACEABILITY = "feature_traceability"
-# 55 
-# 56     #  Production Safety
-# 57     SECURITY_CHECK = "security_check"
-# 58     POLICY_COMPLIANCE = "policy_compliance"
-# 59     LICENSE_CHECK = "license_check"
-# 60 
-# 61     #  Misc / Cross-cutting
-# 62     PATCHING = "patching"
-# 63     PROMPT_REFINEMENT = "prompt_refinement"
-# 64     AGENT_RECOMMENDATION = "agent_recommendation"
-# 65     SEMANTIC_DIFF = "semantic_diff"
-# 66     CONTEXT_FILTERING = "context_filtering"
-# 67 
-# 68     UNKNOWN = "unknown"
+# 5 class SYSTEM(str, Enum):
+# 6     START = "start"
+# 7     END = "end"
+# 8 
+# 9     #  Core Code Transformation
+# 10     LINTING = "linting"
+# 11     FORMATTING = "formatting"
+# 12     DOCSTRING = "docstring"
+# 13     TYPE_ANNOTATION = "type_annotation"
+# 14     REFACTORING = "refactoring"
+# 15     DEAD_CODE_REMOVAL = "dead_code_removal"
+# 16     COMPLEXITY_REDUCTION = "complexity_reduction"
+# 17 
+# 18     #  Testing and Validation
+# 19     UNIT_TESTING = "unit_testing"
+# 20     EDGE_TESTING = "edge_testing"
+# 21     INTEGRATION_TESTING = "integration_testing"
+# 22     TEST_FIX_GENERATION = "test_fix_generation"
+# 23     MOCK_GENERATION = "mock_generation"
+# 24     STUB_EXTRACTION = "stub_extraction"
+# 25 
+# 26     #  Observability and Instrumentation
+# 27     LOGGING_INJECTION = "logging_injection"
+# 28     TRACE_ANNOTATION = "trace_annotation"
+# 29     ERROR_HANDLING = "error_handling"
+# 30 
+# 31     #  Documentation and Explanation
+# 32     INLINE_COMMENTING = "inline_commenting"
+# 33     FUNCTION_SUMMARIZATION = "function_summarization"
+# 34     FILE_SUMMARIZATION = "file_summarization"
+# 35     CHANGE_SUMMARIZATION = "change_summarization"
+# 36 
+# 37     #  Review and Oversight
+# 38     CODE_REVIEW = "code_review"
+# 39     STATIC_ANALYSIS = "static_analysis"
+# 40     REGRESSION_ANALYSIS = "regression_analysis"
+# 41     MEDIATOR_RECONCILIATION = "mediator_reconciliation"
+# 42     SCORING_EVALUATION = "scoring_evaluation"
+# 43 
+# 44     #  Planning and Organization
+# 45     SYMBOL_GRAPH_GENERATION = "symbol_graph_generation"
+# 46     DEPENDENCY_MAPPING = "dependency_mapping"
+# 47     FILE_RESTRUCTURING = "file_restructuring"
+# 48     FUNCTION_SPLITTING = "function_splitting"
+# 49 
+# 50     #  MLOps-Specific
+# 51     DATA_VALIDATION = "data_validation"
+# 52     METADATA_ANNOTATION = "metadata_annotation"
+# 53     MODEL_DOC_GENERATION = "model_doc_generation"
+# 54     PIPELINE_TESTING = "pipeline_testing"
+# 55     TRAINING_CONFIG_AUDIT = "training_config_audit"
+# 56     FEATURE_TRACEABILITY = "feature_traceability"
+# 57 
+# 58     #  Production Safety
+# 59     SECURITY_CHECK = "security_check"
+# 60     POLICY_COMPLIANCE = "policy_compliance"
+# 61     LICENSE_CHECK = "license_check"
+# 62 
+# 63     #  Misc / Cross-cutting
+# 64     PATCHING = "patching"
+# 65     PROMPT_REFINEMENT = "prompt_refinement"
+# 66     AGENT_RECOMMENDATION = "agent_recommendation"
+# 67     SEMANTIC_DIFF = "semantic_diff"
+# 68     CONTEXT_FILTERING = "context_filtering"
 # 69 
-# 70 
+# 70     UNKNOWN = "unknown"
 # 71 
 # 72 
+# 73 
+# 74 
 
 
 # factories\__init__.py
@@ -4104,8 +4091,8 @@
 # 6 
 # 7 from app.db.models import SnapshotMetrics
 # 8 from app.db.schemas import AgentEngineOutput, SnapshotMetricsSchema
-# 9 from app.enums.system_enums import SYSTEM_TYPE
-# 10 from app.enums.agent_enums import AGENT_TYPE
+# 9 from app.enums.system_enums import SYSTEM
+# 10 from app.enums.agent_enums import AGENT
 # 11 from app.enums.fsm_enums import DECISION_TYPE
 # 12 from app.enums.logging_enums import LOG_TYPE
 # 13 
@@ -4140,8 +4127,8 @@
 # 42     def _run_provider(self, input: dict) -> AgentEngineOutput:
 # 43         file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
 # 44         session_id = input.get("session_id", "")
-# 45         system = SYSTEM_TYPE(input.get("system", SYSTEM_TYPE.UNKNOWN))
-# 46         agent_type = AGENT_TYPE(input.get("agent_type", AGENT_TYPE.UNKNOWN))
+# 45         system = SYSTEM(input.get("system", SYSTEM.UNKNOWN))
+# 46         agent_type = AGENT(input.get("agent_type", AGENT.UNKNOWN))
 # 47         agent_id = input.get("agent_id", -1)
 # 48 
 # 49         before_code = ""
@@ -4311,153 +4298,152 @@
 # 5 
 # 6 from app.db.models import SnapshotMetrics
 # 7 from app.enums.logging_enums import LOG_TYPE
-# 8 from app.enums.agent_enums import AGENT_TYPE
-# 9 from app.enums.system_enums import SYSTEM_TYPE
-# 10 from app.enums.fsm_enums import DECISION_TYPE
-# 11 from app.providers.base_provider import BaseProvider
-# 12 from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
-# 13 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
-# 14 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
-# 15 from app.db.schemas import AgentConversationLogSchema, AgentOutputSchema
+# 8 from app.enums.agent_enums import AGENT
+# 9 from app.enums.fsm_enums import DECISION_TYPE
+# 10 from app.providers.base_provider import BaseProvider
+# 11 from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
+# 12 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
+# 13 from app.utilities.metadata.snapshots.snapshot_writer import SnapshotWriter
+# 14 from app.db.schemas import AgentConversationLogSchema, AgentOutputSchema
+# 15 
 # 16 
-# 17 
-# 18 class AgentProviderBase(BaseProvider):
-# 19     def __init__(
-# 20         self,
-# 21         config=None,
-# 22         agent_engine=None,
-# 23         prompt_provider=None,
-# 24         context_provider=None,
-# 25         score_provider=None,
-# 26         tool_providers=None,
-# 27         called_by_type=None,
-# 28         called_by_id=None,
-# 29     ):
-# 30         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
-# 31         self._agent_engine = agent_engine
-# 32         self._prompt_provider = prompt_provider
-# 33         self._context_provider = context_provider
-# 34         self._score_provider = score_provider
-# 35         self._tool_providers = tool_providers or []
-# 36 
-# 37     def _run_provider(self, input: dict) -> AgentOutputSchema:
-# 38         output = self._run(input)
-# 39         self._log.debug(f"🧻 _run_provider called for: {self._config.name if self._config else 'unknown'}")
-# 40 
-# 41         response = output.response if hasattr(output, "response") else str(output)
-# 42         decision = self._infer_decision(response)
-# 43         log_content = self._extract_log(response) or self._default_log(decision)
-# 44 
-# 45         snapshot_id = None
-# 46         file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
-# 47         if file_name and (code_block := self._extract_code(response)):
-# 48             before_path = Path(file_name)
-# 49             try:
-# 50                 relative_path = before_path.relative_to(Path.cwd())
-# 51             except ValueError:
-# 52                 relative_path = before_path
-# 53             before_path = relative_path
-# 54 
-# 55             if before_path.exists():
-# 56                 before_code = before_path.read_text(encoding="utf-8")
-# 57                 after_code = code_block
-# 58 
-# 59                 before_metrics = analyze_code(before_code)
-# 60                 after_metrics = analyze_code(after_code)
-# 61                 deltas = compute_deltas(before_metrics, after_metrics)
-# 62 
-# 63                 metadata = {
-# 64                     "system": self._system,
-# 65                     "agent": self._config.name if self._config else "unknown",
-# 66                     "score": (
-# 67                         self._score_provider.run(
-# 68                             {"file_name": str(before_path)}, session_id=self._session_id
-# 69                         ).value
-# 70                         if self._score_provider else None
-# 71                     ),
-# 72                     "state": str(input.get("state_context", {}).get("state", "unknown")),
-# 73                     "decision": decision.value,
-# 74                     "timestamp": datetime.now(timezone.utc).isoformat(),
-# 75                     **{f"{k}_before": v for k, v in before_metrics.items()},
-# 76                     **{f"{k}_after": v for k, v in after_metrics.items()},
-# 77                     **deltas,
-# 78                 }
-# 79 
-# 80                 after_code = append_agent_note(
-# 81                     file_content=after_code,
-# 82                     system=self._system,
-# 83                     agent_name=self._config.name if self._config else "unknown",
-# 84                     note=log_content
-# 85                 )
-# 86 
-# 87                 snapshot_id = SnapshotWriter().write_snapshot(
-# 88                     before=before_code,
-# 89                     after=after_code,
-# 90                     session_id=self._session_id,
-# 91                     metadata=metadata
-# 92                 )
-# 93                 with Session(bind=self._engine) as session:
-# 94                     entry = SnapshotMetrics(
-# 95                         session_id=self._session_id,
-# 96                         snapshot_id=snapshot_id,
-# 97                         system=self._system,
-# 98                         agent=self._config.name,
-# 99                         score=metadata.get("score"),
-# 100                         state=metadata.get("state"),
-# 101                         decision=DECISION_TYPE(metadata.get("decision", "unknown")),
-# 102                         timestamp=datetime.fromisoformat(metadata["timestamp"]),
-# 103                         **{
-# 104                             k: metadata.get(k)
-# 105                             for k in SnapshotMetrics.__table__.columns.keys()
-# 106                             if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
-# 107                         }
-# 108                     )
-# 109                     session.add(entry)
-# 110                     session.commit()
-# 111                 self._snapshot_id = snapshot_id
-# 112                 self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
-# 113             else:
-# 114                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
-# 115 
-# 116         #  Always log conversation
-# 117         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
-# 118             session_id=self._session_id,
-# 119             system=self._system,
-# 120             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT_TYPE.BASIC,
-# 121             agent_provider_config_id=self._config.id if self._config else -1,
-# 122             content=log_content,
-# 123             timestamp=datetime.now(timezone.utc),
-# 124         ))
-# 125         self._log.debug("✅ AGENT_CONVERSATION log write complete")
-# 126 
-# 127         return output
-# 128 
-# 129     def _infer_decision(self, text: str) -> DECISION_TYPE:
-# 130         if "[AGENT_DECISION]accept" in text:
-# 131             return DECISION_TYPE.ACCEPT
-# 132         if "[AGENT_DECISION]reject" in text:
-# 133             return DECISION_TYPE.REJECT
-# 134         return DECISION_TYPE.UNKNOWN
-# 135 
-# 136     def _extract_log(self, text: str) -> str | None:
-# 137         return self._extract_block(text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 138 
-# 139     def _default_log(self, decision: DECISION_TYPE) -> str:
-# 140         return f"No conversation log entry found. Agent decision was: {decision.value}."
-# 141 
-# 142     def _extract_code(self, text: str) -> str | None:
-# 143         return self._extract_block(text, "[CODE]", "[/CODE]")
-# 144 
-# 145     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-# 146         start = text.find(start_tag)
-# 147         end = text.find(end_tag)
-# 148         if start != -1 and end != -1 and start < end:
-# 149             return text[start + len(start_tag):end].strip()
-# 150         return None
-# 151 
-# 152     @abstractmethod
-# 153     def _run(self, input: dict) -> AgentOutputSchema:
-# 154         raise NotImplementedError
+# 17 class AgentProviderBase(BaseProvider):
+# 18     def __init__(
+# 19         self,
+# 20         config=None,
+# 21         agent_engine=None,
+# 22         prompt_provider=None,
+# 23         context_provider=None,
+# 24         score_provider=None,
+# 25         tool_providers=None,
+# 26         called_by_type=None,
+# 27         called_by_id=None,
+# 28     ):
+# 29         super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
+# 30         self._agent_engine = agent_engine
+# 31         self._prompt_provider = prompt_provider
+# 32         self._context_provider = context_provider
+# 33         self._score_provider = score_provider
+# 34         self._tool_providers = tool_providers or []
+# 35 
+# 36     def _run_provider(self, input: dict) -> AgentOutputSchema:
+# 37         output = self._run(input)
+# 38         self._log.debug(f"🧻 _run_provider called for: {self._config.name if self._config else 'unknown'}")
+# 39 
+# 40         response = output.response if hasattr(output, "response") else str(output)
+# 41         decision = self._infer_decision(response)
+# 42         log_content = self._extract_log(response) or self._default_log(decision)
+# 43 
+# 44         snapshot_id = None
+# 45         file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
+# 46         if file_name and (code_block := self._extract_code(response)):
+# 47             before_path = Path(file_name)
+# 48             try:
+# 49                 relative_path = before_path.relative_to(Path.cwd())
+# 50             except ValueError:
+# 51                 relative_path = before_path
+# 52             before_path = relative_path
+# 53 
+# 54             if before_path.exists():
+# 55                 before_code = before_path.read_text(encoding="utf-8")
+# 56                 after_code = code_block
+# 57 
+# 58                 before_metrics = analyze_code(before_code)
+# 59                 after_metrics = analyze_code(after_code)
+# 60                 deltas = compute_deltas(before_metrics, after_metrics)
+# 61 
+# 62                 metadata = {
+# 63                     "system": self._system,
+# 64                     "agent": self._config.name if self._config else "unknown",
+# 65                     "score": (
+# 66                         self._score_provider.run(
+# 67                             {"file_name": str(before_path)}, session_id=self._session_id
+# 68                         ).value
+# 69                         if self._score_provider else None
+# 70                     ),
+# 71                     "state": str(input.get("state_context", {}).get("state", "unknown")),
+# 72                     "decision": decision.value,
+# 73                     "timestamp": datetime.now(timezone.utc).isoformat(),
+# 74                     **{f"{k}_before": v for k, v in before_metrics.items()},
+# 75                     **{f"{k}_after": v for k, v in after_metrics.items()},
+# 76                     **deltas,
+# 77                 }
+# 78 
+# 79                 after_code = append_agent_note(
+# 80                     file_content=after_code,
+# 81                     system=self._system,
+# 82                     agent_name=self._config.name if self._config else "unknown",
+# 83                     note=log_content
+# 84                 )
+# 85 
+# 86                 snapshot_id = SnapshotWriter().write_snapshot(
+# 87                     before=before_code,
+# 88                     after=after_code,
+# 89                     session_id=self._session_id,
+# 90                     metadata=metadata
+# 91                 )
+# 92                 with Session(bind=self._engine) as session:
+# 93                     entry = SnapshotMetrics(
+# 94                         session_id=self._session_id,
+# 95                         snapshot_id=snapshot_id,
+# 96                         system=self._system,
+# 97                         agent=self._config.name,
+# 98                         score=metadata.get("score"),
+# 99                         state=metadata.get("state"),
+# 100                         decision=DECISION_TYPE(metadata.get("decision", "unknown")),
+# 101                         timestamp=datetime.fromisoformat(metadata["timestamp"]),
+# 102                         **{
+# 103                             k: metadata.get(k)
+# 104                             for k in SnapshotMetrics.__table__.columns.keys()
+# 105                             if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
+# 106                         }
+# 107                     )
+# 108                     session.add(entry)
+# 109                     session.commit()
+# 110                 self._snapshot_id = snapshot_id
+# 111                 self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
+# 112             else:
+# 113                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
+# 114 
+# 115         #  Always log conversation
+# 116         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
+# 117             session_id=self._session_id,
+# 118             system=self._system,
+# 119             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
+# 120             agent_provider_config_id=self._config.id if self._config else -1,
+# 121             content=log_content,
+# 122             timestamp=datetime.now(timezone.utc),
+# 123         ))
+# 124         self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 125 
+# 126         return output
+# 127 
+# 128     def _infer_decision(self, text: str) -> DECISION_TYPE:
+# 129         if "[AGENT_DECISION]accept" in text:
+# 130             return DECISION_TYPE.ACCEPT
+# 131         if "[AGENT_DECISION]reject" in text:
+# 132             return DECISION_TYPE.REJECT
+# 133         return DECISION_TYPE.UNKNOWN
+# 134 
+# 135     def _extract_log(self, text: str) -> str | None:
+# 136         return self._extract_block(text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 137 
+# 138     def _default_log(self, decision: DECISION_TYPE) -> str:
+# 139         return f"No conversation log entry found. Agent decision was: {decision.value}."
+# 140 
+# 141     def _extract_code(self, text: str) -> str | None:
+# 142         return self._extract_block(text, "[CODE]", "[/CODE]")
+# 143 
+# 144     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 145         start = text.find(start_tag)
+# 146         end = text.find(end_tag)
+# 147         if start != -1 and end != -1 and start < end:
+# 148             return text[start + len(start_tag):end].strip()
+# 149         return None
+# 150 
+# 151     @abstractmethod
+# 152     def _run(self, input: dict) -> AgentOutputSchema:
+# 153         raise NotImplementedError
 
 
 # providers\base_provider.py
@@ -4468,7 +4454,7 @@
 # 4 import json
 # 5 import time
 # 6 from pathlib import Path
-# 7 from typing import Optional
+# 7 from typing import Dict, Optional
 # 8 from uuid import uuid4
 # 9 
 # 10 from app.db import init_db
@@ -4476,141 +4462,140 @@
 # 12 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 # 13 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
 # 14 
-# 15 
-# 16 class BaseProvider(LoggingMixin):
-# 17     def __init__(
-# 18         self,
-# 19         config=None,
-# 20         called_by_type: Optional[PROVIDER_TYPE] = None,
-# 21         called_by_id: Optional[int] = None,
-# 22     ) -> None:
-# 23         super().__init__()
-# 24         assert config is not None, "🚨 engine must be injected into BaseProvider"
-# 25         self._config = config
-# 26         self._engine = init_db(reset=False)
-# 27         self._called_by_type = called_by_type
-# 28         self._called_by_id = called_by_id
-# 29 
-# 30     def run(self, input: dict | None = None, session_id: str = "") -> str:
-# 31         input = input or {}
-# 32         if not session_id:
-# 33             raise ValueError("session_id must be provided to run()")
-# 34 
-# 35         self._session_id = session_id
-# 36         self._system = input.get("system", "unknown")
-# 37         self._run_id = str(uuid4()) 
-# 38 
-# 39         start_clock = time.perf_counter()
-# 40         start_time = datetime.now(timezone.utc)
-# 41 
-# 42         try:
-# 43             output = self._run_provider(input)
-# 44         except Exception as exc:
-# 45             latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 46             try:
-# 47                 self.logger.write(
-# 48                     LOG_TYPE.ERROR,
-# 49                     ErrorLogSchema(
-# 50                         session_id=session_id,
-# 51                         error_type=self._map_error_type(exc).value,
-# 52                         message=str(exc),
-# 53                         file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 54                         provider_id=self._config.id if self._config else None,
-# 55                         provider_type=self._infer_provider_type().value,
-# 56                         timestamp=start_time,
-# 57                         latency_ms=latency_ms,
-# 58                         called_by_type=self._called_by_type.value if self._called_by_type else None,
-# 59                         called_by_id=self._called_by_id,
-# 60                         run_id=self._run_id,
-# 61                     ),
-# 62                 )
-# 63             except Exception:
-# 64                 pass
-# 65             raise
-# 66 
-# 67         latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 68 
-# 69         try:
-# 70             input_str = json.dumps(
-# 71                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
-# 72                 default=str,
-# 73             )
-# 74         except Exception:
-# 75             input_str = ""
-# 76 
-# 77         try:
-# 78             if hasattr(output, "model_dump"):
-# 79                 dumped = output.model_dump()
-# 80                 for k, v in dumped.items():
-# 81                     if isinstance(v, dict):
-# 82                         dumped[k] = json.dumps(v, default=str)
-# 83                 output_str = json.dumps(dumped, default=str)
-# 84                 output_schema = output.__class__.__name__
-# 85             else:
-# 86                 output_str = json.dumps(output, default=str)
-# 87                 output_schema = None
-# 88         except Exception:
-# 89             output_str = ""
-# 90             output_schema = None
-# 91 
-# 92         try:
-# 93             self.logger.write(
-# 94                 LOG_TYPE.PROVIDER,
-# 95                 ProviderLogSchema(
-# 96                     session_id=session_id,
-# 97                     provider_id=self._config.id if self._config else -1,
-# 98                     provider_type=self._infer_provider_type().value,
-# 99                     input=input_str,
-# 100                     output=output_str,
-# 101                     output_schema=output_schema,
-# 102                     latency_ms=latency_ms,
-# 103                     config_hash=self._compute_config_hash(),
-# 104                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 105                     if getattr(self._config, "artifact_path", None)
-# 106                     else None,
-# 107                     timestamp=start_time,
-# 108                     called_by_type=self._called_by_type.value if self._called_by_type else None,
-# 109                     called_by_id=self._called_by_id,
-# 110                     run_id=self._run_id,
-# 111                 ),
-# 112             )
-# 113         except Exception:
-# 114             raise
-# 115 
-# 116         self._log.debug("✅ Provider run logged")
-# 117         return output
-# 118 
-# 119     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 120         return ERROR_TYPE.RUNTIME
-# 121 
-# 122     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 123         cls = self.__class__.__name__.lower()
-# 124         if "tool" in cls:
-# 125             return PROVIDER_TYPE.TOOL
-# 126         if "engine" in cls:
-# 127             return PROVIDER_TYPE.AGENT_ENGINE
-# 128         if "agent" in cls:
-# 129             return PROVIDER_TYPE.AGENT
-# 130         if "prompt" in cls:
-# 131             return PROVIDER_TYPE.PROMPT
-# 132         if "context" in cls:
-# 133             return PROVIDER_TYPE.CONTEXT
-# 134         if "score" in cls:
-# 135             return PROVIDER_TYPE.SCORE
-# 136         if "state" in cls:
-# 137             return PROVIDER_TYPE.STATE
-# 138         if "system" in cls:
-# 139             return PROVIDER_TYPE.SYSTEM
-# 140         if "controller" in cls:
-# 141             return PROVIDER_TYPE.CONTROLLER
-# 142         if "program" in cls:
-# 143             return PROVIDER_TYPE.PROGRAM
-# 144         return PROVIDER_TYPE.UNKNOWN
-# 145 
-# 146     def _compute_config_hash(self) -> Optional[str]:
-# 147         if not self._config or not getattr(self._config, "config", None):
-# 148             return None
-# 149         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
+# 15 class BaseProvider(LoggingMixin):
+# 16     def __init__(
+# 17         self,
+# 18         called_by_type: PROVIDER_TYPE,  
+# 19         called_by_id: int,  
+# 20         config=None,
+# 21     ) -> None:
+# 22         super().__init__()
+# 23         assert config is not None, "🚨 engine must be injected into BaseProvider"
+# 24         self._config = config
+# 25         self._engine = init_db(reset=False)
+# 26         self._called_by_type = called_by_type
+# 27         self._called_by_id = called_by_id
+# 28 
+# 29     def run(self, input: dict | None = None, session_id: str = "") -> str:
+# 30         input = input or {}
+# 31         if not session_id:
+# 32             raise ValueError("session_id must be provided to run()")
+# 33 
+# 34         self._session_id = session_id
+# 35         self._system = input.get("system", "unknown")
+# 36         self._run_id = str(uuid4())
+# 37 
+# 38         start_clock = time.perf_counter()
+# 39         start_time = datetime.now(timezone.utc)
+# 40 
+# 41         try:
+# 42             output = self._run_provider(input)
+# 43         except Exception as exc:
+# 44             latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 45             try:
+# 46                 self.logger.write(
+# 47                     LOG_TYPE.ERROR,
+# 48                     ErrorLogSchema(
+# 49                         session_id=session_id,
+# 50                         error_type=self._map_error_type(exc).value,
+# 51                         message=str(exc),
+# 52                         file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 53                         provider_id=self._config.id if self._config else None,
+# 54                         provider_type=self._infer_provider_type().value,
+# 55                         timestamp=start_time,
+# 56                         latency_ms=latency_ms,
+# 57                         called_by_type=self._called_by_type.value if self._called_by_type else None,
+# 58                         called_by_id=self._called_by_id,
+# 59                         run_id=self._run_id,
+# 60                     ),
+# 61                 )
+# 62             except Exception:
+# 63                 pass
+# 64             raise
+# 65 
+# 66         latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 67 
+# 68         try:
+# 69             input_str = json.dumps(
+# 70                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 71                 default=str,
+# 72             )
+# 73         except Exception:
+# 74             input_str = ""
+# 75 
+# 76         try:
+# 77             if hasattr(output, "model_dump"):
+# 78                 dumped = output.model_dump()
+# 79                 for k, v in dumped.items():
+# 80                     if isinstance(v, dict):
+# 81                         dumped[k] = json.dumps(v, default=str)
+# 82                 output_str = json.dumps(dumped, default=str)
+# 83                 output_schema = output.__class__.__name__
+# 84             else:
+# 85                 output_str = json.dumps(output, default=str)
+# 86                 output_schema = None
+# 87         except Exception:
+# 88             output_str = ""
+# 89             output_schema = None
+# 90 
+# 91         try:
+# 92             self.logger.write(
+# 93                 LOG_TYPE.PROVIDER,
+# 94                 ProviderLogSchema(
+# 95                     session_id=session_id,
+# 96                     provider_id=self._config.id if self._config else -1,
+# 97                     provider_type=self._infer_provider_type().value,
+# 98                     input=input_str,
+# 99                     output=output_str,
+# 100                     output_schema=output_schema,
+# 101                     latency_ms=latency_ms,
+# 102                     config_hash=self._compute_config_hash(),
+# 103                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 104                     if getattr(self._config, "artifact_path", None)
+# 105                     else None,
+# 106                     timestamp=start_time,
+# 107                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 108                     called_by_id=self._called_by_id,
+# 109                     run_id=self._run_id,
+# 110                 ),
+# 111             )
+# 112         except Exception:
+# 113             raise
+# 114 
+# 115         self._log.debug("✅ Provider run logged")
+# 116         return output
+# 117 
+# 118     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 119         return ERROR_TYPE.RUNTIME
+# 120 
+# 121     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 122         cls = self.__class__.__name__.lower()
+# 123         if "tool" in cls:
+# 124             return PROVIDER_TYPE.TOOL
+# 125         if "engine" in cls:
+# 126             return PROVIDER_TYPE.AGENT_ENGINE
+# 127         if "agent" in cls:
+# 128             return PROVIDER_TYPE.AGENT
+# 129         if "prompt" in cls:
+# 130             return PROVIDER_TYPE.PROMPT
+# 131         if "context" in cls:
+# 132             return PROVIDER_TYPE.CONTEXT
+# 133         if "score" in cls:
+# 134             return PROVIDER_TYPE.SCORE
+# 135         if "state" in cls:
+# 136             return PROVIDER_TYPE.STATE
+# 137         if "system" in cls:
+# 138             return PROVIDER_TYPE.SYSTEM
+# 139         if "controller" in cls:
+# 140             return PROVIDER_TYPE.CONTROLLER
+# 141         if "program" in cls:
+# 142             return PROVIDER_TYPE.PROGRAM
+# 143         return PROVIDER_TYPE.UNKNOWN
+# 144 
+# 145     def _compute_config_hash(self) -> Optional[str]:
+# 146         if not self._config or not getattr(self._config, "config", None):
+# 147             return None
+# 148         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
 
 
 # providers\context_provider_base.py
@@ -4656,188 +4641,189 @@
 # 5 import shutil
 # 6 from typing import Dict
 # 7 
-# 8 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import ControllerOutputSchema
-# 11 from app.utilities.extract_base_filename import extract_base_filename
-# 12 from app.utilities.select_best_file_by_score import select_best_file_by_score
-# 13 
+# 8 from app.enums.fsm_enums import DECISION_TYPE
+# 9 from app.enums.system_enums import SYSTEM
+# 10 from app.providers.fsm_provider_base import FSMProviderBase
+# 11 from app.db.schemas import ControllerOutputSchema
+# 12 from app.utilities.extract_base_filename import extract_base_filename
+# 13 from app.utilities.select_best_file_by_score import select_best_file_by_score
 # 14 
-# 15 class ControllerProviderBase(FSMProviderBase):
-# 16     def __init__(
-# 17         self,
-# 18         config=None,
-# 19         system_providers: Dict[str, object] = None,
-# 20         context_provider=None,
-# 21         score_provider=None,
-# 22         tool_providers=None,
-# 23         called_by_type=None,
-# 24         called_by_id=None,
-# 25     ):
-# 26         super().__init__(
-# 27             config=config,
-# 28             called_by_type=called_by_type,
-# 29             called_by_id=called_by_id,
-# 30         )
-# 31         self._systems = system_providers or {}
-# 32         self.context_provider = context_provider
-# 33         self.score_provider = score_provider
-# 34         self.tool_providers = tool_providers or []
-# 35         self._generated_files: list[Path] = []
-# 36 
-# 37     def _run_provider(self, input: dict) -> ControllerOutputSchema:
-# 38         session_id = input.get("session_id")
-# 39         max_steps = input.get("max_steps", 10)
-# 40 
-# 41         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 42         if not incoming_file:
-# 43             raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
-# 44 
-# 45         self.incoming_file = incoming_file
-# 46         src = Path(incoming_file).resolve()
-# 47         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 48         working_dir = Path("working_files").resolve()
-# 49         working_dir.mkdir(parents=True, exist_ok=True)
-# 50         root = extract_base_filename(src)
-# 51         self.working_file = working_dir / f"{root}__ctrl_{timestamp}{src.suffix}"
-# 52         shutil.copy(src, self.working_file)
-# 53         self._generated_files.append(self.working_file)
-# 54 
-# 55         input_path = Path(incoming_file)
-# 56         try:
-# 57             relative_path = str(input_path.relative_to(Path.cwd()))
-# 58         except ValueError:
-# 59             relative_path = str(input_path)
-# 60 
-# 61         state = {
-# 62             "state": STATE.START,
-# 63             "file_path": str(self.working_file),
-# 64             "session_id": session_id,
-# 65             "system": input.get("system", "unknown"),
-# 66             "reason": input.get("reason", STATE.START.value),
-# 67             "steps": input.get("steps", 0),
-# 68             "retry_count": input.get("retry_count", 0),
-# 69             "_last_state": input.get("_last_state", STATE.START),
-# 70             "decision": DECISION_TYPE.UNKNOWN,
-# 71             "original_file": relative_path,
-# 72             "run_id": self._run_id,
-# 73         }
-# 74 
-# 75         step_count = 0
-# 76 
-# 77         while True:
-# 78             current = state.get("state")
-# 79 
-# 80             if step_count >= max_steps:
-# 81                 return ControllerOutputSchema(
-# 82                     state=STATE.END,
-# 83                     previous_state=current,
-# 84                     state_type=STATE_TYPE.END,
-# 85                     decision=DECISION_TYPE.REJECT,
-# 86                     steps=step_count,
-# 87                     max_steps=max_steps,
-# 88                     summary=f"Max steps ({max_steps}) reached",
-# 89                     output=state,
-# 90                     provider_name=self._config.name,
-# 91                 )
-# 92 
-# 93             if current == STATE.END:
-# 94                 best_file = select_best_file_by_score(
-# 95                     file_a=state["file_path"],
-# 96                     file_b=self.incoming_file,
-# 97                     score_provider=self.score_provider,
-# 98                     system=state.get("system", "unknown"),
-# 99                     session_id=session_id,
-# 100                 )
-# 101 
-# 102                 final_path = Path("working_files") / f"final_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 103                 shutil.copy(Path(best_file), final_path)
-# 104                 state["file_path"] = str(final_path)
-# 105 
-# 106                 for f in Path("working_files").glob("final_*.py"):
-# 107                     if f.resolve() != final_path.resolve():
-# 108                         try:
-# 109                             f.unlink()
-# 110                         except Exception:
-# 111                             pass
-# 112 
-# 113                 for f in Path("working_files").glob("*_stripped.py"):
-# 114                     try:
-# 115                         f.unlink()
-# 116                     except Exception:
-# 117                         pass
-# 118 
-# 119                 for path in self._generated_files:
-# 120                     if path.exists():
-# 121                         try:
-# 122                             path.unlink()
-# 123                         except Exception:
-# 124                             pass
-# 125 
-# 126                 return ControllerOutputSchema(
-# 127                     state=STATE.END,
-# 128                     previous_state=state.get("_last_state", STATE.START),
-# 129                     state_type=STATE_TYPE.END,
-# 130                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 131                     steps=step_count,
-# 132                     max_steps=max_steps,
-# 133                     summary=state.get("summary", "Completed"),
-# 134                     output=state,
-# 135                     provider_name=self._config.name,
-# 136                 )
-# 137 
-# 138             step_count += 1
-# 139 
-# 140             if current == STATE.START:
-# 141                 transition = self.transition(state, None)
-# 142                 state.update(transition)
-# 143                 state["_last_state"] = STATE.START
-# 144                 continue
-# 145 
-# 146             provider = self._systems.get(current.value)
-# 147             if not provider:
-# 148                 raise ValueError(f"No system provider registered for state: {current.value}")
-# 149 
-# 150             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 151             output = provider.run(input=provider_input, session_id=session_id)
-# 152 
-# 153             new_file_path = getattr(output, "file_path", None)
-# 154             if new_file_path:
-# 155                 new_file_path = Path(new_file_path).resolve()
-# 156                 current_path = Path(state["file_path"]).resolve()
-# 157                 if new_file_path != current_path:
-# 158                     shutil.copy(new_file_path, current_path)
-# 159                     self._generated_files.append(new_file_path)
-# 160                     state["file_path"] = str(new_file_path)
-# 161 
-# 162             if hasattr(output, "decision") and output.decision:
-# 163                 state["decision"] = output.decision
-# 164 
-# 165             transition_result = self.transition(state, output)
-# 166             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 167 
-# 168             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 169             transition_metadata.update({
-# 170                 "agent_output": flat_output.get("output", {}),
-# 171                 "file_path": flat_output.get("file_path"),
-# 172             })
-# 173             transition_result["transition_metadata"] = transition_metadata
-# 174 
-# 175             raw_state = transition_result.get("state", current)
-# 176             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
-# 177 
-# 178             state = {
-# 179                 **state,
-# 180                 **transition_result,
-# 181                 "state": state_enum,
-# 182                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 183                 "_last_state": current,
-# 184                 "state_output": flat_output,
-# 185             }
-# 186 
-# 187     @abstractmethod
-# 188     def _transition(self, state: dict, output: dict | None) -> dict:
-# 189         ...
+# 15 
+# 16 class ControllerProviderBase(FSMProviderBase):
+# 17     def __init__(
+# 18         self,
+# 19         config=None,
+# 20         system_providers: Dict[str, object] = None,
+# 21         context_provider=None,
+# 22         score_provider=None,
+# 23         tool_providers=None,
+# 24         called_by_type=None,
+# 25         called_by_id=None,
+# 26     ):
+# 27         super().__init__(
+# 28             config=config,
+# 29             called_by_type=called_by_type,
+# 30             called_by_id=called_by_id,
+# 31         )
+# 32         self._systems = system_providers or {}
+# 33         self.context_provider = context_provider
+# 34         self.score_provider = score_provider
+# 35         self.tool_providers = tool_providers or []
+# 36         self._generated_files: list[Path] = []
+# 37 
+# 38     def _run_provider(self, input: dict) -> ControllerOutputSchema:
+# 39         session_id = input.get("session_id")
+# 40         max_steps = input.get("max_steps", 10)
+# 41 
+# 42         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 43         if not incoming_file:
+# 44             raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
+# 45 
+# 46         self.incoming_file = incoming_file
+# 47         src = Path(incoming_file).resolve()
+# 48         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 49         working_dir = Path("working_files").resolve()
+# 50         working_dir.mkdir(parents=True, exist_ok=True)
+# 51         root = extract_base_filename(src)
+# 52         self.working_file = working_dir / f"{root}__ctrl_{timestamp}{src.suffix}"
+# 53         shutil.copy(src, self.working_file)
+# 54         self._generated_files.append(self.working_file)
+# 55 
+# 56         input_path = Path(incoming_file)
+# 57         try:
+# 58             relative_path = str(input_path.relative_to(Path.cwd()))
+# 59         except ValueError:
+# 60             relative_path = str(input_path)
+# 61 
+# 62         state = {
+# 63             "state": SYSTEM.START,
+# 64             "file_path": str(self.working_file),
+# 65             "session_id": session_id,
+# 66             "system": input.get("system", "unknown"),
+# 67             "reason": input.get("reason",SYSTEM.START.value),
+# 68             "steps": input.get("steps", 0),
+# 69             "retry_count": input.get("retry_count", 0),
+# 70             "_last_state": input.get("_last_state", SYSTEM.START),
+# 71             "decision": DECISION_TYPE.UNKNOWN,
+# 72             "original_file": relative_path,
+# 73             "run_id": self._run_id,
+# 74         }
+# 75 
+# 76         step_count = 0
+# 77 
+# 78         while True:
+# 79             current = state.get("state")
+# 80 
+# 81             if step_count >= max_steps:
+# 82                 return ControllerOutputSchema(
+# 83                     state=SYSTEM.END,
+# 84                     previous_state=current,
+# 85                     state_type=SYSTEM.END,
+# 86                     decision=DECISION_TYPE.REJECT,
+# 87                     steps=step_count,
+# 88                     max_steps=max_steps,
+# 89                     summary=f"Max steps ({max_steps}) reached",
+# 90                     output=state,
+# 91                     provider_name=self._config.name,
+# 92                 )
+# 93 
+# 94             if current == SYSTEM.END:
+# 95                 best_file = select_best_file_by_score(
+# 96                     file_a=state["file_path"],
+# 97                     file_b=self.incoming_file,
+# 98                     score_provider=self.score_provider,
+# 99                     system=state.get("system", "unknown"),
+# 100                     session_id=session_id,
+# 101                 )
+# 102 
+# 103                 final_path = Path("working_files") / f"final_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 104                 shutil.copy(Path(best_file), final_path)
+# 105                 state["file_path"] = str(final_path)
+# 106 
+# 107                 for f in Path("working_files").glob("final_*.py"):
+# 108                     if f.resolve() != final_path.resolve():
+# 109                         try:
+# 110                             f.unlink()
+# 111                         except Exception:
+# 112                             pass
+# 113 
+# 114                 for f in Path("working_files").glob("*_stripped.py"):
+# 115                     try:
+# 116                         f.unlink()
+# 117                     except Exception:
+# 118                         pass
+# 119 
+# 120                 for path in self._generated_files:
+# 121                     if path.exists():
+# 122                         try:
+# 123                             path.unlink()
+# 124                         except Exception:
+# 125                             pass
+# 126 
+# 127                 return ControllerOutputSchema(
+# 128                     state=SYSTEM.END,
+# 129                     previous_state=state.get("_last_state", SYSTEM.START),
+# 130                     state_type=SYSTEM.END,
+# 131                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 132                     steps=step_count,
+# 133                     max_steps=max_steps,
+# 134                     summary=state.get("summary", "Completed"),
+# 135                     output=state,
+# 136                     provider_name=self._config.name,
+# 137                 )
+# 138 
+# 139             step_count += 1
+# 140 
+# 141             if current == SYSTEM.START:
+# 142                 transition = self.transition(state, None)
+# 143                 state.update(transition)
+# 144                 state["_last_state"] = SYSTEM.START
+# 145                 continue
+# 146 
+# 147             provider = self._systems.get(current.value)
+# 148             if not provider:
+# 149                 raise ValueError(f"No system provider registered for state: {current.value}")
+# 150 
+# 151             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 152             output = provider.run(input=provider_input, session_id=session_id)
+# 153 
+# 154             new_file_path = getattr(output, "file_path", None)
+# 155             if new_file_path:
+# 156                 new_file_path = Path(new_file_path).resolve()
+# 157                 current_path = Path(state["file_path"]).resolve()
+# 158                 if new_file_path != current_path:
+# 159                     shutil.copy(new_file_path, current_path)
+# 160                     self._generated_files.append(new_file_path)
+# 161                     state["file_path"] = str(new_file_path)
+# 162 
+# 163             if hasattr(output, "decision") and output.decision:
+# 164                 state["decision"] = output.decision
+# 165 
+# 166             transition_result = self.transition(state, output)
+# 167             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 168 
+# 169             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 170             transition_metadata.update({
+# 171                 "agent_output": flat_output.get("output", {}),
+# 172                 "file_path": flat_output.get("file_path"),
+# 173             })
+# 174             transition_result["transition_metadata"] = transition_metadata
+# 175 
+# 176             raw_state = transition_result.get("state", current)
+# 177             state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
+# 178 
+# 179             state = {
+# 180                 **state,
+# 181                 **transition_result,
+# 182                 "state": state_enum,
+# 183                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+# 184                 "_last_state": current,
+# 185                 "state_output": flat_output,
+# 186             }
+# 187 
+# 188     @abstractmethod
+# 189     def _transition(self, state: dict, output: dict | None) -> dict:
+# 190         ...
 
 
 # providers\fsm_provider_base.py
@@ -4904,28 +4890,32 @@
 # 60         else:
 # 61             decision = STATE_DECISION_TYPE.INITIAL
 # 62 
-# 63         self.logger.write(
-# 64             LOG_TYPE.STATE_TRANSITION,
-# 65             StateTransitionLogSchema(
-# 66                 session_id=self._session_id,
-# 67                 entity_type=self._infer_provider_type(),
-# 68                 entity_id=self._config.id,
-# 69                 from_state=state.get("state"),
-# 70                 to_state=next_state.get("state", "unknown"),
-# 71                 reason=TRANSITION_REASON_TYPE(next_state["reason"]),
-# 72                 decision=decision,
-# 73                 triggered_by=self._config.name,
-# 74                 step=state["steps"],
-# 75                 transition_metadata=transition_metadata,
-# 76                 timestamp=datetime.now(timezone.utc),
-# 77                 run_id=self._run_id,
-# 78             ),
-# 79         )
-# 80         return next_state
-# 81 
-# 82     @abstractmethod
-# 83     def _transition(self, state: dict, result: dict | None) -> dict:
-# 84         raise NotImplementedError
+# 63         #  Log the state transition with relevant details
+# 64         self.logger.write(
+# 65             LOG_TYPE.STATE_TRANSITION,
+# 66             StateTransitionLogSchema(
+# 67                 session_id=self._session_id,
+# 68                 entity_type=self._infer_provider_type(),
+# 69                 entity_id=self._config.id,
+# 70                 from_state=state.get("state"),
+# 71                 to_state=next_state.get("state", "unknown"),
+# 72                 reason=TRANSITION_REASON_TYPE(next_state["reason"]),
+# 73                 decision=decision,
+# 74                 triggered_by=self._config.name,
+# 75                 step=state["steps"],
+# 76                 transition_metadata=transition_metadata,
+# 77                 timestamp=datetime.now(timezone.utc),
+# 78                 run_id=self._run_id,
+# 79                 called_by_type=self._called_by_type if self._called_by_type else None,
+# 80                 called_by_id=self._called_by_id,
+# 81             ),
+# 82         )
+# 83         return next_state
+# 84 
+# 85 
+# 86     @abstractmethod
+# 87     def _transition(self, state: dict, result: dict | None) -> dict:
+# 88         raise NotImplementedError
 
 
 # providers\program_provider_base.py
@@ -4937,177 +4927,178 @@
 # 5 import shutil
 # 6 from typing import Dict
 # 7 
-# 8 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import ProgramOutputSchema
-# 11 from app.utilities.extract_base_filename import extract_base_filename
-# 12 from app.utilities.select_best_file_by_score import select_best_file_by_score
-# 13 
+# 8 from app.enums.controller_enums import CONTROLLER
+# 9 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 10 from app.providers.fsm_provider_base import FSMProviderBase
+# 11 from app.db.schemas import ProgramOutputSchema
+# 12 from app.utilities.extract_base_filename import extract_base_filename
+# 13 from app.utilities.select_best_file_by_score import select_best_file_by_score
 # 14 
-# 15 class ProgramProviderBase(FSMProviderBase):
-# 16     def __init__(
-# 17         self,
-# 18         config=None,
-# 19         controller_providers: Dict[str, object] = None,
-# 20         context_provider=None,
-# 21         score_provider=None,
-# 22         tool_providers=None,
-# 23         called_by_type=None,
-# 24         called_by_id=None,
-# 25     ):
-# 26         super().__init__(
-# 27             config=config,
-# 28             called_by_type=called_by_type,
-# 29             called_by_id=called_by_id
-# 30         )
-# 31         self._states = controller_providers or {}
-# 32         self.context_provider = context_provider
-# 33         self.score_provider = score_provider
-# 34         self.tool_providers = tool_providers or []
-# 35         self._generated_files: list[Path] = []
-# 36 
-# 37     def _run_provider(self, input: dict) -> ProgramOutputSchema:
-# 38         session_id = input.get("session_id")
-# 39         max_steps = input.get("max_steps", 20)
-# 40 
-# 41         incoming_file = input.get("file_path")
-# 42         self.incoming_file = incoming_file
-# 43 
-# 44         src = Path(incoming_file).resolve()
-# 45         root = extract_base_filename(src)
-# 46         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 47         working_dir = Path("working_files").resolve()
-# 48         working_dir.mkdir(parents=True, exist_ok=True)
-# 49         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
-# 50         shutil.copy(src, self.working_file)
-# 51         self._generated_files.append(self.working_file)
-# 52 
-# 53         input_path = Path(incoming_file)
-# 54         try:
-# 55             relative_path = str(input_path.relative_to(Path.cwd()))
-# 56         except ValueError:
-# 57             relative_path = str(input_path)
-# 58 
-# 59         state = {
-# 60             "state": STATE.START,
-# 61             "file_path": str(self.working_file),
-# 62             "session_id": session_id,
-# 63             "system": input.get("system", "unknown"),
-# 64             "reason": input.get("reason", STATE.START.value),
-# 65             "steps": input.get("steps", 0),
-# 66             "retry_count": input.get("retry_count", 0),
-# 67             "_last_state": input.get("_last_state", STATE.START),
-# 68             "original_file": relative_path,
-# 69             "run_id": self._run_id,
-# 70         }
-# 71 
-# 72         step_count = 0
-# 73 
-# 74         while True:
-# 75             current = state.get("state")
-# 76 
-# 77             if step_count >= max_steps:
-# 78                 return ProgramOutputSchema(
-# 79                     state=STATE.END,
-# 80                     previous_state=current,
-# 81                     state_type=STATE_TYPE.END,
-# 82                     decision=DECISION_TYPE.UNKNOWN,
-# 83                     steps=step_count,
-# 84                     max_steps=max_steps,
-# 85                     summary=f"Max steps ({max_steps}) reached",
-# 86                     output=state,
-# 87                     provider_name=self._config.name
-# 88                 )
-# 89 
-# 90             if current == STATE.END:
-# 91                 final_decision = state.get("decision")
-# 92                 nested = state.get("output") or {}
-# 93 
-# 94                 if isinstance(nested, dict):
-# 95                     final_decision = final_decision or nested.get("decision")
-# 96 
-# 97                 best_file = select_best_file_by_score(
-# 98                     file_a=state.get("file_path"),
-# 99                     file_b=self.incoming_file,
-# 100                     score_provider=self.score_provider,
-# 101                     system=state.get("system", "unknown"),
-# 102                     session_id=session_id
-# 103                 )
-# 104 
-# 105                 final_path = Path("working_files") / f"final_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 106                 shutil.copy(Path(best_file).resolve(), final_path)
-# 107                 state["file_path"] = str(final_path)
-# 108                 state["decision"] = final_decision
-# 109 
-# 110                 for f in Path("working_files").glob("final_*.py"):
-# 111                     if f.resolve() != final_path.resolve():
-# 112                         try:
-# 113                             f.unlink()
-# 114                         except Exception:
-# 115                             pass
-# 116 
-# 117                 for f in Path("working_files").glob("*_stripped.py"):
-# 118                     try:
-# 119                         f.unlink()
-# 120                     except Exception:
-# 121                         pass
-# 122 
-# 123                 for path in self._generated_files:
-# 124                     if path.exists():
-# 125                         try:
-# 126                             path.unlink()
-# 127                         except Exception:
-# 128                             pass
-# 129 
-# 130                 return ProgramOutputSchema(
-# 131                     state=STATE.END,
-# 132                     previous_state=state.get("_last_state", STATE.START),
-# 133                     state_type=STATE_TYPE.END,
-# 134                     decision=final_decision or DECISION_TYPE.UNKNOWN,
-# 135                     steps=step_count,
-# 136                     max_steps=max_steps,
-# 137                     summary=state.get("reason", "Completed"),
-# 138                     output=state,
-# 139                     provider_name=self._config.name
-# 140                 )
-# 141 
-# 142             step_count += 1
-# 143 
-# 144             if current == STATE.START:
-# 145                 transition = self.transition(state, None)
-# 146                 state.update(transition)
-# 147                 state["_last_state"] = STATE.START
-# 148                 continue
-# 149 
-# 150             provider = self._states.get(current)
-# 151             if not provider:
-# 152                 raise ValueError(f"No controller provider registered for state: {current}")
-# 153 
-# 154             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 155             output = provider.run(input=provider_input, session_id=session_id)
-# 156 
-# 157             transition_result = self.transition(state, output)
-# 158             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 159 
-# 160             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 161             transition_metadata.update({
-# 162                 "agent_output": flat_output.get("output", {}),
-# 163                 "file_path": flat_output.get("file_path"),
-# 164             })
-# 165             transition_result["transition_metadata"] = transition_metadata
-# 166 
-# 167             state = {
-# 168                 **state,
-# 169                 **transition_result,
-# 170                 "state": STATE(transition_result.get("state", current)),
-# 171                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 172                 "_last_state": current,
-# 173                 "state_output": flat_output,
-# 174             }
-# 175 
-# 176     @abstractmethod
-# 177     def _transition(self, state: dict, output: dict | None) -> dict:
-# 178         ...
+# 15 
+# 16 class ProgramProviderBase(FSMProviderBase):
+# 17     def __init__(
+# 18         self,
+# 19         config=None,
+# 20         controller_providers: Dict[str, object] = None,
+# 21         context_provider=None,
+# 22         score_provider=None,
+# 23         tool_providers=None,
+# 24         called_by_type=None,
+# 25         called_by_id=None,
+# 26     ):
+# 27         super().__init__(
+# 28             config=config,
+# 29             called_by_type=called_by_type,
+# 30             called_by_id=called_by_id
+# 31         )
+# 32         self._states = controller_providers or {}
+# 33         self.context_provider = context_provider
+# 34         self.score_provider = score_provider
+# 35         self.tool_providers = tool_providers or []
+# 36         self._generated_files: list[Path] = []
+# 37 
+# 38     def _run_provider(self, input: dict) -> ProgramOutputSchema:
+# 39         session_id = input.get("session_id")
+# 40         max_steps = input.get("max_steps", 20)
+# 41 
+# 42         incoming_file = input.get("file_path")
+# 43         self.incoming_file = incoming_file
+# 44 
+# 45         src = Path(incoming_file).resolve()
+# 46         root = extract_base_filename(src)
+# 47         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 48         working_dir = Path("working_files").resolve()
+# 49         working_dir.mkdir(parents=True, exist_ok=True)
+# 50         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
+# 51         shutil.copy(src, self.working_file)
+# 52         self._generated_files.append(self.working_file)
+# 53 
+# 54         input_path = Path(incoming_file)
+# 55         try:
+# 56             relative_path = str(input_path.relative_to(Path.cwd()))
+# 57         except ValueError:
+# 58             relative_path = str(input_path)
+# 59 
+# 60         state = {
+# 61             "state": CONTROLLER.START,
+# 62             "file_path": str(self.working_file),
+# 63             "session_id": session_id,
+# 64             "system": input.get("system", "unknown"),
+# 65             "reason": input.get("reason", CONTROLLER.START.value),
+# 66             "steps": input.get("steps", 0),
+# 67             "retry_count": input.get("retry_count", 0),
+# 68             "_last_state": input.get("_last_state", CONTROLLER.START),
+# 69             "original_file": relative_path,
+# 70             "run_id": self._run_id,
+# 71         }
+# 72 
+# 73         step_count = 0
+# 74 
+# 75         while True:
+# 76             current = state.get("state")
+# 77 
+# 78             if step_count >= max_steps:
+# 79                 return ProgramOutputSchema(
+# 80                     state=CONTROLLER.END,
+# 81                     previous_state=current,
+# 82                     state_type=STATE_TYPE.END,
+# 83                     decision=DECISION_TYPE.UNKNOWN,
+# 84                     steps=step_count,
+# 85                     max_steps=max_steps,
+# 86                     summary=f"Max steps ({max_steps}) reached",
+# 87                     output=state,
+# 88                     provider_name=self._config.name
+# 89                 )
+# 90 
+# 91             if current == CONTROLLER.END:
+# 92                 final_decision = state.get("decision")
+# 93                 nested = state.get("output") or {}
+# 94 
+# 95                 if isinstance(nested, dict):
+# 96                     final_decision = final_decision or nested.get("decision")
+# 97 
+# 98                 best_file = select_best_file_by_score(
+# 99                     file_a=state.get("file_path"),
+# 100                     file_b=self.incoming_file,
+# 101                     score_provider=self.score_provider,
+# 102                     system=state.get("system", "unknown"),
+# 103                     session_id=session_id
+# 104                 )
+# 105 
+# 106                 final_path = Path("working_files") / f"final_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 107                 shutil.copy(Path(best_file).resolve(), final_path)
+# 108                 state["file_path"] = str(final_path)
+# 109                 state["decision"] = final_decision
+# 110 
+# 111                 for f in Path("working_files").glob("final_*.py"):
+# 112                     if f.resolve() != final_path.resolve():
+# 113                         try:
+# 114                             f.unlink()
+# 115                         except Exception:
+# 116                             pass
+# 117 
+# 118                 for f in Path("working_files").glob("*_stripped.py"):
+# 119                     try:
+# 120                         f.unlink()
+# 121                     except Exception:
+# 122                         pass
+# 123 
+# 124                 for path in self._generated_files:
+# 125                     if path.exists():
+# 126                         try:
+# 127                             path.unlink()
+# 128                         except Exception:
+# 129                             pass
+# 130 
+# 131                 return ProgramOutputSchema(
+# 132                     state=CONTROLLER.END,
+# 133                     previous_state=state.get("_last_state", CONTROLLER.START),
+# 134                     state_type=STATE_TYPE.END,
+# 135                     decision=final_decision or DECISION_TYPE.UNKNOWN,
+# 136                     steps=step_count,
+# 137                     max_steps=max_steps,
+# 138                     summary=state.get("reason", "Completed"),
+# 139                     output=state,
+# 140                     provider_name=self._config.name
+# 141                 )
+# 142 
+# 143             step_count += 1
+# 144 
+# 145             if current == CONTROLLER.START:
+# 146                 transition = self.transition(state, None)
+# 147                 state.update(transition)
+# 148                 state["_last_state"] = CONTROLLER.START
+# 149                 continue
+# 150 
+# 151             provider = self._states.get(current)
+# 152             if not provider:
+# 153                 raise ValueError(f"No controller provider registered for state: {current}")
+# 154 
+# 155             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 156             output = provider.run(input=provider_input, session_id=session_id)
+# 157 
+# 158             transition_result = self.transition(state, output)
+# 159             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 160 
+# 161             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 162             transition_metadata.update({
+# 163                 "agent_output": flat_output.get("output", {}),
+# 164                 "file_path": flat_output.get("file_path"),
+# 165             })
+# 166             transition_result["transition_metadata"] = transition_metadata
+# 167 
+# 168             state = {
+# 169                 **state,
+# 170                 **transition_result,
+# 171                 "state": CONTROLLER(transition_result.get("state", current)),
+# 172                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+# 173                 "_last_state": current,
+# 174                 "state_output": flat_output,
+# 175             }
+# 176 
+# 177     @abstractmethod
+# 178     def _transition(self, state: dict, output: dict | None) -> dict:
+# 179         ...
 
 
 # providers\prompt_provider_base.py
@@ -5203,186 +5194,188 @@
 # 5 import shutil
 # 6 from typing import Dict
 # 7 
-# 8 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import StateOutputSchema
-# 11 from app.utilities.extract_base_filename import extract_base_filename
-# 12 from app.utilities.select_best_file_by_score import select_best_file_by_score
-# 13 
-# 14 
-# 15 class StateProviderBase(FSMProviderBase):
-# 16     def __init__(
-# 17         self,
-# 18         config=None,
-# 19         agent_providers: Dict[str, object] = None,
-# 20         context_provider=None,
-# 21         score_provider=None,
-# 22         tool_providers=None,
-# 23         called_by_type=None,
-# 24         called_by_id=None,
-# 25     ):
-# 26         super().__init__(
-# 27             config=config,
-# 28             called_by_type=called_by_type,
-# 29             called_by_id=called_by_id,
-# 30         )
-# 31         self.agent_providers = agent_providers or {}
-# 32         self.context_provider = context_provider
-# 33         self.score_provider = score_provider
-# 34         self.tool_providers = tool_providers or []
-# 35         self._generated_files: list[Path] = []
-# 36 
-# 37     def _run_provider(self, input: dict) -> StateOutputSchema:
-# 38         session_id = input.get("session_id")
-# 39         max_steps = input.get("max_steps", 10)
-# 40 
-# 41         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 42         if not incoming_file:
-# 43             raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
-# 44 
-# 45         self.incoming_file = incoming_file
-# 46         src = Path(incoming_file).resolve()
-# 47         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 48         working_dir = Path("working_files").resolve()
-# 49         working_dir.mkdir(parents=True, exist_ok=True)
-# 50         root = extract_base_filename(src)
-# 51         self.working_file = working_dir / f"{root}__state_{timestamp}{src.suffix}"
-# 52         shutil.copy(src, self.working_file)
-# 53         self._generated_files.append(self.working_file)
-# 54 
-# 55         input_path = Path(incoming_file)
-# 56         try:
-# 57             relative_path = str(input_path.relative_to(Path.cwd()))
-# 58         except ValueError:
-# 59             relative_path = str(input_path)
-# 60 
-# 61         state = {
-# 62             "state": STATE.START,
-# 63             "file_path": str(self.working_file),
-# 64             "session_id": session_id,
-# 65             "system": input.get("system", "unknown"),
-# 66             "reason": input.get("reason", STATE.START.value),
-# 67             "steps": input.get("steps", 0),
-# 68             "retry_count": input.get("retry_count", 0),
-# 69             "_last_state": input.get("_last_state", STATE.START),
-# 70             "decision": DECISION_TYPE.UNKNOWN,
-# 71             "original_file": relative_path,
-# 72             "run_id": self._run_id,
-# 73         }
-# 74 
-# 75         step_count = 0
+# 8 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 9 from app.enums.state_enums import STATE
+# 10 from app.enums.agent_enums import AGENT
+# 11 from app.providers.fsm_provider_base import FSMProviderBase
+# 12 from app.db.schemas import StateOutputSchema
+# 13 from app.utilities.extract_base_filename import extract_base_filename
+# 14 from app.utilities.select_best_file_by_score import select_best_file_by_score
+# 15 
+# 16 
+# 17 class StateProviderBase(FSMProviderBase):
+# 18     def __init__(
+# 19         self,
+# 20         config=None,
+# 21         agent_providers: Dict[str, object] = None,
+# 22         context_provider=None,
+# 23         score_provider=None,
+# 24         tool_providers=None,
+# 25         called_by_type=None,
+# 26         called_by_id=None,
+# 27     ):
+# 28         super().__init__(
+# 29             config=config,
+# 30             called_by_type=called_by_type,
+# 31             called_by_id=called_by_id,
+# 32         )
+# 33         self.agent_providers = agent_providers or {}
+# 34         self.context_provider = context_provider
+# 35         self.score_provider = score_provider
+# 36         self.tool_providers = tool_providers or []
+# 37         self._generated_files: list[Path] = []
+# 38 
+# 39     def _run_provider(self, input: dict) -> StateOutputSchema:
+# 40         session_id = input.get("session_id")
+# 41         max_steps = input.get("max_steps", 10)
+# 42 
+# 43         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 44         if not incoming_file:
+# 45             raise ValueError("❌ StateProvider requires 'file_path', 'file_name', or 'before' in input")
+# 46 
+# 47         self.incoming_file = incoming_file
+# 48         src = Path(incoming_file).resolve()
+# 49         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 50         working_dir = Path("working_files").resolve()
+# 51         working_dir.mkdir(parents=True, exist_ok=True)
+# 52         root = extract_base_filename(src)
+# 53         self.working_file = working_dir / f"{root}__state_{timestamp}{src.suffix}"
+# 54         shutil.copy(src, self.working_file)
+# 55         self._generated_files.append(self.working_file)
+# 56 
+# 57         input_path = Path(incoming_file)
+# 58         try:
+# 59             relative_path = str(input_path.relative_to(Path.cwd()))
+# 60         except ValueError:
+# 61             relative_path = str(input_path)
+# 62 
+# 63         state = {
+# 64             "state": AGENT.START,
+# 65             "file_path": str(self.working_file),
+# 66             "session_id": session_id,
+# 67             "system": input.get("system", "unknown"),
+# 68             "reason": input.get("reason", AGENT.START.value),
+# 69             "steps": input.get("steps", 0),
+# 70             "retry_count": input.get("retry_count", 0),
+# 71             "_last_state": input.get("_last_state", AGENT.START),
+# 72             "decision": DECISION_TYPE.UNKNOWN,
+# 73             "original_file": relative_path,
+# 74             "run_id": self._run_id,
+# 75         }
 # 76 
-# 77         while True:
-# 78             current = state["state"]
-# 79 
-# 80             if step_count >= max_steps:
-# 81                 return StateOutputSchema(
-# 82                     state=STATE.END,
-# 83                     previous_state=current,
-# 84                     state_type=STATE_TYPE.END,
-# 85                     decision=DECISION_TYPE.REJECT,
-# 86                     steps=step_count,
-# 87                     max_steps=max_steps,
-# 88                     summary=f"Max steps ({max_steps}) reached",
-# 89                     output=state,
-# 90                     provider_name=self._config.name,
-# 91                 )
-# 92 
-# 93             if current == STATE.END:
-# 94                 if self.score_provider:
-# 95                     best_file = select_best_file_by_score(
-# 96                         file_a=state["file_path"],
-# 97                         file_b=self.incoming_file,
-# 98                         score_provider=self.score_provider,
-# 99                         system=state.get("system", "unknown"),
-# 100                         session_id=session_id
-# 101                     )
-# 102 
-# 103                     final_path = Path("working_files") / f"final_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 104                     shutil.copy(Path(best_file), final_path)
-# 105                     state["file_path"] = str(final_path)
-# 106 
-# 107                     for f in Path("working_files").glob("final_*.py"):
-# 108                         if f.resolve() != final_path.resolve():
-# 109                             try:
-# 110                                 f.unlink()
-# 111                             except Exception:
-# 112                                 pass
-# 113 
-# 114                     for f in Path("working_files").glob("*_stripped.py"):
-# 115                         try:
-# 116                             f.unlink()
-# 117                         except Exception:
-# 118                             pass
-# 119 
-# 120                 for path in self._generated_files:
-# 121                     if path.exists():
-# 122                         try:
-# 123                             path.unlink()
-# 124                         except Exception:
-# 125                             pass
-# 126 
-# 127                 return StateOutputSchema(
-# 128                     state=STATE.END,
-# 129                     previous_state=state.get("_last_state", STATE.START),
-# 130                     state_type=STATE_TYPE.END,
-# 131                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 132                     steps=step_count,
-# 133                     max_steps=max_steps,
-# 134                     summary=state.get("summary", "Completed"),
-# 135                     output=state,
-# 136                     provider_name=self._config.name,
-# 137                 )
-# 138 
-# 139             step_count += 1
+# 77         step_count = 0
+# 78 
+# 79         while True:
+# 80             current = state["state"]
+# 81 
+# 82             if step_count >= max_steps:
+# 83                 return StateOutputSchema(
+# 84                     state=AGENT.END,
+# 85                     previous_state=current,
+# 86                     state_type=STATE_TYPE.END,
+# 87                     decision=DECISION_TYPE.REJECT,
+# 88                     steps=step_count,
+# 89                     max_steps=max_steps,
+# 90                     summary=f"Max steps ({max_steps}) reached",
+# 91                     output=state,
+# 92                     provider_name=self._config.name,
+# 93                 )
+# 94 
+# 95             if current == STATE.END:
+# 96                 if self.score_provider:
+# 97                     best_file = select_best_file_by_score(
+# 98                         file_a=state["file_path"],
+# 99                         file_b=self.incoming_file,
+# 100                         score_provider=self.score_provider,
+# 101                         system=state.get("system", "unknown"),
+# 102                         session_id=session_id
+# 103                     )
+# 104 
+# 105                     final_path = Path("working_files") / f"final_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 106                     shutil.copy(Path(best_file), final_path)
+# 107                     state["file_path"] = str(final_path)
+# 108 
+# 109                     for f in Path("working_files").glob("final_*.py"):
+# 110                         if f.resolve() != final_path.resolve():
+# 111                             try:
+# 112                                 f.unlink()
+# 113                             except Exception:
+# 114                                 pass
+# 115 
+# 116                     for f in Path("working_files").glob("*_stripped.py"):
+# 117                         try:
+# 118                             f.unlink()
+# 119                         except Exception:
+# 120                             pass
+# 121 
+# 122                 for path in self._generated_files:
+# 123                     if path.exists():
+# 124                         try:
+# 125                             path.unlink()
+# 126                         except Exception:
+# 127                             pass
+# 128 
+# 129                 return StateOutputSchema(
+# 130                     state=AGENT.END,
+# 131                     previous_state=state.get("_last_state", AGENT.START),
+# 132                     state_type=STATE_TYPE.END,
+# 133                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 134                     steps=step_count,
+# 135                     max_steps=max_steps,
+# 136                     summary=state.get("summary", "Completed"),
+# 137                     output=state,
+# 138                     provider_name=self._config.name,
+# 139                 )
 # 140 
-# 141             if current == STATE.START:
-# 142                 transition = self._transition(state, None)
-# 143                 state.update(transition)
-# 144                 state["_last_state"] = STATE.START
-# 145                 continue
-# 146 
-# 147             provider = self.agent_providers.get(current.value)
-# 148             agent_output = provider.run(input=state, session_id=session_id) if provider else None
-# 149 
-# 150             transition_result = self._transition(state, agent_output)
+# 141             step_count += 1
+# 142 
+# 143             if current == AGENT.START:
+# 144                 transition = self._transition(state, None)
+# 145                 state.update(transition)
+# 146                 state["_last_state"] = AGENT.START
+# 147                 continue
+# 148 
+# 149             provider = self.agent_providers.get(current.value)
+# 150             agent_output = provider.run(input=state, session_id=session_id) if provider else None
 # 151 
-# 152             new_file_path = transition_result.get("file_path") or getattr(agent_output, "file_path", None)
-# 153             if new_file_path:
-# 154                 new_file_path = Path(new_file_path).resolve()
-# 155                 current_path = Path(state["file_path"]).resolve()
-# 156                 if new_file_path != current_path:
-# 157                     shutil.copy(new_file_path, current_path)
-# 158                     self._generated_files.append(new_file_path)
-# 159                     state["file_path"] = str(new_file_path)
-# 160 
-# 161             if hasattr(agent_output, "decision") and agent_output.decision:
-# 162                 state["decision"] = agent_output.decision
-# 163 
-# 164             flat_output = agent_output.model_dump(exclude={"output"}) if hasattr(agent_output, "model_dump") else dict(agent_output or {})
+# 152             transition_result = self._transition(state, agent_output)
+# 153 
+# 154             new_file_path = transition_result.get("file_path") or getattr(agent_output, "file_path", None)
+# 155             if new_file_path:
+# 156                 new_file_path = Path(new_file_path).resolve()
+# 157                 current_path = Path(state["file_path"]).resolve()
+# 158                 if new_file_path != current_path:
+# 159                     shutil.copy(new_file_path, current_path)
+# 160                     self._generated_files.append(new_file_path)
+# 161                     state["file_path"] = str(new_file_path)
+# 162 
+# 163             if hasattr(agent_output, "decision") and agent_output.decision:
+# 164                 state["decision"] = agent_output.decision
 # 165 
-# 166             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 167             transition_metadata.update({
-# 168                 "agent_output": flat_output.get("output", {}),
-# 169                 "file_path": flat_output.get("file_path"),
-# 170             })
-# 171             transition_result["transition_metadata"] = transition_metadata
-# 172 
-# 173             raw_state = transition_result.get("state", current)
-# 174             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
-# 175 
-# 176             state = {
-# 177                 **state,
-# 178                 **transition_result,
-# 179                 "state": state_enum,
-# 180                 "file_path": transition_result.get("file_path") or state.get("file_path"),
-# 181                 "_last_state": current,
-# 182                 "state_output": flat_output,
-# 183             }
-# 184 
-# 185     @abstractmethod
-# 186     def _transition(self, state: dict, output: dict | None) -> dict:
-# 187         ...
+# 166             flat_output = agent_output.model_dump(exclude={"output"}) if hasattr(agent_output, "model_dump") else dict(agent_output or {})
+# 167 
+# 168             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 169             transition_metadata.update({
+# 170                 "agent_output": flat_output.get("output", {}),
+# 171                 "file_path": flat_output.get("file_path"),
+# 172             })
+# 173             transition_result["transition_metadata"] = transition_metadata
+# 174 
+# 175             raw_state = transition_result.get("state", current)
+# 176             state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
+# 177 
+# 178             state = {
+# 179                 **state,
+# 180                 **transition_result,
+# 181                 "state": state_enum,
+# 182                 "file_path": transition_result.get("file_path") or state.get("file_path"),
+# 183                 "_last_state": current,
+# 184                 "state_output": flat_output,
+# 185             }
+# 186 
+# 187     @abstractmethod
+# 188     def _transition(self, state: dict, output: dict | None) -> dict:
+# 189         ...
 
 
 # providers\system_provider_base.py
@@ -5394,183 +5387,184 @@
 # 5 import shutil
 # 6 from typing import Dict
 # 7 
-# 8 from app.enums.fsm_enums import STATE, STATE_TYPE, DECISION_TYPE
-# 9 from app.providers.fsm_provider_base import FSMProviderBase
-# 10 from app.db.schemas import SystemOutputSchema
-# 11 from app.utilities.extract_base_filename import extract_base_filename
-# 12 from app.utilities.select_best_file_by_score import select_best_file_by_score
-# 13 
+# 8 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+# 9 from app.enums.state_enums import STATE
+# 10 from app.providers.fsm_provider_base import FSMProviderBase
+# 11 from app.db.schemas import SystemOutputSchema
+# 12 from app.utilities.extract_base_filename import extract_base_filename
+# 13 from app.utilities.select_best_file_by_score import select_best_file_by_score
 # 14 
-# 15 class SystemProviderBase(FSMProviderBase):
-# 16     def __init__(
-# 17         self,
-# 18         config=None,
-# 19         state_providers: Dict[str, object] = None,
-# 20         context_provider=None,
-# 21         score_provider=None,
-# 22         tool_providers=None,
-# 23         called_by_type=None,
-# 24         called_by_id=None,
-# 25     ):
-# 26         super().__init__(
-# 27             config=config,
-# 28             called_by_type=called_by_type,
-# 29             called_by_id=called_by_id
-# 30         )
-# 31         self._states = state_providers or {}
-# 32         self.context_provider = context_provider
-# 33         self.score_provider = score_provider
-# 34         self.tool_providers = tool_providers or []
-# 35         self._generated_files: list[Path] = []
-# 36 
-# 37     def _run_provider(self, input: dict) -> SystemOutputSchema:
-# 38         session_id = input.get("session_id")
-# 39         max_steps = input.get("max_steps", 10)
-# 40 
-# 41         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
-# 42         if not incoming_file:
-# 43             raise ValueError("❌ SystemProvider requires 'file_path', 'file_name', or 'before' in input")
-# 44 
-# 45         self.incoming_file = incoming_file
-# 46         src = Path(incoming_file).resolve()
-# 47         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 48         working_dir = Path("working_files").resolve()
-# 49         working_dir.mkdir(parents=True, exist_ok=True)
-# 50         root = extract_base_filename(src)
-# 51         self.working_file = working_dir / f"{root}__sys_{timestamp}{src.suffix}"
-# 52         shutil.copy(src, self.working_file)
-# 53         self._generated_files.append(self.working_file)
-# 54 
-# 55         input_path = Path(incoming_file)
-# 56         try:
-# 57             relative_path = str(input_path.relative_to(Path.cwd()))
-# 58         except ValueError:
-# 59             relative_path = str(input_path)
-# 60 
-# 61         state = {
-# 62             "state": STATE.START,
-# 63             "file_path": str(self.working_file),
-# 64             "session_id": session_id,
-# 65             "system": input.get("system", "unknown"),
-# 66             "reason": input.get("reason", STATE.START.value),
-# 67             "steps": input.get("steps", 0),
-# 68             "retry_count": input.get("retry_count", 0),
-# 69             "_last_state": input.get("_last_state", STATE.START),
-# 70             "decision": DECISION_TYPE.UNKNOWN,
-# 71             "original_file": relative_path,
-# 72             "run_id": self._run_id,
-# 73         }
-# 74 
-# 75         step_count = 0
-# 76 
-# 77         while True:
-# 78             current = state["state"]
-# 79 
-# 80             if step_count >= max_steps:
-# 81                 return SystemOutputSchema(
-# 82                     state=STATE.END,
-# 83                     previous_state=current,
-# 84                     state_type=STATE_TYPE.END,
-# 85                     decision=DECISION_TYPE.REJECT,
-# 86                     steps=step_count,
-# 87                     max_steps=max_steps,
-# 88                     summary=f"Max steps ({max_steps}) reached",
-# 89                     output=state,
-# 90                     provider_name=self._config.name
-# 91                 )
-# 92 
-# 93             if current == STATE.END:
-# 94                 best_file = select_best_file_by_score(
-# 95                     file_a=state["file_path"],
-# 96                     file_b=self.incoming_file,
-# 97                     score_provider=self.score_provider,
-# 98                     system=state.get("system", "unknown"),
-# 99                     session_id=session_id
-# 100                 )
-# 101 
-# 102                 final_path = Path("working_files") / f"final_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 103                 shutil.copy(Path(best_file), final_path)
-# 104                 state["file_path"] = str(final_path)
-# 105 
-# 106                 for f in Path("working_files").glob("final_*.py"):
-# 107                     if f.resolve() != final_path.resolve():
-# 108                         try:
-# 109                             f.unlink()
-# 110                         except Exception:
-# 111                             pass
-# 112 
-# 113                 for f in Path("working_files").glob("*_stripped.py"):
-# 114                     try:
-# 115                         f.unlink()
-# 116                     except Exception:
-# 117                         pass
-# 118 
-# 119                 for path in self._generated_files:
-# 120                     if path.exists():
-# 121                         try:
-# 122                             path.unlink()
-# 123                         except Exception:
-# 124                             pass
-# 125 
-# 126                 return SystemOutputSchema(
-# 127                     state=STATE.END,
-# 128                     previous_state=state.get("_last_state", STATE.START),
-# 129                     state_type=STATE_TYPE.END,
-# 130                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 131                     steps=step_count,
-# 132                     max_steps=max_steps,
-# 133                     summary=state.get("summary", "Completed"),
-# 134                     output=state,
-# 135                     provider_name=self._config.name
-# 136                 )
-# 137 
-# 138             step_count += 1
-# 139 
-# 140             if current == STATE.START:
-# 141                 transition = self.transition(state, None)
-# 142                 state.update(transition)
-# 143                 state["_last_state"] = STATE.START
-# 144                 continue
-# 145 
-# 146             provider = self._states.get(current.value)
-# 147             if not provider:
-# 148                 raise ValueError(f"No state provider registered for state: {current.value}")
-# 149 
-# 150             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 151             output = provider.run(input=provider_input, session_id=session_id)
-# 152 
-# 153             new_file_path = output.output.get("file_path")
-# 154             if new_file_path:
-# 155                 state["file_path"] = str(new_file_path)
-# 156 
-# 157             if hasattr(output, "decision") and output.decision:
-# 158                 state["decision"] = output.decision
-# 159 
-# 160             transition_result = self.transition(state, output)
-# 161             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 162 
-# 163             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 164             transition_metadata.update({
-# 165                 "agent_output": flat_output.get("output", {}),
-# 166                 "file_path": flat_output.get("file_path"),
-# 167             })
-# 168             transition_result["transition_metadata"] = transition_metadata
-# 169 
-# 170             raw_state = transition_result.get("state", current)
-# 171             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
-# 172 
-# 173             state = {
-# 174                 **state,
-# 175                 **transition_result,
-# 176                 "state": state_enum,
-# 177                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 178                 "_last_state": current,
-# 179                 "state_output": flat_output,
-# 180             }
-# 181 
-# 182     @abstractmethod
-# 183     def _transition(self, state: dict, output: dict | None) -> dict:
-# 184         ...
+# 15 
+# 16 class SystemProviderBase(FSMProviderBase):
+# 17     def __init__(
+# 18         self,
+# 19         config=None,
+# 20         state_providers: Dict[str, object] = None,
+# 21         context_provider=None,
+# 22         score_provider=None,
+# 23         tool_providers=None,
+# 24         called_by_type=None,
+# 25         called_by_id=None,
+# 26     ):
+# 27         super().__init__(
+# 28             config=config,
+# 29             called_by_type=called_by_type,
+# 30             called_by_id=called_by_id
+# 31         )
+# 32         self._states = state_providers or {}
+# 33         self.context_provider = context_provider
+# 34         self.score_provider = score_provider
+# 35         self.tool_providers = tool_providers or []
+# 36         self._generated_files: list[Path] = []
+# 37 
+# 38     def _run_provider(self, input: dict) -> SystemOutputSchema:
+# 39         session_id = input.get("session_id")
+# 40         max_steps = input.get("max_steps", 10)
+# 41 
+# 42         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+# 43         if not incoming_file:
+# 44             raise ValueError("❌ SystemProvider requires 'file_path', 'file_name', or 'before' in input")
+# 45 
+# 46         self.incoming_file = incoming_file
+# 47         src = Path(incoming_file).resolve()
+# 48         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 49         working_dir = Path("working_files").resolve()
+# 50         working_dir.mkdir(parents=True, exist_ok=True)
+# 51         root = extract_base_filename(src)
+# 52         self.working_file = working_dir / f"{root}__sys_{timestamp}{src.suffix}"
+# 53         shutil.copy(src, self.working_file)
+# 54         self._generated_files.append(self.working_file)
+# 55 
+# 56         input_path = Path(incoming_file)
+# 57         try:
+# 58             relative_path = str(input_path.relative_to(Path.cwd()))
+# 59         except ValueError:
+# 60             relative_path = str(input_path)
+# 61 
+# 62         state = {
+# 63             "state": STATE.START,
+# 64             "file_path": str(self.working_file),
+# 65             "session_id": session_id,
+# 66             "system": input.get("system", "unknown"),
+# 67             "reason": input.get("reason", STATE.START.value),
+# 68             "steps": input.get("steps", 0),
+# 69             "retry_count": input.get("retry_count", 0),
+# 70             "_last_state": input.get("_last_state", STATE.START),
+# 71             "decision": DECISION_TYPE.UNKNOWN,
+# 72             "original_file": relative_path,
+# 73             "run_id": self._run_id,
+# 74         }
+# 75 
+# 76         step_count = 0
+# 77 
+# 78         while True:
+# 79             current = state["state"]
+# 80 
+# 81             if step_count >= max_steps:
+# 82                 return SystemOutputSchema(
+# 83                     state=STATE.END,
+# 84                     previous_state=current,
+# 85                     state_type=STATE_TYPE.END,
+# 86                     decision=DECISION_TYPE.REJECT,
+# 87                     steps=step_count,
+# 88                     max_steps=max_steps,
+# 89                     summary=f"Max steps ({max_steps}) reached",
+# 90                     output=state,
+# 91                     provider_name=self._config.name
+# 92                 )
+# 93 
+# 94             if current == STATE.END:
+# 95                 best_file = select_best_file_by_score(
+# 96                     file_a=state["file_path"],
+# 97                     file_b=self.incoming_file,
+# 98                     score_provider=self.score_provider,
+# 99                     system=state.get("system", "unknown"),
+# 100                     session_id=session_id
+# 101                 )
+# 102 
+# 103                 final_path = Path("working_files") / f"final_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 104                 shutil.copy(Path(best_file), final_path)
+# 105                 state["file_path"] = str(final_path)
+# 106 
+# 107                 for f in Path("working_files").glob("final_*.py"):
+# 108                     if f.resolve() != final_path.resolve():
+# 109                         try:
+# 110                             f.unlink()
+# 111                         except Exception:
+# 112                             pass
+# 113 
+# 114                 for f in Path("working_files").glob("*_stripped.py"):
+# 115                     try:
+# 116                         f.unlink()
+# 117                     except Exception:
+# 118                         pass
+# 119 
+# 120                 for path in self._generated_files:
+# 121                     if path.exists():
+# 122                         try:
+# 123                             path.unlink()
+# 124                         except Exception:
+# 125                             pass
+# 126 
+# 127                 return SystemOutputSchema(
+# 128                     state=STATE.END,
+# 129                     previous_state=state.get("_last_state", STATE.START),
+# 130                     state_type=STATE_TYPE.END,
+# 131                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 132                     steps=step_count,
+# 133                     max_steps=max_steps,
+# 134                     summary=state.get("summary", "Completed"),
+# 135                     output=state,
+# 136                     provider_name=self._config.name
+# 137                 )
+# 138 
+# 139             step_count += 1
+# 140 
+# 141             if current == STATE.START:
+# 142                 transition = self.transition(state, None)
+# 143                 state.update(transition)
+# 144                 state["_last_state"] = STATE.START
+# 145                 continue
+# 146 
+# 147             provider = self._states.get(current.value)
+# 148             if not provider:
+# 149                 raise ValueError(f"No state provider registered for state: {current.value}")
+# 150 
+# 151             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 152             output = provider.run(input=provider_input, session_id=session_id)
+# 153 
+# 154             new_file_path = output.output.get("file_path")
+# 155             if new_file_path:
+# 156                 state["file_path"] = str(new_file_path)
+# 157 
+# 158             if hasattr(output, "decision") and output.decision:
+# 159                 state["decision"] = output.decision
+# 160 
+# 161             transition_result = self.transition(state, output)
+# 162             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 163 
+# 164             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 165             transition_metadata.update({
+# 166                 "agent_output": flat_output.get("output", {}),
+# 167                 "file_path": flat_output.get("file_path"),
+# 168             })
+# 169             transition_result["transition_metadata"] = transition_metadata
+# 170 
+# 171             raw_state = transition_result.get("state", current)
+# 172             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
+# 173 
+# 174             state = {
+# 175                 **state,
+# 176                 **transition_result,
+# 177                 "state": state_enum,
+# 178                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
+# 179                 "_last_state": current,
+# 180                 "state_output": flat_output,
+# 181             }
+# 182 
+# 183     @abstractmethod
+# 184     def _transition(self, state: dict, output: dict | None) -> dict:
+# 185         ...
 
 
 # providers\tool_provider_base.py

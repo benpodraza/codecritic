@@ -1,4 +1,5 @@
 from pathlib import Path
+from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 
@@ -34,9 +35,9 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
 
         response = engine_output.response
         decision = (
-            "accept" if "[AGENT_DECISION]accept" in response else
-            "reject" if "[AGENT_DECISION]reject" in response else
-            "unknown"
+            DECISION_TYPE.ACCEPTED if "[AGENT_DECISION]accept" in response else
+            DECISION_TYPE.REJECTED if "[AGENT_DECISION]reject" in response else
+            DECISION_TYPE.UNKNOWN 
         )
 
         log = None
@@ -48,10 +49,10 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
         code = self._extract_block(response, "[CODE]", "[/CODE]")
         log_entry = self._extract_block(response, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
 
-        if decision == "unknown" and code and log_entry:
-            decision = "accept"
+        if decision == DECISION_TYPE.UNKNOWN and code and log_entry:
+            decision = DECISION_TYPE.ACCEPTED
             self._log.debug("✅ Generator decision inferred as 'accept' based on presence of code and log.")
-        elif decision == "unknown":
+        elif decision == DECISION_TYPE.UNKNOWN :
             self._log.warning("⚠️ Generator decision remained 'unknown'; [AGENT_DECISION] tag may be missing.")
 
         # Ensure relative path if file_path is present

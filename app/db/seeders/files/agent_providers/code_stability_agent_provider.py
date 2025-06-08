@@ -1,4 +1,5 @@
 from pathlib import Path
+from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 
@@ -20,7 +21,7 @@ class CodeStabilityAgentProvider(AgentProviderBase):
                 response="""[AGENT_DECISION]accept[/AGENT_DECISION]
 [CONVERSATION_LOG_ENTRY]Code passed all stability checks.[/CONVERSATION_LOG_ENTRY]""",
                 log="Code passed all stability checks.",
-                decision="accept",
+                decision=DECISION_TYPE.ACCEPTED,
                 snapshot_id=None,
                 file_path=relative_file_path,
                 score=score_result.value
@@ -30,7 +31,7 @@ class CodeStabilityAgentProvider(AgentProviderBase):
             response=f"""[AGENT_DECISION]reject[/AGENT_DECISION]
 [CONVERSATION_LOG_ENTRY]Failed stability checks: {score_result.components}[/CONVERSATION_LOG_ENTRY]""",
             log=f"Failed stability checks: {score_result.components}",
-            decision="reject",
+            decision=DECISION_TYPE.REJECTED,
             snapshot_id=None,
             file_path=relative_file_path,
             score=score_result.value

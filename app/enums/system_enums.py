@@ -1,11 +1,8 @@
 from __future__ import annotations
-
 from enum import Enum
 
 
 class SYSTEM(str, Enum):
-    # For use in FSM management
-    
     START = "start"
     END = "end"
 

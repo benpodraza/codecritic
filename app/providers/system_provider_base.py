@@ -83,7 +83,7 @@ class SystemProviderBase(FSMProviderBase):
                     state=STATE.END,
                     previous_state=current,
                     state_type=STATE_TYPE.END,
-                    decision=DECISION_TYPE.REJECT,
+                    decision=DECISION_TYPE.REJECTED,
                     steps=step_count,
                     max_steps=max_steps,
                     summary=f"Max steps ({max_steps}) reached",
@@ -100,12 +100,12 @@ class SystemProviderBase(FSMProviderBase):
                     session_id=session_id
                 )
 
-                final_path = Path("working_files") / f"final_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-                shutil.copy(Path(best_file), final_path)
-                state["file_path"] = str(final_path)
+                temp_path = Path("working_files") / f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                shutil.copy(Path(best_file), temp_path)
+                state["file_path"] = str(temp_path)
 
-                for f in Path("working_files").glob("final_*.py"):
-                    if f.resolve() != final_path.resolve():
+                for f in Path("working_files").glob("temp_sys_*.py"):
+                    if f.resolve() != temp_path.resolve():
                         try:
                             f.unlink()
                         except Exception:

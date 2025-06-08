@@ -7,27 +7,51 @@ class PreprocessingControllerProvider(ControllerProviderBase):
         current = SYSTEM(state["state"])
         transition = {}
 
+        # Transition from SYSTEM.START to SYSTEM.LINTING
         if current == SYSTEM.START:
             transition = {
                 "state": SYSTEM.LINTING,
                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
             }
+        # Transition from SYSTEM.LINTING to SYSTEM.END based on system output decision
         elif current == SYSTEM.LINTING:
-            transition = {
-                "state": SYSTEM.END,
-                "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
-            }
+            # Check the sys_output for decision and adjust transition reason accordingly
+            if sys_output and hasattr(sys_output, "output") and isinstance(sys_output.output, dict):
+                output_dict = sys_output.output
+                decision = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
+
+                # Determine the transition reason based on the decision
+                if decision == DECISION_TYPE.ACCEPTED:
+                    transition = {
+                        "state": SYSTEM.END,
+                        "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
+                    }
+                elif decision == DECISION_TYPE.REJECTED:
+                    transition = {
+                        "state": SYSTEM.END,
+                        "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL,
+                    }
+                else:
+                    transition = {
+                        "state": SYSTEM.END,
+                        "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
+                    }
+                
+                # Propagate the file path and decision to the next state
+                transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
+                transition["decision"] = decision
+            else:
+                # Default case if no valid output is found
+                transition = {
+                    "state": SYSTEM.END,
+                    "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
+                }
+
         else:
+            # Handle any other states that don't match SYSTEM.START or SYSTEM.LINTING
             transition = {
                 "state": SYSTEM.END,
                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
             }
-
-        # 🔁 Propagate outputs from system FSM (without score)
-        if sys_output:
-            if hasattr(sys_output, "output") and isinstance(sys_output.output, dict):
-                output_dict = sys_output.output
-                transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
-                transition["decision"] = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
 
         return transition

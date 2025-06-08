@@ -11,17 +11,27 @@ class LintingDiscriminatorStateProvider(StateProviderBase):
                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION
             }
 
-        if agent_output.decision == DECISION_TYPE.ACCEPT:
+        # Handle the different decision types returned by the agent
+        if agent_output.decision == DECISION_TYPE.ACCEPTED:
             return {
                 "state": AGENT.END,
-                "reason": TRANSITION_REASON_TYPE.PASSED,
-                "decision": DECISION_TYPE.ACCEPT,
+                "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
+                "decision": DECISION_TYPE.ACCEPTED,
                 "file_path": agent_output.file_path,
             }
 
+        elif agent_output.decision == DECISION_TYPE.IMPROVED:
+            return {
+                "state": AGENT.END,
+                "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,  # Could be improved, still valid
+                "decision": DECISION_TYPE.IMPROVED,
+                "file_path": agent_output.file_path,
+            }
+
+        # If the decision is REJECTED, handle accordingly
         return {
             "state": AGENT.END,
-            "reason": TRANSITION_REASON_TYPE.FAILED,
-            "decision": DECISION_TYPE.REJECT,
+            "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL,
+            "decision": DECISION_TYPE.REJECTED,
             "file_path": agent_output.file_path,
         }

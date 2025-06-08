@@ -6,7 +6,6 @@ from enum import Enum
 class AGENT(str, Enum):
     START = "start"
     END = "end"
-
     GENERATOR = "generator"
     DISCRIMINATOR = "discriminator"
     MEDIATOR = "mediator"

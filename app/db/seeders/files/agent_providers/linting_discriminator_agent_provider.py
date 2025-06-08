@@ -1,7 +1,9 @@
-from __future__ import annotations
 from pathlib import Path
 import uuid
+import shutil
+from datetime import datetime
 
+from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 from app.utilities.metadata.snapshots.snapshot_reader import read_latest_snapshot
@@ -15,7 +17,7 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
 
         if not snapshot:
             return AgentOutputSchema(
-                decision="reject",
+                decision=DECISION_TYPE.REJECTED,
                 log="No snapshot found.",
                 response=(
                     "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
@@ -40,10 +42,10 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 return str(path)
 
         if before_code == after_code:
-            decision = "accept" if before_score >= LINTING_PASS_THRESHOLD else "reject"
+            decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
             log_msg = (
                 "No meaningful change, but score already passing."
-                if decision == "accept"
+                if decision == DECISION_TYPE.ACCEPTED
                 else "No meaningful change and score below threshold."
             )
             return AgentOutputSchema(
@@ -57,12 +59,13 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 score=before_score
             )
 
+        # Summarize the diff if the code has changed
         summary = summarize_diff(before_code, after_code).strip()
         if not summary:
-            decision = "accept" if before_score >= LINTING_PASS_THRESHOLD else "reject"
+            decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
             log_msg = (
                 "Diff could not be summarized, but prior version passes."
-                if decision == "accept"
+                if decision == DECISION_TYPE.ACCEPTED
                 else "Diff could not be summarized and prior version fails."
             )
             return AgentOutputSchema(
@@ -76,22 +79,24 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 score=before_score
             )
 
-        if after_score > before_score and after_score >= LINTING_PASS_THRESHOLD:
-            decision = "accept"
+        # Check the scores for acceptance or improvement
+        if after_score >= LINTING_PASS_THRESHOLD and after_score > before_score:
+            decision = DECISION_TYPE.ACCEPTED
             chosen_code = after_code
             score = after_score
-        elif before_score >= LINTING_PASS_THRESHOLD:
-            decision = "accept"
+        elif after_score < LINTING_PASS_THRESHOLD and after_score > before_score:
+            decision = DECISION_TYPE.IMPROVED
+            chosen_code = after_code
+            score = after_score
+        else:
+            decision = DECISION_TYPE.REJECTED
             chosen_code = before_code
             score = before_score
-        else:
-            decision = "reject"
-            chosen_code = after_code
-            score = after_score
 
-        output_path = Path("working_files") / f"{uuid.uuid4().hex}.py"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(chosen_code, encoding="utf-8")
+        # Update the file naming convention and clean up previous files
+        temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+        temp_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path.write_text(chosen_code, encoding="utf-8")
 
         return AgentOutputSchema(
             decision=decision,
@@ -100,6 +105,6 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
                 f"[CONVERSATION_LOG_ENTRY]{summary}[/CONVERSATION_LOG_ENTRY]"
             ),
-            file_path=safe_relative(output_path),
+            file_path=safe_relative(temp_path),
             score=score
         )

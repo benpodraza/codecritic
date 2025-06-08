@@ -84,7 +84,7 @@ class StateProviderBase(FSMProviderBase):
                     state=AGENT.END,
                     previous_state=current,
                     state_type=STATE_TYPE.END,
-                    decision=DECISION_TYPE.REJECT,
+                    decision=DECISION_TYPE.REJECTED,
                     steps=step_count,
                     max_steps=max_steps,
                     summary=f"Max steps ({max_steps}) reached",
@@ -102,12 +102,19 @@ class StateProviderBase(FSMProviderBase):
                         session_id=session_id
                     )
 
-                    final_path = Path("working_files") / f"final_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-                    shutil.copy(Path(best_file), final_path)
-                    state["file_path"] = str(final_path)
+                    temp_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                    shutil.copy(Path(best_file), temp_path)
+                    state["file_path"] = str(temp_path)
 
-                    for f in Path("working_files").glob("final_*.py"):
-                        if f.resolve() != final_path.resolve():
+                    for f in Path("working_files").glob("temp_state_*.py"):
+                        if f.resolve() != temp_path.resolve():
+                            try:
+                                f.unlink()
+                            except Exception:
+                                pass
+                    
+                    for f in Path("working_files").glob("temp_agent_*.py"):
+                        if f.resolve() != temp_path.resolve():
                             try:
                                 f.unlink()
                             except Exception:
@@ -141,7 +148,7 @@ class StateProviderBase(FSMProviderBase):
             step_count += 1
 
             if current == AGENT.START:
-                transition = self._transition(state, None)
+                transition = self.transition(state, None)
                 state.update(transition)
                 state["_last_state"] = AGENT.START
                 continue
@@ -149,7 +156,7 @@ class StateProviderBase(FSMProviderBase):
             provider = self.agent_providers.get(current.value)
             agent_output = provider.run(input=state, session_id=session_id) if provider else None
 
-            transition_result = self._transition(state, agent_output)
+            transition_result = self.transition(state, agent_output)
 
             new_file_path = transition_result.get("file_path") or getattr(agent_output, "file_path", None)
             if new_file_path:

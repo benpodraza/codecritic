@@ -127,9 +127,9 @@ class AgentProviderBase(BaseProvider):
 
     def _infer_decision(self, text: str) -> DECISION_TYPE:
         if "[AGENT_DECISION]accept" in text:
-            return DECISION_TYPE.ACCEPT
+            return DECISION_TYPE.ACCEPTED
         if "[AGENT_DECISION]reject" in text:
-            return DECISION_TYPE.REJECT
+            return DECISION_TYPE.REJECTED
         return DECISION_TYPE.UNKNOWN
 
     def _extract_log(self, text: str) -> str | None:

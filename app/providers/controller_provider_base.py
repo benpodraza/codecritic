@@ -5,13 +5,12 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import DECISION_TYPE
+from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE
 from app.enums.system_enums import SYSTEM
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ControllerOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
-
 
 class ControllerProviderBase(FSMProviderBase):
     def __init__(
@@ -64,11 +63,11 @@ class ControllerProviderBase(FSMProviderBase):
             "file_path": str(self.working_file),
             "session_id": session_id,
             "system": input.get("system", "unknown"),
-            "reason": input.get("reason",SYSTEM.START.value),
+            "reason": input.get("reason", SYSTEM.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", SYSTEM.START),
-            "decision": DECISION_TYPE.UNKNOWN,
+            "decision": DECISION_TYPE.UNKNOWN,  # Default decision
             "original_file": relative_path,
             "run_id": self._run_id,
         }
@@ -79,6 +78,14 @@ class ControllerProviderBase(FSMProviderBase):
             current = state.get("state")
 
             if step_count >= max_steps:
+                transition = self.transition(state, output)
+                state.update({
+                    **state,
+                    **transition,
+                    "state": SYSTEM.END,
+                    "state_type": STATE_TYPE.END,
+                    "reason": f"Max steps ({max_steps}) reached"
+                })
                 return ControllerOutputSchema(
                     state=SYSTEM.END,
                     previous_state=current,
@@ -127,8 +134,8 @@ class ControllerProviderBase(FSMProviderBase):
                 return ControllerOutputSchema(
                     state=SYSTEM.END,
                     previous_state=state.get("_last_state", SYSTEM.START),
-                    state_type=SYSTEM.END,
-                    decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+                    state_type=STATE_TYPE.END,
+                    decision=state.get("decision", DECISION_TYPE.UNKNOWN), 
                     steps=step_count,
                     max_steps=max_steps,
                     summary=state.get("summary", "Completed"),
@@ -160,7 +167,8 @@ class ControllerProviderBase(FSMProviderBase):
                     self._generated_files.append(new_file_path)
                     state["file_path"] = str(new_file_path)
 
-            if hasattr(output, "decision") and output.decision:
+            # Check if the decision exists directly in the output, and if so, update the state
+            if hasattr(output, "decision") and output.decision is not None:
                 state["decision"] = output.decision
 
             transition_result = self.transition(state, output)

@@ -41,7 +41,7 @@ class AgentEngineProviderBase(BaseProvider):
 
     def _run_provider(self, input: dict) -> AgentEngineOutput:
         file_path = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
-        session_id = input.get("session_id", "")
+        session_id = self._session_id
         system = SYSTEM(input.get("system", SYSTEM.UNKNOWN))
         agent_type = AGENT(input.get("agent_type", AGENT.UNKNOWN))
         agent_id = input.get("agent_id", -1)

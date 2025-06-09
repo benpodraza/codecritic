@@ -49,7 +49,7 @@ class SystemProviderBase(FSMProviderBase):
         working_dir = Path("working_files").resolve()
         working_dir.mkdir(parents=True, exist_ok=True)
         root = extract_base_filename(src)
-        self.working_file = working_dir / f"{root}__sys_{timestamp}{src.suffix}"
+        self.working_file = working_dir / f"{root}.__sys_{timestamp}{src.suffix}"
         shutil.copy(src, self.working_file)
         self._generated_files.append(self.working_file)
 
@@ -79,6 +79,14 @@ class SystemProviderBase(FSMProviderBase):
             current = state["state"]
 
             if step_count >= max_steps:
+                transition = self.transition(state, output)
+                state.update({
+                    **state,
+                    **transition,
+                    "state": STATE.END,
+                    "state_type": STATE_TYPE.END,
+                    "reason": f"Max steps ({max_steps}) reached"
+                })
                 return SystemOutputSchema(
                     state=STATE.END,
                     previous_state=current,
@@ -92,6 +100,9 @@ class SystemProviderBase(FSMProviderBase):
                 )
 
             if current == STATE.END:
+                transition = self.transition(state, output)
+                state.update(transition)
+
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,

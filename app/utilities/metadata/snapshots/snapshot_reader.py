@@ -4,7 +4,7 @@ SNAPSHOT_ROOT = Path(__file__).resolve().parents[4] / "experiments" / "snapshots
 
 def read_latest_snapshot(session_id: str, root: Path | str | None = None):
     session_root = Path(root) if root else SNAPSHOT_ROOT
-    session_root = session_root
+    session_root = session_root / str(session_id)
     
     if not session_root.exists():
         return None

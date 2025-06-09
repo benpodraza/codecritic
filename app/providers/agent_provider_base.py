@@ -42,7 +42,8 @@ class AgentProviderBase(BaseProvider):
         log_content = self._extract_log(response) or self._default_log(decision)
 
         snapshot_id = None
-        file_name = input.get("before") or input.get("file_name") or (self._config.config or {}).get("before")
+        file_name = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
+    
         if file_name and (code_block := self._extract_code(response)):
             before_path = Path(file_name)
             try:
@@ -50,7 +51,7 @@ class AgentProviderBase(BaseProvider):
             except ValueError:
                 relative_path = before_path
             before_path = relative_path
-
+       
             if before_path.exists():
                 before_code = before_path.read_text(encoding="utf-8")
                 after_code = code_block
@@ -64,7 +65,7 @@ class AgentProviderBase(BaseProvider):
                     "agent": self._config.name if self._config else "unknown",
                     "score": (
                         self._score_provider.run(
-                            {"file_name": str(before_path)}, session_id=self._session_id
+                            {"file_path": str(before_path)}, session_id=self._session_id
                         ).value
                         if self._score_provider else None
                     ),

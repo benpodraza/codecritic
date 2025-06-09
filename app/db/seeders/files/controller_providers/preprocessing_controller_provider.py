@@ -13,12 +13,13 @@ class PreprocessingControllerProvider(ControllerProviderBase):
                 "state": SYSTEM.LINTING,
                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
             }
+
         # Transition from SYSTEM.LINTING to SYSTEM.END based on system output decision
         elif current == SYSTEM.LINTING:
-            # Check the sys_output for decision and adjust transition reason accordingly
-            if sys_output and hasattr(sys_output, "output") and isinstance(sys_output.output, dict):
-                output_dict = sys_output.output
-                decision = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
+            # Check sys_output directly for decision
+            if sys_output:
+                # Directly check for 'decision' attribute in sys_output
+                decision = sys_output.decision if hasattr(sys_output, 'decision') else DECISION_TYPE.UNKNOWN
 
                 # Determine the transition reason based on the decision
                 if decision == DECISION_TYPE.ACCEPTED:
@@ -36,9 +37,9 @@ class PreprocessingControllerProvider(ControllerProviderBase):
                         "state": SYSTEM.END,
                         "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
                     }
-                
-                # Propagate the file path and decision to the next state
-                transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
+
+                # Propagate the decision and file path to the next state
+                transition["file_path"] = sys_output.file_path if hasattr(sys_output, 'file_path') else state.get("file_path")
                 transition["decision"] = decision
             else:
                 # Default case if no valid output is found

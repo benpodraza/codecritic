@@ -8,48 +8,39 @@ class CodeCriticProgramProvider(ProgramProviderBase):
         transition = {}
 
         if current == CONTROLLER.START:
-            transition = {
+            return {
                 "state": CONTROLLER.PREPROCESSING,
                 "reason": TRANSITION_REASON_TYPE.INITIALIZATION,
             }
 
         elif current == CONTROLLER.PREPROCESSING:
-            # Check the ctrl_output for decision and adjust transition reason accordingly
-            if ctrl_output and hasattr(ctrl_output, "output") and isinstance(ctrl_output.output, dict):
-                output_dict = ctrl_output.output
-                decision = output_dict.get("decision", DECISION_TYPE.UNKNOWN)
+            # Safely extract decision
+            decision = getattr(ctrl_output, "decision", DECISION_TYPE.UNKNOWN)
 
-                # Determine the transition reason based on the decision
-                if decision == DECISION_TYPE.ACCEPTED:
-                    transition = {
-                        "state": CONTROLLER.END,
-                        "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
-                    }
-                elif decision == DECISION_TYPE.REJECTED:
-                    transition = {
-                        "state": CONTROLLER.END,
-                        "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL,
-                    }
-                else:
-                    transition = {
-                        "state": CONTROLLER.END,
-                        "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
-                    }
-
-                # Propagate the file path and decision to the next state
-                transition["file_path"] = output_dict.get("file_path", state.get("file_path"))
-                transition["decision"] = decision
+            # Route based on decision
+            if decision == DECISION_TYPE.ACCEPTED:
+                transition = {
+                    "state": CONTROLLER.END,
+                    "reason": TRANSITION_REASON_TYPE.SUCCESSFUL,
+                }
+            elif decision == DECISION_TYPE.REJECTED:
+                transition = {
+                    "state": CONTROLLER.END,
+                    "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL,
+                }
             else:
-                # If no valid decision is found, assume a custom rule transition
                 transition = {
                     "state": CONTROLLER.END,
                     "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
                 }
 
+            transition["file_path"] = getattr(ctrl_output, "file_path", state.get("file_path"))
+            transition["decision"] = decision
+            return transition
+
         else:
-            transition = {
+            return {
                 "state": CONTROLLER.END,
                 "reason": TRANSITION_REASON_TYPE.CUSTOM_RULE,
             }
-
-        return transition
+    

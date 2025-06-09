@@ -80,6 +80,14 @@ class StateProviderBase(FSMProviderBase):
             current = state["state"]
 
             if step_count >= max_steps:
+                transition = self.transition(state, output)
+                state.update({
+                    **state,
+                    **transition,
+                    "state": STATE.END,
+                    "state_type": STATE_TYPE.END,
+                    "reason": f"Max steps ({max_steps}) reached"
+                })
                 return StateOutputSchema(
                     state=AGENT.END,
                     previous_state=current,
@@ -154,11 +162,11 @@ class StateProviderBase(FSMProviderBase):
                 continue
 
             provider = self.agent_providers.get(current.value)
-            agent_output = provider.run(input=state, session_id=session_id) if provider else None
+            output = provider.run(input=state, session_id=session_id) if provider else None
 
-            transition_result = self.transition(state, agent_output)
+            transition_result = self.transition(state, output)
 
-            new_file_path = transition_result.get("file_path") or getattr(agent_output, "file_path", None)
+            new_file_path = transition_result.get("file_path") or getattr(output, "file_path", None)
             if new_file_path:
                 new_file_path = Path(new_file_path).resolve()
                 current_path = Path(state["file_path"]).resolve()
@@ -167,10 +175,10 @@ class StateProviderBase(FSMProviderBase):
                     self._generated_files.append(new_file_path)
                     state["file_path"] = str(new_file_path)
 
-            if hasattr(agent_output, "decision") and agent_output.decision:
-                state["decision"] = agent_output.decision
+            if hasattr(output, "decision") and output.decision:
+                state["decision"] = output.decision
 
-            flat_output = agent_output.model_dump(exclude={"output"}) if hasattr(agent_output, "model_dump") else dict(agent_output or {})
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output or {})
 
             transition_metadata = transition_result.get("transition_metadata", {}) or {}
             transition_metadata.update({

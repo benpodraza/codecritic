@@ -79,6 +79,14 @@ class ProgramProviderBase(FSMProviderBase):
             current = state.get("state")
 
             if step_count >= max_steps:
+                transition = self.transition(state, output)
+                state.update({
+                    **state,
+                    **transition,
+                    "state": CONTROLLER.END,
+                    "state_type": STATE_TYPE.END,
+                    "reason": f"Max steps ({max_steps}) reached"
+                })
                 return ProgramOutputSchema(
                     state=CONTROLLER.END,
                     previous_state=current,
@@ -138,7 +146,7 @@ class ProgramProviderBase(FSMProviderBase):
                     state=CONTROLLER.END,
                     previous_state=state.get("_last_state", CONTROLLER.START),
                     state_type=STATE_TYPE.END,
-                    decision=final_decision or DECISION_TYPE.UNKNOWN,
+                    decision=final_decision or state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
                     max_steps=max_steps,
                     summary=state.get("reason", "Completed"),

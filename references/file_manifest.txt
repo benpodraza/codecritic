@@ -172,14 +172,7 @@ codecritic
    - test-runner.ps1
    - tests
       - __init__.py
-      - agent_generator_example.py
-      - codecritic_program_example.py
-      - codecritic_program_example_working.py
-      - context_example.py
-      - example1-11.py
-      - example1_working-11.py
-      - example_black_target.py
-      - example_lint_target.py
+      - complex_lint_task.py
       - notebooks
          - .mypy_cache
          - __init__.py
@@ -191,27 +184,7 @@ codecritic
          - system_development
             - bad_code.py
             - linting_system.ipynb
-      - preprocess_only.py
-      - preprocess_only_working.py
-      - prompt_context_example.py
-      - session_linked_execution.py
-      - session_linked_execution_working.py
-      - state_generator_example.py
-      - system_linting_example.py
-      - system_linting_example_working.py
+      - simple_lint_task.py
    - utilities.ipynb
    - working_files
-      - cb245bfc79d549c1865326f20ced50cf.py
-      - final_prog_1044555211.py
-      - session_linked_execution.__ctrl_1023146305.py
-      - session_linked_execution.__ctrl_2149463661.py
-      - session_linked_execution.__ctrl_2208574868.py
-      - session_linked_execution.__prog_1003088697.py
-      - session_linked_execution.__prog_1023146221.py
-      - session_linked_execution.__prog_1024318679.py
-      - session_linked_execution.__prog_2149463561.py
-      - session_linked_execution.__prog_2202420183.py
-      - session_linked_execution.__prog_2205431561.py
-      - session_linked_execution.__prog_2208574671.py
-      - session_linked_execution.__sys_1023146375.py
-      - session_linked_execution.__sys_2149463852.py
+      - complex_lint_task.py

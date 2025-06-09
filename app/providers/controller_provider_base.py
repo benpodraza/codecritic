@@ -67,7 +67,7 @@ class ControllerProviderBase(FSMProviderBase):
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", SYSTEM.START),
-            "decision": DECISION_TYPE.UNKNOWN,  # Default decision
+            "decision": DECISION_TYPE.UNKNOWN,
             "original_file": relative_path,
             "run_id": self._run_id,
         }
@@ -135,7 +135,7 @@ class ControllerProviderBase(FSMProviderBase):
                     state=SYSTEM.END,
                     previous_state=state.get("_last_state", SYSTEM.START),
                     state_type=STATE_TYPE.END,
-                    decision=state.get("decision", DECISION_TYPE.UNKNOWN), 
+                    decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=step_count,
                     max_steps=max_steps,
                     summary=state.get("summary", "Completed"),
@@ -158,21 +158,19 @@ class ControllerProviderBase(FSMProviderBase):
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, session_id=session_id)
 
-            new_file_path = getattr(output, "file_path", None)
-            if new_file_path:
-                new_file_path = Path(new_file_path).resolve()
-                current_path = Path(state["file_path"]).resolve()
-                if new_file_path != current_path:
-                    shutil.copy(new_file_path, current_path)
-                    self._generated_files.append(new_file_path)
-                    state["file_path"] = str(new_file_path)
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+            promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+            if "file_path" in output.output:
+                final_path = Path(output.output["file_path"]).resolve()
+                shutil.copy(final_path, promoted_path)
+                self._generated_files.append(promoted_path)
+                state["file_path"] = str(promoted_path)
 
-            # Check if the decision exists directly in the output, and if so, update the state
             if hasattr(output, "decision") and output.decision is not None:
                 state["decision"] = output.decision
 
             transition_result = self.transition(state, output)
-            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+            transition_result.pop("file_path", None)
 
             transition_metadata = transition_result.get("transition_metadata", {}) or {}
             transition_metadata.update({
@@ -188,10 +186,10 @@ class ControllerProviderBase(FSMProviderBase):
                 **state,
                 **transition_result,
                 "state": state_enum,
-                "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
                 "_last_state": current,
                 "state_output": flat_output,
             }
+
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

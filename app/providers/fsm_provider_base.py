@@ -30,6 +30,11 @@ class FSMProviderBase(BaseProvider):
 
     def transition(self, state: dict, result: dict | None) -> dict:
         next_state = self._transition(state, result)
+
+        required_keys = {"state", "reason"}
+        missing_keys = required_keys - next_state.keys()
+        if missing_keys:
+            raise ValueError(f"❌ Transition result missing keys: {missing_keys}\nReturned: {next_state}")
         state["steps"] = state.get("steps", 0) + 1
 
         # Ensure original_file is carried forward
@@ -52,7 +57,6 @@ class FSMProviderBase(BaseProvider):
         is_terminal = next_state.get("state_type") == "end" or next_state.get("state") == "end"
 
         decision = getattr(result, "decision", DECISION_TYPE.UNKNOWN)
-
         # Log the state transition with relevant details
         self.logger.write(
             LOG_TYPE.STATE_TRANSITION,

@@ -1,53 +1,44 @@
-import json
-import uuid
+import json, uuid
 from datetime import datetime
 
-def generate_uuid() -> str:
-    """Generates a unique identifier."""
+def generate_uuid():
     return str(uuid.uuid4())
 
-def log_message(message: str, log_level: str = "INFO") -> None:
-    """Logs a message with a specified log level."""
-    timestamp = datetime.now().isoformat()
-    print(f"[{timestamp}] [{log_level}] {message}")
+def log_message(message, log_level = "INFO"):
+  timestamp=datetime.now().isoformat()
+  print(f"[{timestamp}] [{log_level}] {message}")
 
-def calculate_area(radius: float) -> float:
-    """Calculates the area of a circle."""
+def calculate_area(radius):
     if radius <= 0:
-        log_message("Invalid radius value. Must be greater than zero.", "ERROR")
-        return 0.0
-    return 3.14159 * (radius ** 2)
+      log_message("Invalid radius value. Must be greater than zero.", "ERROR")
+      return 0
+    return 3.14159 * radius ** 2
 
-def save_data_to_json(data: dict, file_name: str) -> None:
-    """Saves data as a JSON file."""
+def save_data_to_json(data, file_name):
     try:
-        with open(file_name, "w") as f:
-            json.dump(data, f, indent=4)
-        log_message(f"Data saved to {file_name}")
+      with open(file_name, "w") as f:
+          json.dump(data, f)
+      log_message("Data saved to " + file_name)
     except Exception as e:
-        log_message(f"Failed to save data: {str(e)}", "ERROR")
+      log_message("Failed to save data: " + str(e), "ERROR")
 
-def read_data_from_json(file_name: str) -> dict:
-    """Reads data from a JSON file."""
+def read_data_from_json(file_name):
     try:
-        with open(file_name, "r") as f:
+        with open(file_name) as f:
             return json.load(f)
-    except Exception as e:
-        log_message(f"Failed to read data: {str(e)}", "ERROR")
-        return {}
+    except:
+        log_message("Failed to read data", "ERROR")
+        return None
 
 def main():
-    radius = 5
-    area = calculate_area(radius)
-    if area > 0:
-        log_message(f"Area of circle with radius {radius} is {area:.2f}")
-    
-    # Save and read example data
-    data = {"id": generate_uuid(), "name": "John Doe", "age": 30}
-    file_name = "data.json"
-    save_data_to_json(data, file_name)
-    loaded_data = read_data_from_json(file_name)
-    log_message(f"Loaded data: {loaded_data}")
+    r = 5
+    a = calculate_area(r)
+    if a > 0: log_message("Area is: " + str(a))
 
-if __name__ == "__main__":
-    main()
+    d = {"id": generate_uuid(),"name":"John","age":30}
+    f = "data.json"
+    save_data_to_json(d, f)
+    loaded = read_data_from_json(f)
+    log_message("Loaded: " + str(loaded))
+
+if __name__=="__main__": main()

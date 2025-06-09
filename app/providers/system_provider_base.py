@@ -5,10 +5,10 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.enums.state_enums import STATE
 from app.providers.fsm_provider_base import FSMProviderBase
-from app.db.schemas import SystemOutputSchema
+from app.db.schemas import FSMOutputSchema, SystemOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 
@@ -85,7 +85,7 @@ class SystemProviderBase(FSMProviderBase):
                     **transition,
                     "state": STATE.END,
                     "state_type": STATE_TYPE.END,
-                    "reason": f"Max steps ({max_steps}) reached"
+                    "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL
                 })
                 return SystemOutputSchema(
                     state=STATE.END,
@@ -115,6 +115,7 @@ class SystemProviderBase(FSMProviderBase):
                 shutil.copy(Path(best_file), temp_path)
                 state["file_path"] = str(temp_path)
 
+                # Clean up old temporary files
                 for f in Path("working_files").glob("temp_sys_*.py"):
                     if f.resolve() != temp_path.resolve():
                         try:
@@ -182,14 +183,17 @@ class SystemProviderBase(FSMProviderBase):
             raw_state = transition_result.get("state", current)
             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
 
+            transition_result.pop("file_path", None)
+
             state = {
                 **state,
                 **transition_result,
                 "state": state_enum,
-                "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
                 "_last_state": current,
                 "state_output": flat_output,
             }
+
+
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

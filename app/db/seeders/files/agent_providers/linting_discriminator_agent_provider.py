@@ -93,10 +93,12 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
             chosen_code = before_code
             score = before_score
 
-        # Update the file naming convention and clean up previous files
+        # Promote improved file to a working path (if chosen_code came from after_code)
         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
         temp_path.parent.mkdir(parents=True, exist_ok=True)
-        temp_path.write_text(chosen_code, encoding="utf-8")
+
+        source_path = after_path if chosen_code == after_code else before_path
+        shutil.copyfile(source_path, temp_path)
 
         return AgentOutputSchema(
             decision=decision,

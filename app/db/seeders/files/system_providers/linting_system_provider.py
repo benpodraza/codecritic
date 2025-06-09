@@ -99,4 +99,11 @@ class LintingSystemProvider(SystemProviderBase):
                     "file_path": state.get("file_path")
                 }
 
+        if not transition:
+            transition = {
+                "state": STATE.END,
+                "reason": TRANSITION_REASON_TYPE.GENERATING,
+                "decision": result if isinstance(result, DECISION_TYPE) else DECISION_TYPE.UNKNOWN
+            }
+
         return transition

@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 from typing import Dict
 
-from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.enums.state_enums import STATE
 from app.enums.agent_enums import AGENT
 from app.providers.fsm_provider_base import FSMProviderBase
@@ -86,7 +86,7 @@ class StateProviderBase(FSMProviderBase):
                     **transition,
                     "state": STATE.END,
                     "state_type": STATE_TYPE.END,
-                    "reason": f"Max steps ({max_steps}) reached"
+                    "reason": TRANSITION_REASON_TYPE.UNSUCCESSFUL
                 })
                 return StateOutputSchema(
                     state=AGENT.END,
@@ -120,7 +120,7 @@ class StateProviderBase(FSMProviderBase):
                                 f.unlink()
                             except Exception:
                                 pass
-                    
+
                     for f in Path("working_files").glob("temp_agent_*.py"):
                         if f.resolve() != temp_path.resolve():
                             try:
@@ -166,19 +166,19 @@ class StateProviderBase(FSMProviderBase):
 
             transition_result = self.transition(state, output)
 
-            new_file_path = transition_result.get("file_path") or getattr(output, "file_path", None)
-            if new_file_path:
-                new_file_path = Path(new_file_path).resolve()
-                current_path = Path(state["file_path"]).resolve()
-                if new_file_path != current_path:
-                    shutil.copy(new_file_path, current_path)
-                    self._generated_files.append(new_file_path)
-                    state["file_path"] = str(new_file_path)
+            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output or {})
+            agent_file_path = flat_output.get("file_path")
+
+            if agent_file_path:
+                src_path = Path(agent_file_path).resolve()
+                if src_path.exists():
+                    promoted_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                    shutil.copy(src_path, promoted_path)
+                    self._generated_files.append(promoted_path)
+                    state["file_path"] = str(promoted_path)
 
             if hasattr(output, "decision") and output.decision:
                 state["decision"] = output.decision
-
-            flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output or {})
 
             transition_metadata = transition_result.get("transition_metadata", {}) or {}
             transition_metadata.update({
@@ -190,14 +190,17 @@ class StateProviderBase(FSMProviderBase):
             raw_state = transition_result.get("state", current)
             state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
 
+            transition_result.pop("file_path", None)
+
             state = {
                 **state,
                 **transition_result,
                 "state": state_enum,
-                "file_path": transition_result.get("file_path") or state.get("file_path"),
                 "_last_state": current,
                 "state_output": flat_output,
             }
+
+
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

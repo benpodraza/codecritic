@@ -41,13 +41,15 @@ class LintingScoreProvider(ScoreProviderBase):
             except Exception as e:
                 return 0.0, []
 
-            score = 1.0 if parsed.get("return_code", 0) else 0.0
+            violations = parsed.get("violations", []) or []
+            score = 1.0 - min(1.0, len(violations) / 10)  # Granular scaling: 10 violations -> 0.0 score
+
             if collect_violations:
-                return score, parsed.get("violations", []) or []
+                return score, violations
             else:
                 return score, []
 
-        # Run each tool exactly once
+        # Run each tool exactly once and collect violations
         ruff_score, ruff_violations = run_tool("ruff", collect_violations=True)
         black_score, _ = run_tool("black", collect_violations=False)
         mypy_score, _ = run_tool("mypy", collect_violations=False)
@@ -56,9 +58,10 @@ class LintingScoreProvider(ScoreProviderBase):
         weighted = round(ruff_score * 0.7 + black_score * 0.2 + mypy_score * 0.1, 3)
 
         components = {
-            "ruff": ruff_score,
-            "black": black_score,
-            "mypy": mypy_score
+            "ruff_score": ruff_score,
+            "ruff_violations": len(ruff_violations),
+            "black_score": black_score,
+            "mypy_score": mypy_score,
         }
 
         # Top Ruff Violations

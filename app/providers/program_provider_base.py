@@ -42,7 +42,6 @@ class ProgramProviderBase(FSMProviderBase):
         incoming_file = input.get("file_path")
         self.incoming_file = incoming_file
 
-        # Optional output path from input dictionary
         output_path = input.get("output_path", "working_files")
 
         src = Path(incoming_file).resolve()
@@ -102,7 +101,6 @@ class ProgramProviderBase(FSMProviderBase):
             if current == CONTROLLER.END:
                 final_decision = state.get("decision")
                 nested = state.get("output") or {}
-
                 if isinstance(nested, dict):
                     final_decision = final_decision or nested.get("decision")
 
@@ -114,14 +112,11 @@ class ProgramProviderBase(FSMProviderBase):
                     session_id=session_id
                 )
 
-                # If an output_path is provided, use that path, otherwise default to working_files
                 final_path = Path(output_path) / Path(self.incoming_file).name
-  
                 shutil.copy(Path(best_file).resolve(), final_path)
                 state["file_path"] = str(final_path)
                 state["decision"] = final_decision
 
-                # Delete old files in working directory
                 for f in Path("working_files").glob("temp_*.py"):
                     if f.resolve() != final_path.resolve():
                         try:
@@ -169,8 +164,16 @@ class ProgramProviderBase(FSMProviderBase):
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, session_id=session_id)
 
-            transition_result = self.transition(state, output)
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+            promoted_path = Path("working_files") / f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+            if "file_path" in output.output:
+                src_path = Path(output.output["file_path"]).resolve()
+                shutil.copy(src_path, promoted_path)
+                self._generated_files.append(promoted_path)
+                state["file_path"] = str(promoted_path)
+
+            transition_result = self.transition(state, output)
+            transition_result.pop("file_path", None)
 
             transition_metadata = transition_result.get("transition_metadata", {}) or {}
             transition_metadata.update({
@@ -183,10 +186,10 @@ class ProgramProviderBase(FSMProviderBase):
                 **state,
                 **transition_result,
                 "state": CONTROLLER(transition_result.get("state", current)),
-                "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
                 "_last_state": current,
                 "state_output": flat_output,
             }
+
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

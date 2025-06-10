@@ -1,17 +1,14 @@
 import subprocess
 import sys
 import re
-
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
-
 
 class BlackToolProvider(ToolProviderBase):
     def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
         check = input.get("check", False)
 
-        # Build the Black command
         if check:
             cmd = [
                 sys.executable,
@@ -41,27 +38,17 @@ class BlackToolProvider(ToolProviderBase):
         metrics: dict[str, int | None] = {}
 
         if check:
-            # Black’s exit codes in check mode:
-            #   1 = clean (nothing to reformat)
-            #   0 = would reformat
-            #  ≥2 = internal error
             if proc.returncode == 0:
                 return_code = 1
-                summary = "Black check passed (no formatting needed)"
-                metrics = {
-                    "files_checked": 1,
-                    "files_reformatted": 0,
-                    "lines_changed": 0,
-                }
+                lines_changed = 0
+                files_reformatted = 0
+                summary = f"✅ Black passed: {files_reformatted} reformats"
             elif proc.returncode == 1:
                 return_code = 0
-                summary = "Black check failed"
                 diff_hunks = len(re.findall(r"^@@", stdout, re.MULTILINE))
-                metrics = {
-                    "files_checked": 1,
-                    "files_reformatted": 1,
-                    "lines_changed": diff_hunks,
-                }
+                lines_changed = diff_hunks
+                files_reformatted = 1
+                summary = f"❌ Black failed: {files_reformatted} file, {lines_changed} lines reformatted"
                 violations = [f"Would reformat {target}"]
             else:
                 raise RuntimeError(
@@ -71,14 +58,18 @@ class BlackToolProvider(ToolProviderBase):
             if proc.returncode != 0:
                 raise RuntimeError(f"Black formatting error: {stderr or stdout}")
             return_code = 1
-            summary = "Black formatting applied"
-            metrics = {
-                "files_checked": 1,
-                "files_reformatted": 1,
-                "lines_changed": None,
-            }
+            lines_changed = None
+            files_reformatted = 1
+            summary = f"✅ Black formatted {files_reformatted} file"
 
-        response = ToolOutputSchema(
+        metrics = {
+            "files_checked": 1,
+            "files_reformatted": files_reformatted,
+            "lines_changed": lines_changed,
+            "raw_return_code": proc.returncode
+        }
+
+        return ToolOutputSchema(
             return_code=return_code,
             stdout=stdout or None,
             stderr=stderr or None,
@@ -86,4 +77,3 @@ class BlackToolProvider(ToolProviderBase):
             metrics=metrics or None,
             summary=summary,
         )
-        return response

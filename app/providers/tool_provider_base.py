@@ -15,7 +15,18 @@ class ToolProviderBase(BaseProvider):
     """Base class for tool providers with optional context/score wiring."""
 
     def _run_provider(self, input: dict) -> ToolOutputSchema:
-        return self._run(input)
+        output = self._run(input)
+
+        if not isinstance(output, ToolOutputSchema):
+            raise TypeError(f"Expected ToolOutputSchema, got {type(output).__name__}")
+        if output.return_code is None:
+            raise ValueError("Tool output is missing `return_code`")
+        if output.summary is None:
+            output.summary = "⚠️ Missing summary"
+        if output.metrics is None:
+            output.metrics = {}
+
+        return output
 
     def set_context_provider(self, provider: ContextProviderBase) -> None:
         self.context_provider = provider

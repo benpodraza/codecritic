@@ -1,6 +1,5 @@
 import subprocess
 import sys
-import json
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
@@ -8,7 +7,6 @@ class MypyToolProvider(ToolProviderBase):
     def _run(self, input: dict) -> ToolOutputSchema:
         target = input.get("target")
 
-        # Use strictest mypy options available inline
         cmd = [
             sys.executable, "-m", "mypy", target,
             "--strict",
@@ -34,21 +32,27 @@ class MypyToolProvider(ToolProviderBase):
 
         if raw_code == 0:
             norm_code = 1
-            summary = "Mypy strict check passed"
-            metrics = {"error_count": 0}
+            error_count = 0
         elif raw_code == 1:
             norm_code = 0
-            summary = "Mypy strict violations detected"
             violations = [line.strip() for line in raw_stdout.splitlines() if line.strip()]
-            metrics = {"error_count": len(violations)}
+            error_count = len(violations)
         else:
             raise RuntimeError(f"Mypy execution error ({raw_code}): {raw_stderr or raw_stdout}")
+
+        summary = (
+            f"✅ Mypy passed: {error_count} errors"
+            if norm_code == 1
+            else f"❌ Mypy failed: {error_count} errors"
+        )
+
+        metrics = {"error_count": error_count, "raw_return_code": raw_code}
 
         return ToolOutputSchema(
             return_code=norm_code,
             stdout=raw_stdout or None,
             stderr=raw_stderr or None,
             violations=violations or None,
-            metrics=metrics or None,
-            summary=summary
+            metrics=metrics,
+            summary=summary,
         )

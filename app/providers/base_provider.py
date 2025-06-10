@@ -76,10 +76,17 @@ class BaseProvider(LoggingMixin):
         try:
             if hasattr(output, "model_dump"):
                 dumped = output.model_dump()
+
+                # Flatten nested dicts one level deep
+                flat_dump = {}
                 for k, v in dumped.items():
                     if isinstance(v, dict):
-                        dumped[k] = json.dumps(v, default=str)
-                output_str = json.dumps(dumped, default=str)
+                        for sub_k, sub_v in v.items():
+                            flat_dump[f"{k}.{sub_k}"] = sub_v
+                    else:
+                        flat_dump[k] = v
+
+                output_str = json.dumps(flat_dump, default=str)
                 output_schema = output.__class__.__name__
             else:
                 output_str = json.dumps(output, default=str)

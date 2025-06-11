@@ -315,6 +315,9 @@ class AgentEngineOutput(BaseModel):
     cost_usd: float
     snapshot_id: Optional[str] = None
     summary: Optional[str] = None
+    code: Optional[str] = None 
+    agent_decision: Optional[str] = None
+    conversation_log_entry: Optional[str] = None
 
 
 class AgentOutputSchema(BaseModel):

@@ -99,6 +99,7 @@ codecritic
          - scoring_enums.py
          - state_enums.py
          - system_enums.py
+         - tool_enums.py
       - factories
          - __init__.py
          - agent_engine_provider_factory.py
@@ -152,9 +153,14 @@ codecritic
             - __init__.py
             - create_schema.py
          - select_best_file_by_score.py
+   - data
+      - backup
+         - provider_logs.csv
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
+   - file_lineage_tree.gv
+   - file_lineage_tree.gv.png
    - htmlcov
    - lib
    - mypy.ini
@@ -169,22 +175,61 @@ codecritic
       - flattened_tests.txt
    - requirements.txt
    - setup.sh
+   - temp.csv
+   - temp2.csv
    - test-runner.ps1
    - tests
       - __init__.py
+      - backup
+         - provider_logs.csv
       - complex_lint_task.py
+      - impossible_lint_task.py
       - notebooks
          - .mypy_cache
          - __init__.py
          - eda
-            - eda_provider_log.ipynb
-            - eda_state_transition_log.ipynb
+            - data_generator.ipynb
+            - multi_run
+               - eda_agent_engine_providers.ipynb
+               - eda_tool_providers.ipynb
+            - single_run
+               - eda_provider_log.ipynb
+               - eda_state_transition_log.ipynb
          - functional_tests
          - insights
          - system_development
             - bad_code.py
             - linting_system.ipynb
       - simple_lint_task.py
+      - test_files
+         - bad_indentation.py
+         - complex_function.py
+         - long_line.py
+         - mixed_tabs_spaces.py
+         - no_doc_type.py
+         - off_by_one.py
+         - shadow_builtin.py
+         - unused_import.py
+         - valid_simple.py
+         - wrong_type_hint.py
    - utilities.ipynb
    - working_files
-      - complex_lint_task.py
+      - bad_indentation.py
+      - complex_function..__sys_1935208318.py
+      - complex_function.py
+      - long_line..__sys_1935557288.py
+      - long_line.py
+      - mixed_tabs_spaces..__sys_1936355819.py
+      - mixed_tabs_spaces.py
+      - no_doc_type..__sys_1937087023.py
+      - no_doc_type.py
+      - off_by_one..__sys_1937453274.py
+      - off_by_one.py
+      - shadow_builtin..__sys_1938286636.py
+      - shadow_builtin.py
+      - unused_import..__sys_1939074903.py
+      - unused_import.py
+      - valid_simple..__sys_1940090361.py
+      - valid_simple.py
+      - wrong_type_hint..__sys_1940447371.py
+      - wrong_type_hint.py

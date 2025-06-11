@@ -654,64 +654,67 @@
 # 315     cost_usd: float
 # 316     snapshot_id: Optional[str] = None
 # 317     summary: Optional[str] = None
-# 318 
-# 319 
-# 320 class AgentOutputSchema(BaseModel):
-# 321     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 322     score: Optional[float] = None
-# 323     response: Optional[str] = None
-# 324     log: Optional[str] = None
-# 325     file_path: Optional[str] = None
-# 326 
-# 327 
-# 328 class ContextOutputSchema(BaseModel):
-# 329     context: Dict[str, Any]
-# 330     summary: Optional[str] = None
-# 331 
-# 332 
-# 333 class PromptOutputSchema(BaseModel):
-# 334     prompt: str
-# 335     summary: Optional[str] = None
-# 336 
-# 337 
-# 338 class FSMOutputSchema(BaseModel):
-# 339     state: STATE
-# 340     previous_state: Optional[STATE] = None
-# 341     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
-# 342     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
-# 343     steps: int = Field(..., ge=0)
-# 344     max_steps: int = Field(..., gt=0)
-# 345     summary: Optional[str] = None
-# 346     output: Optional[Dict[str, Any]] = None
-# 347     provider_name: Optional[str] = None
-# 348 
-# 349 class SystemOutputSchema(FSMOutputSchema): pass
-# 350 
-# 351 class StateOutputSchema(FSMOutputSchema): 
-# 352     previous_state: Optional[AGENT] = None
-# 353 class ProgramOutputSchema(FSMOutputSchema):
-# 354     previous_state: Optional[CONTROLLER] = None
-# 355 class ControllerOutputSchema(FSMOutputSchema): 
-# 356     previous_state: Optional[SYSTEM] = None
-# 357 
-# 358 
-# 359 #  DTOs
+# 318     code: Optional[str] = None 
+# 319     agent_decision: Optional[str] = None
+# 320     conversation_log_entry: Optional[str] = None
+# 321 
+# 322 
+# 323 class AgentOutputSchema(BaseModel):
+# 324     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 325     score: Optional[float] = None
+# 326     response: Optional[str] = None
+# 327     log: Optional[str] = None
+# 328     file_path: Optional[str] = None
+# 329 
+# 330 
+# 331 class ContextOutputSchema(BaseModel):
+# 332     context: Dict[str, Any]
+# 333     summary: Optional[str] = None
+# 334 
+# 335 
+# 336 class PromptOutputSchema(BaseModel):
+# 337     prompt: str
+# 338     summary: Optional[str] = None
+# 339 
+# 340 
+# 341 class FSMOutputSchema(BaseModel):
+# 342     state: STATE
+# 343     previous_state: Optional[STATE] = None
+# 344     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
+# 345     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
+# 346     steps: int = Field(..., ge=0)
+# 347     max_steps: int = Field(..., gt=0)
+# 348     summary: Optional[str] = None
+# 349     output: Optional[Dict[str, Any]] = None
+# 350     provider_name: Optional[str] = None
+# 351 
+# 352 class SystemOutputSchema(FSMOutputSchema): pass
+# 353 
+# 354 class StateOutputSchema(FSMOutputSchema): 
+# 355     previous_state: Optional[AGENT] = None
+# 356 class ProgramOutputSchema(FSMOutputSchema):
+# 357     previous_state: Optional[CONTROLLER] = None
+# 358 class ControllerOutputSchema(FSMOutputSchema): 
+# 359     previous_state: Optional[SYSTEM] = None
 # 360 
-# 361 class Snapshot(BaseModel):
-# 362     timestamp: datetime
-# 363     file: str
-# 364     score: float
-# 365     decision: DECISION_TYPE
-# 366 
-# 367 class SystemState(BaseModel):
-# 368     system: str
-# 369     file_path: str
-# 370     working_file: str
-# 371     final_file: Optional[str] = None
-# 372     snapshots: List[Snapshot]
-# 373     state: Optional[str] = "active"
-# 374 
-# 375 
+# 361 
+# 362 #  DTOs
+# 363 
+# 364 class Snapshot(BaseModel):
+# 365     timestamp: datetime
+# 366     file: str
+# 367     score: float
+# 368     decision: DECISION_TYPE
+# 369 
+# 370 class SystemState(BaseModel):
+# 371     system: str
+# 372     file_path: str
+# 373     working_file: str
+# 374     final_file: Optional[str] = None
+# 375     snapshots: List[Snapshot]
+# 376     state: Optional[str] = "active"
+# 377 
+# 378 
 
 
 # db\seed.py
@@ -1435,82 +1438,97 @@
 # 7 import contextlib
 # 8 import sys
 # 9 import io
-# 10 
-# 11 from app.providers.score_provider_base import ScoreProviderBase
-# 12 from app.db.schemas import ScoreOutputSchema
-# 13 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-# 14 
-# 15 
-# 16 @contextlib.contextmanager
-# 17 def suppress_output():
-# 18     original_stdout = sys.stdout
-# 19     original_stderr = sys.stderr
-# 20     sys.stdout = io.StringIO()
-# 21     sys.stderr = io.StringIO()
-# 22     try:
-# 23         yield
-# 24     finally:
-# 25         sys.stdout = original_stdout
-# 26         sys.stderr = original_stderr
-# 27 
+# 10 import uuid
+# 11 
+# 12 from app.providers.score_provider_base import ScoreProviderBase
+# 13 from app.db.schemas import ScoreOutputSchema
+# 14 from app.enums.scoring_enums import SCORING_METRIC_TYPE
+# 15 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+# 16 
+# 17 @contextlib.contextmanager
+# 18 def suppress_output():
+# 19     original_stdout = sys.stdout
+# 20     original_stderr = sys.stderr
+# 21     sys.stdout = io.StringIO()
+# 22     sys.stderr = io.StringIO()
+# 23     try:
+# 24         yield
+# 25     finally:
+# 26         sys.stdout = original_stdout
+# 27         sys.stderr = original_stderr
 # 28 
-# 29 class CodeStabilityScoreProvider(ScoreProviderBase):
-# 30     def _run(self, input: dict) -> ScoreOutputSchema:
-# 31         file_name = Path(input["file_path"]).resolve()
-# 32         components: Dict[str, bool] = {}
-# 33 
-# 34         try:
-# 35             source_code = file_name.read_text(encoding="utf-8")
-# 36             components["utf8_valid"] = True
-# 37         except Exception:
-# 38             components["utf8_valid"] = False
-# 39             return self._final_score(components)
-# 40 
-# 41         with suppress_output():
-# 42             try:
-# 43                 ast.parse(source_code)
-# 44                 components["syntax_ok"] = True
-# 45             except SyntaxError:
-# 46                 components["syntax_ok"] = False
-# 47                 return self._final_score(components)
-# 48 
-# 49             try:
-# 50                 compile(source_code, str(file_name), "exec")
-# 51                 components["can_compile"] = True
-# 52             except Exception:
-# 53                 components["can_compile"] = False
-# 54                 return self._final_score(components)
-# 55 
-# 56             try:
-# 57                 py_compile.compile(str(file_name), doraise=True)
-# 58                 components["py_compile_ok"] = True
-# 59             except Exception:
-# 60                 components["py_compile_ok"] = False
+# 29 
+# 30 class CodeStabilityScoreProvider(ScoreProviderBase):
+# 31     def _run(self, input: dict) -> ScoreOutputSchema:
+# 32         original_path = Path(input["file_path"]).resolve()
+# 33         components: Dict[str, bool] = {}
+# 34 
+# 35         #  Read raw code and verify UTF-8
+# 36         try:
+# 37             raw_code = original_path.read_text(encoding="utf-8")
+# 38             components["utf8_valid"] = True
+# 39         except Exception:
+# 40             components["utf8_valid"] = False
+# 41             return self._final_score(components)
+# 42 
+# 43         #  Strip footer annotations without modifying actual code structure
+# 44         stripped_code, _ = split_code_and_notes(raw_code)
+# 45 
+# 46         #  Always write a clean temp file with newline termination
+# 47         safe_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
+# 48         safe_path.write_text(stripped_code.rstrip() + "\n", encoding="utf-8")
+# 49 
+# 50         #  Reload stripped_code from disk to ensure parity with lint input
+# 51         stripped_code = safe_path.read_text(encoding="utf-8")
+# 52 
+# 53         with suppress_output():
+# 54             #  Syntax and compile check
+# 55             try:
+# 56                 compile(stripped_code, str(safe_path), "exec")
+# 57                 ast.parse(stripped_code)
+# 58                 components["syntax_ok"] = True
+# 59             except (SyntaxError, IndentationError):
+# 60                 components["syntax_ok"] = False
 # 61                 return self._final_score(components)
 # 62 
-# 63             try:
-# 64                 spec = importlib.util.spec_from_file_location("mod", str(file_name))
-# 65                 module = importlib.util.module_from_spec(spec)
-# 66                 spec.loader.exec_module(module)  #  type: ignore
-# 67                 components["can_import"] = True
-# 68             except Exception:
-# 69                 components["can_import"] = False
-# 70                 return self._final_score(components)
-# 71 
-# 72         return self._final_score(components)
-# 73 
-# 74     def _final_score(self, components: Dict[str, bool]) -> ScoreOutputSchema:
-# 75         critical_keys = ["utf8_valid", "syntax_ok", "can_compile", "py_compile_ok", "can_import"]
-# 76         passed = all(components.get(k, False) for k in critical_keys)
-# 77         value = 1.0 if passed else 0.0
-# 78         summary = "✅ Executable" if passed else "❌ Not executable"
-# 79 
-# 80         return ScoreOutputSchema(
-# 81             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
-# 82             value=value,
-# 83             components={k: float(v) for k, v in components.items()},
-# 84             summary=summary
-# 85         )
+# 63             #  py_compile
+# 64             try:
+# 65                 py_compile.compile(str(safe_path), doraise=True)
+# 66                 components["py_compile_ok"] = True
+# 67             except Exception:
+# 68                 components["py_compile_ok"] = False
+# 69                 return self._final_score(components)
+# 70 
+# 71             #  Import stripped code
+# 72             try:
+# 73                 spec = importlib.util.spec_from_file_location("mod", str(safe_path))
+# 74                 module = importlib.util.module_from_spec(spec)
+# 75                 spec.loader.exec_module(module)  #  type: ignore
+# 76                 components["can_import"] = True
+# 77             except Exception:
+# 78                 components["can_import"] = False
+# 79                 return self._final_score(components)
+# 80 
+# 81         #  Special check for Ruff parse error
+# 82         ruff_parse_error = "Failed to parse" in stripped_code
+# 83         components["ruff_parse_error"] = not ruff_parse_error
+# 84         if ruff_parse_error:
+# 85             return self._final_score(components)
+# 86 
+# 87         return self._final_score(components)
+# 88 
+# 89     def _final_score(self, components: Dict[str, bool]) -> ScoreOutputSchema:
+# 90         critical_keys = ["utf8_valid", "syntax_ok", "py_compile_ok", "can_import", "ruff_parse_error"]
+# 91         passed = all(components.get(k, False) for k in critical_keys)
+# 92         value = 1.0 if passed else 0.0
+# 93         summary = "✅ Executable" if passed else "❌ Not executable"
+# 94 
+# 95         return ScoreOutputSchema(
+# 96             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
+# 97             value=value,
+# 98             components={k: float(v) for k, v in components.items()},
+# 99             summary=summary
+# 100         )
 
 
 # db\seeders\files\score_providers\linting_score_provider.py
@@ -1523,77 +1541,77 @@
 # 6 from pathlib import Path
 # 7 import uuid
 # 8 
-# 9 
-# 10 class LintingScoreProvider(ScoreProviderBase):
-# 11     def _run(self, input: dict) -> ScoreOutputSchema:
-# 12         file_path = input["file_path"]
-# 13         session_id = input.get("session_id", self._session_id)
-# 14 
-# 15         #  🧠 Materialize code to disk if file_path is code content or invalid path
-# 16         if not Path(file_path).exists() or "\n" in file_path or "def " in file_path:
-# 17             temp_file = Path("experiments/snapshots") / f"{uuid.uuid4().hex}.py"
-# 18             temp_file.parent.mkdir(parents=True, exist_ok=True)
-# 19             temp_file.write_text(file_path, encoding="utf-8")
-# 20             file_path = str(temp_file)
-# 21 
-# 22         file_path = Path(file_path).resolve()
-# 23         full_code = file_path.read_text(encoding="utf-8")
-# 24         clean_code, _ = split_code_and_notes(full_code)
-# 25 
-# 26         #  Write stripped code to temp file for evaluation
-# 27         stripped_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
-# 28         stripped_path.parent.mkdir(parents=True, exist_ok=True)
-# 29         stripped_path.write_text(clean_code.rstrip() + "\n", encoding="utf-8")
-# 30 
-# 31         #  Build a dict of available tools, keyed by exactly tool.config.name.lower()
-# 32         available = {tool._config.name.lower(): tool for tool in self.tool_providers}
+# 9 class LintingScoreProvider(ScoreProviderBase):
+# 10     def _run(self, input: dict) -> ScoreOutputSchema:
+# 11         file_path = input["file_path"]
+# 12         session_id = input.get("session_id", self._session_id)
+# 13 
+# 14         if not Path(file_path).exists() or "\n" in file_path or "def " in file_path:
+# 15             temp_file = Path("experiments/snapshots") / f"{uuid.uuid4().hex}.py"
+# 16             temp_file.parent.mkdir(parents=True, exist_ok=True)
+# 17             temp_file.write_text(file_path, encoding="utf-8")
+# 18             file_path = str(temp_file)
+# 19 
+# 20         file_path = Path(file_path).resolve()
+# 21         full_code = file_path.read_text(encoding="utf-8")
+# 22         clean_code, _ = split_code_and_notes(full_code)
+# 23 
+# 24         stripped_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
+# 25         stripped_path.parent.mkdir(parents=True, exist_ok=True)
+# 26         stripped_path.write_text(clean_code.rstrip() + "\n", encoding="utf-8")
+# 27 
+# 28         available = {tool._config.name.lower(): tool for tool in self.tool_providers}
+# 29 
+# 30         def run_tool(name: str, collect_violations: bool = False):
+# 31             if name not in available:
+# 32                 return 0.0, []
 # 33 
-# 34         def run_tool(name: str, collect_violations: bool = False):
-# 35             if name not in available:
-# 36                 return 0.0, []
-# 37 
-# 38             try:
-# 39                 raw = available[name].run({"target": str(stripped_path), "check": True}, session_id=session_id)
-# 40                 parsed = raw.model_dump()
-# 41             except Exception as e:
-# 42                 return 0.0, []
+# 34             try:
+# 35                 raw = available[name].run({"target": str(stripped_path), "check": True}, session_id=session_id)
+# 36                 parsed = raw.model_dump()
+# 37             except Exception as e:
+# 38                 return 0.0, []
+# 39 
+# 40             #  Special case: Ruff parse error
+# 41             if parsed.get("metrics", {}).get("parse_error"):
+# 42                 return 0.0, ["<parse_error>"]
 # 43 
 # 44             violations = parsed.get("violations", []) or []
-# 45             score = 1.0 - min(1.0, len(violations) / 10)  #  Granular scaling: 10 violations -> 0.0 score
+# 45             score = 1.0 - min(1.0, len(violations) / 10)
 # 46 
 # 47             if collect_violations:
 # 48                 return score, violations
 # 49             else:
 # 50                 return score, []
 # 51 
-# 52         #  Run each tool exactly once and collect violations
-# 53         ruff_score, ruff_violations = run_tool("ruff", collect_violations=True)
-# 54         black_score, _ = run_tool("black", collect_violations=False)
-# 55         mypy_score, _ = run_tool("mypy", collect_violations=False)
-# 56 
-# 57         #  Compute weighted score
-# 58         weighted = round(ruff_score * 0.7 + black_score * 0.2 + mypy_score * 0.1, 3)
-# 59 
-# 60         components = {
-# 61             "ruff_score": ruff_score,
-# 62             "ruff_violations": len(ruff_violations),
-# 63             "black_score": black_score,
-# 64             "mypy_score": mypy_score,
-# 65         }
-# 66 
-# 67         #  Top Ruff Violations
-# 68         top_violations = []
-# 69         if ruff_violations:
-# 70             freq = {}
-# 71             for code in ruff_violations:
-# 72                 freq[code] = freq.get(code, 0) + 1
-# 73             sorted_codes = sorted(freq.items(), key=lambda kv: kv[1], reverse=True)
-# 74             top_violations = [code for code, _ in sorted_codes[:3]]
-# 75 
-# 76         summary = (
-# 77             f"Top Ruff Violations: {', '.join(top_violations)}"
-# 78             if top_violations else "No Ruff violations"
-# 79         )
+# 52         ruff_score, ruff_violations = run_tool("ruff", collect_violations=True)
+# 53         black_score, _ = run_tool("black", collect_violations=False)
+# 54         mypy_score, _ = run_tool("mypy", collect_violations=False)
+# 55 
+# 56         weighted = round(ruff_score * 0.7 + black_score * 0.2 + mypy_score * 0.1, 3)
+# 57 
+# 58         components = {
+# 59             "ruff_score": ruff_score,
+# 60             "ruff_violations": len(ruff_violations),
+# 61             "black_score": black_score,
+# 62             "mypy_score": mypy_score,
+# 63         }
+# 64 
+# 65         top_violations = []
+# 66         if ruff_violations:
+# 67             freq = {}
+# 68             for code in ruff_violations:
+# 69                 freq[code] = freq.get(code, 0) + 1
+# 70             sorted_codes = sorted(freq.items(), key=lambda kv: kv[1], reverse=True)
+# 71             top_violations = [code for code, _ in sorted_codes[:3]]
+# 72 
+# 73         if "<parse_error>" in ruff_violations:
+# 74             summary = "⚠️ Ruff parse error (excluded from scoring)"
+# 75         else:
+# 76             summary = (
+# 77                 f"Top Ruff Violations: {', '.join(top_violations)}"
+# 78                 if top_violations else "No Ruff violations"
+# 79             )
 # 80 
 # 81         return ScoreOutputSchema(
 # 82             name=SCORING_METRIC_TYPE.LINTING_SCORE,
@@ -1854,92 +1872,82 @@
 # 1 import subprocess
 # 2 import sys
 # 3 import re
-# 4 
-# 5 from app.providers.tool_provider_base import ToolProviderBase
-# 6 from app.db.schemas import ToolOutputSchema
-# 7 
-# 8 
-# 9 class BlackToolProvider(ToolProviderBase):
-# 10     def _run(self, input: dict) -> ToolOutputSchema:
-# 11         target = input.get("target")
-# 12         check = input.get("check", False)
-# 13 
-# 14         #  Build the Black command
-# 15         if check:
-# 16             cmd = [
-# 17                 sys.executable,
-# 18                 "-m",
-# 19                 "black",
-# 20                 "--diff",
-# 21                 "--check",
-# 22                 "--verbose",
-# 23                 target,
-# 24             ]
-# 25         else:
-# 26             cmd = [sys.executable, "-m", "black", "--quiet", target]
-# 27 
-# 28         proc = subprocess.run(
-# 29             cmd,
-# 30             capture_output=True,
-# 31             text=True,
-# 32             encoding="utf-8",
-# 33             errors="ignore",
-# 34         )
-# 35 
-# 36         raw_stdout = proc.stdout or ""
-# 37         raw_stderr = proc.stderr or ""
-# 38         stdout = raw_stdout.rstrip()
-# 39         stderr = raw_stderr.rstrip()
-# 40         violations: list[str] = []
-# 41         metrics: dict[str, int | None] = {}
-# 42 
-# 43         if check:
-# 44             #  Black’s exit codes in check mode:
-# 45             #    1 = clean (nothing to reformat)
-# 46             #    0 = would reformat
-# 47             #   ≥2 = internal error
-# 48             if proc.returncode == 0:
-# 49                 return_code = 1
-# 50                 summary = "Black check passed (no formatting needed)"
-# 51                 metrics = {
-# 52                     "files_checked": 1,
-# 53                     "files_reformatted": 0,
-# 54                     "lines_changed": 0,
-# 55                 }
-# 56             elif proc.returncode == 1:
-# 57                 return_code = 0
-# 58                 summary = "Black check failed"
-# 59                 diff_hunks = len(re.findall(r"^@@", stdout, re.MULTILINE))
-# 60                 metrics = {
-# 61                     "files_checked": 1,
-# 62                     "files_reformatted": 1,
-# 63                     "lines_changed": diff_hunks,
-# 64                 }
-# 65                 violations = [f"Would reformat {target}"]
-# 66             else:
-# 67                 raise RuntimeError(
-# 68                     f"Black execution error ({proc.returncode}): {stderr or stdout}"
-# 69                 )
-# 70         else:
-# 71             if proc.returncode != 0:
-# 72                 raise RuntimeError(f"Black formatting error: {stderr or stdout}")
-# 73             return_code = 1
-# 74             summary = "Black formatting applied"
-# 75             metrics = {
-# 76                 "files_checked": 1,
-# 77                 "files_reformatted": 1,
-# 78                 "lines_changed": None,
-# 79             }
-# 80 
-# 81         response = ToolOutputSchema(
-# 82             return_code=return_code,
-# 83             stdout=stdout or None,
-# 84             stderr=stderr or None,
-# 85             violations=violations or None,
-# 86             metrics=metrics or None,
-# 87             summary=summary,
-# 88         )
-# 89         return response
+# 4 from app.providers.tool_provider_base import ToolProviderBase
+# 5 from app.db.schemas import ToolOutputSchema
+# 6 
+# 7 class BlackToolProvider(ToolProviderBase):
+# 8     def _run(self, input: dict) -> ToolOutputSchema:
+# 9         target = input.get("target")
+# 10         check = input.get("check", False)
+# 11 
+# 12         if check:
+# 13             cmd = [
+# 14                 sys.executable,
+# 15                 "-m",
+# 16                 "black",
+# 17                 "--diff",
+# 18                 "--check",
+# 19                 "--verbose",
+# 20                 target,
+# 21             ]
+# 22         else:
+# 23             cmd = [sys.executable, "-m", "black", "--quiet", target]
+# 24 
+# 25         proc = subprocess.run(
+# 26             cmd,
+# 27             capture_output=True,
+# 28             text=True,
+# 29             encoding="utf-8",
+# 30             errors="ignore",
+# 31         )
+# 32 
+# 33         raw_stdout = proc.stdout or ""
+# 34         raw_stderr = proc.stderr or ""
+# 35         stdout = raw_stdout.rstrip()
+# 36         stderr = raw_stderr.rstrip()
+# 37         violations: list[str] = []
+# 38         metrics: dict[str, int | None] = {}
+# 39 
+# 40         if check:
+# 41             if proc.returncode == 0:
+# 42                 return_code = 1
+# 43                 lines_changed = 0
+# 44                 files_reformatted = 0
+# 45                 summary = f"✅ Black passed: {files_reformatted} reformats"
+# 46             elif proc.returncode == 1:
+# 47                 return_code = 0
+# 48                 diff_hunks = len(re.findall(r"^@@", stdout, re.MULTILINE))
+# 49                 lines_changed = diff_hunks
+# 50                 files_reformatted = 1
+# 51                 summary = f"❌ Black failed: {files_reformatted} file, {lines_changed} lines reformatted"
+# 52                 violations = [f"Would reformat {target}"]
+# 53             else:
+# 54                 raise RuntimeError(
+# 55                     f"Black execution error ({proc.returncode}): {stderr or stdout}"
+# 56                 )
+# 57         else:
+# 58             if proc.returncode != 0:
+# 59                 raise RuntimeError(f"Black formatting error: {stderr or stdout}")
+# 60             return_code = 1
+# 61             lines_changed = None
+# 62             files_reformatted = 1
+# 63             summary = f"✅ Black formatted {files_reformatted} file"
+# 64 
+# 65         metrics = {
+# 66             "files_checked": 1,
+# 67             "files_reformatted": files_reformatted,
+# 68             "lines_changed": lines_changed,
+# 69             "raw_return_code": proc.returncode
+# 70         }
+# 71 
+# 72         return ToolOutputSchema(
+# 73             return_code=return_code,
+# 74             stdout=stdout or None,
+# 75             stderr=stderr or None,
+# 76             violations=violations or None,
+# 77             metrics=metrics or None,
+# 78             summary=summary,
+# 79         )
 
 
 # db\seeders\files\tool_providers\docformatter_tool.py
@@ -1992,58 +2000,62 @@
 
 # 1 import subprocess
 # 2 import sys
-# 3 import json
-# 4 from app.providers.tool_provider_base import ToolProviderBase
-# 5 from app.db.schemas import ToolOutputSchema
-# 6 
-# 7 class MypyToolProvider(ToolProviderBase):
-# 8     def _run(self, input: dict) -> ToolOutputSchema:
-# 9         target = input.get("target")
-# 10 
-# 11         #  Use strictest mypy options available inline
-# 12         cmd = [
-# 13             sys.executable, "-m", "mypy", target,
-# 14             "--strict",
-# 15             "--disallow-untyped-defs",
-# 16             "--disallow-incomplete-defs",
-# 17             "--disallow-untyped-calls",
-# 18             "--disallow-untyped-decorators",
-# 19             "--disallow-any-generics",
-# 20             "--warn-unused-ignores",
-# 21             "--warn-return-any",
-# 22             "--no-implicit-optional",
-# 23             "--strict-equality"
-# 24         ]
+# 3 from app.providers.tool_provider_base import ToolProviderBase
+# 4 from app.db.schemas import ToolOutputSchema
+# 5 
+# 6 class MypyToolProvider(ToolProviderBase):
+# 7     def _run(self, input: dict) -> ToolOutputSchema:
+# 8         target = input.get("target")
+# 9 
+# 10         cmd = [
+# 11             sys.executable, "-m", "mypy", target,
+# 12             "--strict",
+# 13             "--disallow-untyped-defs",
+# 14             "--disallow-incomplete-defs",
+# 15             "--disallow-untyped-calls",
+# 16             "--disallow-untyped-decorators",
+# 17             "--disallow-any-generics",
+# 18             "--warn-unused-ignores",
+# 19             "--warn-return-any",
+# 20             "--no-implicit-optional",
+# 21             "--strict-equality"
+# 22         ]
+# 23 
+# 24         proc = subprocess.run(cmd, capture_output=True, text=True)
 # 25 
-# 26         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 27 
-# 28         raw_code = proc.returncode
-# 29         raw_stdout = proc.stdout.strip()
-# 30         raw_stderr = proc.stderr.strip()
-# 31 
-# 32         violations: list[str] = []
-# 33         metrics: dict[str, int] = {}
-# 34 
-# 35         if raw_code == 0:
-# 36             norm_code = 1
-# 37             summary = "Mypy strict check passed"
-# 38             metrics = {"error_count": 0}
-# 39         elif raw_code == 1:
-# 40             norm_code = 0
-# 41             summary = "Mypy strict violations detected"
-# 42             violations = [line.strip() for line in raw_stdout.splitlines() if line.strip()]
-# 43             metrics = {"error_count": len(violations)}
-# 44         else:
-# 45             raise RuntimeError(f"Mypy execution error ({raw_code}): {raw_stderr or raw_stdout}")
-# 46 
-# 47         return ToolOutputSchema(
-# 48             return_code=norm_code,
-# 49             stdout=raw_stdout or None,
-# 50             stderr=raw_stderr or None,
-# 51             violations=violations or None,
-# 52             metrics=metrics or None,
-# 53             summary=summary
-# 54         )
+# 26         raw_code = proc.returncode
+# 27         raw_stdout = proc.stdout.strip()
+# 28         raw_stderr = proc.stderr.strip()
+# 29 
+# 30         violations: list[str] = []
+# 31         metrics: dict[str, int] = {}
+# 32 
+# 33         if raw_code == 0:
+# 34             norm_code = 1
+# 35             error_count = 0
+# 36         elif raw_code == 1:
+# 37             norm_code = 0
+# 38             violations = [line.strip() for line in raw_stdout.splitlines() if line.strip()]
+# 39             error_count = len(violations)
+# 40         else:
+# 41             raise RuntimeError(f"Mypy execution error ({raw_code}): {raw_stderr or raw_stdout}")
+# 42 
+# 43         summary = (
+# 44             f"✅ Mypy passed: {error_count} errors"
+# 45             if norm_code == 1
+# 46             else f"❌ Mypy failed: {error_count} errors"
+# 47         )
+# 48 
+# 49         metrics = {"error_count": error_count, "raw_return_code": raw_code}
+# 50 
+# 51         return ToolOutputSchema(
+# 52             return_code=norm_code,
+# 53             stdout=raw_stdout or None,
+# 54             stderr=raw_stderr or None,
+# 55             violations=violations or None,
+# 56             metrics=metrics,
+# 57             summary=summary,
+# 58         )
 
 
 # db\seeders\files\tool_providers\radon_tool.py
@@ -2112,38 +2124,60 @@
 # 8     def _run(self, input: dict) -> ToolOutputSchema:
 # 9         target = input.get("target")
 # 10 
-# 11         cmd = [sys.executable, "-m", "ruff", "check", target]
-# 12         proc = subprocess.run(cmd, capture_output=True, text=True)
-# 13 
-# 14         stdout = proc.stdout.strip()
-# 15         stderr = proc.stderr.strip()
+# 11         #  1) Run Ruff in JSON mode
+# 12         cmd = [sys.executable, "-m", "ruff", "check", "--format", "json", target]
+# 13         proc = subprocess.run(cmd, capture_output=True, text=True)
+# 14         stdout = proc.stdout or ""
+# 15         stderr = proc.stderr or ""
 # 16         raw_code = proc.returncode
 # 17 
-# 18         violations = []
-# 19 
-# 20         if raw_code in (0, 1):  #  1 = violations, 0 = clean
-# 21             for line in stdout.splitlines():
-# 22                 if line.strip().startswith(target):
-# 23                     parts = line.strip().split()
-# 24                     if parts:
-# 25                         violations.append(parts[-1])  #  Capture violation code
-# 26 
-# 27         if raw_code == 0:
-# 28             norm_code = 1  #  ✅ pass
-# 29             summary = "Ruff check passed"
-# 30         elif raw_code == 1:
-# 31             norm_code = 0  #  ❌ fail
-# 32             summary = "Ruff rule violations found"
-# 33         else:
-# 34             raise RuntimeError(f"Ruff execution error ({raw_code}): {stderr or stdout or 'unknown error'}")
-# 35 
-# 36         return ToolOutputSchema(
-# 37             return_code=norm_code,
-# 38             stdout=stdout,
-# 39             stderr=stderr,
-# 40             violations=violations or None,
-# 41             summary=summary
-# 42         )
+# 18         #  2) Try parsing JSON; if that fails, mark parse_error
+# 19         parse_error = False
+# 20         violations = []
+# 21 
+# 22         try:
+# 23             report = json.loads(stdout)
+# 24             for file_report in report:
+# 25                 for v in file_report.get("violations", []):
+# 26                     violations.append(v["code"])
+# 27         except json.JSONDecodeError:
+# 28             parse_error = True
+# 29 
+# 30         #  3) Score parse errors as a heavy penalty (10 violations)
+# 31         if parse_error:
+# 32             violations = ["PARSE_ERROR"]
+# 33             violation_count = 1
+# 34         else:
+# 35             violation_count = len(violations)
+# 36 
+# 37         #  4) Build summary & normalized return code
+# 38         if parse_error:
+# 39             norm_code = 0
+# 40             summary = f"❌ Ruff parse error ({violation_count} violations)"
+# 41         elif raw_code == 0:
+# 42             norm_code = 1
+# 43             summary = f"✅ Ruff passed: {violation_count} violations"
+# 44         elif raw_code == 1:
+# 45             norm_code = 0
+# 46             summary = f"❌ Ruff failed: {violation_count} violations"
+# 47         else:
+# 48             norm_code = 2
+# 49             summary = f"❌ Ruff execution error ({raw_code})"
+# 50 
+# 51         metrics = {
+# 52             "violation_count": violation_count,
+# 53             "raw_return_code": raw_code,
+# 54             "parse_error": parse_error
+# 55         }
+# 56 
+# 57         return ToolOutputSchema(
+# 58             return_code=norm_code,
+# 59             stdout=stdout.strip() or None,
+# 60             stderr=stderr.strip() or None,
+# 61             violations=violations,
+# 62             metrics=metrics,
+# 63             summary=summary,
+# 64         )
 
 
 # db\seeders\files\tool_providers\sonarcloud_tool.py
@@ -2414,40 +2448,42 @@
 # 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 10 
 # 11 AGENT_ENGINES = [
-# 12     (1, "basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"]),
-# 13     (2, "openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"]),
-# 14     (3, "gemini_1_5_pro_agent_engine_provider.py", "gemini_1_5_pro_agent_engine", "Runs Gemini 1.5 Pro via Google AI API.", "gemini-1.5-pro", ["google", "production"]),
-# 15     (4, "claude_3_sonnet_agent_engine_provider.py", "claude_3_sonnet_agent_engine", "Runs Claude 3 Sonnet via AWS Bedrock.", "claude-3-sonnet", ["aws", "bedrock", "production"]),
-# 16 ]
-# 17 
-# 18 def seed_agent_engine_providers(db_session: Session):
-# 19     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 20 
-# 21     for id_, filename, name, description, model, tags in AGENT_ENGINES:
-# 22         guid = str(uuid4())
-# 23         source_file = SEED_FILES_DIR / filename
-# 24         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 25 
-# 26         if not source_file.exists():
-# 27             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
-# 28 
-# 29         shutil.copy(source_file, dest_file)
-# 30 
-# 31         config = AgentEngineProviderConfig(
-# 32             id=id_,
-# 33             guid=guid,
-# 34             name=name,
-# 35             description=description,
-# 36             model=model,
-# 37             config={},
-# 38             artifact_path=str(dest_file),
-# 39             tags=tags,
-# 40         )
-# 41 
-# 42         db_session.add(config)
+# 12     #  id, filename, name, description, model, tags, cost_per_1k_tokens
+# 13     (1, "basic_agent_engine_provider.py", "basic_agent_engine_provider", "Returns a mock LLM response.", "mock-llm", ["default"], 0.0),
+# 14     (2, "openai_gpt4o_agent_engine_provider.py", "openai_gpt_4o_agent_engine", "Runs GPT-4o via OpenAI API.", "gpt-4o", ["openai", "production"], 0.005),
+# 15     (3, "gemini_1_5_pro_agent_engine_provider.py", "gemini_1_5_pro_agent_engine", "Runs Gemini 1.5 Pro via Google AI API.", "gemini-1.5-pro", ["google", "production"], 0.007),
+# 16     (4, "claude_3_sonnet_agent_engine_provider.py", "claude_3_sonnet_agent_engine", "Runs Claude 3 Sonnet via AWS Bedrock.", "claude-3-sonnet", ["aws", "bedrock", "production"], 0.003),
+# 17 ]
+# 18 
+# 19 def seed_agent_engine_providers(db_session: Session):
+# 20     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 21 
+# 22     for id_, filename, name, description, model, tags, cost in AGENT_ENGINES:
+# 23         guid = str(uuid4())
+# 24         source_file = SEED_FILES_DIR / filename
+# 25         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 26 
+# 27         if not source_file.exists():
+# 28             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
+# 29 
+# 30         shutil.copy(source_file, dest_file)
+# 31 
+# 32         config = AgentEngineProviderConfig(
+# 33             id=id_,
+# 34             guid=guid,
+# 35             name=name,
+# 36             description=description,
+# 37             model=model,
+# 38             config={},
+# 39             cost_per_1k_tokens=cost,
+# 40             artifact_path=str(dest_file),
+# 41             tags=tags,
+# 42         )
 # 43 
-# 44     db_session.commit()
-# 45     print("Seeded agent engine configurations successfully.")
+# 44         db_session.add(config)
+# 45 
+# 46     db_session.commit()
+# 47     print("✅ Seeded agent engine configurations successfully.")
 
 
 # db\seeders\seed_agent_providers.py
@@ -3462,6 +3498,27 @@
 # 74 
 
 
+# enums\tool_enums.py
+
+# 1 from enum import Enum
+# 2 
+# 3 class ToolProvider(Enum):
+# 4     BLACK = 1
+# 5     SONARCLOUD = 2
+# 6     RUFF = 3
+# 7     RADON = 4
+# 8     MYPY = 5
+# 9     DOCFORMATTER = 6
+# 10     SYMBOL_GRAPH = 7
+# 11 
+# 12     @classmethod
+# 13     def get_name(cls, id_):
+# 14         for tool in cls:
+# 15             if tool.value == id_:
+# 16                 return tool.name.lower()
+# 17         return f"Unknown ({id_})"
+
+
 # factories\__init__.py
 
 
@@ -4254,115 +4311,121 @@
 # 93                     cost_usd=cost_usd,
 # 94                     snapshot_id=None,
 # 95                     summary="No change detected (normalized)",
-# 96                 )
-# 97 
-# 98             after_code = code_block.rstrip()
-# 99             if prior_notes:
-# 100                 after_code += f"\n\n{prior_notes}"
-# 101             if log_block:
-# 102                 after_code = append_agent_note(after_code, system=system.value, agent_name=self._config.name, note=log_block)
-# 103 
-# 104             before_metrics = analyze_code(before_code)
-# 105             after_metrics = analyze_code(after_code)
-# 106             deltas = compute_deltas(before_metrics, after_metrics)
-# 107 
-# 108             timestamp = datetime.now(timezone.utc)
-# 109             metadata = {
-# 110                 "system": system.value,
-# 111                 "agent": self._config.name,
-# 112                 "agent_type": agent_type.value,
-# 113                 "agent_id": agent_id,
-# 114                 "score": None,
-# 115                 "state": str(input.get("state_context", {}).get("state", "unknown")),
-# 116                 "decision": decision.value,
-# 117                 "timestamp": timestamp.isoformat(),
-# 118                 **{f"{k}_before": v for k, v in before_metrics.items()},
-# 119                 **{f"{k}_after": v for k, v in after_metrics.items()},
-# 120                 **deltas,
-# 121             }
-# 122 
-# 123             snapshot_id = SnapshotWriter().write_snapshot(
-# 124                 before=before_code,
-# 125                 after=after_code,
-# 126                 session_id=session_id,
-# 127                 metadata=metadata,
-# 128             )
-# 129 
-# 130             with Session(bind=self._engine) as session:
-# 131                 entry = SnapshotMetrics(
-# 132                     session_id=session_id,
-# 133                     snapshot_id=snapshot_id,
-# 134                     system=system.value,
-# 135                     agent=self._config.name,
-# 136                     agent_type=agent_type.value,
-# 137                     agent_id=agent_id,
-# 138                     score=None,
-# 139                     state=metadata["state"],
-# 140                     decision=decision.value,
-# 141                     timestamp=timestamp,
-# 142                     **{
-# 143                         k: metadata.get(k)
-# 144                         for k in SnapshotMetrics.__table__.columns.keys()
-# 145                         if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
-# 146                     },
-# 147                 )
-# 148                 session.add(entry)
-# 149                 session.commit()
-# 150 
-# 151             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
-# 152                 session_id=session_id,
-# 153                 snapshot_id=snapshot_id,
-# 154                 system=system,
-# 155                 agent=self._config.name,
-# 156                 agent_type=agent_type,
-# 157                 agent_id=agent_id,
-# 158                 score=None,
-# 159                 state=metadata["state"],
-# 160                 decision=decision,
-# 161                 timestamp=timestamp,
-# 162                 line_count_before=metadata["line_count_before"],
-# 163                 line_count_after=metadata["line_count_after"],
-# 164                 function_count_before=metadata["function_count_before"],
-# 165                 function_count_after=metadata["function_count_after"],
-# 166                 symbol_count_before=metadata["symbol_count_before"],
-# 167                 symbol_count_after=metadata["symbol_count_after"],
-# 168                 branch_count_before=metadata["branch_count_before"],
-# 169                 branch_count_after=metadata["branch_count_after"],
-# 170                 comment_count_before=metadata["comment_count_before"],
-# 171                 comment_count_after=metadata["comment_count_after"],
-# 172                 line_count_delta=metadata["line_count_delta"],
-# 173                 function_count_delta=metadata["function_count_delta"],
-# 174                 symbol_count_delta=metadata["symbol_count_delta"],
-# 175                 branch_count_delta=metadata["branch_count_delta"],
-# 176                 comment_count_delta=metadata["comment_count_delta"],
-# 177             ))
-# 178 
-# 179             self._log.debug(f"📦 Snapshot written: {snapshot_id}")
-# 180             summary = log_block or "Snapshot successfully written"
+# 96                     code=code_block,
+# 97                     agent_decision=decision.value,
+# 98                     conversation_log_entry=log_block,
+# 99                 )
+# 100 
+# 101             after_code = code_block.rstrip()
+# 102             if prior_notes:
+# 103                 after_code += f"\n\n{prior_notes}"
+# 104             if log_block:
+# 105                 after_code = append_agent_note(after_code, system=system.value, agent_name=self._config.name, note=log_block)
+# 106 
+# 107             before_metrics = analyze_code(before_code)
+# 108             after_metrics = analyze_code(after_code)
+# 109             deltas = compute_deltas(before_metrics, after_metrics)
+# 110 
+# 111             timestamp = datetime.now(timezone.utc)
+# 112             metadata = {
+# 113                 "system": system.value,
+# 114                 "agent": self._config.name,
+# 115                 "agent_type": agent_type.value,
+# 116                 "agent_id": agent_id,
+# 117                 "score": None,
+# 118                 "state": str(input.get("state_context", {}).get("state", "unknown")),
+# 119                 "decision": decision.value,
+# 120                 "timestamp": timestamp.isoformat(),
+# 121                 **{f"{k}_before": v for k, v in before_metrics.items()},
+# 122                 **{f"{k}_after": v for k, v in after_metrics.items()},
+# 123                 **deltas,
+# 124             }
+# 125 
+# 126             snapshot_id = SnapshotWriter().write_snapshot(
+# 127                 before=before_code,
+# 128                 after=after_code,
+# 129                 session_id=session_id,
+# 130                 metadata=metadata,
+# 131             )
+# 132 
+# 133             with Session(bind=self._engine) as session:
+# 134                 entry = SnapshotMetrics(
+# 135                     session_id=session_id,
+# 136                     snapshot_id=snapshot_id,
+# 137                     system=system.value,
+# 138                     agent=self._config.name,
+# 139                     agent_type=agent_type.value,
+# 140                     agent_id=agent_id,
+# 141                     score=None,
+# 142                     state=metadata["state"],
+# 143                     decision=decision.value,
+# 144                     timestamp=timestamp,
+# 145                     **{
+# 146                         k: metadata.get(k)
+# 147                         for k in SnapshotMetrics.__table__.columns.keys()
+# 148                         if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
+# 149                     },
+# 150                 )
+# 151                 session.add(entry)
+# 152                 session.commit()
+# 153 
+# 154             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
+# 155                 session_id=session_id,
+# 156                 snapshot_id=snapshot_id,
+# 157                 system=system,
+# 158                 agent=self._config.name,
+# 159                 agent_type=agent_type,
+# 160                 agent_id=agent_id,
+# 161                 score=None,
+# 162                 state=metadata["state"],
+# 163                 decision=decision,
+# 164                 timestamp=timestamp,
+# 165                 line_count_before=metadata["line_count_before"],
+# 166                 line_count_after=metadata["line_count_after"],
+# 167                 function_count_before=metadata["function_count_before"],
+# 168                 function_count_after=metadata["function_count_after"],
+# 169                 symbol_count_before=metadata["symbol_count_before"],
+# 170                 symbol_count_after=metadata["symbol_count_after"],
+# 171                 branch_count_before=metadata["branch_count_before"],
+# 172                 branch_count_after=metadata["branch_count_after"],
+# 173                 comment_count_before=metadata["comment_count_before"],
+# 174                 comment_count_after=metadata["comment_count_after"],
+# 175                 line_count_delta=metadata["line_count_delta"],
+# 176                 function_count_delta=metadata["function_count_delta"],
+# 177                 symbol_count_delta=metadata["symbol_count_delta"],
+# 178                 branch_count_delta=metadata["branch_count_delta"],
+# 179                 comment_count_delta=metadata["comment_count_delta"],
+# 180             ))
 # 181 
-# 182         except Exception as exc:
-# 183             self._log.error(f"❌ Error during agent run: {exc}")
-# 184             summary = f"Error: {str(exc)}"
-# 185             cost_usd = 0.0
-# 186 
-# 187         return AgentEngineOutput(
-# 188             response=response_text,
-# 189             token_count=token_count,
-# 190             cost_usd=cost_usd,
-# 191             snapshot_id=snapshot_id,
-# 192             summary=summary,
-# 193         )
-# 194 
-# 195     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-# 196         start = text.find(start_tag)
-# 197         end = text.find(end_tag)
-# 198         if start != -1 and end != -1 and start < end:
-# 199             return text[start + len(start_tag):end].strip()
-# 200         return None
-# 201 
-# 202     @abstractmethod
-# 203     def _run(self, input: dict) -> str:
-# 204         raise NotImplementedError
+# 182             self._log.debug(f"📦 Snapshot written: {snapshot_id}")
+# 183             summary = log_block or "Snapshot successfully written"
+# 184 
+# 185         except Exception as exc:
+# 186             self._log.error(f"❌ Error during agent run: {exc}")
+# 187             summary = f"Error: {str(exc)}"
+# 188             cost_usd = 0.0
+# 189 
+# 190         return AgentEngineOutput(
+# 191             response=response_text,
+# 192             token_count=token_count,
+# 193             cost_usd=cost_usd,
+# 194             snapshot_id=snapshot_id,
+# 195             summary=summary,
+# 196             code=code_block,
+# 197             agent_decision=decision.value,
+# 198             conversation_log_entry=log_block,
+# 199         )
+# 200 
+# 201     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 202         start = text.find(start_tag)
+# 203         end = text.find(end_tag)
+# 204         if start != -1 and end != -1 and start < end:
+# 205             return text[start + len(start_tag):end].strip()
+# 206         return None
+# 207 
+# 208     @abstractmethod
+# 209     def _run(self, input: dict) -> str:
+# 210         raise NotImplementedError
 
 
 # providers\agent_provider_base.py
@@ -4603,76 +4666,83 @@
 # 76         try:
 # 77             if hasattr(output, "model_dump"):
 # 78                 dumped = output.model_dump()
-# 79                 for k, v in dumped.items():
-# 80                     if isinstance(v, dict):
-# 81                         dumped[k] = json.dumps(v, default=str)
-# 82                 output_str = json.dumps(dumped, default=str)
-# 83                 output_schema = output.__class__.__name__
-# 84             else:
-# 85                 output_str = json.dumps(output, default=str)
-# 86                 output_schema = None
-# 87         except Exception:
-# 88             output_str = ""
-# 89             output_schema = None
-# 90 
-# 91         try:
-# 92             self.logger.write(
-# 93                 LOG_TYPE.PROVIDER,
-# 94                 ProviderLogSchema(
-# 95                     session_id=session_id,
-# 96                     provider_id=self._config.id if self._config else -1,
-# 97                     provider_type=self._infer_provider_type(),
-# 98                     input=input_str,
-# 99                     output=output_str,
-# 100                     output_schema=output_schema,
-# 101                     latency_ms=latency_ms,
-# 102                     config_hash=self._compute_config_hash(),
-# 103                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 104                     if getattr(self._config, "artifact_path", None)
-# 105                     else None,
-# 106                     timestamp=start_time,
-# 107                     called_by_type=self._called_by_type if self._called_by_type else None,
-# 108                     called_by_id=self._called_by_id,
-# 109                     run_id=self._run_id,
-# 110                 ),
-# 111             )
-# 112         except Exception:
-# 113             raise
-# 114 
-# 115         self._log.debug("✅ Provider run logged")
-# 116         return output
-# 117 
-# 118     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 119         return ERROR_TYPE.RUNTIME
-# 120 
-# 121     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 122         cls = self.__class__.__name__.lower()
-# 123         if "tool" in cls:
-# 124             return PROVIDER_TYPE.TOOL
-# 125         if "engine" in cls:
-# 126             return PROVIDER_TYPE.AGENT_ENGINE
-# 127         if "agent" in cls:
-# 128             return PROVIDER_TYPE.AGENT
-# 129         if "prompt" in cls:
-# 130             return PROVIDER_TYPE.PROMPT
-# 131         if "context" in cls:
-# 132             return PROVIDER_TYPE.CONTEXT
-# 133         if "score" in cls:
-# 134             return PROVIDER_TYPE.SCORE
-# 135         if "state" in cls:
-# 136             return PROVIDER_TYPE.STATE
-# 137         if "system" in cls:
-# 138             return PROVIDER_TYPE.SYSTEM
-# 139         if "controller" in cls:
-# 140             return PROVIDER_TYPE.CONTROLLER
-# 141         if "program" in cls:
-# 142             return PROVIDER_TYPE.PROGRAM
-# 143         return PROVIDER_TYPE.UNKNOWN
-# 144 
-# 145     def _compute_config_hash(self) -> Optional[str]:
-# 146         if not self._config or not getattr(self._config, "config", None):
-# 147             return None
-# 148         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
+# 79 
+# 80                 #  Flatten nested dicts one level deep
+# 81                 flat_dump = {}
+# 82                 for k, v in dumped.items():
+# 83                     if isinstance(v, dict):
+# 84                         for sub_k, sub_v in v.items():
+# 85                             flat_dump[f"{k}.{sub_k}"] = sub_v
+# 86                     else:
+# 87                         flat_dump[k] = v
+# 88 
+# 89                 output_str = json.dumps(flat_dump, default=str)
+# 90                 output_schema = output.__class__.__name__
+# 91             else:
+# 92                 output_str = json.dumps(output, default=str)
+# 93                 output_schema = None
+# 94         except Exception:
+# 95             output_str = ""
+# 96             output_schema = None
+# 97 
+# 98         try:
+# 99             self.logger.write(
+# 100                 LOG_TYPE.PROVIDER,
+# 101                 ProviderLogSchema(
+# 102                     session_id=session_id,
+# 103                     provider_id=self._config.id if self._config else -1,
+# 104                     provider_type=self._infer_provider_type(),
+# 105                     input=input_str,
+# 106                     output=output_str,
+# 107                     output_schema=output_schema,
+# 108                     latency_ms=latency_ms,
+# 109                     config_hash=self._compute_config_hash(),
+# 110                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 111                     if getattr(self._config, "artifact_path", None)
+# 112                     else None,
+# 113                     timestamp=start_time,
+# 114                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 115                     called_by_id=self._called_by_id,
+# 116                     run_id=self._run_id,
+# 117                 ),
+# 118             )
+# 119         except Exception:
+# 120             raise
+# 121 
+# 122         self._log.debug("✅ Provider run logged")
+# 123         return output
+# 124 
+# 125     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 126         return ERROR_TYPE.RUNTIME
+# 127 
+# 128     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 129         cls = self.__class__.__name__.lower()
+# 130         if "tool" in cls:
+# 131             return PROVIDER_TYPE.TOOL
+# 132         if "engine" in cls:
+# 133             return PROVIDER_TYPE.AGENT_ENGINE
+# 134         if "agent" in cls:
+# 135             return PROVIDER_TYPE.AGENT
+# 136         if "prompt" in cls:
+# 137             return PROVIDER_TYPE.PROMPT
+# 138         if "context" in cls:
+# 139             return PROVIDER_TYPE.CONTEXT
+# 140         if "score" in cls:
+# 141             return PROVIDER_TYPE.SCORE
+# 142         if "state" in cls:
+# 143             return PROVIDER_TYPE.STATE
+# 144         if "system" in cls:
+# 145             return PROVIDER_TYPE.SYSTEM
+# 146         if "controller" in cls:
+# 147             return PROVIDER_TYPE.CONTROLLER
+# 148         if "program" in cls:
+# 149             return PROVIDER_TYPE.PROGRAM
+# 150         return PROVIDER_TYPE.UNKNOWN
+# 151 
+# 152     def _compute_config_hash(self) -> Optional[str]:
+# 153         if not self._config or not getattr(self._config, "config", None):
+# 154             return None
+# 155         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
 
 
 # providers\context_provider_base.py
@@ -4780,7 +4850,7 @@
 # 67             "steps": input.get("steps", 0),
 # 68             "retry_count": input.get("retry_count", 0),
 # 69             "_last_state": input.get("_last_state", SYSTEM.START),
-# 70             "decision": DECISION_TYPE.UNKNOWN,  #  Default decision
+# 70             "decision": DECISION_TYPE.UNKNOWN,
 # 71             "original_file": relative_path,
 # 72             "run_id": self._run_id,
 # 73         }
@@ -4848,7 +4918,7 @@
 # 135                     state=SYSTEM.END,
 # 136                     previous_state=state.get("_last_state", SYSTEM.START),
 # 137                     state_type=STATE_TYPE.END,
-# 138                     decision=state.get("decision", DECISION_TYPE.UNKNOWN), 
+# 138                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
 # 139                     steps=step_count,
 # 140                     max_steps=max_steps,
 # 141                     summary=state.get("summary", "Completed"),
@@ -4871,44 +4941,42 @@
 # 158             provider_input = {k: v for k, v in state.items() if k != "state"}
 # 159             output = provider.run(input=provider_input, session_id=session_id)
 # 160 
-# 161             new_file_path = getattr(output, "file_path", None)
-# 162             if new_file_path:
-# 163                 new_file_path = Path(new_file_path).resolve()
-# 164                 current_path = Path(state["file_path"]).resolve()
-# 165                 if new_file_path != current_path:
-# 166                     shutil.copy(new_file_path, current_path)
-# 167                     self._generated_files.append(new_file_path)
-# 168                     state["file_path"] = str(new_file_path)
-# 169 
-# 170             #  Check if the decision exists directly in the output, and if so, update the state
-# 171             if hasattr(output, "decision") and output.decision is not None:
-# 172                 state["decision"] = output.decision
-# 173 
-# 174             transition_result = self.transition(state, output)
-# 175             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 176 
-# 177             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 178             transition_metadata.update({
-# 179                 "agent_output": flat_output.get("output", {}),
-# 180                 "file_path": flat_output.get("file_path"),
-# 181             })
-# 182             transition_result["transition_metadata"] = transition_metadata
-# 183 
-# 184             raw_state = transition_result.get("state", current)
-# 185             state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
-# 186 
-# 187             state = {
-# 188                 **state,
-# 189                 **transition_result,
-# 190                 "state": state_enum,
-# 191                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 192                 "_last_state": current,
-# 193                 "state_output": flat_output,
-# 194             }
-# 195 
-# 196     @abstractmethod
-# 197     def _transition(self, state: dict, output: dict | None) -> dict:
-# 198         ...
+# 161             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 162             promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 163             if "file_path" in output.output:
+# 164                 final_path = Path(output.output["file_path"]).resolve()
+# 165                 shutil.copy(final_path, promoted_path)
+# 166                 self._generated_files.append(promoted_path)
+# 167                 state["file_path"] = str(promoted_path)
+# 168 
+# 169             if hasattr(output, "decision") and output.decision is not None:
+# 170                 state["decision"] = output.decision
+# 171 
+# 172             transition_result = self.transition(state, output)
+# 173             transition_result.pop("file_path", None)
+# 174 
+# 175             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 176             transition_metadata.update({
+# 177                 "agent_output": flat_output.get("output", {}),
+# 178                 "file_path": flat_output.get("file_path"),
+# 179             })
+# 180             transition_result["transition_metadata"] = transition_metadata
+# 181 
+# 182             raw_state = transition_result.get("state", current)
+# 183             state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
+# 184 
+# 185             state = {
+# 186                 **state,
+# 187                 **transition_result,
+# 188                 "state": state_enum,
+# 189                 "_last_state": current,
+# 190                 "state_output": flat_output,
+# 191             }
+# 192 
+# 193 
+# 194     @abstractmethod
+# 195     def _transition(self, state: dict, output: dict | None) -> dict:
+# 196         ...
 
 
 # providers\fsm_provider_base.py
@@ -5046,156 +5114,158 @@
 # 42         incoming_file = input.get("file_path")
 # 43         self.incoming_file = incoming_file
 # 44 
-# 45         #  Optional output path from input dictionary
-# 46         output_path = input.get("output_path", "working_files")
-# 47 
-# 48         src = Path(incoming_file).resolve()
-# 49         root = extract_base_filename(src)
-# 50         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-# 51         working_dir = Path("working_files").resolve()
-# 52         working_dir.mkdir(parents=True, exist_ok=True)
-# 53         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
-# 54         shutil.copy(src, self.working_file)
-# 55         self._generated_files.append(self.working_file)
-# 56 
-# 57         input_path = Path(incoming_file)
-# 58         try:
-# 59             relative_path = str(input_path.relative_to(Path.cwd()))
-# 60         except ValueError:
-# 61             relative_path = str(input_path)
-# 62 
-# 63         state = {
-# 64             "state": CONTROLLER.START,
-# 65             "file_path": str(self.working_file),
-# 66             "session_id": session_id,
-# 67             "system": input.get("system", "unknown"),
-# 68             "reason": input.get("reason", CONTROLLER.START.value),
-# 69             "steps": input.get("steps", 0),
-# 70             "retry_count": input.get("retry_count", 0),
-# 71             "_last_state": input.get("_last_state", CONTROLLER.START),
-# 72             "original_file": relative_path,
-# 73             "run_id": self._run_id,
-# 74         }
-# 75 
-# 76         step_count = 0
-# 77 
-# 78         while True:
-# 79             current = state.get("state")
-# 80 
-# 81             if step_count >= max_steps:
-# 82                 
-# 83                 transition = self.transition(state, output)
-# 84                 state.update({
-# 85                     **state,
-# 86                     **transition,
-# 87                     "state": CONTROLLER.END,
-# 88                     "state_type": STATE_TYPE.END,
-# 89                     "reason": f"Max steps ({max_steps}) reached"
-# 90                 })
-# 91                 return ProgramOutputSchema(
-# 92                     state=CONTROLLER.END,
-# 93                     previous_state=current,
-# 94                     state_type=STATE_TYPE.END,
-# 95                     decision=DECISION_TYPE.UNKNOWN,
-# 96                     steps=step_count,
-# 97                     max_steps=max_steps,
-# 98                     summary=f"Max steps ({max_steps}) reached",
-# 99                     output=state,
-# 100                     provider_name=self._config.name
-# 101                 )
-# 102 
-# 103             if current == CONTROLLER.END:
-# 104                 final_decision = state.get("decision")
-# 105                 nested = state.get("output") or {}
+# 45         output_path = input.get("output_path", "working_files")
+# 46 
+# 47         src = Path(incoming_file).resolve()
+# 48         root = extract_base_filename(src)
+# 49         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
+# 50         working_dir = Path("working_files").resolve()
+# 51         working_dir.mkdir(parents=True, exist_ok=True)
+# 52         self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
+# 53         shutil.copy(src, self.working_file)
+# 54         self._generated_files.append(self.working_file)
+# 55 
+# 56         input_path = Path(incoming_file)
+# 57         try:
+# 58             relative_path = str(input_path.relative_to(Path.cwd()))
+# 59         except ValueError:
+# 60             relative_path = str(input_path)
+# 61 
+# 62         state = {
+# 63             "state": CONTROLLER.START,
+# 64             "file_path": str(self.working_file),
+# 65             "session_id": session_id,
+# 66             "system": input.get("system", "unknown"),
+# 67             "reason": input.get("reason", CONTROLLER.START.value),
+# 68             "steps": input.get("steps", 0),
+# 69             "retry_count": input.get("retry_count", 0),
+# 70             "_last_state": input.get("_last_state", CONTROLLER.START),
+# 71             "original_file": relative_path,
+# 72             "run_id": self._run_id,
+# 73         }
+# 74 
+# 75         step_count = 0
+# 76 
+# 77         while True:
+# 78             current = state.get("state")
+# 79 
+# 80             if step_count >= max_steps:
+# 81                 transition = self.transition(state, output)
+# 82                 state.update({
+# 83                     **state,
+# 84                     **transition,
+# 85                     "state": CONTROLLER.END,
+# 86                     "state_type": STATE_TYPE.END,
+# 87                     "reason": f"Max steps ({max_steps}) reached"
+# 88                 })
+# 89                 return ProgramOutputSchema(
+# 90                     state=CONTROLLER.END,
+# 91                     previous_state=current,
+# 92                     state_type=STATE_TYPE.END,
+# 93                     decision=DECISION_TYPE.UNKNOWN,
+# 94                     steps=step_count,
+# 95                     max_steps=max_steps,
+# 96                     summary=f"Max steps ({max_steps}) reached",
+# 97                     output=state,
+# 98                     provider_name=self._config.name
+# 99                 )
+# 100 
+# 101             if current == CONTROLLER.END:
+# 102                 final_decision = state.get("decision")
+# 103                 nested = state.get("output") or {}
+# 104                 if isinstance(nested, dict):
+# 105                     final_decision = final_decision or nested.get("decision")
 # 106 
-# 107                 if isinstance(nested, dict):
-# 108                     final_decision = final_decision or nested.get("decision")
-# 109 
-# 110                 best_file = select_best_file_by_score(
-# 111                     file_a=state.get("file_path"),
-# 112                     file_b=self.incoming_file,
-# 113                     score_provider=self.score_provider,
-# 114                     system=state.get("system", "unknown"),
-# 115                     session_id=session_id
-# 116                 )
-# 117 
-# 118                 #  If an output_path is provided, use that path, otherwise default to working_files
-# 119                 final_path = Path(output_path) / Path(self.incoming_file).name
-# 120   
-# 121                 shutil.copy(Path(best_file).resolve(), final_path)
-# 122                 state["file_path"] = str(final_path)
-# 123                 state["decision"] = final_decision
-# 124 
-# 125                 #  Delete old files in working directory
-# 126                 for f in Path("working_files").glob("temp_*.py"):
-# 127                     if f.resolve() != final_path.resolve():
-# 128                         try:
-# 129                             f.unlink()
-# 130                         except Exception:
-# 131                             pass
+# 107                 best_file = select_best_file_by_score(
+# 108                     file_a=state.get("file_path"),
+# 109                     file_b=self.incoming_file,
+# 110                     score_provider=self.score_provider,
+# 111                     system=state.get("system", "unknown"),
+# 112                     session_id=session_id
+# 113                 )
+# 114 
+# 115                 final_path = Path(output_path) / Path(self.incoming_file).name
+# 116                 shutil.copy(Path(best_file).resolve(), final_path)
+# 117                 state["file_path"] = str(final_path)
+# 118                 state["decision"] = final_decision
+# 119 
+# 120                 for f in Path("working_files").glob("temp_*.py"):
+# 121                     if f.resolve() != final_path.resolve():
+# 122                         try:
+# 123                             f.unlink()
+# 124                         except Exception:
+# 125                             pass
+# 126 
+# 127                 for f in Path("working_files").glob("*_stripped.py"):
+# 128                     try:
+# 129                         f.unlink()
+# 130                     except Exception:
+# 131                         pass
 # 132 
-# 133                 for f in Path("working_files").glob("*_stripped.py"):
-# 134                     try:
-# 135                         f.unlink()
-# 136                     except Exception:
-# 137                         pass
-# 138 
-# 139                 for path in self._generated_files:
-# 140                     if path.exists():
-# 141                         try:
-# 142                             path.unlink()
-# 143                         except Exception:
-# 144                             pass
-# 145 
-# 146                 return ProgramOutputSchema(
-# 147                     state=CONTROLLER.END,
-# 148                     previous_state=state.get("_last_state", CONTROLLER.START),
-# 149                     state_type=STATE_TYPE.END,
-# 150                     decision=final_decision or state.get("decision", DECISION_TYPE.UNKNOWN),
-# 151                     steps=step_count,
-# 152                     max_steps=max_steps,
-# 153                     summary=state.get("reason", "Completed"),
-# 154                     output=state,
-# 155                     provider_name=self._config.name
-# 156                 )
-# 157 
-# 158             step_count += 1
+# 133                 for path in self._generated_files:
+# 134                     if path.exists():
+# 135                         try:
+# 136                             path.unlink()
+# 137                         except Exception:
+# 138                             pass
+# 139 
+# 140                 return ProgramOutputSchema(
+# 141                     state=CONTROLLER.END,
+# 142                     previous_state=state.get("_last_state", CONTROLLER.START),
+# 143                     state_type=STATE_TYPE.END,
+# 144                     decision=final_decision or state.get("decision", DECISION_TYPE.UNKNOWN),
+# 145                     steps=step_count,
+# 146                     max_steps=max_steps,
+# 147                     summary=state.get("reason", "Completed"),
+# 148                     output=state,
+# 149                     provider_name=self._config.name
+# 150                 )
+# 151 
+# 152             step_count += 1
+# 153 
+# 154             if current == CONTROLLER.START:
+# 155                 transition = self.transition(state, None)
+# 156                 state.update(transition)
+# 157                 state["_last_state"] = CONTROLLER.START
+# 158                 continue
 # 159 
-# 160             if current == CONTROLLER.START:
-# 161                 transition = self.transition(state, None)
-# 162                 state.update(transition)
-# 163                 state["_last_state"] = CONTROLLER.START
-# 164                 continue
-# 165 
-# 166             provider = self._states.get(current)
-# 167             if not provider:
-# 168                 raise ValueError(f"No controller provider registered for state: {current}")
-# 169 
-# 170             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 171             output = provider.run(input=provider_input, session_id=session_id)
-# 172 
-# 173             transition_result = self.transition(state, output)
-# 174             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 175 
-# 176             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 177             transition_metadata.update({
-# 178                 "agent_output": flat_output.get("output", {}),
-# 179                 "file_path": flat_output.get("file_path"),
-# 180             })
-# 181             transition_result["transition_metadata"] = transition_metadata
-# 182 
-# 183             state = {
-# 184                 **state,
-# 185                 **transition_result,
-# 186                 "state": CONTROLLER(transition_result.get("state", current)),
-# 187                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 188                 "_last_state": current,
-# 189                 "state_output": flat_output,
-# 190             }
-# 191 
-# 192     @abstractmethod
-# 193     def _transition(self, state: dict, output: dict | None) -> dict:
-# 194         ...
+# 160             provider = self._states.get(current)
+# 161             if not provider:
+# 162                 raise ValueError(f"No controller provider registered for state: {current}")
+# 163 
+# 164             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 165             output = provider.run(input=provider_input, session_id=session_id)
+# 166 
+# 167             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 168             promoted_path = Path("working_files") / f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 169             if "file_path" in output.output:
+# 170                 src_path = Path(output.output["file_path"]).resolve()
+# 171                 shutil.copy(src_path, promoted_path)
+# 172                 self._generated_files.append(promoted_path)
+# 173                 state["file_path"] = str(promoted_path)
+# 174 
+# 175             transition_result = self.transition(state, output)
+# 176             transition_result.pop("file_path", None)
+# 177 
+# 178             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 179             transition_metadata.update({
+# 180                 "agent_output": flat_output.get("output", {}),
+# 181                 "file_path": flat_output.get("file_path"),
+# 182             })
+# 183             transition_result["transition_metadata"] = transition_metadata
+# 184 
+# 185             state = {
+# 186                 **state,
+# 187                 **transition_result,
+# 188                 "state": CONTROLLER(transition_result.get("state", current)),
+# 189                 "_last_state": current,
+# 190                 "state_output": flat_output,
+# 191             }
+# 192 
+# 193 
+# 194     @abstractmethod
+# 195     def _transition(self, state: dict, output: dict | None) -> dict:
+# 196         ...
 
 
 # providers\prompt_provider_base.py
@@ -5476,17 +5546,21 @@
 # 190             raw_state = transition_result.get("state", current)
 # 191             state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
 # 192 
-# 193             state = {
-# 194                 **state,
-# 195                 **transition_result,
-# 196                 "state": state_enum,
-# 197                 "_last_state": current,
-# 198                 "state_output": flat_output,
-# 199             }
-# 200 
-# 201     @abstractmethod
-# 202     def _transition(self, state: dict, output: dict | None) -> dict:
-# 203         ...
+# 193             transition_result.pop("file_path", None)
+# 194 
+# 195             state = {
+# 196                 **state,
+# 197                 **transition_result,
+# 198                 "state": state_enum,
+# 199                 "_last_state": current,
+# 200                 "state_output": flat_output,
+# 201             }
+# 202 
+# 203 
+# 204 
+# 205     @abstractmethod
+# 206     def _transition(self, state: dict, output: dict | None) -> dict:
+# 207         ...
 
 
 # providers\system_provider_base.py
@@ -5676,18 +5750,21 @@
 # 183             raw_state = transition_result.get("state", current)
 # 184             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
 # 185 
-# 186             state = {
-# 187                 **state,
-# 188                 **transition_result,
-# 189                 "state": state_enum,
-# 190                 "file_path": transition_result.get("file_path") or getattr(output, "file_path", state.get("file_path")),
-# 191                 "_last_state": current,
-# 192                 "state_output": flat_output,
-# 193             }
-# 194 
-# 195     @abstractmethod
-# 196     def _transition(self, state: dict, output: dict | None) -> dict:
-# 197         ...
+# 186             transition_result.pop("file_path", None)
+# 187 
+# 188             state = {
+# 189                 **state,
+# 190                 **transition_result,
+# 191                 "state": state_enum,
+# 192                 "_last_state": current,
+# 193                 "state_output": flat_output,
+# 194             }
+# 195 
+# 196 
+# 197 
+# 198     @abstractmethod
+# 199     def _transition(self, state: dict, output: dict | None) -> dict:
+# 200         ...
 
 
 # providers\tool_provider_base.py
@@ -5709,18 +5786,29 @@
 # 15     """Base class for tool providers with optional context/score wiring."""
 # 16 
 # 17     def _run_provider(self, input: dict) -> ToolOutputSchema:
-# 18         return self._run(input)
+# 18         output = self._run(input)
 # 19 
-# 20     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 21         self.context_provider = provider
-# 22 
-# 23     def set_score_provider(self, provider: ScoreProviderBase) -> None:
-# 24         self.score_provider = provider
-# 25 
-# 26     @abstractmethod
-# 27     def _run(self, input: dict) -> ToolOutputSchema:
-# 28         raise NotImplementedError
-# 29 
+# 20         if not isinstance(output, ToolOutputSchema):
+# 21             raise TypeError(f"Expected ToolOutputSchema, got {type(output).__name__}")
+# 22         if output.return_code is None:
+# 23             raise ValueError("Tool output is missing `return_code`")
+# 24         if output.summary is None:
+# 25             output.summary = "⚠️ Missing summary"
+# 26         if output.metrics is None:
+# 27             output.metrics = {}
+# 28 
+# 29         return output
+# 30 
+# 31     def set_context_provider(self, provider: ContextProviderBase) -> None:
+# 32         self.context_provider = provider
+# 33 
+# 34     def set_score_provider(self, provider: ScoreProviderBase) -> None:
+# 35         self.score_provider = provider
+# 36 
+# 37     @abstractmethod
+# 38     def _run(self, input: dict) -> ToolOutputSchema:
+# 39         raise NotImplementedError
+# 40 
 
 
 # utilities\__init__.py
@@ -5800,54 +5888,72 @@
 
 # utilities\metadata\footer\code_annnotation_utils.py
 
-# 1 from __future__ import annotations
-# 2 from typing import Tuple
-# 3 
-# 4 FOOTER_START = "#  --- Agent Notes"
-# 5 FOOTER_END = "#  -----------------------------------------------"
-# 6 
-# 7 def strip_agent_notes(file_content: str) -> str:
-# 8     """Remove the agent notes footer from the file (if present)."""
-# 9     lines = file_content.strip().splitlines()
-# 10     start_idx = None
-# 11 
-# 12     for i, line in enumerate(lines):
-# 13         if line.strip().startswith(FOOTER_START):
-# 14             start_idx = i
-# 15             break
-# 16 
-# 17     return "\n".join(lines[:start_idx]) if start_idx is not None else file_content.strip()
-# 18 
+# 1 import ast
+# 2 import uuid
+# 3 from pathlib import Path
+# 4 from typing import Tuple
+# 5 
+# 6 FOOTER_START = "#  --- Agent Notes"
+# 7 FOOTER_END = "#  -----------------------------------------------"
+# 8 
+# 9 def split_code_and_notes(file_content: str) -> Tuple[str, str]:
+# 10     """Return (code_with_safe_footer_removed, extracted_notes), preserving syntax."""
+# 11     footer_start = None
+# 12     line_sep = "\r\n" if "\r\n" in file_content else "\n"
+# 13     lines = file_content.splitlines(keepends=True)
+# 14 
+# 15     for i, line in enumerate(lines):
+# 16         if line.lstrip().startswith(FOOTER_START):
+# 17             footer_start = i
+# 18             break
 # 19 
-# 20 def append_agent_note(file_content: str, system: str, agent_name: str, note: str) -> str:
-# 21     """Append a new agent note to the bottom of the file."""
-# 22     base = strip_agent_notes(file_content)
+# 20     if footer_start is not None:
+# 21         code_part = "".join(lines[:footer_start])
+# 22         notes_part = "".join(lines[footer_start:])
 # 23 
-# 24     formatted_note = (
-# 25         f"{FOOTER_START} ({system} / {agent_name}) ---\n" +
-# 26         "\n".join(f"#  {line.strip()}" for line in note.strip().splitlines()) +
-# 27         f"\n{FOOTER_END}"
-# 28     )
-# 29 
-# 30     return base.rstrip() + "\n\n" + formatted_note
-# 31 
-# 32 
-# 33 def split_code_and_notes(file_content: str) -> Tuple[str, str]:
-# 34     """Return (raw_code, extracted_footer_notes) without modifying whitespace"""
-# 35     lines = file_content.splitlines()  #  No .strip() here
-# 36     start_idx = None
-# 37 
-# 38     for i, line in enumerate(lines):
-# 39         if line.strip().startswith(FOOTER_START):  #  You may keep this .strip() for detecting footer
-# 40             start_idx = i
-# 41             break
-# 42 
-# 43     if start_idx is not None:
-# 44         code_part = "\n".join(lines[:start_idx])  #  No .strip() here to preserve whitespace
-# 45         notes_part = "\n".join(lines[start_idx:])
-# 46         return code_part, notes_part
+# 24         try:
+# 25             ast.parse(code_part)
+# 26             return code_part, notes_part
+# 27         except SyntaxError:
+# 28             safe_footer = (
+# 29                 f"{line_sep}{FOOTER_START} (removed safely)\n"
+# 30                 f"pass  #  [Agent notes stripped for syntax integrity]{line_sep}"
+# 31                 f"{FOOTER_END}{line_sep}"
+# 32             )
+# 33             return code_part + safe_footer, notes_part
+# 34 
+# 35     return file_content, ""
+# 36 
+# 37 def append_agent_note(file_content: str, system: str, agent_name: str, note: str) -> str:
+# 38     base, _ = split_code_and_notes(file_content)  #  strip if possible, fallback-safe
+# 39 
+# 40     formatted_note = (
+# 41         f"{FOOTER_START} ({system} / {agent_name}) ---\n" +
+# 42         "".join(f"#  {line}\n" for line in note.strip().splitlines()) +
+# 43         f"{FOOTER_END}\n"
+# 44     )
+# 45 
+# 46     return base + ("\n" if not base.endswith(('\n', '\r')) else "") + formatted_note
 # 47 
-# 48     return file_content, ""  
+# 48 def prepare_file_for_linting(original_path: str) -> str:
+# 49     original = Path(original_path)
+# 50     raw = original.read_text(encoding="utf-8")
+# 51 
+# 52     from .code_annnotation_utils import split_code_and_notes
+# 53     code_part, _ = split_code_and_notes(raw)
+# 54 
+# 55     try:
+# 56         ast.parse(code_part)
+# 57     except SyntaxError:
+# 58         #  Append safety pass to guarantee valid syntax
+# 59         code_part += "\npass  #  [Auto-patched for linting]\n"
+# 60 
+# 61     temp_file = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
+# 62     temp_file.write_text(code_part.rstrip() + "\n", encoding="utf-8")
+# 63 
+# 64     return str(temp_file)
+# 65 
+# 66 
 
 
 # utilities\metadata\logging\__init__.py

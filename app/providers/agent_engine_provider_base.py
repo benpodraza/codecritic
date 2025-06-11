@@ -93,6 +93,9 @@ class AgentEngineProviderBase(BaseProvider):
                     cost_usd=cost_usd,
                     snapshot_id=None,
                     summary="No change detected (normalized)",
+                    code=code_block,
+                    agent_decision=decision.value,
+                    conversation_log_entry=log_block,
                 )
 
             after_code = code_block.rstrip()
@@ -190,6 +193,9 @@ class AgentEngineProviderBase(BaseProvider):
             cost_usd=cost_usd,
             snapshot_id=snapshot_id,
             summary=summary,
+            code=code_block,
+            agent_decision=decision.value,
+            conversation_log_entry=log_block,
         )
 
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:

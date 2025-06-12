@@ -16,6 +16,7 @@ from app.db.schemas import (
     AgentConversationLogSchema,
     ErrorLogSchema,
     ProviderLogSchema,
+    FileLogSchema
 )
 
 LOG_CONFIG_MAP = {
@@ -38,6 +39,10 @@ LOG_CONFIG_MAP = {
     LOG_TYPE.SNAPSHOT_METRICS: {
         "schema": SnapshotMetricsSchema,  
         "table": "snapshot_metrics",   
+    },
+    LOG_TYPE.FILE: {  
+        "schema": FileLogSchema,
+        "table": "file_log",
     },
 }
 
@@ -123,7 +128,7 @@ class LoggingProvider:
                 for item in items:
                     fh.write(json.dumps(item) + "\n")
 
-    def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> None:
+    def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> int | None:
         if not isinstance(entries, list):
             entries = [entries]
 
@@ -134,7 +139,6 @@ class LoggingProvider:
         schema_cls = config["schema"]
         table_name = config["table"]
 
-        # Log and allow class name mismatches as a warning (helpful for shadowed classes)
         for entry in entries:
             if not is_dataclass(entry):
                 raise TypeError(f"Expected a dataclass instance, got {type(entry)}")
@@ -144,7 +148,23 @@ class LoggingProvider:
                 )
 
         serialized = [self._serialize(e) for e in entries]
+        
+        cur = self.conn.cursor()
+
+        if len(serialized) == 1:
+            keys = list(serialized[0].keys())
+            cols = ",".join(keys)
+            placeholders = ",".join(["?"] * len(keys))
+            values = tuple(serialized[0][k] for k in keys)
+
+            cur.execute(f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})", values)
+            self.conn.commit()
+
+            return cur.lastrowid  # ✅ Return the inserted row ID
+
+        # If multiple, just bulk insert without return
         self._insert_many(table_name, serialized)
+        return None
 
     def log_provider(self, log: ProviderLogSchema) -> None:
         self.write(LOG_TYPE.PROVIDER, log)
@@ -160,6 +180,9 @@ class LoggingProvider:
 
     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
         self.write(LOG_TYPE.SNAPSHOT_METRICS, log)
+    
+    def log_file(self, log: FileLogSchema) -> None:
+        self.write(LOG_TYPE.FILE, log)
 
     def close(self) -> None:
         self.conn.close()
@@ -186,3 +209,6 @@ class LoggingMixin:
 
     def log_snapshot_metrics(self, log: SnapshotMetricsSchema) -> None:
         self.logger.log_snapshot_metrics(log)
+    
+    def log_file(self, log: FileLogSchema) -> None:
+        self.logger.log_file(log)

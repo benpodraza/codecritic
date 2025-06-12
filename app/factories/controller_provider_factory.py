@@ -2,6 +2,8 @@ from app.factories.base_provider_factory import BaseProviderFactory
 from app.db.models import ControllerProviderConfig
 from app.providers.controller_provider_base import ControllerProviderBase
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.provider_mixin_injector import ProviderContextInjectorWrapper
+from app.utilities.run_context import propagate_run_context_if_needed
 
 
 class ControllerProviderFactory(BaseProviderFactory):
@@ -15,6 +17,8 @@ class ControllerProviderFactory(BaseProviderFactory):
         *,
         called_by_type: PROVIDER_TYPE | None = None,
         called_by_id: int | None = None,
+        session_id: str = None, 
+        file_log_id: str = None,
         **kwargs
     ) -> ControllerProviderBase:
         from app.factories.context_provider_factory import ContextProviderFactory
@@ -36,7 +40,9 @@ class ControllerProviderFactory(BaseProviderFactory):
             ContextProviderFactory.create(
                 config["context_provider_id"],
                 called_by_type=provider_type,
-                called_by_id=provider_id
+                called_by_id=provider_id,
+                session_id=session_id,
+                file_log_id=file_log_id
             ) if config.get("context_provider_id") else None
         )
 
@@ -44,7 +50,9 @@ class ControllerProviderFactory(BaseProviderFactory):
             ScoreProviderFactory.create(
                 config["score_provider_id"],
                 called_by_type=provider_type,
-                called_by_id=provider_id
+                called_by_id=provider_id,
+                session_id=session_id,
+                file_log_id=file_log_id
             ) if config.get("score_provider_id") else None
         )
 
@@ -52,7 +60,9 @@ class ControllerProviderFactory(BaseProviderFactory):
             ToolProviderFactory.create(
                 tid,
                 called_by_type=provider_type,
-                called_by_id=provider_id
+                called_by_id=provider_id,
+                session_id=session_id,
+                file_log_id=file_log_id
             )
             for tid in (config.get("tool_provider_ids") or {}).values()
         ]
@@ -61,13 +71,15 @@ class ControllerProviderFactory(BaseProviderFactory):
             name: SystemProviderFactory.create(
                 sys_id,
                 called_by_type=provider_type,
-                called_by_id=provider_id
+                called_by_id=provider_id,
+                session_id=session_id,
+                file_log_id=file_log_id
             )
             for name, sys_id in (config.get("systems") or {}).items()
         }
 
         cls_type = type(inst)
-        return cls_type(
+        instance = cls_type(
             config           = inst._config,
             context_provider = context_provider,
             score_provider   = score_provider,
@@ -75,4 +87,12 @@ class ControllerProviderFactory(BaseProviderFactory):
             system_providers = system_providers, 
             called_by_type   = called_by_type,
             called_by_id     = called_by_id,
+        )
+
+        propagate_run_context_if_needed(instance)
+
+        return ProviderContextInjectorWrapper(
+            instance,
+            session_id=session_id,
+            file_log_id=file_log_id
         )

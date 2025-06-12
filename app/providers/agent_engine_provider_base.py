@@ -153,6 +153,7 @@ class AgentEngineProviderBase(BaseProvider):
 
             self.logger.write(LOG_TYPE.SNAPSHOT_METRICS, SnapshotMetricsSchema(
                 session_id=session_id,
+                file_log_id=self._file_log_id,
                 snapshot_id=snapshot_id,
                 system=system,
                 agent=self._config.name,

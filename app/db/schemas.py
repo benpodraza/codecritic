@@ -162,6 +162,7 @@ class SystemProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[list[str]] = None
+    system_type: SYSTEM
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:
@@ -226,6 +227,7 @@ class ProviderLogSchema:
     called_by_type: Optional[PROVIDER_TYPE] = None
     called_by_id: Optional[int] = None
     run_id: str = field(default_factory=lambda: str(uuid4()))
+    file_log_id: Optional[str] = None
 
 @dataclass
 class StateTransitionLogSchema:
@@ -243,6 +245,7 @@ class StateTransitionLogSchema:
     run_id: str = field(default_factory=lambda: str(uuid4()))
     called_by_type: PROVIDER_TYPE | None = None
     called_by_id: int | None = None 
+    file_log_id: Optional[str] = None
 
 @dataclass
 class AgentConversationLogSchema:
@@ -253,6 +256,7 @@ class AgentConversationLogSchema:
     content: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     run_id: str = field(default_factory=lambda: str(uuid4()))
+    file_log_id: Optional[str] = None
 
 @dataclass
 class ErrorLogSchema:
@@ -267,6 +271,7 @@ class ErrorLogSchema:
     called_by_type: Optional[PROVIDER_TYPE] = None
     called_by_id: Optional[int] = None
     run_id: str = field(default_factory=lambda: str(uuid4()))
+    file_log_id: Optional[str] = None
     
 @dataclass
 class SnapshotMetricsSchema:
@@ -280,6 +285,7 @@ class SnapshotMetricsSchema:
     state: str  # could be FSM state, usually freeform like "generate" or "stability"
     decision: DECISION_TYPE
     timestamp: datetime
+    file_log_id: str
 
     line_count_before: int
     line_count_after: int
@@ -297,6 +303,15 @@ class SnapshotMetricsSchema:
     symbol_count_delta: int
     branch_count_delta: int
     comment_count_delta: int
+
+@dataclass
+class FileLogSchema:
+    session_id: str
+    file_name: str
+    id: Optional[int] = None
+    original_path: Optional[str] = None
+    length_bytes: Optional[int] = None
+
 
 # Provider output schemas (for logs)
 

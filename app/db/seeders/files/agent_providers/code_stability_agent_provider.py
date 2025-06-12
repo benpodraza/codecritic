@@ -6,7 +6,7 @@ from app.db.schemas import AgentOutputSchema
 
 class CodeStabilityAgentProvider(AgentProviderBase):
     def _run(self, input: dict) -> AgentOutputSchema:
-        score_result = self._score_provider.run(input, session_id=input["session_id"])
+        score_result = self._score_provider.run(input)
 
         raw_file_path = input.get("file_path") or input.get("file_name") or input.get("before")
         relative_file_path = None

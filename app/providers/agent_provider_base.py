@@ -61,12 +61,11 @@ class AgentProviderBase(BaseProvider):
                 deltas = compute_deltas(before_metrics, after_metrics)
 
                 metadata = {
-                    "system": self._system,
+                    "system": input.get("system", "unknown"),
                     "agent": self._config.name if self._config else "unknown",
                     "score": (
                         self._score_provider.run(
-                            {"file_path": str(before_path)}, session_id=self._session_id
-                        ).value
+                            {"file_path": str(before_path)}).value
                         if self._score_provider else None
                     ),
                     "state": str(input.get("state_context", {}).get("state", "unknown")),
@@ -77,9 +76,11 @@ class AgentProviderBase(BaseProvider):
                     **deltas,
                 }
 
+                after_code = after_code.rstrip() + "\n\n"
+
                 after_code = append_agent_note(
                     file_content=after_code,
-                    system=self._system,
+                    system=self._called_by_type,
                     agent_name=self._config.name if self._config else "unknown",
                     note=log_content
                 )
@@ -93,8 +94,9 @@ class AgentProviderBase(BaseProvider):
                 with Session(bind=self._engine) as session:
                     entry = SnapshotMetrics(
                         session_id=self._session_id,
+                        file_log_id=self._file_log_id, 
                         snapshot_id=snapshot_id,
-                        system=self._system,
+                        system=self._called_by_type,
                         agent=self._config.name,
                         score=metadata.get("score"),
                         state=metadata.get("state"),
@@ -116,7 +118,8 @@ class AgentProviderBase(BaseProvider):
         # Always log conversation
         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
             session_id=self._session_id,
-            system=self._system,
+            file_log_id=self._file_log_id, 
+            system=input.get("system", "unknown"),
             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
             agent_provider_config_id=self._config.id if self._config else -1,
             content=log_content,
@@ -143,11 +146,10 @@ class AgentProviderBase(BaseProvider):
         return self._extract_block(text, "[CODE]", "[/CODE]")
 
     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-        start = text.find(start_tag)
-        end = text.find(end_tag)
-        if start != -1 and end != -1 and start < end:
-            return text[start + len(start_tag):end].strip()
-        return None
+        import re
+        pattern = re.compile(re.escape(start_tag) + r"(.*?)" + re.escape(end_tag), re.DOTALL)
+        match = pattern.search(text)
+        return match.group(1).strip() if match else None
 
     @abstractmethod
     def _run(self, input: dict) -> AgentOutputSchema:

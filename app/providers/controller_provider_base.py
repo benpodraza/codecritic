@@ -102,9 +102,7 @@ class ControllerProviderBase(FSMProviderBase):
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,
-                    score_provider=self.score_provider,
-                    system=state.get("system", "unknown"),
-                    session_id=session_id,
+                    score_provider=self.score_provider
                 )
 
                 temp_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -156,7 +154,7 @@ class ControllerProviderBase(FSMProviderBase):
                 raise ValueError(f"No system provider registered for state: {current.value}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-            output = provider.run(input=provider_input, session_id=session_id)
+            output = provider.run(input=provider_input)
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
             promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"

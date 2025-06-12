@@ -43,7 +43,8 @@ def append_agent_note(file_content: str, system: str, agent_name: str, note: str
         f"{FOOTER_END}\n"
     )
 
-    return base + ("\n" if not base.endswith(('\n', '\r')) else "") + formatted_note
+    return base.rstrip() + "\n\n" + formatted_note
+
 
 def prepare_file_for_linting(original_path: str) -> str:
     original = Path(original_path)

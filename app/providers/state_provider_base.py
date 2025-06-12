@@ -105,9 +105,7 @@ class StateProviderBase(FSMProviderBase):
                     best_file = select_best_file_by_score(
                         file_a=state["file_path"],
                         file_b=self.incoming_file,
-                        score_provider=self.score_provider,
-                        system=state.get("system", "unknown"),
-                        session_id=session_id
+                        score_provider=self.score_provider
                     )
 
                     temp_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -162,7 +160,7 @@ class StateProviderBase(FSMProviderBase):
                 continue
 
             provider = self.agent_providers.get(current.value)
-            output = provider.run(input=state, session_id=session_id) if provider else None
+            output = provider.run(input=state) if provider else None
 
             transition_result = self.transition(state, output)
 

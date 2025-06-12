@@ -21,11 +21,15 @@ class FSMProviderBase(BaseProvider):
         config=None,
         called_by_type: Optional[PROVIDER_TYPE] = None,
         called_by_id: Optional[int] = None,
+        session_id: str = None,
+        file_log_id: str = None
     ) -> None:
         super().__init__(
             config=config,
             called_by_type=called_by_type,
             called_by_id=called_by_id,
+            session_id=session_id,
+            file_log_id=file_log_id
         )
 
     def transition(self, state: dict, result: dict | None) -> dict:
@@ -62,6 +66,7 @@ class FSMProviderBase(BaseProvider):
             LOG_TYPE.STATE_TRANSITION,
             StateTransitionLogSchema(
                 session_id=self._session_id,
+                file_log_id=self._file_log_id, 
                 entity_type=self._infer_provider_type(),
                 entity_id=self._config.id,
                 from_state=state.get("state"),

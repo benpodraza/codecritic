@@ -2,37 +2,43 @@ from abc import abstractmethod
 from datetime import datetime, timezone
 import hashlib
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Dict, Optional
 from uuid import uuid4
 
 from app.db import init_db
-from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE
+from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE, LoggingProvider
 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
 
-class BaseProvider(LoggingMixin):
+class BaseProvider:
     def __init__(
         self,
-        called_by_type: PROVIDER_TYPE,  
-        called_by_id: int,  
         config=None,
-    ) -> None:
-        super().__init__()
-        assert config is not None, "🚨 engine must be injected into BaseProvider"
+        called_by_type=None,
+        called_by_id=None,
+        *,
+        session_id: str = None,
+        file_log_id: str = None
+    ):
         self._config = config
-        self._engine = init_db(reset=False)
         self._called_by_type = called_by_type
         self._called_by_id = called_by_id
+        self._session_id = session_id 
+        self._file_log_id = file_log_id 
+        self._engine = init_db(reset=False)
+        self._run_id = None
+        self.logger = LoggingProvider()
+        self._log = logging.getLogger(self.__class__.__name__)
 
-    def run(self, input: dict | None = None, session_id: str = "") -> str:
+    def run(self, input: dict | None = None) -> str:
         input = input or {}
-        if not session_id:
-            raise ValueError("session_id must be provided to run()")
 
-        self._session_id = session_id
-        self._system = input.get("system", "unknown")
+        self._session_id = getattr(self, "_session_id", None) or input.get("session_id")
+        self._file_log_id = getattr(self, "_file_log_id", None) or input.get("file_log_id")
+
         self._run_id = str(uuid4())
 
         start_clock = time.perf_counter()
@@ -46,7 +52,8 @@ class BaseProvider(LoggingMixin):
                 self.logger.write(
                     LOG_TYPE.ERROR,
                     ErrorLogSchema(
-                        session_id=session_id,
+                        session_id=self._session_id,
+                        file_log_id=self._file_log_id,
                         error_type=self._map_error_type(exc).value,
                         message=str(exc),
                         file_path=str(Path(__file__).relative_to(Path.cwd())),
@@ -99,7 +106,8 @@ class BaseProvider(LoggingMixin):
             self.logger.write(
                 LOG_TYPE.PROVIDER,
                 ProviderLogSchema(
-                    session_id=session_id,
+                    session_id=self._session_id,
+                    file_log_id=self._file_log_id,
                     provider_id=self._config.id if self._config else -1,
                     provider_type=self._infer_provider_type(),
                     input=input_str,
@@ -153,3 +161,22 @@ class BaseProvider(LoggingMixin):
         if not self._config or not getattr(self._config, "config", None):
             return None
         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
+
+    def propagate_file_log_id(self, file_log_id: str):
+        self._file_log_id = file_log_id
+
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name, None)
+
+            if isinstance(attr, BaseProvider):
+                attr.propagate_file_log_id(file_log_id)
+
+            elif isinstance(attr, list):
+                for item in attr:
+                    if isinstance(item, BaseProvider):
+                        item.propagate_file_log_id(file_log_id)
+
+            elif isinstance(attr, dict):
+                for item in attr.values():
+                    if isinstance(item, BaseProvider):
+                        item.propagate_file_log_id(file_log_id)

@@ -1,64 +1,107 @@
+# app/providers/ruff_tool_provider_v2.py
 import subprocess
-import sys
 import json
+from typing import Any, Dict, List, Optional
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
-class RuffToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> ToolOutputSchema:
-        target = input.get("target")
 
-        # 1) Run Ruff in JSON mode
-        cmd = [sys.executable, "-m", "ruff", "check", "--format", "json", target]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        stdout = proc.stdout or ""
-        stderr = proc.stderr or ""
-        raw_code = proc.returncode
+class RuffToolProviderV2(ToolProviderBase):
+    """
+    Executes `ruff check --output-format json` and normalises results so that
+    return_code 1 ⇒ pass, 0 ⇒ any violation or runtime error.
+    """
 
-        # 2) Try parsing JSON; if that fails, mark parse_error
-        parse_error = False
-        violations = []
+    def _run(self, input: dict) -> ToolOutputSchema:  # noqa: D401, N802
+        target: str = input.get("target")
+        cmd = ["ruff", "check", "--output-format", "json", target]
 
         try:
-            report = json.loads(stdout)
-            for file_report in report:
-                for v in file_report.get("violations", []):
-                    violations.append(v["code"])
+            proc = subprocess.run(
+                cmd, capture_output=True, text=True, encoding="utf‑8", errors="ignore"
+            )
+        except Exception as exc:
+            return self._runtime_error(str(exc))
+
+        raw_code = proc.returncode
+        stdout = (proc.stdout or "").strip()
+        stderr = (proc.stderr or "").strip()
+
+        # ───────────────────────────────────────────── parse Ruff JSON (if any)
+        try:
+            parsed = json.loads(stdout or "[]")
+            violations: List[str] = [
+                v["code"]
+                for file_item in parsed
+                for v in file_item.get("violations", [])
+            ]
         except json.JSONDecodeError:
-            parse_error = True
+            # JSON decode failure = runtime problem
+            return self._runtime_error("Failed to parse Ruff JSON output", raw_code)
 
-        # 3) Score parse errors as a heavy penalty (10 violations)
-        if parse_error:
-            violations = ["PARSE_ERROR"]
-            violation_count = 1
-        else:
-            violation_count = len(violations)
+        violation_count = len(violations)
 
-        # 4) Build summary & normalized return code
-        if parse_error:
-            norm_code = 0
-            summary = f"❌ Ruff parse error ({violation_count} violations)"
-        elif raw_code == 0:
-            norm_code = 1
-            summary = f"✅ Ruff passed: {violation_count} violations"
-        elif raw_code == 1:
-            norm_code = 0
-            summary = f"❌ Ruff failed: {violation_count} violations"
-        else:
-            norm_code = 2
-            summary = f"❌ Ruff execution error ({raw_code})"
+        # ───────────────────────────────────────────────────────── outcome map
+        if raw_code == 0:  # Ruff found zero violations
+            return self._success(
+                summary="✅ Ruff passed — no violations",
+                metrics={
+                    "violation_count": 0,
+                    "raw_return_code": raw_code,
+                },
+            )
 
-        metrics = {
-            "violation_count": violation_count,
-            "raw_return_code": raw_code,
-            "parse_error": parse_error
-        }
+        if raw_code == 1:  # Ruff found violations
+            return self._failure(
+                summary=f"❌ Ruff failed with {violation_count} violation(s)",
+                violations=violations or ["UNKNOWN_VIOLATION"],
+                metrics={
+                    "violation_count": violation_count,
+                    "raw_return_code": raw_code,
+                },
+                stdout=stdout or None,
+            )
 
+        # Anything else → runtime error
+        return self._runtime_error(stderr or stdout, raw_code)
+
+    # ────────────────────────────────────────────────────────────── helpers
+    def _success(
+        self,
+        summary: str,
+        metrics: Dict[str, Any],
+    ) -> ToolOutputSchema:
         return ToolOutputSchema(
-            return_code=norm_code,
-            stdout=stdout.strip() or None,
-            stderr=stderr.strip() or None,
+            return_code=1,
+            stdout=None,
+            stderr=None,
+            violations=None,
+            metrics=metrics,
+            summary=summary,
+        )
+
+    def _failure(
+        self,
+        summary: str,
+        violations: List[str],
+        metrics: Dict[str, Any],
+        stdout: Optional[str] = None,
+    ) -> ToolOutputSchema:
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=stdout,
+            stderr=None,
             violations=violations,
             metrics=metrics,
             summary=summary,
+        )
+
+    def _runtime_error(self, message: str, raw_code: int | None = None) -> ToolOutputSchema:
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=None,
+            stderr=message,
+            violations=["RUNTIME_ERROR"],
+            metrics={"raw_return_code": raw_code, "exception": 1},
+            summary=f"❌ Ruff execution failed: {message}",
         )

@@ -32,8 +32,8 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
         before_path = Path(snapshot["before_path"]).resolve()
         after_path = Path(snapshot["after_path"]).resolve()
 
-        before_score = self._score_provider.run({"file_path": str(before_path)}, session_id=self._session_id).value
-        after_score = self._score_provider.run({"file_path": str(after_path)}, session_id=self._session_id).value
+        before_score = self._score_provider.run({"file_path": str(before_path)}).value
+        after_score = self._score_provider.run({"file_path": str(after_path)}).value
 
         def safe_relative(path: Path) -> str:
             try:

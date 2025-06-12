@@ -121,6 +121,7 @@ class SystemProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    system_type = Column(String, nullable=False)
 
 class ControllerProviderConfig(Base):
     __tablename__ = "controller_provider_config"
@@ -175,6 +176,7 @@ class ProviderLog(Base):
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True)
     run_id = Column(TEXT, nullable=False, index=True)
+    file_log_id = Column(TEXT, nullable=True)
 
     
 class StateTransitionLog(Base):
@@ -197,6 +199,7 @@ class StateTransitionLog(Base):
     run_id = Column(TEXT, nullable=False, index=True)
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True) 
+    file_log_id = Column(TEXT, nullable=True)
 
 class AgentConversationLog(Base):
     __tablename__ = "agent_conversation_log"
@@ -209,6 +212,8 @@ class AgentConversationLog(Base):
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
     run_id = Column(TEXT, nullable=False, index=True)
+    file_log_id = Column(TEXT, nullable=True)
+    
 
 class ErrorLog(Base):
     __tablename__ = "error_log"
@@ -225,6 +230,7 @@ class ErrorLog(Base):
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True)
     run_id = Column(TEXT, nullable=False, index=True)
+    file_log_id = Column(TEXT, nullable=True)
 
 class SnapshotMetrics(Base):
     __tablename__ = "snapshot_metrics"
@@ -240,6 +246,7 @@ class SnapshotMetrics(Base):
     state = Column(String, nullable=True)
     decision = Column(String, nullable=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+    file_log_id = Column(TEXT, nullable=True)
 
     # structural metrics
     line_count_before = Column(Integer)
@@ -261,3 +268,12 @@ class SnapshotMetrics(Base):
     comment_count_delta = Column(Integer)
 
 
+class FileLog(Base):
+    __tablename__ = "file_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(String, nullable=False)
+    file_name = Column(String, nullable=False)
+    original_path = Column(String)
+    length_bytes = Column(Integer)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))

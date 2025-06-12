@@ -9,12 +9,9 @@ from app.db.schemas import PromptOutputSchema
 
 class LintingPromptProvider(PromptProviderBase):
     def _run(self, input: dict) -> PromptOutputSchema:
-        session_id = input.get("session_id")
+        session_id = self._session_id
         system = input.get("system", "unknown")
         file_path = input.get("file_path")
-
-        if not session_id or not file_path:
-            raise ValueError("PromptProvider requires both session_id and file_path")
 
         if not self.agent_text or not self.system_text or not self._context_provider:
             raise ValueError("Missing required prompt text or context provider")
@@ -23,8 +20,7 @@ class LintingPromptProvider(PromptProviderBase):
             {
                 "file_path": file_path,
                 "system": system
-            },
-            session_id=session_id
+            }
         )
         context = context_output.context if hasattr(context_output, "context") else json.loads(context_output)
 

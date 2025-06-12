@@ -6,6 +6,7 @@ class LOG_TYPE(str, Enum):
     STATE_TRANSITION = "state_transition_log"
     AGENT_CONVERSATION = "agent_conversation_log"
     SNAPSHOT_METRICS = "snapshot_metrics"
+    FILE = "file_log"
 
 class PROVIDER_TYPE(str, Enum):
     TOOL = "tool"

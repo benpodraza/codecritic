@@ -10,6 +10,7 @@ from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ProgramOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
+from app.utilities.run_context import propagate_run_context_if_needed, set_run_context
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 
 
@@ -23,20 +24,27 @@ class ProgramProviderBase(FSMProviderBase):
         tool_providers=None,
         called_by_type=None,
         called_by_id=None,
+        session_id=None,
+        file_log_id=None,
+        
     ):
         super().__init__(
             config=config,
             called_by_type=called_by_type,
-            called_by_id=called_by_id
+            called_by_id=called_by_id,
+            session_id=None,
+            file_log_id=None,
         )
         self._states = controller_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
+        self._session_id = session_id
+        self._file_log_id = file_log_id
         self._generated_files: list[Path] = []
 
     def _run_provider(self, input: dict) -> ProgramOutputSchema:
-        session_id = input.get("session_id")
+        session_id = self._session_id
         max_steps = input.get("max_steps", 20)
 
         incoming_file = input.get("file_path")
@@ -53,21 +61,44 @@ class ProgramProviderBase(FSMProviderBase):
         shutil.copy(src, self.working_file)
         self._generated_files.append(self.working_file)
 
+        # 🔹 Log file and get file_log_id
+        from app.db.schemas import FileLogSchema
+        from app.utilities.metadata.logging.logging_provider import LoggingProvider, LOG_TYPE
+
+        original_path = str(src)
+        file_name = src.name
+        length_bytes = src.stat().st_size
+
+        file_log = FileLogSchema(
+            session_id=session_id,
+            file_name=file_name,
+            original_path=original_path,
+            length_bytes=length_bytes
+        )
+        self._file_log_id = LoggingProvider().write(LOG_TYPE.FILE, file_log)
+
+        set_run_context(session_id=session_id, file_log_id=self._file_log_id)
+        
+        propagate_run_context_if_needed(self)  
+        # 🔹 Safe relative path for original_file reference
         input_path = Path(incoming_file)
         try:
             relative_path = str(input_path.relative_to(Path.cwd()))
         except ValueError:
             relative_path = str(input_path)
 
+        # 🔹 Build initial FSM state
         state = {
             "state": CONTROLLER.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
+            "file_log_id": self._file_log_id,
             "system": input.get("system", "unknown"),
             "reason": input.get("reason", CONTROLLER.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", CONTROLLER.START),
+            "decision": DECISION_TYPE.UNKNOWN,
             "original_file": relative_path,
             "run_id": self._run_id,
         }
@@ -107,9 +138,7 @@ class ProgramProviderBase(FSMProviderBase):
                 best_file = select_best_file_by_score(
                     file_a=state.get("file_path"),
                     file_b=self.incoming_file,
-                    score_provider=self.score_provider,
-                    system=state.get("system", "unknown"),
-                    session_id=session_id
+                    score_provider=self.score_provider
                 )
 
                 final_path = Path(output_path) / Path(self.incoming_file).name
@@ -162,7 +191,7 @@ class ProgramProviderBase(FSMProviderBase):
                 raise ValueError(f"No controller provider registered for state: {current}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-            output = provider.run(input=provider_input, session_id=session_id)
+            output = provider.run(input=provider_input)
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
             promoted_path = Path("working_files") / f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"

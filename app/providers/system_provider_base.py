@@ -7,6 +7,7 @@ from typing import Dict
 
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
 from app.enums.state_enums import STATE
+from app.enums.system_enums import SYSTEM
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import FSMOutputSchema, SystemOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
@@ -37,7 +38,7 @@ class SystemProviderBase(FSMProviderBase):
 
     def _run_provider(self, input: dict) -> SystemOutputSchema:
         session_id = input.get("session_id")
-        max_steps = input.get("max_steps", 10)
+        max_steps = input.get("max_steps", 7)
 
         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
         if not incoming_file:
@@ -63,7 +64,7 @@ class SystemProviderBase(FSMProviderBase):
             "state": STATE.START,
             "file_path": str(self.working_file),
             "session_id": session_id,
-            "system": input.get("system", "unknown"),
+            "system": getattr(self._config, "system", SYSTEM.UNKNOWN),
             "reason": input.get("reason", STATE.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
@@ -106,9 +107,7 @@ class SystemProviderBase(FSMProviderBase):
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,
-                    score_provider=self.score_provider,
-                    system=state.get("system", "unknown"),
-                    session_id=session_id
+                    score_provider=self.score_provider
                 )
 
                 temp_path = Path("working_files") / f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -161,7 +160,7 @@ class SystemProviderBase(FSMProviderBase):
                 raise ValueError(f"No state provider registered for state: {current.value}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-            output = provider.run(input=provider_input, session_id=session_id)
+            output = provider.run(input=provider_input)
 
             new_file_path = output.output.get("file_path")
             if new_file_path:

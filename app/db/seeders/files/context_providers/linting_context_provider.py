@@ -13,17 +13,13 @@ class LintingContextProvider(ContextProviderBase):
         file_path = Path(input["file_path"]).resolve()
         system = input["system"]
 
-        if not self._session_id:
-            raise ValueError("ContextProvider requires session_id to be set on self")
-
         if not file_path.exists():
             raise FileNotFoundError(f"❌ File not found: {file_path}")
 
         source_code = file_path.read_text(encoding="utf-8")
 
         score_result = self.score_provider.run(
-            input={"file_path": str(file_path)},
-            session_id=self._session_id
+            input={"file_path": str(file_path)}
         )
 
         with Session(bind=self._engine) as session:

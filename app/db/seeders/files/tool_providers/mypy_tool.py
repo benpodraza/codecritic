@@ -1,58 +1,109 @@
+# app/providers/mypy_tool_provider_v2.py
 import subprocess
 import sys
+from typing import Any, Dict, List, Optional
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
-class MypyToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> ToolOutputSchema:
-        target = input.get("target")
 
-        cmd = [
-            sys.executable, "-m", "mypy", target,
-            "--strict",
-            "--disallow-untyped-defs",
-            "--disallow-incomplete-defs",
-            "--disallow-untyped-calls",
-            "--disallow-untyped-decorators",
-            "--disallow-any-generics",
-            "--warn-unused-ignores",
-            "--warn-return-any",
-            "--no-implicit-optional",
-            "--strict-equality"
-        ]
+class MypyToolProviderV2(ToolProviderBase):
+    """
+    Runs `mypy` in *strict* mode and normalises exit‑codes:
+    0 ⇒ pass ⇒ return_code 1
+    1 ⇒ type errors ⇒ return_code 0
+    >1 ⇒ internal / runtime error ⇒ return_code 0 + RUNTIME_ERROR violation
+    """
 
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+    STRICT_ARGS: list[str] = [
+        "--strict",
+        "--disallow-untyped-defs",
+        "--disallow-incomplete-defs",
+        "--disallow-untyped-calls",
+        "--disallow-untyped-decorators",
+        "--disallow-any-generics",
+        "--warn-unused-ignores",
+        "--warn-return-any",
+        "--no-implicit-optional",
+        "--strict-equality",
+    ]
+
+    def _run(self, input: dict) -> ToolOutputSchema:  # noqa: D401, N802
+        target: str = input.get("target")
+
+        cmd = [sys.executable, "-m", "mypy", target, *self.STRICT_ARGS]
+
+        try:
+            proc = subprocess.run(
+                cmd, capture_output=True, text=True, encoding="utf‑8", errors="ignore"
+            )
+        except Exception as exc:
+            return self._runtime_error(str(exc))
 
         raw_code = proc.returncode
-        raw_stdout = proc.stdout.strip()
-        raw_stderr = proc.stderr.strip()
+        stdout = (proc.stdout or "").strip()
+        stderr = (proc.stderr or "").strip()
 
-        violations: list[str] = []
-        metrics: dict[str, int] = {}
-
+        # ───────────────────────────────────────────────────────── parse outcome
         if raw_code == 0:
-            norm_code = 1
-            error_count = 0
-        elif raw_code == 1:
-            norm_code = 0
-            violations = [line.strip() for line in raw_stdout.splitlines() if line.strip()]
-            error_count = len(violations)
-        else:
-            raise RuntimeError(f"Mypy execution error ({raw_code}): {raw_stderr or raw_stdout}")
+            return self._success(
+                summary="✅ Mypy passed — no type errors",
+                metrics={"error_count": 0, "raw_return_code": raw_code},
+                stdout=stdout or None,
+            )
 
-        summary = (
-            f"✅ Mypy passed: {error_count} errors"
-            if norm_code == 1
-            else f"❌ Mypy failed: {error_count} errors"
-        )
+        if raw_code == 1:
+            violations = [line for line in stdout.splitlines() if line.strip()]
+            return self._failure(
+                summary=f"❌ Mypy failed with {len(violations)} error(s)",
+                violations=violations,
+                metrics={
+                    "error_count": len(violations),
+                    "raw_return_code": raw_code,
+                },
+                stdout=stdout or None,
+            )
 
-        metrics = {"error_count": error_count, "raw_return_code": raw_code}
+        # raw_code > 1 → mypy internal error
+        return self._runtime_error(stderr or stdout, raw_code)
 
+    # ────────────────────────────────────────────────────────────── helpers
+    def _success(
+        self,
+        summary: str,
+        metrics: Dict[str, Any],
+        stdout: Optional[str] = None,
+    ) -> ToolOutputSchema:
         return ToolOutputSchema(
-            return_code=norm_code,
-            stdout=raw_stdout or None,
-            stderr=raw_stderr or None,
-            violations=violations or None,
+            return_code=1,
+            stdout=stdout,
+            stderr=None,
+            violations=None,
             metrics=metrics,
             summary=summary,
+        )
+
+    def _failure(
+        self,
+        summary: str,
+        violations: List[str],
+        metrics: Dict[str, Any],
+        stdout: Optional[str] = None,
+    ) -> ToolOutputSchema:
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=stdout,
+            stderr=None,
+            violations=violations,
+            metrics=metrics,
+            summary=summary,
+        )
+
+    def _runtime_error(self, message: str, raw_code: int | None = None) -> ToolOutputSchema:
+        return ToolOutputSchema(
+            return_code=0,
+            stdout=None,
+            stderr=message,
+            violations=["RUNTIME_ERROR"],
+            metrics={"raw_return_code": raw_code, "exception": 1},
+            summary=f"❌ Mypy execution failed: {message}",
         )

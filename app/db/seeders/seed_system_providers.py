@@ -4,6 +4,7 @@ import shutil
 from sqlalchemy.orm import Session
 from app.db.models import SystemProviderConfig
 from app.enums.state_enums import STATE
+from app.enums.system_enums import SYSTEM
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -15,6 +16,7 @@ SYSTEM_PROVIDERS = [
         "filename": "linting_system_provider.py",
         "name": "linting_system_provider",
         "description": "System to iteratively lint and evaluate Python code.",
+        "system_type": SYSTEM.LINTING.value,
         "tags": ["linting", "system"],
         "config": {
             "score_provider_id": 1,
@@ -46,6 +48,7 @@ def seed_system_providers(db_session: Session):
             guid=guid,
             name=entry["name"],
             description=entry["description"],
+            system_type=entry["system_type"],
             config=entry["config"],
             artifact_path=dest_filename,
             tags=entry["tags"],

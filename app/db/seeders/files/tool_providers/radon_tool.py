@@ -1,15 +1,24 @@
 import subprocess
 import sys
-import json
 from pathlib import Path
+from copy import deepcopy
+
+from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
+
 class RadonToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> ToolOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
         target = input.get("target")
         if not Path(target).exists():
             raise FileNotFoundError(f"{target} not found")
+
+        # ✅ Clone context and inject ancestry
+        if context:
+            context = deepcopy(context)
+            context.parent_id = self._run_id
+            context.execution_chain = context.execution_chain[:] + [self._run_id]
 
         cmd = [sys.executable, "-m", "radon", "cc", "-s", target]
         proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -31,7 +40,6 @@ class RadonToolProvider(ToolProviderBase):
                 except Exception:
                     continue
 
-        # Define clean threshold: worst grade must be A or B
         worst_grade = max(grades, default="A")
         passing = worst_grade in ("A", "B")
 
@@ -46,5 +54,5 @@ class RadonToolProvider(ToolProviderBase):
             return_code=norm_code,
             stdout=stdout,
             stderr=stderr,
-            summary=summary
+            summary=summary,
         )

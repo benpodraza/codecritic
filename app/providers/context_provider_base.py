@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 
 from app.db.schemas import ContextOutputSchema
+from app.enums.logging_enums import RunContext
 from app.providers.base_provider import BaseProvider
 
 from typing import TYPE_CHECKING
@@ -11,10 +12,11 @@ if TYPE_CHECKING:
     from app.providers.tool_provider_base import ToolProviderBase
 
 class ContextProviderBase(BaseProvider):
-    """Base class for context providers."""
+    def __init__(self, config=None, context: RunContext = None, **kwargs):
+        super().__init__(config=config, context=context, **kwargs)
 
     def _run_provider(self, input: dict) -> ContextOutputSchema:
-        return self._run(input)
+        return self._run(input=input, context=self.fork_context())
     
     def set_tool_provider(self, provider: "ToolProviderBase") -> None:
         if not hasattr(self, "tool_providers"):
@@ -26,5 +28,5 @@ class ContextProviderBase(BaseProvider):
 
 
     @abstractmethod
-    def _run(self, input: dict) -> ContextOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> ContextOutputSchema:
         raise NotImplementedError

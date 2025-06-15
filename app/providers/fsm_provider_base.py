@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from app.enums.fsm_enums import TRANSITION_REASON_TYPE, DECISION_TYPE
-from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE
+from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE, RunContext
 from app.db.schemas import StateTransitionLogSchema
 from app.providers.base_provider import BaseProvider
 
@@ -19,17 +19,13 @@ class FSMProviderBase(BaseProvider):
     def __init__(
         self,
         config=None,
-        called_by_type: Optional[PROVIDER_TYPE] = None,
-        called_by_id: Optional[int] = None,
-        session_id: str = None,
-        file_log_id: str = None
+        context: RunContext = None,
+        **kwargs
     ) -> None:
         super().__init__(
             config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            session_id=session_id,
-            file_log_id=file_log_id
+            context=context,
+            **kwargs
         )
 
     def transition(self, state: dict, result: dict | None) -> dict:
@@ -80,6 +76,8 @@ class FSMProviderBase(BaseProvider):
                 run_id=self._run_id,
                 called_by_type=self._called_by_type if self._called_by_type else None,
                 called_by_id=self._called_by_id,
+                parent_id=self._context.parent_id if self._context else None,
+                execution_chain=self._context.execution_chain[:] if self._context else [],
             ),
         )
         return next_state

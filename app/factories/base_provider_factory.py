@@ -4,7 +4,7 @@ from pathlib import Path
 
 from app.db import init_db  # global DB engine instance
 from app.providers.base_provider import BaseProvider
-from app.enums.logging_enums import PROVIDER_TYPE
+from app.enums.logging_enums import PROVIDER_TYPE, RunContext
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
@@ -20,9 +20,8 @@ class BaseProviderFactory:
         cls,
         id: int,
         *,
-        called_by_type: PROVIDER_TYPE | None = None,
-        called_by_id: int | None = None,
-        **kwargs,
+        context: RunContext,
+        **kwargs
     ) -> BaseProvider:
         with Session(bind=engine) as session:
             config = session.get(cls.config_model, int(id))
@@ -49,10 +48,5 @@ class BaseProviderFactory:
         if provider_class is None:
             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
 
-        instance = provider_class(
-            config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            **kwargs
-        )
+        instance = provider_class(config=config, context=context, **kwargs)
         return instance

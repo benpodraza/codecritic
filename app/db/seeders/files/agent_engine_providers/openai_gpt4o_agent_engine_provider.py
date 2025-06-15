@@ -1,6 +1,7 @@
 import json
 import os
 from openai import OpenAI
+from app.enums.logging_enums import RunContext  
 from app.db.schemas import AgentEngineOutput
 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
 
@@ -14,7 +15,7 @@ def _safe_prompt_content(content):
     return str(content)
 
 class OpenAIGPT4oAgentEngineProvider(AgentEngineProviderBase):
-    def _run(self, input: dict) -> AgentEngineOutput:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
         prompt = input["prompt"]
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -23,7 +24,7 @@ class OpenAIGPT4oAgentEngineProvider(AgentEngineProviderBase):
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages = [
+            messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": _safe_prompt_content(prompt)},
             ],

@@ -97,10 +97,11 @@ class LoggingProvider:
             elif isinstance(v, datetime):
                 return v.isoformat()
             elif isinstance(v, list):
-                return [_safe(i) for i in v]
+                # ✅ Serialize list directly
+                return json.dumps([_safe(i) for i in v])
             elif isinstance(v, dict):
-                # Turn any nested dict into a JSON string here:
-                return json.dumps({k: _safe(val) for k, val in v.items()}, default=str)
+                # ✅ Serialize dict directly
+                return json.dumps({k: _safe(val) for k, val in v.items()})
             return v
 
         if not is_dataclass(obj) or isinstance(obj, type):

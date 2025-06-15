@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import shutil
@@ -7,12 +8,12 @@ from typing import Dict
 
 from app.enums.controller_enums import CONTROLLER
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
+from app.enums.logging_enums import RunContext, LOG_TYPE
 from app.providers.fsm_provider_base import FSMProviderBase
-from app.db.schemas import ProgramOutputSchema
+from app.db.schemas import ProgramOutputSchema, FileLogSchema
 from app.utilities.extract_base_filename import extract_base_filename
-from app.utilities.run_context import propagate_run_context_if_needed, set_run_context
 from app.utilities.select_best_file_by_score import select_best_file_by_score
-
+from app.utilities.metadata.logging.logging_provider import LoggingProvider
 
 class ProgramProviderBase(FSMProviderBase):
     def __init__(
@@ -22,25 +23,18 @@ class ProgramProviderBase(FSMProviderBase):
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        called_by_type=None,
-        called_by_id=None,
-        session_id=None,
-        file_log_id=None,
-        
+        context: RunContext = None,
     ):
         super().__init__(
             config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            session_id=None,
-            file_log_id=None,
+            context=context
         )
         self._states = controller_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
-        self._session_id = session_id
-        self._file_log_id = file_log_id
+        self._session_id = context.session_id
+        self._file_log_id = context.file_log_id
         self._generated_files: list[Path] = []
 
     def _run_provider(self, input: dict) -> ProgramOutputSchema:
@@ -62,9 +56,6 @@ class ProgramProviderBase(FSMProviderBase):
         self._generated_files.append(self.working_file)
 
         # 🔹 Log file and get file_log_id
-        from app.db.schemas import FileLogSchema
-        from app.utilities.metadata.logging.logging_provider import LoggingProvider, LOG_TYPE
-
         original_path = str(src)
         file_name = src.name
         length_bytes = src.stat().st_size
@@ -76,11 +67,9 @@ class ProgramProviderBase(FSMProviderBase):
             length_bytes=length_bytes
         )
         self._file_log_id = LoggingProvider().write(LOG_TYPE.FILE, file_log)
+        self._context.file_log_id = self._file_log_id
+        self.context = self._context
 
-        set_run_context(session_id=session_id, file_log_id=self._file_log_id)
-        
-        propagate_run_context_if_needed(self)  
-        # 🔹 Safe relative path for original_file reference
         input_path = Path(incoming_file)
         try:
             relative_path = str(input_path.relative_to(Path.cwd()))
@@ -138,7 +127,8 @@ class ProgramProviderBase(FSMProviderBase):
                 best_file = select_best_file_by_score(
                     file_a=state.get("file_path"),
                     file_b=self.incoming_file,
-                    score_provider=self.score_provider
+                    score_provider=self.score_provider,
+                    context=self._context
                 )
 
                 final_path = Path(output_path) / Path(self.incoming_file).name
@@ -191,7 +181,7 @@ class ProgramProviderBase(FSMProviderBase):
                 raise ValueError(f"No controller provider registered for state: {current}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-            output = provider.run(input=provider_input)
+            output = provider.run(input=provider_input, context=self.fork_context())
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
             promoted_path = Path("working_files") / f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -218,7 +208,6 @@ class ProgramProviderBase(FSMProviderBase):
                 "_last_state": current,
                 "state_output": flat_output,
             }
-
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

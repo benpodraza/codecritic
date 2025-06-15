@@ -1,38 +1,37 @@
 from __future__ import annotations
 from abc import abstractmethod
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Dict
 
 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE
+from app.enums.logging_enums import RunContext
 from app.enums.system_enums import SYSTEM
 from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ControllerOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 
+
 class ControllerProviderBase(FSMProviderBase):
     def __init__(
         self,
         config=None,
-        system_providers: Dict[str, object] = None,
+        system_providers=None,
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        called_by_type=None,
-        called_by_id=None,
+        context: RunContext = None,
+        **kwargs
     ):
-        super().__init__(
-            config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-        )
+        super().__init__(config=config, context=context, **kwargs)
         self._systems = system_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
-        self._generated_files: list[Path] = []
+        self._generated_files = []
 
     def _run_provider(self, input: dict) -> ControllerOutputSchema:
         session_id = input.get("session_id")
@@ -102,7 +101,8 @@ class ControllerProviderBase(FSMProviderBase):
                 best_file = select_best_file_by_score(
                     file_a=state["file_path"],
                     file_b=self.incoming_file,
-                    score_provider=self.score_provider
+                    score_provider=self.score_provider,
+                    context=self._context
                 )
 
                 temp_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -154,7 +154,7 @@ class ControllerProviderBase(FSMProviderBase):
                 raise ValueError(f"No system provider registered for state: {current.value}")
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-            output = provider.run(input=provider_input)
+            output = provider.run(input=provider_input, context=self.fork_context())
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
             promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"

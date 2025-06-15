@@ -177,6 +177,8 @@ class ProviderLog(Base):
     called_by_id = Column(Integer, nullable=True)
     run_id = Column(TEXT, nullable=False, index=True)
     file_log_id = Column(TEXT, nullable=True)
+    parent_id = Column(TEXT, nullable=True)
+    execution_chain = Column(JSON, nullable=False, default=list)
 
     
 class StateTransitionLog(Base):
@@ -200,6 +202,8 @@ class StateTransitionLog(Base):
     called_by_type = Column(String, nullable=True)
     called_by_id = Column(Integer, nullable=True) 
     file_log_id = Column(TEXT, nullable=True)
+    parent_id = Column(TEXT, nullable=True)
+    execution_chain = Column(JSON, nullable=False, default=list)
 
 class AgentConversationLog(Base):
     __tablename__ = "agent_conversation_log"
@@ -231,6 +235,8 @@ class ErrorLog(Base):
     called_by_id = Column(Integer, nullable=True)
     run_id = Column(TEXT, nullable=False, index=True)
     file_log_id = Column(TEXT, nullable=True)
+    parent_id = Column(TEXT, nullable=True)
+    execution_chain = Column(JSON, nullable=False, default=list)
 
 class SnapshotMetrics(Base):
     __tablename__ = "snapshot_metrics"

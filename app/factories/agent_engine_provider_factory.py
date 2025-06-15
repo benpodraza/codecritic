@@ -1,7 +1,7 @@
 from app.db.models import AgentEngineProviderConfig
+from app.enums.logging_enums import RunContext
 from app.factories.base_provider_factory import BaseProviderFactory
 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
-from app.utilities.provider_mixin_injector import ProviderContextInjectorWrapper
 
 
 class AgentEngineProviderFactory(BaseProviderFactory):
@@ -13,20 +13,12 @@ class AgentEngineProviderFactory(BaseProviderFactory):
         cls,
         id: int,
         *,
-        called_by_type=None,
-        called_by_id=None,
-        session_id: str = None,
-        file_log_id: str = None,
+        context: RunContext,
         **kwargs
     ) -> AgentEngineProviderBase:
         instance = super().create(
             id,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
+            context=context,
             **kwargs
         )
-        return ProviderContextInjectorWrapper(
-            instance,
-            session_id=session_id,
-            file_log_id=file_log_id
-        )
+        return instance

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -11,35 +12,49 @@ from uuid import uuid4
 from app.db import init_db
 from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TYPE, LoggingProvider
 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
-from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE
+from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE, RunContext
 
 class BaseProvider:
     def __init__(
         self,
         config=None,
-        called_by_type=None,
-        called_by_id=None,
-        *,
-        session_id: str = None,
-        file_log_id: str = None
+        context: RunContext = None,
+        **kwargs
     ):
         self._config = config
-        self._called_by_type = called_by_type
-        self._called_by_id = called_by_id
-        self._session_id = session_id 
-        self._file_log_id = file_log_id 
+        self._context = deepcopy(context) if context else None
+        self._run_id = str(uuid4())
         self._engine = init_db(reset=False)
-        self._run_id = None
         self.logger = LoggingProvider()
         self._log = logging.getLogger(self.__class__.__name__)
 
-    def run(self, input: dict | None = None) -> str:
+        if self._context:
+            if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+                self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+                self._context.execution_chain.append(self._run_id)
+            self._session_id = self._context.session_id
+            self._file_log_id = self._context.file_log_id
+            self._called_by_type = self._context.called_by_type
+            self._called_by_id = self._context.called_by_id
+        else:
+            self._session_id = None
+            self._file_log_id = None
+            self._called_by_type = None
+            self._called_by_id = None
+
+    def run(self, input: dict | None = None, context: RunContext = None) -> str:
         input = input or {}
-
-        self._session_id = getattr(self, "_session_id", None) or input.get("session_id")
-        self._file_log_id = getattr(self, "_file_log_id", None) or input.get("file_log_id")
-
         self._run_id = str(uuid4())
+
+        if context:
+            self._context = deepcopy(context)
+            self._session_id     = self._context.session_id
+            self._file_log_id    = self._context.file_log_id
+            self._called_by_type = self._context.called_by_type
+            self._called_by_id   = self._context.called_by_id
+            if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+                self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+                self._context.execution_chain.append(self._run_id)
 
         start_clock = time.perf_counter()
         start_time = datetime.now(timezone.utc)
@@ -64,6 +79,8 @@ class BaseProvider:
                         called_by_type=self._called_by_type if self._called_by_type else None,
                         called_by_id=self._called_by_id,
                         run_id=self._run_id,
+                        parent_id=self._context.parent_id if self._context else None,
+                        execution_chain=self._context.execution_chain[:] if self._context else [],
                     ),
                 )
             except Exception:
@@ -83,8 +100,6 @@ class BaseProvider:
         try:
             if hasattr(output, "model_dump"):
                 dumped = output.model_dump()
-
-                # Flatten nested dicts one level deep
                 flat_dump = {}
                 for k, v in dumped.items():
                     if isinstance(v, dict):
@@ -122,6 +137,8 @@ class BaseProvider:
                     called_by_type=self._called_by_type if self._called_by_type else None,
                     called_by_id=self._called_by_id,
                     run_id=self._run_id,
+                    parent_id=self._context.parent_id if self._context else None,
+                    execution_chain=self._context.execution_chain[:] if self._context else [],
                 ),
             )
         except Exception:
@@ -180,3 +197,8 @@ class BaseProvider:
                 for item in attr.values():
                     if isinstance(item, BaseProvider):
                         item.propagate_file_log_id(file_log_id)
+
+    def fork_context(self) -> RunContext:
+        forked = deepcopy(self._context or RunContext())
+        forked.parent_id = self._run_id
+        return forked

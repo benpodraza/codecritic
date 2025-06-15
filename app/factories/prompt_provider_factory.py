@@ -1,11 +1,9 @@
 from app.db.models import PromptProviderConfig
 from app.factories.base_provider_factory import BaseProviderFactory
 from app.providers.prompt_provider_base import PromptProviderBase
-from app.utilities.provider_mixin_injector import ProviderContextInjectorWrapper
 from app.factories.context_provider_factory import ContextProviderFactory
+from app.enums.logging_enums import RunContext
 from pathlib import Path
-
-from app.utilities.run_context import propagate_run_context_if_needed
 
 
 class PromptProviderFactory(BaseProviderFactory):
@@ -17,23 +15,26 @@ class PromptProviderFactory(BaseProviderFactory):
         cls,
         id: int,
         *,
-        called_by_type=None,
-        called_by_id=None,
-        session_id: str = None,
-        file_log_id: str = None,
+        context: RunContext,
         **kwargs
     ) -> PromptProviderBase:
-        instance = super().create(
-            id,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            **kwargs
-        )
+        instance = super().create(id, context=context)
 
         config = instance._config.config or {}
         provider_id = instance._config.id
         provider_type = instance._infer_provider_type()
 
+        # ─── Child context ─────────────────────────────────────────────
+        child_context = RunContext(
+            called_by_type=provider_type,
+            called_by_id=provider_id,
+            session_id=context.session_id,
+            file_log_id=context.file_log_id,
+            parent_id=instance._run_id,
+            execution_chain=context.execution_chain.copy()
+        )
+
+        # ─── Prompt loading ────────────────────────────────────────────
         def load_prompt(prompt_id: int, table: str) -> str | None:
             if not prompt_id:
                 return None
@@ -57,26 +58,14 @@ class PromptProviderFactory(BaseProviderFactory):
         if config.get("context_provider_id"):
             context_provider = ContextProviderFactory.create(
                 config["context_provider_id"],
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id,
+                context=child_context
             )
 
         cls_type = type(instance)
-        final_instance = cls_type(
+        return cls_type(
             config=instance._config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
             agent_text=agent_prompt_text,
             system_text=system_prompt_text,
             context_provider=context_provider,
-        )
-
-        propagate_run_context_if_needed(instance)
-
-        return ProviderContextInjectorWrapper(
-            final_instance,
-            session_id=session_id,
-            file_log_id=file_log_id,
+            context=context
         )

@@ -1,11 +1,13 @@
 from __future__ import annotations
 from abc import abstractmethod
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Dict
 
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
+from app.enums.logging_enums import RunContext
 from app.enums.state_enums import STATE
 from app.enums.agent_enums import AGENT
 from app.providers.fsm_provider_base import FSMProviderBase
@@ -18,23 +20,19 @@ class StateProviderBase(FSMProviderBase):
     def __init__(
         self,
         config=None,
-        agent_providers: Dict[str, object] = None,
+        agent_providers=None,
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        called_by_type=None,
-        called_by_id=None,
+        context: RunContext = None,
+        **kwargs
     ):
-        super().__init__(
-            config=config,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-        )
-        self.agent_providers = agent_providers or {}
+        super().__init__(config=config, context=context, **kwargs)
+        self._agents = agent_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
-        self._generated_files: list[Path] = []
+        self._generated_files = []
 
     def _run_provider(self, input: dict) -> StateOutputSchema:
         session_id = input.get("session_id")
@@ -80,7 +78,7 @@ class StateProviderBase(FSMProviderBase):
             current = state["state"]
 
             if step_count >= max_steps:
-                transition = self.transition(state, output)
+                transition = self.transition(state, None)
                 state.update({
                     **state,
                     **transition,
@@ -105,7 +103,8 @@ class StateProviderBase(FSMProviderBase):
                     best_file = select_best_file_by_score(
                         file_a=state["file_path"],
                         file_b=self.incoming_file,
-                        score_provider=self.score_provider
+                        score_provider=self.score_provider,
+                        context=self._context
                     )
 
                     temp_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
@@ -131,6 +130,8 @@ class StateProviderBase(FSMProviderBase):
                             f.unlink()
                         except Exception:
                             pass
+
+                    ctx = self._context or RunContext()
 
                 for path in self._generated_files:
                     if path.exists():
@@ -159,8 +160,24 @@ class StateProviderBase(FSMProviderBase):
                 state["_last_state"] = AGENT.START
                 continue
 
-            provider = self.agent_providers.get(current.value)
-            output = provider.run(input=state) if provider else None
+            provider = self._agents.get(current.value)
+
+            provider_input = {k: v for k, v in state.items() if k != "state"}
+
+            from pprint import pprint
+            import json
+
+            provider_input = {k: v for k, v in state.items() if k != "state"}
+            print('state provider making the run call\n')
+
+            print("🔸 self._context:")
+            pprint(json.loads(json.dumps(self._context.__dict__, indent=2)) if self._context else None)
+
+            print("\n🔹 forked context:")
+            forked = self.fork_context()
+            pprint(json.loads(json.dumps(forked.__dict__, indent=2)) if forked else None)
+
+            output = provider.run(input=provider_input, context=forked)
 
             transition_result = self.transition(state, output)
 
@@ -197,8 +214,6 @@ class StateProviderBase(FSMProviderBase):
                 "_last_state": current,
                 "state_output": flat_output,
             }
-
-
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

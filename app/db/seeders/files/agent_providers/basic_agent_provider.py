@@ -1,10 +1,11 @@
 from pathlib import Path
+from app.enums.logging_enums import RunContext  # ✅ Add for context typing
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 
 
 class BasicAgentProvider(AgentProviderBase):
-    def _run(self, input: dict) -> AgentOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
         raw_file_path = input.get("before") or input.get("file_name")
         relative_file_path = None
 

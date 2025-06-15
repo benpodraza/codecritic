@@ -228,6 +228,8 @@ class ProviderLogSchema:
     called_by_id: Optional[int] = None
     run_id: str = field(default_factory=lambda: str(uuid4()))
     file_log_id: Optional[str] = None
+    parent_id: Optional[str] = None
+    execution_chain: List[str] = field(default_factory=list)
 
 @dataclass
 class StateTransitionLogSchema:
@@ -246,6 +248,8 @@ class StateTransitionLogSchema:
     called_by_type: PROVIDER_TYPE | None = None
     called_by_id: int | None = None 
     file_log_id: Optional[str] = None
+    parent_id: Optional[str] = None
+    execution_chain: List[str] = field(default_factory=list)
 
 @dataclass
 class AgentConversationLogSchema:
@@ -272,6 +276,8 @@ class ErrorLogSchema:
     called_by_id: Optional[int] = None
     run_id: str = field(default_factory=lambda: str(uuid4()))
     file_log_id: Optional[str] = None
+    parent_id: Optional[str] = None
+    execution_chain: List[str] = field(default_factory=list)
     
 @dataclass
 class SnapshotMetricsSchema:

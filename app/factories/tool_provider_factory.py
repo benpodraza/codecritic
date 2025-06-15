@@ -1,9 +1,7 @@
 from app.factories.base_provider_factory import BaseProviderFactory
 from app.db.models import ToolProviderConfig
 from app.providers.tool_provider_base import ToolProviderBase
-from app.enums.logging_enums import PROVIDER_TYPE
-from app.utilities.provider_mixin_injector import ProviderContextInjectorWrapper
-from app.utilities.run_context import propagate_run_context_if_needed
+from app.enums.logging_enums import RunContext
 
 
 class ToolProviderFactory(BaseProviderFactory):
@@ -15,54 +13,44 @@ class ToolProviderFactory(BaseProviderFactory):
         cls,
         id: int,
         *,
-        called_by_type: PROVIDER_TYPE | None = None,
-        called_by_id: int | None = None,
-        session_id: str = None,
-        file_log_id: str = None,
+        context: RunContext,
         **kwargs
     ) -> ToolProviderBase:
         from app.factories.context_provider_factory import ContextProviderFactory
         from app.factories.score_provider_factory import ScoreProviderFactory
 
-        instance = super().create(
-            id,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            **kwargs
-        )
+        instance = super().create(id, context=context)
         config = instance._config.config or {}
         provider_id = instance._config.id
         provider_type = instance._infer_provider_type()
 
+        # ─── Child context ─────────────────────────────────────────────
+        child_context = RunContext(
+            called_by_type=provider_type,
+            called_by_id=provider_id,
+            session_id=context.session_id,
+            file_log_id=context.file_log_id,
+            parent_id=instance._run_id,
+            execution_chain=context.execution_chain.copy()
+        )
+
         if (ctx_id := config.get("context_provider_id")):
-            context = ContextProviderFactory.create(
+            context_provider = ContextProviderFactory.create(
                 ctx_id,
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id
+                context=child_context
             )
-            instance.set_context_provider(context)
-            if hasattr(context, "set_tool_provider"):
-                context.set_tool_provider(instance)
+            instance.set_context_provider(context_provider)
+            if hasattr(context_provider, "set_tool_provider"):
+                context_provider.set_tool_provider(instance)
 
         if (score_id := config.get("score_provider_id")):
             if isinstance(score_id, int) and score_id > 0:
-                score = ScoreProviderFactory.create(
+                score_provider = ScoreProviderFactory.create(
                     score_id,
-                    called_by_type=provider_type,
-                    called_by_id=provider_id,
-                    session_id=session_id,
-                    file_log_id=file_log_id
+                    context=child_context
                 )
-                instance.set_score_provider(score)
-                if hasattr(score, "set_tool_provider"):
-                    score.set_tool_provider(instance)
+                instance.set_score_provider(score_provider)
+                if hasattr(score_provider, "set_tool_provider"):
+                    score_provider.set_tool_provider(instance)
 
-        propagate_run_context_if_needed(instance)
-
-        return ProviderContextInjectorWrapper(
-            instance,
-            session_id=session_id,
-            file_log_id=file_log_id
-        )
+        return instance

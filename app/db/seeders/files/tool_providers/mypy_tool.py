@@ -1,7 +1,9 @@
-# app/providers/mypy_tool_provider_v2.py
 import subprocess
 import sys
 from typing import Any, Dict, List, Optional
+from copy import deepcopy
+
+from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
@@ -27,14 +29,20 @@ class MypyToolProviderV2(ToolProviderBase):
         "--strict-equality",
     ]
 
-    def _run(self, input: dict) -> ToolOutputSchema:  # noqa: D401, N802
+    def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
         target: str = input.get("target")
+
+        # ✅ Propagate RunContext
+        if context:
+            context = deepcopy(context)
+            context.parent_id = self._run_id
+            context.execution_chain = context.execution_chain[:] + [self._run_id]
 
         cmd = [sys.executable, "-m", "mypy", target, *self.STRICT_ARGS]
 
         try:
             proc = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf‑8", errors="ignore"
+                cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
             )
         except Exception as exc:
             return self._runtime_error(str(exc))
@@ -43,7 +51,6 @@ class MypyToolProviderV2(ToolProviderBase):
         stdout = (proc.stdout or "").strip()
         stderr = (proc.stderr or "").strip()
 
-        # ───────────────────────────────────────────────────────── parse outcome
         if raw_code == 0:
             return self._success(
                 summary="✅ Mypy passed — no type errors",
@@ -63,7 +70,6 @@ class MypyToolProviderV2(ToolProviderBase):
                 stdout=stdout or None,
             )
 
-        # raw_code > 1 → mypy internal error
         return self._runtime_error(stderr or stdout, raw_code)
 
     # ────────────────────────────────────────────────────────────── helpers

@@ -1,8 +1,9 @@
+from app.enums.logging_enums import RunContext
 from app.db.schemas import AgentEngineOutput
 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
 
 class BasicAgentEngineProvider(AgentEngineProviderBase):
-    def _run(self, input: dict) -> AgentEngineOutput:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
         response = f"[Basic Response] You said: {input.get('prompt', '')}"
         token_count = len(response.split())
         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000

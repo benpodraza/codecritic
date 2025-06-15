@@ -1,9 +1,10 @@
 import os, requests
+from app.enums.logging_enums import RunContext  # ✅ Add for typing
 from app.db.schemas import AgentEngineOutput
 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
 
 class Gemini1_5ProAgentEngineProvider(AgentEngineProviderBase):
-    def _run(self, input: dict) -> AgentEngineOutput:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
         prompt = input["prompt"]
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:

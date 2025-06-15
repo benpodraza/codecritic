@@ -1,9 +1,7 @@
 from app.factories.base_provider_factory import BaseProviderFactory
 from app.db.models import ProgramProviderConfig
 from app.providers.program_provider_base import ProgramProviderBase
-from app.enums.logging_enums import PROVIDER_TYPE
-from app.utilities.provider_mixin_injector import ProviderContextInjectorWrapper
-from app.utilities.run_context import propagate_run_context_if_needed
+from app.enums.logging_enums import RunContext
 
 
 class ProgramProviderFactory(BaseProviderFactory):
@@ -15,10 +13,7 @@ class ProgramProviderFactory(BaseProviderFactory):
         cls,
         id: int,
         *,
-        session_id: str = None,
-        file_log_id: str = None,
-        called_by_type: PROVIDER_TYPE | None = None,
-        called_by_id: int | None = None,
+        context: RunContext,
         **kwargs
     ) -> ProgramProviderBase:
         from app.factories.context_provider_factory import ContextProviderFactory
@@ -26,45 +21,40 @@ class ProgramProviderFactory(BaseProviderFactory):
         from app.factories.tool_provider_factory import ToolProviderFactory
         from app.factories.controller_provider_factory import ControllerProviderFactory
 
-        inst = super().create(
-            id,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
-            session_id=session_id,
-            file_log_id=file_log_id,
-            **kwargs
-        )
+        inst = super().create(id, context=context)
         config = inst._config.config or {}
         provider_id = inst._config.id
         provider_type = inst._infer_provider_type()
 
+        # ─── Child context ─────────────────────────────────────────────
+        child_context = RunContext(
+            called_by_type=provider_type,
+            called_by_id=provider_id,
+            session_id=context.session_id,
+            file_log_id=context.file_log_id,
+            parent_id=inst._run_id,
+            execution_chain=context.execution_chain.copy()
+        )
+
+        # ─── Subproviders ──────────────────────────────────────────────
         context_provider = (
             ContextProviderFactory.create(
                 config["context_provider_id"],
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id
+                context=child_context
             ) if config.get("context_provider_id") else None
         )
 
         score_provider = (
             ScoreProviderFactory.create(
                 config["score_provider_id"],
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id
+                context=child_context
             ) if config.get("score_provider_id") else None
         )
 
         tool_providers = [
             ToolProviderFactory.create(
                 tid,
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id
+                context=child_context
             )
             for tid in (config.get("tool_provider_ids") or {}).values()
         ]
@@ -72,14 +62,12 @@ class ProgramProviderFactory(BaseProviderFactory):
         controller_providers = {
             name: ControllerProviderFactory.create(
                 controller_id,
-                called_by_type=provider_type,
-                called_by_id=provider_id,
-                session_id=session_id,
-                file_log_id=file_log_id
+                context=child_context
             )
             for name, controller_id in (config.get("controllers") or {}).items()
         }
 
+        # ─── Final instantiation ───────────────────────────────────────
         cls_type = type(inst)
         instance = cls_type(
             config=inst._config,
@@ -87,14 +75,7 @@ class ProgramProviderFactory(BaseProviderFactory):
             score_provider=score_provider,
             tool_providers=tool_providers,
             controller_providers=controller_providers,
-            called_by_type=called_by_type,
-            called_by_id=called_by_id,
+            context=context
         )
 
-        propagate_run_context_if_needed(instance)
-
-        return ProviderContextInjectorWrapper(
-            instance,
-            session_id=session_id,
-            file_log_id=file_log_id
-        )
+        return instance

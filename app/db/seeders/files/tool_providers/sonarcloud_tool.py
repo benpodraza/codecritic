@@ -6,22 +6,21 @@ import json
 import tempfile
 from pathlib import Path
 from typing import Dict
+from copy import deepcopy
+
+from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
-import os
-import subprocess
-import time
-import uuid
-import json
-import tempfile
-from pathlib import Path
-from typing import Dict
-from app.providers.tool_provider_base import ToolProviderBase
-from app.db.schemas import ToolOutputSchema
 
 class SonarCloudToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> ToolOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
+        # ✅ Clone context to maintain execution chain isolation
+        if context:
+            context = deepcopy(context)
+            context.parent_id = self._run_id
+            context.execution_chain = context.execution_chain[:] + [str(uuid.uuid4())]
+
         target_path = Path(input.get("target"))
         if not target_path.exists():
             raise FileNotFoundError(f"{target_path} does not exist")
@@ -49,7 +48,6 @@ class SonarCloudToolProvider(ToolProviderBase):
             if metrics:
                 self._git_cleanup(filename, cwd=src_dir)
 
-        # Determine if the scan passes your criteria
         violations_present = any(
             metrics.get(key, 0) > 0 for key in ("bugs", "vulnerabilities", "code_smells")
         )
@@ -63,10 +61,11 @@ class SonarCloudToolProvider(ToolProviderBase):
         return ToolOutputSchema(
             return_code=return_code,
             stdout=stdout_msg,
+            stderr=None,
+            violations=None,
             metrics=metrics,
-            summary=summary
+            summary=summary,
         )
-
 
     def _load_env(self) -> tuple[str, str, str, str, str]:
         github_token = os.getenv("GITHUB_TOKEN")
@@ -92,7 +91,7 @@ class SonarCloudToolProvider(ToolProviderBase):
 
     def _wait_for_scan_completion(self, sonar_token: str, sonar_project: str) -> None:
         url = f"https://sonarcloud.io/api/ce/component?component={sonar_project}"
-        for attempt in range(20):
+        for _ in range(20):
             time.sleep(10)
             result = subprocess.run(
                 ["curl", "-s", "-u", f"{sonar_token}:", url],
@@ -116,13 +115,12 @@ class SonarCloudToolProvider(ToolProviderBase):
             "complexity", "cognitive_complexity",
             "duplicated_lines", "duplicated_blocks", "duplicated_files", "duplicated_lines_density"
         ])
-
         api_url = (
             f"https://sonarcloud.io/api/measures/component"
             f"?component={sonar_project}&metricKeys={metric_keys}"
         )
 
-        for attempt in range(10):
+        for _ in range(10):
             time.sleep(5)
             result = subprocess.run(
                 ["curl", "-s", "-u", f"{sonar_token}:", api_url],
@@ -136,4 +134,3 @@ class SonarCloudToolProvider(ToolProviderBase):
             except Exception as e:
                 print(f"⚠️ Error parsing metrics: {e}")
         return {}
-

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -9,7 +10,7 @@ from app.db.schemas import AgentEngineOutput, SnapshotMetricsSchema
 from app.enums.system_enums import SYSTEM
 from app.enums.agent_enums import AGENT
 from app.enums.fsm_enums import DECISION_TYPE
-from app.enums.logging_enums import LOG_TYPE
+from app.enums.logging_enums import LOG_TYPE, RunContext
 
 from app.providers.base_provider import BaseProvider
 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
@@ -21,8 +22,6 @@ from app.utilities.metadata.footer.code_annnotation_utils import (
 
 
 class AgentEngineProviderBase(BaseProvider):
-    """Base class for agent engines that return raw LLM output and manage snapshots."""
-
     def __init__(
         self,
         config=None,
@@ -30,10 +29,10 @@ class AgentEngineProviderBase(BaseProvider):
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        called_by_type=None,
-        called_by_id=None,
+        context: RunContext = None,
+        **kwargs
     ):
-        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
+        super().__init__(config=config, context=context, **kwargs)
         self.prompt_provider = prompt_provider
         self.context_provider = context_provider
         self.score_provider = score_provider
@@ -60,7 +59,7 @@ class AgentEngineProviderBase(BaseProvider):
         token_count = 0
 
         try:
-            raw_output = self._run(input)
+            raw_output = self._run(input=input, context=self.fork_context())
             if isinstance(raw_output, AgentEngineOutput):
                 response_text = raw_output.response
                 token_count = raw_output.token_count
@@ -207,5 +206,5 @@ class AgentEngineProviderBase(BaseProvider):
         return None
 
     @abstractmethod
-    def _run(self, input: dict) -> str:
+    def _run(self, input: dict, context: RunContext | None = None) -> str:
         raise NotImplementedError

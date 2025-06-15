@@ -4,7 +4,9 @@ import ast
 import json
 from pathlib import Path
 from typing import Any, Dict
+from copy import deepcopy
 
+from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 
@@ -25,7 +27,12 @@ class SymbolGraph:
 
 
 class SymbolGraphToolProvider(ToolProviderBase):
-    def _run(self, input: dict) -> ToolOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
+        if context:
+            context = deepcopy(context)
+            context.parent_id = self._run_id
+            context.execution_chain = context.execution_chain[:] + [str(self._run_id)]
+
         target = input.get("target")
         path = Path(target)
         if not path.exists():
@@ -36,10 +43,11 @@ class SymbolGraphToolProvider(ToolProviderBase):
 
         result_json = json.dumps(symbol_graph_util.graph, indent=2)
 
-        # Return 1 to indicate “error free / success”
         return ToolOutputSchema(
             return_code=1,
             stdout=result_json,
+            stderr=None,
+            violations=None,
             metrics=symbol_graph_util.graph,
             summary="Symbol graph extraction successful"
         )

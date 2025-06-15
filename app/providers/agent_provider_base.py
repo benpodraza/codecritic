@@ -1,10 +1,11 @@
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from abc import abstractmethod
 from sqlalchemy.orm import Session
 
 from app.db.models import SnapshotMetrics
-from app.enums.logging_enums import LOG_TYPE
+from app.enums.logging_enums import LOG_TYPE, RunContext
 from app.enums.agent_enums import AGENT
 from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.base_provider import BaseProvider
@@ -23,10 +24,10 @@ class AgentProviderBase(BaseProvider):
         context_provider=None,
         score_provider=None,
         tool_providers=None,
-        called_by_type=None,
-        called_by_id=None,
+        context: RunContext = None,
+        **kwargs
     ):
-        super().__init__(config=config, called_by_type=called_by_type, called_by_id=called_by_id)
+        super().__init__(config=config, context=context, **kwargs)
         self._agent_engine = agent_engine
         self._prompt_provider = prompt_provider
         self._context_provider = context_provider
@@ -34,8 +35,9 @@ class AgentProviderBase(BaseProvider):
         self._tool_providers = tool_providers or []
 
     def _run_provider(self, input: dict) -> AgentOutputSchema:
-        output = self._run(input)
-        self._log.debug(f"🧻 _run_provider called for: {self._config.name if self._config else 'unknown'}")
+        context = self.fork_context()
+        output = self._run(input=input, context=context)
+        self._log.debug(f"\U0001f9fb _run_provider called for: {self._config.name if self._config else 'unknown'}")
 
         response = output.response if hasattr(output, "response") else str(output)
         decision = self._infer_decision(response)
@@ -43,7 +45,7 @@ class AgentProviderBase(BaseProvider):
 
         snapshot_id = None
         file_name = input.get("before") or input.get("file_path") or (self._config.config or {}).get("before")
-    
+
         if file_name and (code_block := self._extract_code(response)):
             before_path = Path(file_name)
             try:
@@ -51,7 +53,7 @@ class AgentProviderBase(BaseProvider):
             except ValueError:
                 relative_path = before_path
             before_path = relative_path
-       
+
             if before_path.exists():
                 before_code = before_path.read_text(encoding="utf-8")
                 after_code = code_block
@@ -60,14 +62,16 @@ class AgentProviderBase(BaseProvider):
                 after_metrics = analyze_code(after_code)
                 deltas = compute_deltas(before_metrics, after_metrics)
 
+                ctx = self.fork_context()
+                score_result = (
+                    self._score_provider.run({"file_path": str(before_path)}, context=ctx)
+                    if self._score_provider else None
+                )
+
                 metadata = {
                     "system": input.get("system", "unknown"),
                     "agent": self._config.name if self._config else "unknown",
-                    "score": (
-                        self._score_provider.run(
-                            {"file_path": str(before_path)}).value
-                        if self._score_provider else None
-                    ),
+                    "score": score_result.value if score_result else None if not hasattr(score_result, "model_dump") else score_result.model_dump(),
                     "state": str(input.get("state_context", {}).get("state", "unknown")),
                     "decision": decision.value,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -94,7 +98,7 @@ class AgentProviderBase(BaseProvider):
                 with Session(bind=self._engine) as session:
                     entry = SnapshotMetrics(
                         session_id=self._session_id,
-                        file_log_id=self._file_log_id, 
+                        file_log_id=self._file_log_id,
                         snapshot_id=snapshot_id,
                         system=self._called_by_type,
                         agent=self._config.name,
@@ -111,14 +115,14 @@ class AgentProviderBase(BaseProvider):
                     session.add(entry)
                     session.commit()
                 self._snapshot_id = snapshot_id
-                self._log.debug(f"📦 Snapshot written to: {snapshot_id}")
+                self._log.debug(f"\U0001f4e6 Snapshot written to: {snapshot_id}")
             else:
                 self._log.warning(f"❌ Snapshot skipped: file does not exist → {before_path}")
 
         # Always log conversation
         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
             session_id=self._session_id,
-            file_log_id=self._file_log_id, 
+            file_log_id=self._file_log_id,
             system=input.get("system", "unknown"),
             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
             agent_provider_config_id=self._config.id if self._config else -1,
@@ -152,5 +156,5 @@ class AgentProviderBase(BaseProvider):
         return match.group(1).strip() if match else None
 
     @abstractmethod
-    def _run(self, input: dict) -> AgentOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
         raise NotImplementedError

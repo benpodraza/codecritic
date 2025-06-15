@@ -2,11 +2,12 @@ from pathlib import Path
 from app.enums.fsm_enums import DECISION_TYPE
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
+from app.enums.logging_enums import RunContext  # needed to type context
 
 
 class CodeStabilityAgentProvider(AgentProviderBase):
-    def _run(self, input: dict) -> AgentOutputSchema:
-        score_result = self._score_provider.run(input)
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+        score_result = self._score_provider.run(input, context=self.fork_context())
 
         raw_file_path = input.get("file_path") or input.get("file_name") or input.get("before")
         relative_file_path = None

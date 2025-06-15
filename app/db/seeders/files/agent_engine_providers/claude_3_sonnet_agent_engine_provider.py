@@ -1,9 +1,10 @@
 import os, json, boto3
+from app.enums.logging_enums import RunContext  # 🔧 Needed for typing
 from app.db.schemas import AgentEngineOutput
 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
 
 class Claude3SonnetAgentEngineProvider(AgentEngineProviderBase):
-    def _run(self, input: dict) -> AgentEngineOutput:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
         prompt = input["prompt"]
         region = os.getenv("AWS_REGION", "us-east-1")
 

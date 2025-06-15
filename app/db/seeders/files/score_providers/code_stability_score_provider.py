@@ -9,10 +9,12 @@ import sys
 import io
 import uuid
 
+from app.enums.logging_enums import RunContext
 from app.providers.score_provider_base import ScoreProviderBase
 from app.db.schemas import ScoreOutputSchema
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+
 
 @contextlib.contextmanager
 def suppress_output():
@@ -28,7 +30,7 @@ def suppress_output():
 
 
 class CodeStabilityScoreProvider(ScoreProviderBase):
-    def _run(self, input: dict) -> ScoreOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
         original_path = Path(input["file_path"]).resolve()
         components: Dict[str, bool] = {}
 

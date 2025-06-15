@@ -1,10 +1,11 @@
-# app/providers/black_tool_provider_v2.py
+from __future__ import annotations
 import subprocess
 import sys
 import re
 from typing import Any, Dict, List, Optional
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
+from app.enums.logging_enums import RunContext
 
 
 class BlackToolProviderV2(ToolProviderBase):
@@ -13,9 +14,14 @@ class BlackToolProviderV2(ToolProviderBase):
     maps Black’s native exit‑codes onto the 1 / 0 contract.
     """
 
-    def _run(self, input: dict) -> ToolOutputSchema:  # noqa: D401, N802
+    def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
         target: str = input.get("target")
         check: bool = bool(input.get("check", False))
+
+        # Optionally track context lineage
+        if context:
+            context.parent_id = self._run_id
+            context.execution_chain = context.execution_chain[:] + [self._run_id]
 
         cmd = [
             sys.executable,
@@ -31,16 +37,14 @@ class BlackToolProviderV2(ToolProviderBase):
             proc = subprocess.run(
                 cmd, capture_output=True, text=True, encoding="utf‑8", errors="ignore"
             )
-        except Exception as exc:  # Black could not even start
+        except Exception as exc:
             return self._runtime_error(str(exc))
 
         raw_code = proc.returncode
         stdout = (proc.stdout or "").strip()
         stderr = (proc.stderr or "").strip()
 
-        # ───────────────────────────────────────────────────────── parse outcome
         if check:
-            # Black --check returns 0 = no changes, 1 = would reformat, >1 error
             if raw_code == 0:
                 return self._success(
                     summary="✅ Black check passed (no reformatting needed)",
@@ -52,7 +56,7 @@ class BlackToolProviderV2(ToolProviderBase):
                     },
                 )
 
-            if raw_code == 1:  # needs reformatting
+            if raw_code == 1:
                 diff_hunks = len(re.findall(r"^@@", stdout, re.MULTILINE))
                 return self._failure(
                     stdout=stdout,
@@ -69,10 +73,8 @@ class BlackToolProviderV2(ToolProviderBase):
                     },
                 )
 
-            # fall‑through → Black execution problem
             return self._runtime_error(stderr or stdout, raw_code)
 
-        # ─────────────────────────────────────────────── regular (in‑place) mode
         if raw_code == 0:
             return self._success(
                 summary="✅ Black formatted the file successfully",

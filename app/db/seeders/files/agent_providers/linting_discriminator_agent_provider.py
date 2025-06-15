@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 
 from app.enums.fsm_enums import DECISION_TYPE
+from app.enums.logging_enums import RunContext
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
 from app.utilities.metadata.snapshots.snapshot_reader import read_latest_snapshot
@@ -12,7 +13,8 @@ from app.utilities.diff_utils import summarize_diff
 LINTING_PASS_THRESHOLD = 0.85
 
 class LintingDiscriminatorAgentProvider(AgentProviderBase):
-    def _run(self, input: dict) -> AgentOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+        
         snapshot = read_latest_snapshot(session_id=self._session_id)
 
         if not snapshot:
@@ -32,8 +34,15 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
         before_path = Path(snapshot["before_path"]).resolve()
         after_path = Path(snapshot["after_path"]).resolve()
 
-        before_score = self._score_provider.run({"file_path": str(before_path)}).value
-        after_score = self._score_provider.run({"file_path": str(after_path)}).value
+        before_score = self._score_provider.run(
+            {"file_path": str(before_path)},
+            context=self.fork_context()
+        ).value
+
+        after_score = self._score_provider.run(
+            {"file_path": str(after_path)},
+            context=self.fork_context()
+        ).value
 
         def safe_relative(path: Path) -> str:
             try:

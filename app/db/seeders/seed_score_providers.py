@@ -9,6 +9,8 @@ SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
+from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
+
 SCORES = [
     {
         "id": 1,
@@ -22,7 +24,13 @@ SCORES = [
                 "mypy": 5,
                 "radon": 4
             },
-            "context_provider_id": None
+            # ✅ Flattened config
+            **LintingScoreConfig(
+                weight_ruff=0.7,
+                weight_black=0.2,
+                weight_mypy=0.1,
+                fail_threshold=0.75
+            ).model_dump()
         },
         "tags": ["linting"]
     },
@@ -32,15 +40,19 @@ SCORES = [
         "name": "code_stability_score_provider",
         "description": "Ensures code is structurally and syntactically safe for downstream use.",
         "config": {
-            "tool_provider_ids": {
-                "black": 1,
-                "mypy": 5,
-                "symbol_graph": 7
-            }
+            # 🚫 No tool_provider_ids — not used
+            **CodeStabilityScoreConfig(
+                failure_penalty=0.25,
+                diff_penalty=0.3,
+                test_weight=0.25,
+                coverage_weight=0.2
+            ).model_dump()
         },
         "tags": ["stability", "safety"]
     }
 ]
+
+
 
 def seed_score_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

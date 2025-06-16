@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
@@ -78,11 +78,6 @@ class ToolProviderConfig(BaseModel):
             raise ValueError("Invalid artifact path")
         return v
 
-class ScoreOutputSchema(BaseModel):
-    name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
-    value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
-    components: Dict[str, float] = Field(..., description="Tool/component-specific scores")
-    summary: Optional[str] = None
 
 
 class ScoreProviderConfig(BaseModel):
@@ -398,3 +393,74 @@ class SystemState(BaseModel):
     state: Optional[str] = "active"
 
 
+# Score Providers
+
+from typing import Annotated, Union, Optional, Literal
+from pydantic import BaseModel, Field, computed_field
+from app.enums.scoring_enums import SCORING_METRIC_TYPE
+
+# ─────────────────────────────────────────────────────────────
+# 🧩 BASE SCHEMAS
+# ─────────────────────────────────────────────────────────────
+
+class ScoreConfigBase(BaseModel):
+    """Base schema for input config (weights, thresholds, etc.)"""
+    pass
+
+class ScoreComponentsBase(BaseModel):
+    """Base schema for output components (results/metrics)"""
+    pass
+
+
+# ─────────────────────────────────────────────────────────────
+# 🧪 Linting Score
+# ─────────────────────────────────────────────────────────────
+
+class LintingScoreConfig(ScoreConfigBase):
+    weight_ruff: float
+    weight_black: float
+    weight_mypy: float
+    fail_threshold: float = 0.5
+
+class LintingScoreComponents(ScoreComponentsBase):
+    type: Literal["linting"] 
+    ruff_score: float
+    ruff_violations: int
+    black_score: float
+    mypy_score: float
+    tool_failure_count: int
+    weight_ruff: float
+    weight_black: float
+    weight_mypy: float
+
+
+# ─────────────────────────────────────────────────────────────
+# 🧬 Code Stability Score
+# ─────────────────────────────────────────────────────────────
+
+class CodeStabilityScoreConfig(ScoreConfigBase):
+    failure_penalty: float
+    diff_penalty: float
+    test_weight: float
+    coverage_weight: float
+
+class CodeStabilityScoreComponents(ScoreComponentsBase):
+    type: Literal["code_stability"]
+    utf8_valid: float
+    syntax_ok: float
+    py_compile_ok: float
+    can_import: float
+
+
+# ─────────────────────────────────────────────────────────────
+# 🧾 Final Output Schema
+# ─────────────────────────────────────────────────────────────
+
+class ScoreOutputSchema(BaseModel):
+    name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
+    value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
+    components: Union[
+        Annotated[LintingScoreComponents, Field(discriminator="type")],
+        Annotated[CodeStabilityScoreComponents, Field(discriminator="type")]
+    ] = Field(..., description="Structured component scores (schema depends on provider)")
+    summary: Optional[str] = None

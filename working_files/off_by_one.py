@@ -1,8 +1,8 @@
 def inclusive_range(n: int) -> list:
-    return list(range(n + 1))  # corrected to include n
+    return list(range(n + 1))  # Corrected to include n in the range
 
 # --- Agent Notes (PROVIDER_TYPE.SESSION / linting_generator_agent_provider) ---
-# - Changed `range(n)` to `range(n + 1)` to make the function inclusive of `n`, as indicated by the comment.
-# - Added type hints to the function signature for better clarity and to improve `mypy` score.
-# - No tradeoffs were made; the change aligns with the intended functionality described in the comment.
+# - Added type hints to the function `inclusive_range` to specify that it takes an integer and returns a list. This enhances code readability and helps with static type checking.
+# - Corrected the range function to `range(n + 1)` to ensure the range is inclusive of `n`, as suggested by the comment in the original code.
+# - No tradeoffs were made; the change maintains the original intent and functionality of the code.
 # -----------------------------------------------

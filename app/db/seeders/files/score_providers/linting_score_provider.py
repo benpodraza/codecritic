@@ -7,19 +7,22 @@ from typing import Dict, List, Tuple, Any
 
 from app.enums.logging_enums import RunContext
 from app.providers.score_provider_base import ScoreProviderBase
-from app.db.schemas import ScoreOutputSchema
+from app.db.schemas import (
+    LintingScoreConfig,
+    ScoreOutputSchema,
+    LintingScoreComponents
+)
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
 
 
 class LintingScoreProvider(ScoreProviderBase):
+    ConfigSchema = LintingScoreConfig 
     _DEFAULT_WEIGHTS: Dict[str, float] = {"ruff": 0.7, "black": 0.2, "mypy": 0.1}
     _DEFAULT_THRESHOLD: float | None = None
     _MAX_RUFF_VIOLATIONS_CONSIDERED = 10
 
     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-        # context = self.fork_context(context)
-        
         file_path = input["file_path"]
         file_path = self._make_path_from_raw(file_path)
         full_code = file_path.read_text(encoding="utf-8")
@@ -43,19 +46,18 @@ class LintingScoreProvider(ScoreProviderBase):
         threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
         meets_threshold = (threshold is None) or (weighted_score >= threshold)
 
-        components: Dict[str, float] = {
-            "ruff_score": ruff_score,
-            "ruff_violations": float(len(ruff_violations)),
-            "black_score": black_score,
-            "mypy_score": mypy_score,
-            "tool_failure_count": float(len(tool_failures)),
-            "weight_ruff": weights["ruff"],
-            "weight_black": weights["black"],
-            "weight_mypy": weights["mypy"],
-        }
-        if threshold is not None:
-            components["threshold"] = threshold
-            components["meets_threshold"] = 1.0 if meets_threshold else 0.0
+        # 🧩 Structured component output
+        components = LintingScoreComponents(
+            type="linting",
+            ruff_score=ruff_score,
+            ruff_violations=len(ruff_violations),
+            black_score=black_score,
+            mypy_score=mypy_score,
+            tool_failure_count=len(tool_failures),
+            weight_ruff=weights["ruff"],
+            weight_black=weights["black"],
+            weight_mypy=weights["mypy"],
+        )
 
         summary = self._build_summary(
             ruff_violations=ruff_violations,
@@ -141,7 +143,6 @@ class LintingScoreProvider(ScoreProviderBase):
         collect_violations: bool = False
     ) -> Tuple[float, List[str]]:
         ctx = self.fork_context()
-
         result = tool.run(input=input, context=ctx)
 
         violations = getattr(result, "violations", []) or []

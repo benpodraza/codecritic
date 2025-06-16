@@ -1,16 +1,20 @@
 from __future__ import annotations
 from abc import abstractmethod
 from copy import deepcopy
+from typing import TYPE_CHECKING, Type, Optional
+
 from app.enums.logging_enums import RunContext
 from app.providers.base_provider import BaseProvider
-from typing import TYPE_CHECKING
+from app.db.schemas import ScoreOutputSchema, ScoreComponentsBase, ScoreProviderConfig
+
 if TYPE_CHECKING:
     from app.providers.context_provider_base import ContextProviderBase
     from app.providers.tool_provider_base import ToolProviderBase
 
-from app.db.schemas import ScoreOutputSchema
 
 class ScoreProviderBase(BaseProvider):
+    ConfigSchema: Type[ScoreComponentsBase] = ScoreComponentsBase  # ⬅️ override in subclasses
+
     def __init__(
         self,
         config=None,
@@ -22,6 +26,14 @@ class ScoreProviderBase(BaseProvider):
         super().__init__(config=config, context=context, **kwargs)
         self._context_provider = context_provider
         self._tool_providers = tool_providers or []
+
+        # ✅ Parse schema-enforced config
+        self.config: ScoreComponentsBase = self._parse_config(config or {})
+
+    def _parse_config(self, raw_config: dict | ScoreProviderConfig) -> ScoreComponentsBase:
+        if hasattr(raw_config, "config"):
+            raw_config = raw_config.config  # unwrap SQLAlchemy wrapper
+        return self.ConfigSchema.model_validate(raw_config)
 
     def _run_provider(self, input: dict) -> ScoreOutputSchema:
         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"

@@ -184,7 +184,6 @@ codecritic
    - tests
       - __init__.py
       - backup
-         - agent_engine_expanded.csv
          - provider_logs.csv
       - complex_lint_task.py
       - impossible_lint_task.py
@@ -195,6 +194,11 @@ codecritic
             - data_generator.ipynb
             - multi_run
                - eda_agent_engine_providers.ipynb
+               - eda_agent_providers.ipynb
+               - eda_context_providers.ipynb
+               - eda_controller_providers.ipynb
+               - eda_program_providers.ipynb
+               - eda_system_providers.ipynb
                - eda_tool_providers.ipynb
             - single_run
                - eda_provider_log.ipynb
@@ -223,9 +227,7 @@ codecritic
       - long_line.py
       - mixed_tabs_spaces.py
       - no_doc_type.py
-      - off_by_one..__sys_1301541847.py
       - off_by_one.py
-      - shadow_builtin..__sys_1302240199.py
       - shadow_builtin.py
       - unused_import.py
       - valid_simple.py

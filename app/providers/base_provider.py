@@ -100,15 +100,7 @@ class BaseProvider:
         try:
             if hasattr(output, "model_dump"):
                 dumped = output.model_dump()
-                flat_dump = {}
-                for k, v in dumped.items():
-                    if isinstance(v, dict):
-                        for sub_k, sub_v in v.items():
-                            flat_dump[f"{k}.{sub_k}"] = sub_v
-                    else:
-                        flat_dump[k] = v
-
-                output_str = json.dumps(flat_dump, default=str)
+                output_str = json.dumps(dumped, default=str)
                 output_schema = output.__class__.__name__
             else:
                 output_str = json.dumps(output, default=str)

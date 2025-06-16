@@ -35,14 +35,10 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
         log = self._extract_log(response) or "Generator agent did not return a log entry."
         code = self._extract_code(response)
 
-        decision = DECISION_TYPE.ACCEPTED if code else DECISION_TYPE.UNKNOWN
-        if decision == DECISION_TYPE.UNKNOWN:
-            self._log.warning("⚠️ Generator did not return a code block; decision set to UNKNOWN.")
-
         return AgentOutputSchema(
             response=response,
             log=log,
-            decision=decision,
+            decision=DECISION_TYPE.UNKNOWN,
             snapshot_id=None,
             file_path=file_path,
             score=getattr(engine_output, "score", None)

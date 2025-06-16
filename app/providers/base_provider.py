@@ -129,7 +129,7 @@ class BaseProvider:
                     output=output_str,
                     output_schema=output_schema,
                     latency_ms=latency_ms,
-                    config_hash=self._compute_config_hash(),
+                    config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
                     if getattr(self._config, "artifact_path", None)
                     else None,
@@ -174,10 +174,9 @@ class BaseProvider:
             return PROVIDER_TYPE.PROGRAM
         return PROVIDER_TYPE.UNKNOWN
 
-    def _compute_config_hash(self) -> Optional[str]:
-        if not self._config or not getattr(self._config, "config", None):
-            return None
-        return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
+    def _compute_config_hash(self, config: dict | None) -> str:
+        config_str = json.dumps(config or {}, sort_keys=True)
+        return hashlib.md5(config_str.encode("utf-8")).hexdigest()
 
     def propagate_file_log_id(self, file_log_id: str):
         self._file_log_id = file_log_id

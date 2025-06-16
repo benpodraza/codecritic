@@ -342,6 +342,7 @@ class AgentEngineOutput(BaseModel):
 
 
 class AgentOutputSchema(BaseModel):
+    agent_type: Optional[AGENT] = AGENT.UNKNOWN 
     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
     score: Optional[float] = None
     response: Optional[str] = None

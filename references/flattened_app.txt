@@ -980,7 +980,7 @@
 # 7 
 # 8 class CodeStabilityAgentProvider(AgentProviderBase):
 # 9     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
-# 10         score_result = self._score_provider.run(input, context=self.fork_context(context))
+# 10         score_result = self._score_provider.run(input, context=self.fork_context())
 # 11 
 # 12         raw_file_path = input.get("file_path") or input.get("file_name") or input.get("before")
 # 13         relative_file_path = None
@@ -1052,12 +1052,12 @@
 # 36 
 # 37         before_score = self._score_provider.run(
 # 38             {"file_path": str(before_path)},
-# 39             context=self.fork_context(context)
+# 39             context=self.fork_context()
 # 40         ).value
 # 41 
 # 42         after_score = self._score_provider.run(
 # 43             {"file_path": str(after_path)},
-# 44             context=self.fork_context(context)
+# 44             context=self.fork_context()
 # 45         ).value
 # 46 
 # 47         def safe_relative(path: Path) -> str:
@@ -1593,7 +1593,7 @@
 # 18     _MAX_RUFF_VIOLATIONS_CONSIDERED = 10
 # 19 
 # 20     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 21         context = self.fork_context(context)
+# 21         #  context = self.fork_context(context)
 # 22         
 # 23         file_path = input["file_path"]
 # 24         file_path = self._make_path_from_raw(file_path)
@@ -1715,7 +1715,7 @@
 # 140         context: RunContext | None = None,
 # 141         collect_violations: bool = False
 # 142     ) -> Tuple[float, List[str]]:
-# 143         ctx = self.fork_context(override=context)
+# 143         ctx = self.fork_context()
 # 144 
 # 145         result = tool.run(input=input, context=ctx)
 # 146 
@@ -4936,7 +4936,7 @@
 # 71                 metadata = {
 # 72                     "system": input.get("system", "unknown"),
 # 73                     "agent": self._config.name if self._config else "unknown",
-# 74                     "score": score_result.value if score_result else None,
+# 74                     "score": score_result.value if score_result else None if not hasattr(score_result, "model_dump") else score_result.model_dump(),
 # 75                     "state": str(input.get("state_context", {}).get("state", "unknown")),
 # 76                     "decision": decision.value,
 # 77                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -5077,155 +5077,160 @@
 # 48 
 # 49         if context:
 # 50             self._context = deepcopy(context)
-# 51             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-# 52                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-# 53                 self._context.execution_chain.append(self._run_id)
-# 54 
-# 55         start_clock = time.perf_counter()
-# 56         start_time = datetime.now(timezone.utc)
-# 57 
-# 58         try:
-# 59             output = self._run_provider(input)
-# 60         except Exception as exc:
-# 61             latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 62             try:
-# 63                 self.logger.write(
-# 64                     LOG_TYPE.ERROR,
-# 65                     ErrorLogSchema(
-# 66                         session_id=self._session_id,
-# 67                         file_log_id=self._file_log_id,
-# 68                         error_type=self._map_error_type(exc).value,
-# 69                         message=str(exc),
-# 70                         file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 71                         provider_id=self._config.id if self._config else None,
-# 72                         provider_type=self._infer_provider_type(),
-# 73                         timestamp=start_time,
-# 74                         latency_ms=latency_ms,
-# 75                         called_by_type=self._called_by_type if self._called_by_type else None,
-# 76                         called_by_id=self._called_by_id,
-# 77                         run_id=self._run_id,
-# 78                         parent_id=self._context.parent_id if self._context else None,
-# 79                         execution_chain=self._context.execution_chain[:] if self._context else [],
-# 80                     ),
-# 81                 )
-# 82             except Exception:
-# 83                 pass
-# 84             raise
-# 85 
-# 86         latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 87 
-# 88         try:
-# 89             input_str = json.dumps(
-# 90                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
-# 91                 default=str,
-# 92             )
-# 93         except Exception:
-# 94             input_str = ""
-# 95 
-# 96         try:
-# 97             if hasattr(output, "model_dump"):
-# 98                 dumped = output.model_dump()
-# 99                 flat_dump = {}
-# 100                 for k, v in dumped.items():
-# 101                     if isinstance(v, dict):
-# 102                         for sub_k, sub_v in v.items():
-# 103                             flat_dump[f"{k}.{sub_k}"] = sub_v
-# 104                     else:
-# 105                         flat_dump[k] = v
-# 106 
-# 107                 output_str = json.dumps(flat_dump, default=str)
-# 108                 output_schema = output.__class__.__name__
-# 109             else:
-# 110                 output_str = json.dumps(output, default=str)
-# 111                 output_schema = None
-# 112         except Exception:
-# 113             output_str = ""
-# 114             output_schema = None
-# 115 
-# 116         try:
-# 117             self.logger.write(
-# 118                 LOG_TYPE.PROVIDER,
-# 119                 ProviderLogSchema(
-# 120                     session_id=self._session_id,
-# 121                     file_log_id=self._file_log_id,
-# 122                     provider_id=self._config.id if self._config else -1,
-# 123                     provider_type=self._infer_provider_type(),
-# 124                     input=input_str,
-# 125                     output=output_str,
-# 126                     output_schema=output_schema,
-# 127                     latency_ms=latency_ms,
-# 128                     config_hash=self._compute_config_hash(),
-# 129                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 130                     if getattr(self._config, "artifact_path", None)
-# 131                     else None,
-# 132                     timestamp=start_time,
-# 133                     called_by_type=self._called_by_type if self._called_by_type else None,
-# 134                     called_by_id=self._called_by_id,
-# 135                     run_id=self._run_id,
-# 136                     parent_id=self._context.parent_id if self._context else None,
-# 137                     execution_chain=self._context.execution_chain[:] if self._context else [],
-# 138                 ),
-# 139             )
-# 140         except Exception:
-# 141             raise
-# 142 
-# 143         self._log.debug("✅ Provider run logged")
-# 144         return output
-# 145 
-# 146     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 147         return ERROR_TYPE.RUNTIME
-# 148 
-# 149     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 150         cls = self.__class__.__name__.lower()
-# 151         if "tool" in cls:
-# 152             return PROVIDER_TYPE.TOOL
-# 153         if "engine" in cls:
-# 154             return PROVIDER_TYPE.AGENT_ENGINE
-# 155         if "agent" in cls:
-# 156             return PROVIDER_TYPE.AGENT
-# 157         if "prompt" in cls:
-# 158             return PROVIDER_TYPE.PROMPT
-# 159         if "context" in cls:
-# 160             return PROVIDER_TYPE.CONTEXT
-# 161         if "score" in cls:
-# 162             return PROVIDER_TYPE.SCORE
-# 163         if "state" in cls:
-# 164             return PROVIDER_TYPE.STATE
-# 165         if "system" in cls:
-# 166             return PROVIDER_TYPE.SYSTEM
-# 167         if "controller" in cls:
-# 168             return PROVIDER_TYPE.CONTROLLER
-# 169         if "program" in cls:
-# 170             return PROVIDER_TYPE.PROGRAM
-# 171         return PROVIDER_TYPE.UNKNOWN
-# 172 
-# 173     def _compute_config_hash(self) -> Optional[str]:
-# 174         if not self._config or not getattr(self._config, "config", None):
-# 175             return None
-# 176         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
-# 177 
-# 178     def propagate_file_log_id(self, file_log_id: str):
-# 179         self._file_log_id = file_log_id
-# 180 
-# 181         for attr_name in dir(self):
-# 182             attr = getattr(self, attr_name, None)
-# 183 
-# 184             if isinstance(attr, BaseProvider):
-# 185                 attr.propagate_file_log_id(file_log_id)
-# 186 
-# 187             elif isinstance(attr, list):
-# 188                 for item in attr:
-# 189                     if isinstance(item, BaseProvider):
-# 190                         item.propagate_file_log_id(file_log_id)
-# 191 
-# 192             elif isinstance(attr, dict):
-# 193                 for item in attr.values():
-# 194                     if isinstance(item, BaseProvider):
-# 195                         item.propagate_file_log_id(file_log_id)
-# 196 
-# 197     def fork_context(self, override: RunContext | None = None) -> RunContext:
-# 198         ctx = deepcopy(self._context)
-# 199         return ctx
+# 51             self._session_id     = self._context.session_id
+# 52             self._file_log_id    = self._context.file_log_id
+# 53             self._called_by_type = self._context.called_by_type
+# 54             self._called_by_id   = self._context.called_by_id
+# 55             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+# 56                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+# 57                 self._context.execution_chain.append(self._run_id)
+# 58 
+# 59         start_clock = time.perf_counter()
+# 60         start_time = datetime.now(timezone.utc)
+# 61 
+# 62         try:
+# 63             output = self._run_provider(input)
+# 64         except Exception as exc:
+# 65             latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 66             try:
+# 67                 self.logger.write(
+# 68                     LOG_TYPE.ERROR,
+# 69                     ErrorLogSchema(
+# 70                         session_id=self._session_id,
+# 71                         file_log_id=self._file_log_id,
+# 72                         error_type=self._map_error_type(exc).value,
+# 73                         message=str(exc),
+# 74                         file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 75                         provider_id=self._config.id if self._config else None,
+# 76                         provider_type=self._infer_provider_type(),
+# 77                         timestamp=start_time,
+# 78                         latency_ms=latency_ms,
+# 79                         called_by_type=self._called_by_type if self._called_by_type else None,
+# 80                         called_by_id=self._called_by_id,
+# 81                         run_id=self._run_id,
+# 82                         parent_id=self._context.parent_id if self._context else None,
+# 83                         execution_chain=self._context.execution_chain[:] if self._context else [],
+# 84                     ),
+# 85                 )
+# 86             except Exception:
+# 87                 pass
+# 88             raise
+# 89 
+# 90         latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 91 
+# 92         try:
+# 93             input_str = json.dumps(
+# 94                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 95                 default=str,
+# 96             )
+# 97         except Exception:
+# 98             input_str = ""
+# 99 
+# 100         try:
+# 101             if hasattr(output, "model_dump"):
+# 102                 dumped = output.model_dump()
+# 103                 flat_dump = {}
+# 104                 for k, v in dumped.items():
+# 105                     if isinstance(v, dict):
+# 106                         for sub_k, sub_v in v.items():
+# 107                             flat_dump[f"{k}.{sub_k}"] = sub_v
+# 108                     else:
+# 109                         flat_dump[k] = v
+# 110 
+# 111                 output_str = json.dumps(flat_dump, default=str)
+# 112                 output_schema = output.__class__.__name__
+# 113             else:
+# 114                 output_str = json.dumps(output, default=str)
+# 115                 output_schema = None
+# 116         except Exception:
+# 117             output_str = ""
+# 118             output_schema = None
+# 119 
+# 120         try:
+# 121             self.logger.write(
+# 122                 LOG_TYPE.PROVIDER,
+# 123                 ProviderLogSchema(
+# 124                     session_id=self._session_id,
+# 125                     file_log_id=self._file_log_id,
+# 126                     provider_id=self._config.id if self._config else -1,
+# 127                     provider_type=self._infer_provider_type(),
+# 128                     input=input_str,
+# 129                     output=output_str,
+# 130                     output_schema=output_schema,
+# 131                     latency_ms=latency_ms,
+# 132                     config_hash=self._compute_config_hash(),
+# 133                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 134                     if getattr(self._config, "artifact_path", None)
+# 135                     else None,
+# 136                     timestamp=start_time,
+# 137                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 138                     called_by_id=self._called_by_id,
+# 139                     run_id=self._run_id,
+# 140                     parent_id=self._context.parent_id if self._context else None,
+# 141                     execution_chain=self._context.execution_chain[:] if self._context else [],
+# 142                 ),
+# 143             )
+# 144         except Exception:
+# 145             raise
+# 146 
+# 147         self._log.debug("✅ Provider run logged")
+# 148         return output
+# 149 
+# 150     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 151         return ERROR_TYPE.RUNTIME
+# 152 
+# 153     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 154         cls = self.__class__.__name__.lower()
+# 155         if "tool" in cls:
+# 156             return PROVIDER_TYPE.TOOL
+# 157         if "engine" in cls:
+# 158             return PROVIDER_TYPE.AGENT_ENGINE
+# 159         if "agent" in cls:
+# 160             return PROVIDER_TYPE.AGENT
+# 161         if "prompt" in cls:
+# 162             return PROVIDER_TYPE.PROMPT
+# 163         if "context" in cls:
+# 164             return PROVIDER_TYPE.CONTEXT
+# 165         if "score" in cls:
+# 166             return PROVIDER_TYPE.SCORE
+# 167         if "state" in cls:
+# 168             return PROVIDER_TYPE.STATE
+# 169         if "system" in cls:
+# 170             return PROVIDER_TYPE.SYSTEM
+# 171         if "controller" in cls:
+# 172             return PROVIDER_TYPE.CONTROLLER
+# 173         if "program" in cls:
+# 174             return PROVIDER_TYPE.PROGRAM
+# 175         return PROVIDER_TYPE.UNKNOWN
+# 176 
+# 177     def _compute_config_hash(self) -> Optional[str]:
+# 178         if not self._config or not getattr(self._config, "config", None):
+# 179             return None
+# 180         return hashlib.md5(json.dumps(self._config.config, sort_keys=True).encode()).hexdigest()
+# 181 
+# 182     def propagate_file_log_id(self, file_log_id: str):
+# 183         self._file_log_id = file_log_id
+# 184 
+# 185         for attr_name in dir(self):
+# 186             attr = getattr(self, attr_name, None)
+# 187 
+# 188             if isinstance(attr, BaseProvider):
+# 189                 attr.propagate_file_log_id(file_log_id)
+# 190 
+# 191             elif isinstance(attr, list):
+# 192                 for item in attr:
+# 193                     if isinstance(item, BaseProvider):
+# 194                         item.propagate_file_log_id(file_log_id)
+# 195 
+# 196             elif isinstance(attr, dict):
+# 197                 for item in attr.values():
+# 198                     if isinstance(item, BaseProvider):
+# 199                         item.propagate_file_log_id(file_log_id)
+# 200 
+# 201     def fork_context(self) -> RunContext:
+# 202         forked = deepcopy(self._context or RunContext())
+# 203         forked.parent_id = self._run_id
+# 204         return forked
 
 
 # providers\context_provider_base.py
@@ -5369,96 +5374,97 @@
 # 101                 best_file = select_best_file_by_score(
 # 102                     file_a=state["file_path"],
 # 103                     file_b=self.incoming_file,
-# 104                     score_provider=self.score_provider
-# 105                 )
-# 106 
-# 107                 temp_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 108                 shutil.copy(Path(best_file), temp_path)
-# 109                 state["file_path"] = str(temp_path)
-# 110 
-# 111                 for f in Path("working_files").glob("temp_ctrl_*.py"):
-# 112                     if f.resolve() != temp_path.resolve():
-# 113                         try:
-# 114                             f.unlink()
-# 115                         except Exception:
-# 116                             pass
-# 117 
-# 118                 for f in Path("working_files").glob("*_stripped.py"):
-# 119                     try:
-# 120                         f.unlink()
-# 121                     except Exception:
-# 122                         pass
-# 123 
-# 124                 for path in self._generated_files:
-# 125                     if path.exists():
-# 126                         try:
-# 127                             path.unlink()
-# 128                         except Exception:
-# 129                             pass
-# 130 
-# 131                 return ControllerOutputSchema(
-# 132                     state=SYSTEM.END,
-# 133                     previous_state=state.get("_last_state", SYSTEM.START),
-# 134                     state_type=STATE_TYPE.END,
-# 135                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 136                     steps=step_count,
-# 137                     max_steps=max_steps,
-# 138                     summary=state.get("summary", "Completed"),
-# 139                     output=state,
-# 140                     provider_name=self._config.name,
-# 141                 )
-# 142 
-# 143             step_count += 1
-# 144 
-# 145             if current == SYSTEM.START:
-# 146                 transition = self.transition(state, None)
-# 147                 state.update(transition)
-# 148                 state["_last_state"] = SYSTEM.START
-# 149                 continue
-# 150 
-# 151             provider = self._systems.get(current.value)
-# 152             if not provider:
-# 153                 raise ValueError(f"No system provider registered for state: {current.value}")
-# 154 
-# 155             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 156             output = provider.run(input=provider_input, context=self.fork_context())
-# 157 
-# 158             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 159             promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 160             if "file_path" in output.output:
-# 161                 final_path = Path(output.output["file_path"]).resolve()
-# 162                 shutil.copy(final_path, promoted_path)
-# 163                 self._generated_files.append(promoted_path)
-# 164                 state["file_path"] = str(promoted_path)
-# 165 
-# 166             if hasattr(output, "decision") and output.decision is not None:
-# 167                 state["decision"] = output.decision
-# 168 
-# 169             transition_result = self.transition(state, output)
-# 170             transition_result.pop("file_path", None)
-# 171 
-# 172             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 173             transition_metadata.update({
-# 174                 "agent_output": flat_output.get("output", {}),
-# 175                 "file_path": flat_output.get("file_path"),
-# 176             })
-# 177             transition_result["transition_metadata"] = transition_metadata
-# 178 
-# 179             raw_state = transition_result.get("state", current)
-# 180             state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
-# 181 
-# 182             state = {
-# 183                 **state,
-# 184                 **transition_result,
-# 185                 "state": state_enum,
-# 186                 "_last_state": current,
-# 187                 "state_output": flat_output,
-# 188             }
-# 189 
+# 104                     score_provider=self.score_provider,
+# 105                     context=self._context
+# 106                 )
+# 107 
+# 108                 temp_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 109                 shutil.copy(Path(best_file), temp_path)
+# 110                 state["file_path"] = str(temp_path)
+# 111 
+# 112                 for f in Path("working_files").glob("temp_ctrl_*.py"):
+# 113                     if f.resolve() != temp_path.resolve():
+# 114                         try:
+# 115                             f.unlink()
+# 116                         except Exception:
+# 117                             pass
+# 118 
+# 119                 for f in Path("working_files").glob("*_stripped.py"):
+# 120                     try:
+# 121                         f.unlink()
+# 122                     except Exception:
+# 123                         pass
+# 124 
+# 125                 for path in self._generated_files:
+# 126                     if path.exists():
+# 127                         try:
+# 128                             path.unlink()
+# 129                         except Exception:
+# 130                             pass
+# 131 
+# 132                 return ControllerOutputSchema(
+# 133                     state=SYSTEM.END,
+# 134                     previous_state=state.get("_last_state", SYSTEM.START),
+# 135                     state_type=STATE_TYPE.END,
+# 136                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 137                     steps=step_count,
+# 138                     max_steps=max_steps,
+# 139                     summary=state.get("summary", "Completed"),
+# 140                     output=state,
+# 141                     provider_name=self._config.name,
+# 142                 )
+# 143 
+# 144             step_count += 1
+# 145 
+# 146             if current == SYSTEM.START:
+# 147                 transition = self.transition(state, None)
+# 148                 state.update(transition)
+# 149                 state["_last_state"] = SYSTEM.START
+# 150                 continue
+# 151 
+# 152             provider = self._systems.get(current.value)
+# 153             if not provider:
+# 154                 raise ValueError(f"No system provider registered for state: {current.value}")
+# 155 
+# 156             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 157             output = provider.run(input=provider_input, context=self.fork_context())
+# 158 
+# 159             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 160             promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 161             if "file_path" in output.output:
+# 162                 final_path = Path(output.output["file_path"]).resolve()
+# 163                 shutil.copy(final_path, promoted_path)
+# 164                 self._generated_files.append(promoted_path)
+# 165                 state["file_path"] = str(promoted_path)
+# 166 
+# 167             if hasattr(output, "decision") and output.decision is not None:
+# 168                 state["decision"] = output.decision
+# 169 
+# 170             transition_result = self.transition(state, output)
+# 171             transition_result.pop("file_path", None)
+# 172 
+# 173             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 174             transition_metadata.update({
+# 175                 "agent_output": flat_output.get("output", {}),
+# 176                 "file_path": flat_output.get("file_path"),
+# 177             })
+# 178             transition_result["transition_metadata"] = transition_metadata
+# 179 
+# 180             raw_state = transition_result.get("state", current)
+# 181             state_enum = raw_state if isinstance(raw_state, SYSTEM) else SYSTEM(raw_state)
+# 182 
+# 183             state = {
+# 184                 **state,
+# 185                 **transition_result,
+# 186                 "state": state_enum,
+# 187                 "_last_state": current,
+# 188                 "state_output": flat_output,
+# 189             }
 # 190 
-# 191     @abstractmethod
-# 192     def _transition(self, state: dict, output: dict | None) -> dict:
-# 193         ...
+# 191 
+# 192     @abstractmethod
+# 193     def _transition(self, state: dict, output: dict | None) -> dict:
+# 194         ...
 
 
 # providers\fsm_provider_base.py
@@ -5565,22 +5571,22 @@
 # 8 
 # 9 from app.enums.controller_enums import CONTROLLER
 # 10 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE
-# 11 from app.enums.logging_enums import RunContext
+# 11 from app.enums.logging_enums import RunContext, LOG_TYPE
 # 12 from app.providers.fsm_provider_base import FSMProviderBase
-# 13 from app.db.schemas import ProgramOutputSchema
+# 13 from app.db.schemas import ProgramOutputSchema, FileLogSchema
 # 14 from app.utilities.extract_base_filename import extract_base_filename
 # 15 from app.utilities.select_best_file_by_score import select_best_file_by_score
-# 16 
-# 17 class ProgramProviderBase(FSMProviderBase):
-# 18     def __init__(
-# 19         self,
-# 20         config=None,
-# 21         controller_providers: Dict[str, object] = None,
-# 22         context_provider=None,
-# 23         score_provider=None,
-# 24         tool_providers=None,
-# 25         context: RunContext = None,
-# 26         
+# 16 from app.utilities.metadata.logging.logging_provider import LoggingProvider
+# 17 
+# 18 class ProgramProviderBase(FSMProviderBase):
+# 19     def __init__(
+# 20         self,
+# 21         config=None,
+# 22         controller_providers: Dict[str, object] = None,
+# 23         context_provider=None,
+# 24         score_provider=None,
+# 25         tool_providers=None,
+# 26         context: RunContext = None,
 # 27     ):
 # 28         super().__init__(
 # 29             config=config,
@@ -5613,79 +5619,79 @@
 # 56         self._generated_files.append(self.working_file)
 # 57 
 # 58         #  🔹 Log file and get file_log_id
-# 59         from app.db.schemas import FileLogSchema
-# 60         from app.utilities.metadata.logging.logging_provider import LoggingProvider, LOG_TYPE
-# 61 
-# 62         original_path = str(src)
-# 63         file_name = src.name
-# 64         length_bytes = src.stat().st_size
-# 65 
-# 66         file_log = FileLogSchema(
-# 67             session_id=session_id,
-# 68             file_name=file_name,
-# 69             original_path=original_path,
-# 70             length_bytes=length_bytes
-# 71         )
-# 72         self._file_log_id = LoggingProvider().write(LOG_TYPE.FILE, file_log)
-# 73         
-# 74         input_path = Path(incoming_file)
-# 75         try:
-# 76             relative_path = str(input_path.relative_to(Path.cwd()))
-# 77         except ValueError:
-# 78             relative_path = str(input_path)
-# 79 
-# 80         #  🔹 Build initial FSM state
-# 81         state = {
-# 82             "state": CONTROLLER.START,
-# 83             "file_path": str(self.working_file),
-# 84             "session_id": session_id,
-# 85             "file_log_id": self._file_log_id,
-# 86             "system": input.get("system", "unknown"),
-# 87             "reason": input.get("reason", CONTROLLER.START.value),
-# 88             "steps": input.get("steps", 0),
-# 89             "retry_count": input.get("retry_count", 0),
-# 90             "_last_state": input.get("_last_state", CONTROLLER.START),
-# 91             "decision": DECISION_TYPE.UNKNOWN,
-# 92             "original_file": relative_path,
-# 93             "run_id": self._run_id,
-# 94         }
-# 95 
-# 96         step_count = 0
-# 97 
-# 98         while True:
-# 99             current = state.get("state")
-# 100 
-# 101             if step_count >= max_steps:
-# 102                 transition = self.transition(state, output)
-# 103                 state.update({
-# 104                     **state,
-# 105                     **transition,
-# 106                     "state": CONTROLLER.END,
-# 107                     "state_type": STATE_TYPE.END,
-# 108                     "reason": f"Max steps ({max_steps}) reached"
-# 109                 })
-# 110                 return ProgramOutputSchema(
-# 111                     state=CONTROLLER.END,
-# 112                     previous_state=current,
-# 113                     state_type=STATE_TYPE.END,
-# 114                     decision=DECISION_TYPE.UNKNOWN,
-# 115                     steps=step_count,
-# 116                     max_steps=max_steps,
-# 117                     summary=f"Max steps ({max_steps}) reached",
-# 118                     output=state,
-# 119                     provider_name=self._config.name
-# 120                 )
-# 121 
-# 122             if current == CONTROLLER.END:
-# 123                 final_decision = state.get("decision")
-# 124                 nested = state.get("output") or {}
-# 125                 if isinstance(nested, dict):
-# 126                     final_decision = final_decision or nested.get("decision")
-# 127 
-# 128                 best_file = select_best_file_by_score(
-# 129                     file_a=state.get("file_path"),
-# 130                     file_b=self.incoming_file,
-# 131                     score_provider=self.score_provider
+# 59         original_path = str(src)
+# 60         file_name = src.name
+# 61         length_bytes = src.stat().st_size
+# 62 
+# 63         file_log = FileLogSchema(
+# 64             session_id=session_id,
+# 65             file_name=file_name,
+# 66             original_path=original_path,
+# 67             length_bytes=length_bytes
+# 68         )
+# 69         self._file_log_id = LoggingProvider().write(LOG_TYPE.FILE, file_log)
+# 70         self._context.file_log_id = self._file_log_id
+# 71         self.context = self._context
+# 72 
+# 73         input_path = Path(incoming_file)
+# 74         try:
+# 75             relative_path = str(input_path.relative_to(Path.cwd()))
+# 76         except ValueError:
+# 77             relative_path = str(input_path)
+# 78 
+# 79         #  🔹 Build initial FSM state
+# 80         state = {
+# 81             "state": CONTROLLER.START,
+# 82             "file_path": str(self.working_file),
+# 83             "session_id": session_id,
+# 84             "file_log_id": self._file_log_id,
+# 85             "system": input.get("system", "unknown"),
+# 86             "reason": input.get("reason", CONTROLLER.START.value),
+# 87             "steps": input.get("steps", 0),
+# 88             "retry_count": input.get("retry_count", 0),
+# 89             "_last_state": input.get("_last_state", CONTROLLER.START),
+# 90             "decision": DECISION_TYPE.UNKNOWN,
+# 91             "original_file": relative_path,
+# 92             "run_id": self._run_id,
+# 93         }
+# 94 
+# 95         step_count = 0
+# 96 
+# 97         while True:
+# 98             current = state.get("state")
+# 99 
+# 100             if step_count >= max_steps:
+# 101                 transition = self.transition(state, output)
+# 102                 state.update({
+# 103                     **state,
+# 104                     **transition,
+# 105                     "state": CONTROLLER.END,
+# 106                     "state_type": STATE_TYPE.END,
+# 107                     "reason": f"Max steps ({max_steps}) reached"
+# 108                 })
+# 109                 return ProgramOutputSchema(
+# 110                     state=CONTROLLER.END,
+# 111                     previous_state=current,
+# 112                     state_type=STATE_TYPE.END,
+# 113                     decision=DECISION_TYPE.UNKNOWN,
+# 114                     steps=step_count,
+# 115                     max_steps=max_steps,
+# 116                     summary=f"Max steps ({max_steps}) reached",
+# 117                     output=state,
+# 118                     provider_name=self._config.name
+# 119                 )
+# 120 
+# 121             if current == CONTROLLER.END:
+# 122                 final_decision = state.get("decision")
+# 123                 nested = state.get("output") or {}
+# 124                 if isinstance(nested, dict):
+# 125                     final_decision = final_decision or nested.get("decision")
+# 126 
+# 127                 best_file = select_best_file_by_score(
+# 128                     file_a=state.get("file_path"),
+# 129                     file_b=self.incoming_file,
+# 130                     score_provider=self.score_provider,
+# 131                     context=self._context
 # 132                 )
 # 133 
 # 134                 final_path = Path(output_path) / Path(self.incoming_file).name
@@ -5766,10 +5772,9 @@
 # 209                 "state_output": flat_output,
 # 210             }
 # 211 
-# 212 
-# 213     @abstractmethod
-# 214     def _transition(self, state: dict, output: dict | None) -> dict:
-# 215         ...
+# 212     @abstractmethod
+# 213     def _transition(self, state: dict, output: dict | None) -> dict:
+# 214         ...
 
 
 # providers\prompt_provider_base.py
@@ -5839,20 +5844,19 @@
 # 25 
 # 26     def _run_provider(self, input: dict) -> ScoreOutputSchema:
 # 27         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
-# 28         print(f"🛠️ ScoreProvider called by: {caller}")
-# 29         return self._run(input=input, context=self.fork_context())
-# 30 
-# 31     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 32         self.context_provider = provider
-# 33 
-# 34     def set_tool_provider(self, provider: ToolProviderBase) -> None:
-# 35         if not hasattr(self, "tool_providers"):
-# 36             self.tool_providers = []
-# 37         self.tool_providers.append(provider)
-# 38 
-# 39     @abstractmethod
-# 40     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 41         raise NotImplementedError
+# 28         return self._run(input=input, context=self.fork_context())
+# 29 
+# 30     def set_context_provider(self, provider: ContextProviderBase) -> None:
+# 31         self.context_provider = provider
+# 32 
+# 33     def set_tool_provider(self, provider: ToolProviderBase) -> None:
+# 34         if not hasattr(self, "tool_providers"):
+# 35             self.tool_providers = []
+# 36         self.tool_providers.append(provider)
+# 37 
+# 38     @abstractmethod
+# 39     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
+# 40         raise NotImplementedError
 
 
 # providers\state_provider_base.py
@@ -5962,120 +5966,109 @@
 # 103                     best_file = select_best_file_by_score(
 # 104                         file_a=state["file_path"],
 # 105                         file_b=self.incoming_file,
-# 106                         score_provider=self.score_provider
-# 107                     )
-# 108 
-# 109                     temp_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 110                     shutil.copy(Path(best_file), temp_path)
-# 111                     state["file_path"] = str(temp_path)
-# 112 
-# 113                     for f in Path("working_files").glob("temp_state_*.py"):
-# 114                         if f.resolve() != temp_path.resolve():
-# 115                             try:
-# 116                                 f.unlink()
-# 117                             except Exception:
-# 118                                 pass
-# 119 
-# 120                     for f in Path("working_files").glob("temp_agent_*.py"):
-# 121                         if f.resolve() != temp_path.resolve():
-# 122                             try:
-# 123                                 f.unlink()
-# 124                             except Exception:
-# 125                                 pass
-# 126 
-# 127                     for f in Path("working_files").glob("*_stripped.py"):
-# 128                         try:
-# 129                             f.unlink()
-# 130                         except Exception:
-# 131                             pass
-# 132 
-# 133                     ctx = self._context or RunContext()
-# 134 
-# 135                 for path in self._generated_files:
-# 136                     if path.exists():
-# 137                         try:
-# 138                             path.unlink()
-# 139                         except Exception:
-# 140                             pass
-# 141 
-# 142                 return StateOutputSchema(
-# 143                     state=AGENT.END,
-# 144                     previous_state=state.get("_last_state", AGENT.START),
-# 145                     state_type=STATE_TYPE.END,
-# 146                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 147                     steps=step_count,
-# 148                     max_steps=max_steps,
-# 149                     summary=state.get("summary", "Completed"),
-# 150                     output=state,
-# 151                     provider_name=self._config.name,
-# 152                 )
-# 153 
-# 154             step_count += 1
-# 155 
-# 156             if current == AGENT.START:
-# 157                 transition = self.transition(state, None)
-# 158                 state.update(transition)
-# 159                 state["_last_state"] = AGENT.START
-# 160                 continue
-# 161 
-# 162             provider = self._agents.get(current.value)
-# 163 
-# 164             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 165 
-# 166             from pprint import pprint
-# 167             import json
-# 168 
-# 169             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 170             print('state provider making the run call\n')
+# 106                         score_provider=self.score_provider,
+# 107                         context=self._context
+# 108                     )
+# 109 
+# 110                     temp_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 111                     shutil.copy(Path(best_file), temp_path)
+# 112                     state["file_path"] = str(temp_path)
+# 113 
+# 114                     for f in Path("working_files").glob("temp_state_*.py"):
+# 115                         if f.resolve() != temp_path.resolve():
+# 116                             try:
+# 117                                 f.unlink()
+# 118                             except Exception:
+# 119                                 pass
+# 120 
+# 121                     for f in Path("working_files").glob("temp_agent_*.py"):
+# 122                         if f.resolve() != temp_path.resolve():
+# 123                             try:
+# 124                                 f.unlink()
+# 125                             except Exception:
+# 126                                 pass
+# 127 
+# 128                     for f in Path("working_files").glob("*_stripped.py"):
+# 129                         try:
+# 130                             f.unlink()
+# 131                         except Exception:
+# 132                             pass
+# 133 
+# 134                     ctx = self._context or RunContext()
+# 135 
+# 136                 for path in self._generated_files:
+# 137                     if path.exists():
+# 138                         try:
+# 139                             path.unlink()
+# 140                         except Exception:
+# 141                             pass
+# 142 
+# 143                 return StateOutputSchema(
+# 144                     state=AGENT.END,
+# 145                     previous_state=state.get("_last_state", AGENT.START),
+# 146                     state_type=STATE_TYPE.END,
+# 147                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 148                     steps=step_count,
+# 149                     max_steps=max_steps,
+# 150                     summary=state.get("summary", "Completed"),
+# 151                     output=state,
+# 152                     provider_name=self._config.name,
+# 153                 )
+# 154 
+# 155             step_count += 1
+# 156 
+# 157             if current == AGENT.START:
+# 158                 transition = self.transition(state, None)
+# 159                 state.update(transition)
+# 160                 state["_last_state"] = AGENT.START
+# 161                 continue
+# 162 
+# 163             provider = self._agents.get(current.value)
+# 164 
+# 165             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 166             forked = self.fork_context()
+# 167 
+# 168             output = provider.run(input=provider_input, context=forked)
+# 169 
+# 170             transition_result = self.transition(state, output)
 # 171 
-# 172             print("🔸 self._context:")
-# 173             pprint(json.loads(json.dumps(self._context.__dict__, indent=2)) if self._context else None)
+# 172             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output or {})
+# 173             agent_file_path = flat_output.get("file_path")
 # 174 
-# 175             print("\n🔹 forked context:")
-# 176             forked = self.fork_context()
-# 177             pprint(json.loads(json.dumps(forked.__dict__, indent=2)) if forked else None)
-# 178 
-# 179             output = provider.run(input=provider_input, context=forked)
-# 180 
-# 181             transition_result = self.transition(state, output)
+# 175             if agent_file_path:
+# 176                 src_path = Path(agent_file_path).resolve()
+# 177                 if src_path.exists():
+# 178                     promoted_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 179                     shutil.copy(src_path, promoted_path)
+# 180                     self._generated_files.append(promoted_path)
+# 181                     state["file_path"] = str(promoted_path)
 # 182 
-# 183             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output or {})
-# 184             agent_file_path = flat_output.get("file_path")
+# 183             if hasattr(output, "decision") and output.decision:
+# 184                 state["decision"] = output.decision
 # 185 
-# 186             if agent_file_path:
-# 187                 src_path = Path(agent_file_path).resolve()
-# 188                 if src_path.exists():
-# 189                     promoted_path = Path("working_files") / f"temp_state_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 190                     shutil.copy(src_path, promoted_path)
-# 191                     self._generated_files.append(promoted_path)
-# 192                     state["file_path"] = str(promoted_path)
-# 193 
-# 194             if hasattr(output, "decision") and output.decision:
-# 195                 state["decision"] = output.decision
-# 196 
-# 197             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 198             transition_metadata.update({
-# 199                 "agent_output": flat_output.get("output", {}),
-# 200                 "file_path": flat_output.get("file_path"),
-# 201             })
-# 202             transition_result["transition_metadata"] = transition_metadata
-# 203 
-# 204             raw_state = transition_result.get("state", current)
-# 205             state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
-# 206 
-# 207             transition_result.pop("file_path", None)
-# 208 
-# 209             state = {
-# 210                 **state,
-# 211                 **transition_result,
-# 212                 "state": state_enum,
-# 213                 "_last_state": current,
-# 214                 "state_output": flat_output,
-# 215             }
-# 216 
-# 217     @abstractmethod
-# 218     def _transition(self, state: dict, output: dict | None) -> dict:
-# 219         ...
+# 186             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 187             transition_metadata.update({
+# 188                 "agent_output": flat_output.get("output", {}),
+# 189                 "file_path": flat_output.get("file_path"),
+# 190             })
+# 191             transition_result["transition_metadata"] = transition_metadata
+# 192 
+# 193             raw_state = transition_result.get("state", current)
+# 194             state_enum = raw_state if isinstance(raw_state, AGENT) else AGENT(raw_state)
+# 195 
+# 196             transition_result.pop("file_path", None)
+# 197 
+# 198             state = {
+# 199                 **state,
+# 200                 **transition_result,
+# 201                 "state": state_enum,
+# 202                 "_last_state": current,
+# 203                 "state_output": flat_output,
+# 204             }
+# 205 
+# 206     @abstractmethod
+# 207     def _transition(self, state: dict, output: dict | None) -> dict:
+# 208         ...
 
 
 # providers\system_provider_base.py
@@ -6187,97 +6180,98 @@
 # 105                 best_file = select_best_file_by_score(
 # 106                     file_a=state["file_path"],
 # 107                     file_b=self.incoming_file,
-# 108                     score_provider=self.score_provider
-# 109                 )
-# 110 
-# 111                 temp_path = Path("working_files") / f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 112                 shutil.copy(Path(best_file), temp_path)
-# 113                 state["file_path"] = str(temp_path)
-# 114 
-# 115                 #  Clean up old temporary files
-# 116                 for f in Path("working_files").glob("temp_sys_*.py"):
-# 117                     if f.resolve() != temp_path.resolve():
-# 118                         try:
-# 119                             f.unlink()
-# 120                         except Exception:
-# 121                             pass
-# 122 
-# 123                 for f in Path("working_files").glob("*_stripped.py"):
-# 124                     try:
-# 125                         f.unlink()
-# 126                     except Exception:
-# 127                         pass
-# 128 
-# 129                 for path in self._generated_files:
-# 130                     if path.exists():
-# 131                         try:
-# 132                             path.unlink()
-# 133                         except Exception:
-# 134                             pass
-# 135 
-# 136                 return SystemOutputSchema(
-# 137                     state=STATE.END,
-# 138                     previous_state=state.get("_last_state", STATE.START),
-# 139                     state_type=STATE_TYPE.END,
-# 140                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 141                     steps=step_count,
-# 142                     max_steps=max_steps,
-# 143                     summary=state.get("summary", "Completed"),
-# 144                     output=state,
-# 145                     provider_name=self._config.name
-# 146                 )
-# 147 
-# 148             step_count += 1
-# 149 
-# 150             if current == STATE.START:
-# 151                 transition = self.transition(state, None)
-# 152                 state.update(transition)
-# 153                 state["_last_state"] = STATE.START
-# 154                 continue
-# 155 
-# 156             provider = self._states.get(current.value)
-# 157             if not provider:
-# 158                 raise ValueError(f"No state provider registered for state: {current.value}")
-# 159 
-# 160             provider_input = {k: v for k, v in state.items() if k != "state"}
-# 161             output = provider.run(input=provider_input, context=self.fork_context())
-# 162 
+# 108                     score_provider=self.score_provider,
+# 109                     context=self._context
+# 110                 )
+# 111 
+# 112                 temp_path = Path("working_files") / f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 113                 shutil.copy(Path(best_file), temp_path)
+# 114                 state["file_path"] = str(temp_path)
+# 115 
+# 116                 #  Clean up old temporary files
+# 117                 for f in Path("working_files").glob("temp_sys_*.py"):
+# 118                     if f.resolve() != temp_path.resolve():
+# 119                         try:
+# 120                             f.unlink()
+# 121                         except Exception:
+# 122                             pass
+# 123 
+# 124                 for f in Path("working_files").glob("*_stripped.py"):
+# 125                     try:
+# 126                         f.unlink()
+# 127                     except Exception:
+# 128                         pass
+# 129 
+# 130                 for path in self._generated_files:
+# 131                     if path.exists():
+# 132                         try:
+# 133                             path.unlink()
+# 134                         except Exception:
+# 135                             pass
+# 136 
+# 137                 return SystemOutputSchema(
+# 138                     state=STATE.END,
+# 139                     previous_state=state.get("_last_state", STATE.START),
+# 140                     state_type=STATE_TYPE.END,
+# 141                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
+# 142                     steps=step_count,
+# 143                     max_steps=max_steps,
+# 144                     summary=state.get("summary", "Completed"),
+# 145                     output=state,
+# 146                     provider_name=self._config.name
+# 147                 )
+# 148 
+# 149             step_count += 1
+# 150 
+# 151             if current == STATE.START:
+# 152                 transition = self.transition(state, None)
+# 153                 state.update(transition)
+# 154                 state["_last_state"] = STATE.START
+# 155                 continue
+# 156 
+# 157             provider = self._states.get(current.value)
+# 158             if not provider:
+# 159                 raise ValueError(f"No state provider registered for state: {current.value}")
+# 160 
+# 161             provider_input = {k: v for k, v in state.items() if k != "state"}
+# 162             output = provider.run(input=provider_input, context=self.fork_context())
 # 163 
-# 164             new_file_path = output.output.get("file_path")
-# 165             if new_file_path:
-# 166                 state["file_path"] = str(new_file_path)
-# 167 
-# 168             if hasattr(output, "decision") and output.decision:
-# 169                 state["decision"] = output.decision
-# 170 
-# 171             transition_result = self.transition(state, output)
-# 172             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-# 173 
-# 174             transition_metadata = transition_result.get("transition_metadata", {}) or {}
-# 175             transition_metadata.update({
-# 176                 "agent_output": flat_output.get("output", {}),
-# 177                 "file_path": flat_output.get("file_path"),
-# 178             })
-# 179             transition_result["transition_metadata"] = transition_metadata
-# 180 
-# 181             raw_state = transition_result.get("state", current)
-# 182             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
-# 183 
-# 184             transition_result.pop("file_path", None)
-# 185 
-# 186             state = {
-# 187                 **state,
-# 188                 **transition_result,
-# 189                 "state": state_enum,
-# 190                 "_last_state": current,
-# 191                 "state_output": flat_output,
-# 192             }
-# 193 
+# 164 
+# 165             new_file_path = output.output.get("file_path")
+# 166             if new_file_path:
+# 167                 state["file_path"] = str(new_file_path)
+# 168 
+# 169             if hasattr(output, "decision") and output.decision:
+# 170                 state["decision"] = output.decision
+# 171 
+# 172             transition_result = self.transition(state, output)
+# 173             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
+# 174 
+# 175             transition_metadata = transition_result.get("transition_metadata", {}) or {}
+# 176             transition_metadata.update({
+# 177                 "agent_output": flat_output.get("output", {}),
+# 178                 "file_path": flat_output.get("file_path"),
+# 179             })
+# 180             transition_result["transition_metadata"] = transition_metadata
+# 181 
+# 182             raw_state = transition_result.get("state", current)
+# 183             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
+# 184 
+# 185             transition_result.pop("file_path", None)
+# 186 
+# 187             state = {
+# 188                 **state,
+# 189                 **transition_result,
+# 190                 "state": state_enum,
+# 191                 "_last_state": current,
+# 192                 "state_output": flat_output,
+# 193             }
 # 194 
 # 195 
-# 196     @abstractmethod
-# 197     def _transition(self, state: dict, output: dict | None) -> dict:
-# 198         ...
+# 196 
+# 197     @abstractmethod
+# 198     def _transition(self, state: dict, output: dict | None) -> dict:
+# 199         ...
 
 
 # providers\tool_provider_base.py
@@ -7166,29 +7160,30 @@
 # 7 def select_best_file_by_score(
 # 8     file_a: str,
 # 9     file_b: str,
-# 10     score_provider: ScoreProviderBase
-# 11 ) -> str:
-# 12     """
-# 13     Compare two file paths using a scoring provider (with .run(input, session_id).value)
-# 14     and return the file path with the higher score.
-# 15 
-# 16     Args:
-# 17         file_a (str): First file path to compare.
-# 18         file_b (str): Second file path to compare.
-# 19         scoring_provider: Object with a .run(dict, session_id) method that returns .value.
-# 20         system (str): System identifier passed into the scoring input.
-# 21         session_id (str): Session identifier passed into the scoring call.
-# 22 
-# 23     Returns:
-# 24         str: File path with the higher score.
-# 25     """
-# 26     path_a = Path(file_a).resolve()
-# 27     path_b = Path(file_b).resolve()
-# 28 
-# 29     score_a = score_provider.run({"file_path": str(path_a)}).value
-# 30     score_b = score_provider.run({"file_path": str(path_b)}).value
-# 31 
-# 32     return str(path_a if score_a >= score_b else path_b)
+# 10     score_provider: ScoreProviderBase,
+# 11     context
+# 12 ) -> str:
+# 13     """
+# 14     Compare two file paths using a scoring provider (with .run(input, session_id).value)
+# 15     and return the file path with the higher score.
+# 16 
+# 17     Args:
+# 18         file_a (str): First file path to compare.
+# 19         file_b (str): Second file path to compare.
+# 20         scoring_provider: Object with a .run(dict, session_id) method that returns .value.
+# 21         system (str): System identifier passed into the scoring input.
+# 22         session_id (str): Session identifier passed into the scoring call.
+# 23 
+# 24     Returns:
+# 25         str: File path with the higher score.
+# 26     """
+# 27     path_a = Path(file_a).resolve()
+# 28     path_b = Path(file_b).resolve()
+# 29 
+# 30     score_a = score_provider.run({"file_path": str(path_a)}, context=context).value
+# 31     score_b = score_provider.run({"file_path": str(path_b)}, context=context).value
+# 32 
+# 33     return str(path_a if score_a >= score_b else path_b)
 
 
 

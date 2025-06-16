@@ -89,7 +89,7 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
             )
 
         # Check the scores for acceptance or improvement
-        if after_score >= LINTING_PASS_THRESHOLD and after_score > before_score:
+        if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
             decision = DECISION_TYPE.ACCEPTED
             chosen_code = after_code
             score = after_score

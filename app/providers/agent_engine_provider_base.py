@@ -79,11 +79,16 @@ class AgentEngineProviderBase(BaseProvider):
             else:
                 decision = DECISION_TYPE.UNKNOWN
 
-            def normalize_code(code: str) -> str:
-                return "\n".join(line.strip() for line in code.strip().splitlines() if line.strip())
+            import difflib
 
-            if not code_block or not before_code or normalize_code(code_block) == normalize_code(before_code):
-                self._log.debug("🟡 Generator returned output matching input (normalized)")
+            def is_code_changed(before: str, after: str) -> bool:
+                before_lines = before.strip().splitlines()
+                after_lines = after.strip().splitlines()
+                diff = difflib.unified_diff(before_lines, after_lines, lineterm="")
+                return any(line.startswith(("+", "-")) and not line.startswith(("+++", "---")) for line in diff)
+
+            if not code_block or not before_code or not is_code_changed(before_code, code_block):
+                self._log.debug("🟡 Generator returned output matching input (diffed)")
                 self._log.debug(f"🔍 BEFORE:\n{before_code}")
                 self._log.debug(f"🆕 AFTER:\n{code_block}")
                 return AgentEngineOutput(
@@ -91,7 +96,7 @@ class AgentEngineProviderBase(BaseProvider):
                     token_count=token_count,
                     cost_usd=cost_usd,
                     snapshot_id=None,
-                    summary="No change detected (normalized)",
+                    summary="No change detected (diff)",
                     code=code_block,
                     agent_decision=decision.value,
                     conversation_log_entry=log_block,

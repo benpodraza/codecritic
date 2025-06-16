@@ -163,19 +163,7 @@ class StateProviderBase(FSMProviderBase):
             provider = self._agents.get(current.value)
 
             provider_input = {k: v for k, v in state.items() if k != "state"}
-
-            from pprint import pprint
-            import json
-
-            provider_input = {k: v for k, v in state.items() if k != "state"}
-            print('state provider making the run call\n')
-
-            print("🔸 self._context:")
-            pprint(json.loads(json.dumps(self._context.__dict__, indent=2)) if self._context else None)
-
-            print("\n🔹 forked context:")
             forked = self.fork_context()
-            pprint(json.loads(json.dumps(forked.__dict__, indent=2)) if forked else None)
 
             output = provider.run(input=provider_input, context=forked)
 

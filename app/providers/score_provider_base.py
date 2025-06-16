@@ -25,7 +25,6 @@ class ScoreProviderBase(BaseProvider):
 
     def _run_provider(self, input: dict) -> ScoreOutputSchema:
         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
-        print(f"🛠️ ScoreProvider called by: {caller}")
         return self._run(input=input, context=self.fork_context())
 
     def set_context_provider(self, provider: ContextProviderBase) -> None:

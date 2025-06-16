@@ -37,6 +37,8 @@ class AgentProviderBase(BaseProvider):
     def _run_provider(self, input: dict) -> AgentOutputSchema:
         context = self.fork_context()
         output = self._run(input=input, context=context)
+        if not hasattr(output, "score") or output.score is None:
+            output.score = -1.0
         self._log.debug(f"\U0001f9fb _run_provider called for: {self._config.name if self._config else 'unknown'}")
 
         response = output.response if hasattr(output, "response") else str(output)
@@ -63,15 +65,11 @@ class AgentProviderBase(BaseProvider):
                 deltas = compute_deltas(before_metrics, after_metrics)
 
                 ctx = self.fork_context()
-                score_result = (
-                    self._score_provider.run({"file_path": str(before_path)}, context=ctx)
-                    if self._score_provider else None
-                )
 
                 metadata = {
                     "system": input.get("system", "unknown"),
                     "agent": self._config.name if self._config else "unknown",
-                    "score": score_result.value if score_result else None if not hasattr(score_result, "model_dump") else score_result.model_dump(),
+                    "score": output.score,
                     "state": str(input.get("state_context", {}).get("state", "unknown")),
                     "decision": decision.value,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -130,6 +128,8 @@ class AgentProviderBase(BaseProvider):
             timestamp=datetime.now(timezone.utc),
         ))
         self._log.debug("✅ AGENT_CONVERSATION log write complete")
+
+        output.agent_type = self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.UNKNOWN
 
         return output
 

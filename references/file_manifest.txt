@@ -166,6 +166,7 @@ codecritic
    - htmlcov
    - lib
    - mypy.ini
+   - provider_logs.db
    - pytest
    - pytest.ini
    - references
@@ -183,6 +184,7 @@ codecritic
    - tests
       - __init__.py
       - backup
+         - agent_engine_expanded.csv
          - provider_logs.csv
       - complex_lint_task.py
       - impossible_lint_task.py
@@ -216,5 +218,16 @@ codecritic
          - wrong_type_hint.py
    - utilities.ipynb
    - working_files
-      - complex_lint_task.py
+      - bad_indentation.py
+      - complex_function.py
+      - long_line.py
+      - mixed_tabs_spaces.py
+      - no_doc_type.py
+      - off_by_one..__sys_1301541847.py
+      - off_by_one.py
+      - shadow_builtin..__sys_1302240199.py
+      - shadow_builtin.py
+      - unused_import.py
+      - valid_simple.py
+      - wrong_type_hint.py
    - your_database_path.db

@@ -121,7 +121,6 @@ class AgentProviderBase(BaseProvider):
         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
             session_id=self._session_id,
             file_log_id=self._file_log_id,
-            system=input.get("system", "unknown"),
             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
             agent_provider_config_id=self._config.id if self._config else -1,
             content=log_content,

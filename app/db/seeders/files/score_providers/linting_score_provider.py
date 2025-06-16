@@ -32,8 +32,12 @@ class LintingScoreProvider(ScoreProviderBase):
 
         available = {tp._config.name.lower(): tp for tp in self.tool_providers}
         ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_path, context)
-        black_score, _ = self._run_tool("black", available, stripped_path, tool_failures, context)
-        mypy_score, _ = self._run_tool("mypy", available, stripped_path, tool_failures, context)
+        black_score, black_violations = self._run_tool(
+            "black", available, stripped_path, tool_failures, context, collect_violations=True
+        )
+        mypy_score, mypy_violations = self._run_tool(
+            "mypy", available, stripped_path, tool_failures, context, collect_violations=True
+        )
 
         weights = self._parse_weights(input.get("weights"))
         weighted_score = round(
@@ -50,9 +54,11 @@ class LintingScoreProvider(ScoreProviderBase):
         components = LintingScoreComponents(
             type="linting",
             ruff_score=ruff_score,
-            ruff_violations=len(ruff_violations),
+            ruff_violations=ruff_violations,            
             black_score=black_score,
+            black_violations=black_violations,    
             mypy_score=mypy_score,
+            mypy_violations=mypy_violations,
             tool_failure_count=len(tool_failures),
             weight_ruff=weights["ruff"],
             weight_black=weights["black"],

@@ -210,7 +210,6 @@ class AgentConversationLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String, nullable=False)
-    system = Column(String, nullable=False)
     agent_provider_config_id = Column(Integer, nullable=False)
     agent_type = Column(String, nullable=False) 
     content = Column(String, nullable=False)

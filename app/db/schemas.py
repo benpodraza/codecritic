@@ -249,7 +249,6 @@ class StateTransitionLogSchema:
 @dataclass
 class AgentConversationLogSchema:
     session_id: str
-    system: SYSTEM
     agent_type: AGENT
     agent_provider_config_id: int
     content: str
@@ -423,15 +422,18 @@ class LintingScoreConfig(ScoreConfigBase):
     fail_threshold: float = 0.5
 
 class LintingScoreComponents(ScoreComponentsBase):
-    type: Literal["linting"] 
+    type: Literal["linting"]
     ruff_score: float
-    ruff_violations: int
+    ruff_violations: List[str]
     black_score: float
+    black_violations: List[str]
     mypy_score: float
+    mypy_violations: List[str]
     tool_failure_count: int
     weight_ruff: float
     weight_black: float
     weight_mypy: float
+    
 
 
 # ─────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 
 from sqlalchemy.orm import Session
-from app.enums.logging_enums import RunContext  # ✅ import context type
+from app.enums.logging_enums import RunContext
 from app.providers.context_provider_base import ContextProviderBase
 from app.utilities.metadata.logging.conversation_log import get_conversation_log
 from app.db.schemas import ContextOutputSchema
@@ -12,7 +12,6 @@ from app.db.schemas import ContextOutputSchema
 class LintingContextProvider(ContextProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> ContextOutputSchema:
         file_path = Path(input["file_path"]).resolve()
-        system = input["system"]
 
         if not file_path.exists():
             raise FileNotFoundError(f"❌ File not found: {file_path}")
@@ -26,7 +25,11 @@ class LintingContextProvider(ContextProviderBase):
         )
 
         with Session(bind=self._engine) as session:
-            convo_log = get_conversation_log(session, session_id=self._session_id, system=system)
+            convo_log = get_conversation_log(
+                session=session,
+                session_id=self._session_id,
+                file_log_id=context.file_log_id
+            )
 
         context_data = {
             "file_path": str(file_path),

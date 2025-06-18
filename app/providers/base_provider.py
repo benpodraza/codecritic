@@ -14,6 +14,9 @@ from app.utilities.metadata.logging.logging_provider import LoggingMixin, LOG_TY
 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE, RunContext
 
+DEFAULT_MAX_RETRIES = 2
+DEFAULT_BACKOFF_SECONDS = 0.25
+
 class BaseProvider:
     def __init__(
         self,
@@ -44,7 +47,8 @@ class BaseProvider:
 
     def run(self, input: dict | None = None, context: RunContext = None) -> str:
         input = input or {}
-        self._run_id = str(uuid4())
+        max_retries = input.get("max_retries", DEFAULT_MAX_RETRIES)
+        backoff_seconds = input.get("backoff_seconds", DEFAULT_BACKOFF_SECONDS)
 
         if context:
             self._context = deepcopy(context)
@@ -52,40 +56,81 @@ class BaseProvider:
             self._file_log_id    = self._context.file_log_id
             self._called_by_type = self._context.called_by_type
             self._called_by_id   = self._context.called_by_id
-            if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-                self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-                self._context.execution_chain.append(self._run_id)
 
-        start_clock = time.perf_counter()
-        start_time = datetime.now(timezone.utc)
+        for attempt in range(max_retries + 1):
+            self._run_id = str(uuid4())
 
-        try:
-            output = self._run_provider(input)
-        except Exception as exc:
-            latency_ms = int((time.perf_counter() - start_clock) * 1000)
+            if self._context:
+                if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+                    self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+                    self._context.execution_chain.append(self._run_id)
+
+            start_time = datetime.now(timezone.utc)
+            start_clock = time.perf_counter()
+
             try:
-                self.logger.write(
-                    LOG_TYPE.ERROR,
-                    ErrorLogSchema(
-                        session_id=self._session_id,
-                        file_log_id=self._file_log_id,
-                        error_type=self._map_error_type(exc).value,
-                        message=str(exc),
-                        file_path=str(Path(__file__).relative_to(Path.cwd())),
-                        provider_id=self._config.id if self._config else None,
-                        provider_type=self._infer_provider_type(),
-                        timestamp=start_time,
-                        latency_ms=latency_ms,
-                        called_by_type=self._called_by_type if self._called_by_type else None,
-                        called_by_id=self._called_by_id,
-                        run_id=self._run_id,
-                        parent_id=self._context.parent_id if self._context else None,
-                        execution_chain=self._context.execution_chain[:] if self._context else [],
-                    ),
-                )
-            except Exception:
-                pass
-            raise
+                output = self._run_provider(input)
+                break
+            except Exception as exc:
+                latency_ms = int((time.perf_counter() - start_clock) * 1000)
+
+                # 🔴 Error Log
+                try:
+                    self.logger.write(
+                        LOG_TYPE.ERROR,
+                        ErrorLogSchema(
+                            session_id=self._session_id,
+                            file_log_id=self._file_log_id,
+                            error_type=self._map_error_type(exc).value,
+                            message=str(exc),
+                            file_path=str(Path(__file__).relative_to(Path.cwd())),
+                            provider_id=self._config.id if self._config else None,
+                            provider_type=self._infer_provider_type(),
+                            timestamp=start_time,
+                            latency_ms=latency_ms,
+                            called_by_type=self._called_by_type if self._called_by_type else None,
+                            called_by_id=self._called_by_id,
+                            run_id=self._run_id,
+                            parent_id=self._context.parent_id if self._context else None,
+                            execution_chain=self._context.execution_chain[:] if self._context else [],
+                        ),
+                    )
+                except Exception:
+                    pass
+
+                # 📜 Provider Log for failure (explicit marker)
+                try:
+                    self.logger.write(
+                        LOG_TYPE.PROVIDER,
+                        ProviderLogSchema(
+                            session_id=self._session_id,
+                            file_log_id=self._file_log_id,
+                            provider_id=self._config.id if self._config else -1,
+                            provider_type=self._infer_provider_type(),
+                            input=json.dumps(input, default=str),
+                            output="ERROR",  # 🚨 Clear indicator
+                            output_schema=None,
+                            latency_ms=latency_ms,
+                            config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+                            file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+                            if getattr(self._config, "artifact_path", None)
+                            else None,
+                            timestamp=start_time,
+                            called_by_type=self._called_by_type if self._called_by_type else None,
+                            called_by_id=self._called_by_id,
+                            run_id=self._run_id,
+                            parent_id=self._context.parent_id if self._context else None,
+                            execution_chain=self._context.execution_chain[:] if self._context else [],
+                        ),
+                    )
+                except Exception:
+                    pass
+
+                if attempt == max_retries:
+                    raise
+
+                time.sleep(backoff_seconds * (2 ** attempt))
+                input["retry_count"] = attempt + 1
 
         latency_ms = int((time.perf_counter() - start_clock) * 1000)
 

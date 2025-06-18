@@ -36,7 +36,6 @@ class StateProviderBase(FSMProviderBase):
 
     def _run_provider(self, input: dict) -> StateOutputSchema:
         session_id = input.get("session_id")
-        max_steps = input.get("max_steps", 10)
 
         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
         if not incoming_file:
@@ -76,10 +75,9 @@ class StateProviderBase(FSMProviderBase):
         while True:
             current = state["state"]
 
-            if step_count >= max_steps:
+            if step_count >= self._max_steps:
                 transition = self.transition(state, None)
                 state.update({
-                    **state,
                     **transition,
                     "state": STATE.END,
                     "state_type": STATE_TYPE.END,
@@ -91,8 +89,8 @@ class StateProviderBase(FSMProviderBase):
                     state_type=STATE_TYPE.END,
                     decision=DECISION_TYPE.REJECTED,
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
-                    summary=f"Max steps ({max_steps}) reached",
+                    max_steps=self._max_steps,
+                    summary=f"Max steps ({self._max_steps}) reached",
                     output=state,
                     provider_name=self._config.name,
                 )
@@ -145,7 +143,7 @@ class StateProviderBase(FSMProviderBase):
                     state_type=STATE_TYPE.END,
                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
+                    max_steps=self._max_steps,
                     summary=state.get("summary", "Completed"),
                     output=state,
                     provider_name=self._config.name,

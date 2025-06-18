@@ -6,7 +6,7 @@ from app.enums.logging_enums import RunContext
 class LintingGeneratorAgentProvider(AgentProviderBase):
     """Runs a generation round using the linting system prompt, context, and snapshot."""
 
-    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+    def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:        
         file_path = input.get("file_path")
         system = input.get("system", "linting")
 

@@ -20,6 +20,7 @@ SYSTEM_PROVIDERS = [
         "tags": ["linting", "system"],
         "config": {
             "score_provider_id": 1,
+            "max_steps": 20,
             "states": {
                 STATE.GENERATE.value: 1,
                 STATE.DISCRIMINATE.value: 2,

@@ -198,9 +198,14 @@ codecritic
                - eda_context_providers.ipynb
                - eda_controller_providers.ipynb
                - eda_program_providers.ipynb
+               - eda_prompt_providers.ipynb
+               - eda_score_providers.ipynb
+               - eda_state_providers.ipynb
                - eda_system_providers.ipynb
                - eda_tool_providers.ipynb
             - single_run
+               - eda_agent_conversation_log.ipynb
+               - eda_error_log.ipynb
                - eda_provider_log.ipynb
                - eda_state_transition_log.ipynb
          - functional_tests
@@ -222,14 +227,5 @@ codecritic
          - wrong_type_hint.py
    - utilities.ipynb
    - working_files
-      - bad_indentation.py
-      - complex_function.py
-      - long_line.py
-      - mixed_tabs_spaces.py
-      - no_doc_type.py
-      - off_by_one.py
-      - shadow_builtin.py
-      - unused_import.py
-      - valid_simple.py
-      - wrong_type_hint.py
+      - complex_lint_task.py
    - your_database_path.db

@@ -11,53 +11,57 @@ PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 STATE_PROVIDERS = [
-    (
-        1,
-        "linting_generator_state_provider.py",
-        "LintingGeneratorStateProvider",
-        "Runs the generator agent in its own FSM wrapper.",
-        ["linting", "generator"],
-        {
+    {
+        "id": 1,
+        "filename": "linting_generator_state_provider.py",
+        "name": "LintingGeneratorStateProvider",
+        "description": "Runs the generator agent in its own FSM wrapper.",
+        "tags": ["linting", "generator"],
+        "config": {
             "score_provider_id": 1,
+            "max_steps": 20,
             "agents": {
-                AGENT.GENERATOR.value: 2 
+                AGENT.GENERATOR.value: 2
             }
         }
-    ),
-    (
-        2,
-        "linting_discriminator_state_provider.py",
-        "LintingDiscriminatorStateProvider",
-        "Runs the discriminator agent in its own FSM wrapper.",
-        ["linting", "discriminator"],
-        {
+    },
+    {
+        "id": 2,
+        "filename": "linting_discriminator_state_provider.py",
+        "name": "LintingDiscriminatorStateProvider",
+        "description": "Runs the discriminator agent in its own FSM wrapper.",
+        "tags": ["linting", "discriminator"],
+        "config": {
             "score_provider_id": 1,
+            "max_steps": 20,
             "agents": {
-                AGENT.DISCRIMINATOR.value: 3 
+                AGENT.DISCRIMINATOR.value: 3
             }
         }
-    ),
-    (
-        3,
-        "code_stability_state_provider.py",
-        "CodeStabilityStateProvider",
-        "Gates code based on parse, compile, import, and static validation success.",
-        ["stability"],
-        {
+    },
+    {
+        "id": 3,
+        "filename": "code_stability_state_provider.py",
+        "name": "CodeStabilityStateProvider",
+        "description": "Gates code based on parse, compile, import, and static validation success.",
+        "tags": ["stability"],
+        "config": {
             "score_provider_id": 1,
+            "max_steps": 20,
             "agents": {
-                AGENT.STABILITY.value: 4 
+                AGENT.STABILITY.value: 4
             }
         }
-    )
+    }
 ]
+
 
 def seed_state_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-    for id, filename, name, description, tags, config in STATE_PROVIDERS:
+    for entry in STATE_PROVIDERS:
         guid = str(uuid4())
-        source_file = SEED_FILES_DIR / filename
+        source_file = SEED_FILES_DIR / entry["filename"]
         dest_filename = f"{guid}.py"
         dest_file = EXTENSIONS_DIR / dest_filename
 
@@ -67,13 +71,13 @@ def seed_state_providers(db_session: Session):
         shutil.copy(source_file, dest_file)
 
         record = StateProviderConfig(
-            id=id,
+            id=entry["id"],
             guid=guid,
-            name=name,
-            description=description,
-            config=config,
+            name=entry["name"],
+            description=entry["description"],
+            config=entry["config"],
             artifact_path=dest_filename,
-            tags=tags,
+            tags=entry["tags"],
         )
 
         db_session.add(record)

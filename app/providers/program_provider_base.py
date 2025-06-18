@@ -39,7 +39,6 @@ class ProgramProviderBase(FSMProviderBase):
 
     def _run_provider(self, input: dict) -> ProgramOutputSchema:
         session_id = self._session_id
-        max_steps = input.get("max_steps", 20)
 
         incoming_file = input.get("file_path")
         self.incoming_file = incoming_file
@@ -96,14 +95,13 @@ class ProgramProviderBase(FSMProviderBase):
         while True:
             current = state.get("state")
 
-            if step_count >= max_steps:
+            if step_count >= self._max_steps:
                 transition = self.transition(state, output)
                 state.update({
-                    **state,
                     **transition,
                     "state": CONTROLLER.END,
                     "state_type": STATE_TYPE.END,
-                    "reason": f"Max steps ({max_steps}) reached"
+                    "reason": f"Max steps ({self._max_steps}) reached"
                 })
                 return ProgramOutputSchema(
                     state=CONTROLLER.END,
@@ -111,8 +109,8 @@ class ProgramProviderBase(FSMProviderBase):
                     state_type=STATE_TYPE.END,
                     decision=DECISION_TYPE.UNKNOWN,
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
-                    summary=f"Max steps ({max_steps}) reached",
+                    max_steps=self._max_steps,
+                    summary=f"Max steps ({self._max_steps}) reached",
                     output=state,
                     provider_name=self._config.name
                 )
@@ -161,7 +159,7 @@ class ProgramProviderBase(FSMProviderBase):
                     state_type=STATE_TYPE.END,
                     decision=final_decision or state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
+                    max_steps=self._max_steps,
                     summary=state.get("reason", "Completed"),
                     output=state,
                     provider_name=self._config.name

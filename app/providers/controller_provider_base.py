@@ -35,7 +35,6 @@ class ControllerProviderBase(FSMProviderBase):
 
     def _run_provider(self, input: dict) -> ControllerOutputSchema:
         session_id = input.get("session_id")
-        max_steps = input.get("max_steps", 10)
 
         incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
         if not incoming_file:
@@ -75,14 +74,13 @@ class ControllerProviderBase(FSMProviderBase):
         while True:
             current = state.get("state")
 
-            if step_count >= max_steps:
+            if step_count >= self._max_steps:
                 transition = self.transition(state, output)
                 state.update({
-                    **state,
                     **transition,
                     "state": SYSTEM.END,
                     "state_type": STATE_TYPE.END,
-                    "reason": f"Max steps ({max_steps}) reached"
+                    "reason": f"Max steps ({self._max_steps}) reached"
                 })
                 return ControllerOutputSchema(
                     state=SYSTEM.END,
@@ -90,8 +88,8 @@ class ControllerProviderBase(FSMProviderBase):
                     state_type=SYSTEM.END,
                     decision=DECISION_TYPE.REJECTED,
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
-                    summary=f"Max steps ({max_steps}) reached",
+                    max_steps=self._max_steps,
+                    summary=f"Max steps ({self._max_steps}) reached",
                     output=state,
                     provider_name=self._config.name,
                 )
@@ -134,7 +132,7 @@ class ControllerProviderBase(FSMProviderBase):
                     state_type=STATE_TYPE.END,
                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
                     steps=state.get("steps", step_count),
-                    max_steps=max_steps,
+                    max_steps=self._max_steps,
                     summary=state.get("summary", "Completed"),
                     output=state,
                     provider_name=self._config.name,

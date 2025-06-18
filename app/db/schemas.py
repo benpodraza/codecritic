@@ -79,7 +79,6 @@ class ToolProviderConfig(BaseModel):
         return v
 
 
-
 class ScoreProviderConfig(BaseModel):
     id: Optional[int] = None
     guid: UUID = Field(default_factory=uuid4)
@@ -282,7 +281,7 @@ class SnapshotMetricsSchema:
     agent_type: AGENT 
     agent_id: int
     score: float
-    state: str  # could be FSM state, usually freeform like "generate" or "stability"
+    state: str 
     decision: DECISION_TYPE
     timestamp: datetime
     file_log_id: str
@@ -360,7 +359,7 @@ class FSMOutputSchema(BaseModel):
     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
     steps: int = Field(..., ge=0)
-    max_steps: int = Field(..., gt=0)
+    max_steps: int = Field(default=20, gt=0)
     summary: Optional[str] = None
     output: Optional[Dict[str, Any]] = None
     provider_name: Optional[str] = None

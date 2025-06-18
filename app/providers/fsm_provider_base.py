@@ -27,6 +27,7 @@ class FSMProviderBase(BaseProvider):
             context=context,
             **kwargs
         )
+        self._max_steps = getattr(config, "config", {}).get("max_steps", 100)
 
     def transition(self, state: dict, result: dict | None) -> dict:
         next_state = self._transition(state, result)

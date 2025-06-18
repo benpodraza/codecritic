@@ -282,79 +282,78 @@
 # 210 
 # 211     id = Column(Integer, primary_key=True, index=True)
 # 212     session_id = Column(String, nullable=False)
-# 213     system = Column(String, nullable=False)
-# 214     agent_provider_config_id = Column(Integer, nullable=False)
-# 215     agent_type = Column(String, nullable=False) 
-# 216     content = Column(String, nullable=False)
-# 217     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 218     run_id = Column(TEXT, nullable=False, index=True)
-# 219     file_log_id = Column(TEXT, nullable=True)
-# 220     
-# 221 
-# 222 class ErrorLog(Base):
-# 223     __tablename__ = "error_log"
-# 224 
-# 225     id = Column(Integer, primary_key=True, index=True)
-# 226     session_id = Column(String, nullable=False)
-# 227     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 228     latency_ms = Column(Integer, nullable=True) 
-# 229     provider_id = Column(Integer, nullable=True)
-# 230     provider_type = Column(String, nullable=True)
-# 231     error_type = Column(String, nullable=False)
-# 232     message = Column(String, nullable=False)
-# 233     file_path = Column(String, nullable=True)
-# 234     called_by_type = Column(String, nullable=True)
-# 235     called_by_id = Column(Integer, nullable=True)
-# 236     run_id = Column(TEXT, nullable=False, index=True)
-# 237     file_log_id = Column(TEXT, nullable=True)
-# 238     parent_id = Column(TEXT, nullable=True)
-# 239     execution_chain = Column(JSON, nullable=False, default=list)
-# 240 
-# 241 class SnapshotMetrics(Base):
-# 242     __tablename__ = "snapshot_metrics"
-# 243 
-# 244     id = Column(Integer, primary_key=True)
-# 245     session_id = Column(String, nullable=False)
-# 246     snapshot_id = Column(String, nullable=False)
-# 247     system = Column(String, nullable=True)
-# 248     agent = Column(String, nullable=True)
-# 249     agent_type = Column(Enum(AGENT), nullable=True)
-# 250     agent_id = Column(Integer, nullable=True)
-# 251     score = Column(Float, nullable=True)
-# 252     state = Column(String, nullable=True)
-# 253     decision = Column(String, nullable=True)
-# 254     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 255     file_log_id = Column(TEXT, nullable=True)
-# 256 
-# 257     #  structural metrics
-# 258     line_count_before = Column(Integer)
-# 259     line_count_after = Column(Integer)
-# 260     function_count_before = Column(Integer)
-# 261     function_count_after = Column(Integer)
-# 262     symbol_count_before = Column(Integer)
-# 263     symbol_count_after = Column(Integer)
-# 264     branch_count_before = Column(Integer)
-# 265     branch_count_after = Column(Integer)
-# 266     comment_count_before = Column(Integer)
-# 267     comment_count_after = Column(Integer)
-# 268 
-# 269     #  deltas
-# 270     line_count_delta = Column(Integer)
-# 271     function_count_delta = Column(Integer)
-# 272     symbol_count_delta = Column(Integer)
-# 273     branch_count_delta = Column(Integer)
-# 274     comment_count_delta = Column(Integer)
+# 213     agent_provider_config_id = Column(Integer, nullable=False)
+# 214     agent_type = Column(String, nullable=False) 
+# 215     content = Column(String, nullable=False)
+# 216     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 217     run_id = Column(TEXT, nullable=False, index=True)
+# 218     file_log_id = Column(TEXT, nullable=True)
+# 219     
+# 220 
+# 221 class ErrorLog(Base):
+# 222     __tablename__ = "error_log"
+# 223 
+# 224     id = Column(Integer, primary_key=True, index=True)
+# 225     session_id = Column(String, nullable=False)
+# 226     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 227     latency_ms = Column(Integer, nullable=True) 
+# 228     provider_id = Column(Integer, nullable=True)
+# 229     provider_type = Column(String, nullable=True)
+# 230     error_type = Column(String, nullable=False)
+# 231     message = Column(String, nullable=False)
+# 232     file_path = Column(String, nullable=True)
+# 233     called_by_type = Column(String, nullable=True)
+# 234     called_by_id = Column(Integer, nullable=True)
+# 235     run_id = Column(TEXT, nullable=False, index=True)
+# 236     file_log_id = Column(TEXT, nullable=True)
+# 237     parent_id = Column(TEXT, nullable=True)
+# 238     execution_chain = Column(JSON, nullable=False, default=list)
+# 239 
+# 240 class SnapshotMetrics(Base):
+# 241     __tablename__ = "snapshot_metrics"
+# 242 
+# 243     id = Column(Integer, primary_key=True)
+# 244     session_id = Column(String, nullable=False)
+# 245     snapshot_id = Column(String, nullable=False)
+# 246     system = Column(String, nullable=True)
+# 247     agent = Column(String, nullable=True)
+# 248     agent_type = Column(Enum(AGENT), nullable=True)
+# 249     agent_id = Column(Integer, nullable=True)
+# 250     score = Column(Float, nullable=True)
+# 251     state = Column(String, nullable=True)
+# 252     decision = Column(String, nullable=True)
+# 253     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 254     file_log_id = Column(TEXT, nullable=True)
+# 255 
+# 256     #  structural metrics
+# 257     line_count_before = Column(Integer)
+# 258     line_count_after = Column(Integer)
+# 259     function_count_before = Column(Integer)
+# 260     function_count_after = Column(Integer)
+# 261     symbol_count_before = Column(Integer)
+# 262     symbol_count_after = Column(Integer)
+# 263     branch_count_before = Column(Integer)
+# 264     branch_count_after = Column(Integer)
+# 265     comment_count_before = Column(Integer)
+# 266     comment_count_after = Column(Integer)
+# 267 
+# 268     #  deltas
+# 269     line_count_delta = Column(Integer)
+# 270     function_count_delta = Column(Integer)
+# 271     symbol_count_delta = Column(Integer)
+# 272     branch_count_delta = Column(Integer)
+# 273     comment_count_delta = Column(Integer)
+# 274 
 # 275 
-# 276 
-# 277 class FileLog(Base):
-# 278     __tablename__ = "file_log"
-# 279 
-# 280     id = Column(Integer, primary_key=True, autoincrement=True)
-# 281     session_id = Column(String, nullable=False)
-# 282     file_name = Column(String, nullable=False)
-# 283     original_path = Column(String)
-# 284     length_bytes = Column(Integer)
-# 285     created_at = Column(DateTime, default=datetime.now(timezone.utc))
+# 276 class FileLog(Base):
+# 277     __tablename__ = "file_log"
+# 278 
+# 279     id = Column(Integer, primary_key=True, autoincrement=True)
+# 280     session_id = Column(String, nullable=False)
+# 281     file_name = Column(String, nullable=False)
+# 282     original_path = Column(String)
+# 283     length_bytes = Column(Integer)
+# 284     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
 
 # db\schemas.py
@@ -364,7 +363,7 @@
 # 3 from typing import Any, Dict, List, Optional
 # 4 from pathlib import Path
 # 5 from uuid import UUID, uuid4
-# 6 from pydantic import BaseModel, Field, field_validator
+# 6 from pydantic import BaseModel, Field, computed_field, field_validator
 # 7 
 # 8 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
 # 9 from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
@@ -439,326 +438,394 @@
 # 78             raise ValueError("Invalid artifact path")
 # 79         return v
 # 80 
-# 81 class ScoreOutputSchema(BaseModel):
-# 82     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
-# 83     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
-# 84     components: Dict[str, float] = Field(..., description="Tool/component-specific scores")
-# 85     summary: Optional[str] = None
-# 86 
-# 87 
-# 88 class ScoreProviderConfig(BaseModel):
-# 89     id: Optional[int] = None
-# 90     guid: UUID = Field(default_factory=uuid4)
-# 91     name: str
-# 92     description: Optional[str] = None
-# 93     artifact_path: Optional[Path] = None
-# 94     tags: Optional[List[str]] = None
-# 95     table_name: str = "score_provider"
-# 96 
-# 97     @field_validator("artifact_path")
-# 98     @classmethod
-# 99     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 100         if v is None:
-# 101             return v
-# 102         if not v.is_absolute() and ".." in v.parts:
-# 103             raise ValueError("Invalid artifact path")
-# 104         return v
-# 105         
-# 106 class AgentEngineProviderConfig(BaseModel):
-# 107     id: Optional[int] = None
-# 108     guid: UUID = Field(default_factory=uuid4)
-# 109     name: str
-# 110     description: Optional[str] = None
-# 111     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
-# 112     config: Optional[Dict[str, Any]] = None
-# 113     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
-# 114     artifact_path: Path
-# 115     tags: Optional[List[str]] = None
-# 116 
-# 117     @field_validator("artifact_path")
-# 118     @classmethod
-# 119     def validate_artifact_path(cls, v: Path) -> Path:
-# 120         if not v.is_absolute() and ".." in v.parts:
-# 121             raise ValueError("Invalid artifact path")
-# 122         return v
-# 123 
-# 124 
-# 125 class AgentProviderConfigSchema(BaseModel):
-# 126     id: Optional[int] = None
-# 127     guid: UUID = Field(default_factory=uuid4)
-# 128     name: str
-# 129     description: Optional[str] = None
-# 130     config: Optional[Dict[str, Any]] = None
-# 131     artifact_path: Path
-# 132     tags: Optional[list[str]] = None
-# 133     agent_type: AGENT = AGENT.UNKNOWN 
-# 134 
-# 135     @field_validator("artifact_path")
-# 136     @classmethod
-# 137     def validate_artifact_path(cls, v: Path) -> Path:
-# 138         if not v.is_absolute() and ".." in v.parts:
-# 139             raise ValueError("Invalid artifact path")
-# 140         return v
-# 141 
-# 142 class StateProviderConfigSchema(BaseModel):
-# 143     id: Optional[int] = None
-# 144     guid: UUID = Field(default_factory=uuid4)
-# 145     name: str
-# 146     description: Optional[str] = None
-# 147     config: Optional[Dict[str, Any]] = None
-# 148     artifact_path: Path
-# 149     tags: Optional[list[str]] = None
-# 150 
-# 151     @classmethod
-# 152     def validate_artifact_path(cls, v: Path) -> Path:
-# 153         if not v.is_absolute() and ".." in v.parts:
-# 154             raise ValueError("Invalid artifact path")
-# 155         return v
-# 156 
-# 157 class SystemProviderConfigSchema(BaseModel):
-# 158     id: Optional[int] = None
-# 159     guid: UUID = Field(default_factory=uuid4)
-# 160     name: str
-# 161     description: Optional[str] = None
-# 162     config: Optional[Dict[str, Any]] = None
-# 163     artifact_path: Path
-# 164     tags: Optional[list[str]] = None
-# 165     system_type: SYSTEM
-# 166 
-# 167     @classmethod
-# 168     def validate_artifact_path(cls, v: Path) -> Path:
-# 169         if not v.is_absolute() and ".." in v.parts:
-# 170             raise ValueError("Invalid artifact path")
-# 171         return v
-# 172 
-# 173 class ControllerProviderConfigSchema(BaseModel):
-# 174     id: Optional[int] = None
-# 175     guid: UUID = Field(default_factory=uuid4)
-# 176     name: str
-# 177     description: Optional[str] = None
-# 178     config: Optional[Dict[str, Any]] = None
-# 179     artifact_path: Path
-# 180     tags: Optional[list[str]] = None
-# 181 
-# 182     @classmethod
-# 183     def validate_artifact_path(cls, v: Path) -> Path:
-# 184         if not v.is_absolute() and ".." in v.parts:
-# 185             raise ValueError("Invalid artifact path")
-# 186         return v
-# 187 
-# 188 class ProgramProviderConfigSchema(BaseModel):
-# 189     id: Optional[int] = None
-# 190     guid: UUID = Field(default_factory=uuid4)
-# 191     name: str
-# 192     description: Optional[str] = None
-# 193     config: Optional[Dict[str, Any]] = None
-# 194     artifact_path: Path
-# 195     tags: Optional[List[str]] = None
-# 196 
-# 197     @classmethod
-# 198     def validate_artifact_path(cls, v: Path) -> Path:
-# 199         if not v.is_absolute() and ".." in v.parts:
-# 200             raise ValueError("Invalid artifact path")
-# 201         return v
-# 202 
-# 203 class SessionConfigSchema(BaseModel):
-# 204     id: Optional[int] = None
-# 205     session_id: str
-# 206     name: str
-# 207     description: Optional[str] = None
-# 208     environment_type: str  #  e.g., "experiment", "live", "staging"
-# 209     config: Optional[Dict[str, Any]] = None
-# 210     tags: Optional[List[str]] = None
-# 211     
-# 212 
-# 213 #  LOGS
-# 214 
-# 215 @dataclass
-# 216 class ProviderLogSchema:
-# 217     session_id: str
-# 218     provider_id: int
-# 219     provider_type: PROVIDER_TYPE
-# 220     input: Optional[str] = None
-# 221     output: Optional[str] = None
-# 222     output_schema: Optional[str] = None
-# 223     latency_ms: Optional[int] = None
-# 224     config_hash: Optional[str] = None
-# 225     file_name: Optional[str] = None
-# 226     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 227     called_by_type: Optional[PROVIDER_TYPE] = None
-# 228     called_by_id: Optional[int] = None
-# 229     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 230     file_log_id: Optional[str] = None
-# 231     parent_id: Optional[str] = None
-# 232     execution_chain: List[str] = field(default_factory=list)
-# 233 
-# 234 @dataclass
-# 235 class StateTransitionLogSchema:
-# 236     session_id: str
-# 237     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
-# 238     entity_id: int
-# 239     from_state: str
-# 240     to_state: str
-# 241     reason: TRANSITION_REASON_TYPE
-# 242     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 243     triggered_by: str | None = None
-# 244     step: int | None = None
-# 245     transition_metadata: dict | None = None
-# 246     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 247     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 248     called_by_type: PROVIDER_TYPE | None = None
-# 249     called_by_id: int | None = None 
-# 250     file_log_id: Optional[str] = None
-# 251     parent_id: Optional[str] = None
-# 252     execution_chain: List[str] = field(default_factory=list)
-# 253 
-# 254 @dataclass
-# 255 class AgentConversationLogSchema:
-# 256     session_id: str
-# 257     system: SYSTEM
-# 258     agent_type: AGENT
-# 259     agent_provider_config_id: int
-# 260     content: str
-# 261     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 262     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 263     file_log_id: Optional[str] = None
-# 264 
-# 265 @dataclass
-# 266 class ErrorLogSchema:
-# 267     session_id: str
-# 268     error_type: ERROR_TYPE
-# 269     message: str
-# 270     file_path: str | None = None
-# 271     provider_id: int | None = None
-# 272     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
-# 273     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 274     latency_ms: Optional[int] = None
-# 275     called_by_type: Optional[PROVIDER_TYPE] = None
-# 276     called_by_id: Optional[int] = None
-# 277     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 278     file_log_id: Optional[str] = None
-# 279     parent_id: Optional[str] = None
-# 280     execution_chain: List[str] = field(default_factory=list)
-# 281     
-# 282 @dataclass
-# 283 class SnapshotMetricsSchema:
-# 284     session_id: str
-# 285     snapshot_id: str
-# 286     system: SYSTEM
-# 287     agent: str
-# 288     agent_type: AGENT 
-# 289     agent_id: int
-# 290     score: float
-# 291     state: str  #  could be FSM state, usually freeform like "generate" or "stability"
-# 292     decision: DECISION_TYPE
-# 293     timestamp: datetime
-# 294     file_log_id: str
-# 295 
-# 296     line_count_before: int
-# 297     line_count_after: int
-# 298     function_count_before: int
-# 299     function_count_after: int
-# 300     symbol_count_before: int
-# 301     symbol_count_after: int
-# 302     branch_count_before: int
-# 303     branch_count_after: int
-# 304     comment_count_before: int
-# 305     comment_count_after: int
+# 81 
+# 82 
+# 83 class ScoreProviderConfig(BaseModel):
+# 84     id: Optional[int] = None
+# 85     guid: UUID = Field(default_factory=uuid4)
+# 86     name: str
+# 87     description: Optional[str] = None
+# 88     artifact_path: Optional[Path] = None
+# 89     tags: Optional[List[str]] = None
+# 90     table_name: str = "score_provider"
+# 91 
+# 92     @field_validator("artifact_path")
+# 93     @classmethod
+# 94     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 95         if v is None:
+# 96             return v
+# 97         if not v.is_absolute() and ".." in v.parts:
+# 98             raise ValueError("Invalid artifact path")
+# 99         return v
+# 100         
+# 101 class AgentEngineProviderConfig(BaseModel):
+# 102     id: Optional[int] = None
+# 103     guid: UUID = Field(default_factory=uuid4)
+# 104     name: str
+# 105     description: Optional[str] = None
+# 106     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
+# 107     config: Optional[Dict[str, Any]] = None
+# 108     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
+# 109     artifact_path: Path
+# 110     tags: Optional[List[str]] = None
+# 111 
+# 112     @field_validator("artifact_path")
+# 113     @classmethod
+# 114     def validate_artifact_path(cls, v: Path) -> Path:
+# 115         if not v.is_absolute() and ".." in v.parts:
+# 116             raise ValueError("Invalid artifact path")
+# 117         return v
+# 118 
+# 119 
+# 120 class AgentProviderConfigSchema(BaseModel):
+# 121     id: Optional[int] = None
+# 122     guid: UUID = Field(default_factory=uuid4)
+# 123     name: str
+# 124     description: Optional[str] = None
+# 125     config: Optional[Dict[str, Any]] = None
+# 126     artifact_path: Path
+# 127     tags: Optional[list[str]] = None
+# 128     agent_type: AGENT = AGENT.UNKNOWN 
+# 129 
+# 130     @field_validator("artifact_path")
+# 131     @classmethod
+# 132     def validate_artifact_path(cls, v: Path) -> Path:
+# 133         if not v.is_absolute() and ".." in v.parts:
+# 134             raise ValueError("Invalid artifact path")
+# 135         return v
+# 136 
+# 137 class StateProviderConfigSchema(BaseModel):
+# 138     id: Optional[int] = None
+# 139     guid: UUID = Field(default_factory=uuid4)
+# 140     name: str
+# 141     description: Optional[str] = None
+# 142     config: Optional[Dict[str, Any]] = None
+# 143     artifact_path: Path
+# 144     tags: Optional[list[str]] = None
+# 145 
+# 146     @classmethod
+# 147     def validate_artifact_path(cls, v: Path) -> Path:
+# 148         if not v.is_absolute() and ".." in v.parts:
+# 149             raise ValueError("Invalid artifact path")
+# 150         return v
+# 151 
+# 152 class SystemProviderConfigSchema(BaseModel):
+# 153     id: Optional[int] = None
+# 154     guid: UUID = Field(default_factory=uuid4)
+# 155     name: str
+# 156     description: Optional[str] = None
+# 157     config: Optional[Dict[str, Any]] = None
+# 158     artifact_path: Path
+# 159     tags: Optional[list[str]] = None
+# 160     system_type: SYSTEM
+# 161 
+# 162     @classmethod
+# 163     def validate_artifact_path(cls, v: Path) -> Path:
+# 164         if not v.is_absolute() and ".." in v.parts:
+# 165             raise ValueError("Invalid artifact path")
+# 166         return v
+# 167 
+# 168 class ControllerProviderConfigSchema(BaseModel):
+# 169     id: Optional[int] = None
+# 170     guid: UUID = Field(default_factory=uuid4)
+# 171     name: str
+# 172     description: Optional[str] = None
+# 173     config: Optional[Dict[str, Any]] = None
+# 174     artifact_path: Path
+# 175     tags: Optional[list[str]] = None
+# 176 
+# 177     @classmethod
+# 178     def validate_artifact_path(cls, v: Path) -> Path:
+# 179         if not v.is_absolute() and ".." in v.parts:
+# 180             raise ValueError("Invalid artifact path")
+# 181         return v
+# 182 
+# 183 class ProgramProviderConfigSchema(BaseModel):
+# 184     id: Optional[int] = None
+# 185     guid: UUID = Field(default_factory=uuid4)
+# 186     name: str
+# 187     description: Optional[str] = None
+# 188     config: Optional[Dict[str, Any]] = None
+# 189     artifact_path: Path
+# 190     tags: Optional[List[str]] = None
+# 191 
+# 192     @classmethod
+# 193     def validate_artifact_path(cls, v: Path) -> Path:
+# 194         if not v.is_absolute() and ".." in v.parts:
+# 195             raise ValueError("Invalid artifact path")
+# 196         return v
+# 197 
+# 198 class SessionConfigSchema(BaseModel):
+# 199     id: Optional[int] = None
+# 200     session_id: str
+# 201     name: str
+# 202     description: Optional[str] = None
+# 203     environment_type: str  #  e.g., "experiment", "live", "staging"
+# 204     config: Optional[Dict[str, Any]] = None
+# 205     tags: Optional[List[str]] = None
+# 206     
+# 207 
+# 208 #  LOGS
+# 209 
+# 210 @dataclass
+# 211 class ProviderLogSchema:
+# 212     session_id: str
+# 213     provider_id: int
+# 214     provider_type: PROVIDER_TYPE
+# 215     input: Optional[str] = None
+# 216     output: Optional[str] = None
+# 217     output_schema: Optional[str] = None
+# 218     latency_ms: Optional[int] = None
+# 219     config_hash: Optional[str] = None
+# 220     file_name: Optional[str] = None
+# 221     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 222     called_by_type: Optional[PROVIDER_TYPE] = None
+# 223     called_by_id: Optional[int] = None
+# 224     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 225     file_log_id: Optional[str] = None
+# 226     parent_id: Optional[str] = None
+# 227     execution_chain: List[str] = field(default_factory=list)
+# 228 
+# 229 @dataclass
+# 230 class StateTransitionLogSchema:
+# 231     session_id: str
+# 232     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
+# 233     entity_id: int
+# 234     from_state: str
+# 235     to_state: str
+# 236     reason: TRANSITION_REASON_TYPE
+# 237     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 238     triggered_by: str | None = None
+# 239     step: int | None = None
+# 240     transition_metadata: dict | None = None
+# 241     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 242     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 243     called_by_type: PROVIDER_TYPE | None = None
+# 244     called_by_id: int | None = None 
+# 245     file_log_id: Optional[str] = None
+# 246     parent_id: Optional[str] = None
+# 247     execution_chain: List[str] = field(default_factory=list)
+# 248 
+# 249 @dataclass
+# 250 class AgentConversationLogSchema:
+# 251     session_id: str
+# 252     agent_type: AGENT
+# 253     agent_provider_config_id: int
+# 254     content: str
+# 255     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 256     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 257     file_log_id: Optional[str] = None
+# 258 
+# 259 @dataclass
+# 260 class ErrorLogSchema:
+# 261     session_id: str
+# 262     error_type: ERROR_TYPE
+# 263     message: str
+# 264     file_path: str | None = None
+# 265     provider_id: int | None = None
+# 266     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
+# 267     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 268     latency_ms: Optional[int] = None
+# 269     called_by_type: Optional[PROVIDER_TYPE] = None
+# 270     called_by_id: Optional[int] = None
+# 271     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 272     file_log_id: Optional[str] = None
+# 273     parent_id: Optional[str] = None
+# 274     execution_chain: List[str] = field(default_factory=list)
+# 275     
+# 276 @dataclass
+# 277 class SnapshotMetricsSchema:
+# 278     session_id: str
+# 279     snapshot_id: str
+# 280     system: SYSTEM
+# 281     agent: str
+# 282     agent_type: AGENT 
+# 283     agent_id: int
+# 284     score: float
+# 285     state: str 
+# 286     decision: DECISION_TYPE
+# 287     timestamp: datetime
+# 288     file_log_id: str
+# 289 
+# 290     line_count_before: int
+# 291     line_count_after: int
+# 292     function_count_before: int
+# 293     function_count_after: int
+# 294     symbol_count_before: int
+# 295     symbol_count_after: int
+# 296     branch_count_before: int
+# 297     branch_count_after: int
+# 298     comment_count_before: int
+# 299     comment_count_after: int
+# 300 
+# 301     line_count_delta: int
+# 302     function_count_delta: int
+# 303     symbol_count_delta: int
+# 304     branch_count_delta: int
+# 305     comment_count_delta: int
 # 306 
-# 307     line_count_delta: int
-# 308     function_count_delta: int
-# 309     symbol_count_delta: int
-# 310     branch_count_delta: int
-# 311     comment_count_delta: int
-# 312 
-# 313 @dataclass
-# 314 class FileLogSchema:
-# 315     session_id: str
-# 316     file_name: str
-# 317     id: Optional[int] = None
-# 318     original_path: Optional[str] = None
-# 319     length_bytes: Optional[int] = None
-# 320 
-# 321 
-# 322 #  Provider output schemas (for logs)
-# 323 
-# 324 class ToolOutputSchema(BaseModel):
-# 325     return_code: int
-# 326     stdout: Optional[str] = None
-# 327     stderr: Optional[str] = None
-# 328     violations: Optional[List[str]] = None  #  for linters like ruff
-# 329     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
-# 330     summary: Optional[str] = None  #  optional human-readable summary
-# 331 
-# 332 
-# 333 class AgentEngineOutput(BaseModel):
-# 334     response: str
-# 335     token_count: int
-# 336     cost_usd: float
-# 337     snapshot_id: Optional[str] = None
-# 338     summary: Optional[str] = None
-# 339     code: Optional[str] = None 
-# 340     agent_decision: Optional[str] = None
-# 341     conversation_log_entry: Optional[str] = None
-# 342 
-# 343 
-# 344 class AgentOutputSchema(BaseModel):
-# 345     agent_type: Optional[AGENT] = AGENT.UNKNOWN 
-# 346     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 347     score: Optional[float] = None
-# 348     response: Optional[str] = None
-# 349     log: Optional[str] = None
-# 350     file_path: Optional[str] = None
+# 307 @dataclass
+# 308 class FileLogSchema:
+# 309     session_id: str
+# 310     file_name: str
+# 311     id: Optional[int] = None
+# 312     original_path: Optional[str] = None
+# 313     length_bytes: Optional[int] = None
+# 314 
+# 315 
+# 316 #  Provider output schemas (for logs)
+# 317 
+# 318 class ToolOutputSchema(BaseModel):
+# 319     return_code: int
+# 320     stdout: Optional[str] = None
+# 321     stderr: Optional[str] = None
+# 322     violations: Optional[List[str]] = None  #  for linters like ruff
+# 323     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
+# 324     summary: Optional[str] = None  #  optional human-readable summary
+# 325 
+# 326 
+# 327 class AgentEngineOutput(BaseModel):
+# 328     response: str
+# 329     token_count: int
+# 330     cost_usd: float
+# 331     snapshot_id: Optional[str] = None
+# 332     summary: Optional[str] = None
+# 333     code: Optional[str] = None 
+# 334     agent_decision: Optional[str] = None
+# 335     conversation_log_entry: Optional[str] = None
+# 336 
+# 337 
+# 338 class AgentOutputSchema(BaseModel):
+# 339     agent_type: Optional[AGENT] = AGENT.UNKNOWN 
+# 340     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 341     score: Optional[float] = None
+# 342     response: Optional[str] = None
+# 343     log: Optional[str] = None
+# 344     file_path: Optional[str] = None
+# 345 
+# 346 
+# 347 class ContextOutputSchema(BaseModel):
+# 348     context: Dict[str, Any]
+# 349     summary: Optional[str] = None
+# 350 
 # 351 
-# 352 
-# 353 class ContextOutputSchema(BaseModel):
-# 354     context: Dict[str, Any]
-# 355     summary: Optional[str] = None
+# 352 class PromptOutputSchema(BaseModel):
+# 353     prompt: str
+# 354     summary: Optional[str] = None
+# 355 
 # 356 
-# 357 
-# 358 class PromptOutputSchema(BaseModel):
-# 359     prompt: str
-# 360     summary: Optional[str] = None
-# 361 
-# 362 
-# 363 class FSMOutputSchema(BaseModel):
-# 364     state: STATE
-# 365     previous_state: Optional[STATE] = None
-# 366     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
-# 367     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
-# 368     steps: int = Field(..., ge=0)
-# 369     max_steps: int = Field(..., gt=0)
-# 370     summary: Optional[str] = None
-# 371     output: Optional[Dict[str, Any]] = None
-# 372     provider_name: Optional[str] = None
-# 373 
-# 374 class SystemOutputSchema(FSMOutputSchema): pass
-# 375 
-# 376 class StateOutputSchema(FSMOutputSchema): 
-# 377     previous_state: Optional[AGENT] = None
-# 378 class ProgramOutputSchema(FSMOutputSchema):
-# 379     previous_state: Optional[CONTROLLER] = None
-# 380 class ControllerOutputSchema(FSMOutputSchema): 
-# 381     previous_state: Optional[SYSTEM] = None
-# 382 
-# 383 
-# 384 #  DTOs
+# 357 class FSMOutputSchema(BaseModel):
+# 358     state: STATE
+# 359     previous_state: Optional[STATE] = None
+# 360     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
+# 361     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
+# 362     steps: int = Field(..., ge=0)
+# 363     max_steps: int = Field(..., gt=0)
+# 364     summary: Optional[str] = None
+# 365     output: Optional[Dict[str, Any]] = None
+# 366     provider_name: Optional[str] = None
+# 367 
+# 368 class SystemOutputSchema(FSMOutputSchema): pass
+# 369 
+# 370 class StateOutputSchema(FSMOutputSchema): 
+# 371     previous_state: Optional[AGENT] = None
+# 372 class ProgramOutputSchema(FSMOutputSchema):
+# 373     previous_state: Optional[CONTROLLER] = None
+# 374 class ControllerOutputSchema(FSMOutputSchema): 
+# 375     previous_state: Optional[SYSTEM] = None
+# 376 
+# 377 
+# 378 #  DTOs
+# 379 
+# 380 class Snapshot(BaseModel):
+# 381     timestamp: datetime
+# 382     file: str
+# 383     score: float
+# 384     decision: DECISION_TYPE
 # 385 
-# 386 class Snapshot(BaseModel):
-# 387     timestamp: datetime
-# 388     file: str
-# 389     score: float
-# 390     decision: DECISION_TYPE
-# 391 
-# 392 class SystemState(BaseModel):
-# 393     system: str
-# 394     file_path: str
-# 395     working_file: str
-# 396     final_file: Optional[str] = None
-# 397     snapshots: List[Snapshot]
-# 398     state: Optional[str] = "active"
-# 399 
+# 386 class SystemState(BaseModel):
+# 387     system: str
+# 388     file_path: str
+# 389     working_file: str
+# 390     final_file: Optional[str] = None
+# 391     snapshots: List[Snapshot]
+# 392     state: Optional[str] = "active"
+# 393 
+# 394 
+# 395 #  Score Providers
+# 396 
+# 397 from typing import Annotated, Union, Optional, Literal
+# 398 from pydantic import BaseModel, Field, computed_field
+# 399 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 # 400 
+# 401 #  ─────────────────────────────────────────────────────────────
+# 402 #  🧩 BASE SCHEMAS
+# 403 #  ─────────────────────────────────────────────────────────────
+# 404 
+# 405 class ScoreConfigBase(BaseModel):
+# 406     """Base schema for input config (weights, thresholds, etc.)"""
+# 407     pass
+# 408 
+# 409 class ScoreComponentsBase(BaseModel):
+# 410     """Base schema for output components (results/metrics)"""
+# 411     pass
+# 412 
+# 413 
+# 414 #  ─────────────────────────────────────────────────────────────
+# 415 #  🧪 Linting Score
+# 416 #  ─────────────────────────────────────────────────────────────
+# 417 
+# 418 class LintingScoreConfig(ScoreConfigBase):
+# 419     weight_ruff: float
+# 420     weight_black: float
+# 421     weight_mypy: float
+# 422     fail_threshold: float = 0.5
+# 423 
+# 424 class LintingScoreComponents(ScoreComponentsBase):
+# 425     type: Literal["linting"]
+# 426     ruff_score: float
+# 427     ruff_violations: List[str]
+# 428     black_score: float
+# 429     black_violations: List[str]
+# 430     mypy_score: float
+# 431     mypy_violations: List[str]
+# 432     tool_failure_count: int
+# 433     weight_ruff: float
+# 434     weight_black: float
+# 435     weight_mypy: float
+# 436     
+# 437 
+# 438 
+# 439 #  ─────────────────────────────────────────────────────────────
+# 440 #  🧬 Code Stability Score
+# 441 #  ─────────────────────────────────────────────────────────────
+# 442 
+# 443 class CodeStabilityScoreConfig(ScoreConfigBase):
+# 444     failure_penalty: float
+# 445     diff_penalty: float
+# 446     test_weight: float
+# 447     coverage_weight: float
+# 448 
+# 449 class CodeStabilityScoreComponents(ScoreComponentsBase):
+# 450     type: Literal["code_stability"]
+# 451     utf8_valid: float
+# 452     syntax_ok: float
+# 453     py_compile_ok: float
+# 454     can_import: float
+# 455 
+# 456 
+# 457 #  ─────────────────────────────────────────────────────────────
+# 458 #  🧾 Final Output Schema
+# 459 #  ─────────────────────────────────────────────────────────────
+# 460 
+# 461 class ScoreOutputSchema(BaseModel):
+# 462     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
+# 463     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
+# 464     components: Union[
+# 465         Annotated[LintingScoreComponents, Field(discriminator="type")],
+# 466         Annotated[CodeStabilityScoreComponents, Field(discriminator="type")]
+# 467     ] = Field(..., description="Structured component scores (schema depends on provider)")
+# 468     summary: Optional[str] = None
 
 
 # db\seed.py
@@ -1031,7 +1098,7 @@
 # 14 
 # 15 class LintingDiscriminatorAgentProvider(AgentProviderBase):
 # 16     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
-# 17         
+# 17 
 # 18         snapshot = read_latest_snapshot(session_id=self._session_id)
 # 19 
 # 20         if not snapshot:
@@ -1051,91 +1118,126 @@
 # 34         before_path = Path(snapshot["before_path"]).resolve()
 # 35         after_path = Path(snapshot["after_path"]).resolve()
 # 36 
-# 37         before_score = self._score_provider.run(
+# 37         before_result = self._score_provider.run(
 # 38             {"file_path": str(before_path)},
 # 39             context=self.fork_context()
-# 40         ).value
-# 41 
-# 42         after_score = self._score_provider.run(
-# 43             {"file_path": str(after_path)},
-# 44             context=self.fork_context()
-# 45         ).value
-# 46 
-# 47         def safe_relative(path: Path) -> str:
-# 48             try:
-# 49                 return str(path.relative_to(Path.cwd()))
-# 50             except ValueError:
-# 51                 return str(path)
-# 52 
-# 53         if before_code == after_code:
-# 54             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-# 55             log_msg = (
-# 56                 "No meaningful change, but score already passing."
-# 57                 if decision == DECISION_TYPE.ACCEPTED
-# 58                 else "No meaningful change and score below threshold."
-# 59             )
-# 60             return AgentOutputSchema(
-# 61                 decision=decision,
-# 62                 log=log_msg,
-# 63                 response=(
-# 64                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 65                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
-# 66                 ),
-# 67                 file_path=safe_relative(before_path),
-# 68                 score=before_score
-# 69             )
-# 70 
-# 71         #  Summarize the diff if the code has changed
-# 72         summary = summarize_diff(before_code, after_code).strip()
-# 73         if not summary:
-# 74             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-# 75             log_msg = (
-# 76                 "Diff could not be summarized, but prior version passes."
-# 77                 if decision == DECISION_TYPE.ACCEPTED
-# 78                 else "Diff could not be summarized and prior version fails."
-# 79             )
-# 80             return AgentOutputSchema(
-# 81                 decision=decision,
-# 82                 log=log_msg,
-# 83                 response=(
-# 84                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 85                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
-# 86                 ),
-# 87                 file_path=safe_relative(before_path),
-# 88                 score=before_score
-# 89             )
-# 90 
-# 91         #  Check the scores for acceptance or improvement
-# 92         if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
-# 93             decision = DECISION_TYPE.ACCEPTED
-# 94             chosen_code = after_code
-# 95             score = after_score
-# 96         elif after_score < LINTING_PASS_THRESHOLD and after_score > before_score:
-# 97             decision = DECISION_TYPE.IMPROVED
-# 98             chosen_code = after_code
-# 99             score = after_score
-# 100         else:
-# 101             decision = DECISION_TYPE.REJECTED
-# 102             chosen_code = before_code
-# 103             score = before_score
-# 104 
-# 105         #  Promote improved file to a working path (if chosen_code came from after_code)
-# 106         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 107         temp_path.parent.mkdir(parents=True, exist_ok=True)
+# 40         )
+# 41         after_result = self._score_provider.run(
+# 42             {"file_path": str(after_path)},
+# 43             context=self.fork_context()
+# 44         )
+# 45 
+# 46         before_score = before_result.value
+# 47         after_score = after_result.value
+# 48 
+# 49         def safe_relative(path: Path) -> str:
+# 50             try:
+# 51                 return str(path.relative_to(Path.cwd()))
+# 52             except ValueError:
+# 53                 return str(path)
+# 54 
+# 55         if before_code == after_code:
+# 56             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
+# 57             log_msg = (
+# 58                 "No meaningful change, but score already passing."
+# 59                 if decision == DECISION_TYPE.ACCEPTED
+# 60                 else "No meaningful change and score below threshold."
+# 61             )
+# 62             return AgentOutputSchema(
+# 63                 decision=decision,
+# 64                 log=log_msg,
+# 65                 response=(
+# 66                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 67                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+# 68                 ),
+# 69                 file_path=safe_relative(before_path),
+# 70                 score=before_score
+# 71             )
+# 72 
+# 73         #  Summarize the diff if the code has changed
+# 74         summary = summarize_diff(before_code, after_code).strip()
+# 75         if not summary:
+# 76             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
+# 77             log_msg = (
+# 78                 "Diff could not be summarized, but prior version passes."
+# 79                 if decision == DECISION_TYPE.ACCEPTED
+# 80                 else "Diff could not be summarized and prior version fails."
+# 81             )
+# 82             return AgentOutputSchema(
+# 83                 decision=decision,
+# 84                 log=log_msg,
+# 85                 response=(
+# 86                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 87                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+# 88                 ),
+# 89                 file_path=safe_relative(before_path),
+# 90                 score=before_score
+# 91             )
+# 92 
+# 93         #  Inspect violations (if any)
+# 94         after_components = getattr(after_result, "components", {})
+# 95         violation_msgs = []
+# 96 
+# 97         def append_count(name: str, val: int):
+# 98             if val:
+# 99                 violation_msgs.append(f"{name}: {val}")
+# 100 
+# 101         def get_violations(field) -> list[str]:
+# 102             val = getattr(after_components, field, None)
+# 103             if isinstance(val, list):
+# 104                 return val
+# 105             if isinstance(val, int):
+# 106                 return [f"{val} issues"]
+# 107             return []
 # 108 
-# 109         source_path = after_path if chosen_code == after_code else before_path
-# 110         shutil.copyfile(source_path, temp_path)
-# 111 
-# 112         return AgentOutputSchema(
-# 113             decision=decision,
-# 114             log=summary,
-# 115             response=(
-# 116                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 117                 f"[CONVERSATION_LOG_ENTRY]{summary}[/CONVERSATION_LOG_ENTRY]"
-# 118             ),
-# 119             file_path=safe_relative(temp_path),
-# 120             score=score
-# 121         )
+# 109         def append_messages(name: str, msgs: list[str]):
+# 110             if msgs:
+# 111                 joined = "\n    - " + "\n    - ".join(msgs)
+# 112                 violation_msgs.append(f"{name}:\n{joined}")
+# 113 
+# 114 
+# 115         
+# 116         append_messages("ruff", get_violations("ruff_violations"))
+# 117         append_messages("black", get_violations("black_violations"))
+# 118         append_messages("mypy", get_violations("mypy_violations"))
+# 119 
+# 120         violations_summary = (
+# 121             f"\n\n⚠️ Remaining violations:\n\n" + "\n\n".join(violation_msgs)
+# 122             if violation_msgs else "No Remaining violations"
+# 123         )
+# 124 
+# 125         #  Check the scores for acceptance or improvement
+# 126         if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
+# 127             decision = DECISION_TYPE.ACCEPTED
+# 128             chosen_code = after_code
+# 129             score = after_score
+# 130         elif after_score < LINTING_PASS_THRESHOLD and after_score > before_score:
+# 131             decision = DECISION_TYPE.IMPROVED
+# 132             chosen_code = after_code
+# 133             score = after_score
+# 134         else:
+# 135             decision = DECISION_TYPE.REJECTED
+# 136             chosen_code = before_code
+# 137             score = before_score
+# 138 
+# 139         #  Promote improved file to a working path (if chosen_code came from after_code)
+# 140         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 141         temp_path.parent.mkdir(parents=True, exist_ok=True)
+# 142 
+# 143         source_path = after_path if chosen_code == after_code else before_path
+# 144         shutil.copyfile(source_path, temp_path)
+# 145 
+# 146         return AgentOutputSchema(
+# 147             decision=decision,
+# 148             log=summary,
+# 149             response=(
+# 150                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 151                 f"[CONVERSATION_LOG_ENTRY]✅ Score improved from {before_score:.2f} to {after_score:.2f} and passes threshold."
+# 152                 f"{violations_summary}\n\n{summary}[/CONVERSATION_LOG_ENTRY]"
+# 153             ),
+# 154             file_path=safe_relative(temp_path),
+# 155             score=score
+# 156         )
 
 
 # db\seeders\files\agent_providers\linting_generator_agent_provider.py
@@ -1148,7 +1250,7 @@
 # 6 class LintingGeneratorAgentProvider(AgentProviderBase):
 # 7     """Runs a generation round using the linting system prompt, context, and snapshot."""
 # 8 
-# 9     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+# 9     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:        
 # 10         file_path = input.get("file_path")
 # 11         system = input.get("system", "linting")
 # 12 
@@ -1212,7 +1314,7 @@
 # 3 import json
 # 4 
 # 5 from sqlalchemy.orm import Session
-# 6 from app.enums.logging_enums import RunContext  #  ✅ import context type
+# 6 from app.enums.logging_enums import RunContext
 # 7 from app.providers.context_provider_base import ContextProviderBase
 # 8 from app.utilities.metadata.logging.conversation_log import get_conversation_log
 # 9 from app.db.schemas import ContextOutputSchema
@@ -1221,33 +1323,36 @@
 # 12 class LintingContextProvider(ContextProviderBase):
 # 13     def _run(self, input: dict, context: RunContext | None = None) -> ContextOutputSchema:
 # 14         file_path = Path(input["file_path"]).resolve()
-# 15         system = input["system"]
-# 16 
-# 17         if not file_path.exists():
-# 18             raise FileNotFoundError(f"❌ File not found: {file_path}")
-# 19 
-# 20         source_code = file_path.read_text(encoding="utf-8")
-# 21 
-# 22         #  🔧 propagate context
-# 23         score_result = self.score_provider.run(
-# 24             input={"file_path": str(file_path)},
-# 25             context=context
-# 26         )
-# 27 
-# 28         with Session(bind=self._engine) as session:
-# 29             convo_log = get_conversation_log(session, session_id=self._session_id, system=system)
-# 30 
-# 31         context_data = {
-# 32             "file_path": str(file_path),
-# 33             "source_code": source_code,
-# 34             "score": score_result.model_dump(),
-# 35             "conversation_log": convo_log
-# 36         }
-# 37 
-# 38         return ContextOutputSchema(
-# 39             context=context_data,
-# 40             summary=f"Context for {file_path.name}, {score_result.value} score, {len(convo_log)} log entries"
-# 41         )
+# 15 
+# 16         if not file_path.exists():
+# 17             raise FileNotFoundError(f"❌ File not found: {file_path}")
+# 18 
+# 19         source_code = file_path.read_text(encoding="utf-8")
+# 20 
+# 21         #  🔧 propagate context
+# 22         score_result = self.score_provider.run(
+# 23             input={"file_path": str(file_path)},
+# 24             context=context
+# 25         )
+# 26 
+# 27         with Session(bind=self._engine) as session:
+# 28             convo_log = get_conversation_log(
+# 29                 session=session,
+# 30                 session_id=self._session_id,
+# 31                 file_log_id=context.file_log_id
+# 32             )
+# 33 
+# 34         context_data = {
+# 35             "file_path": str(file_path),
+# 36             "source_code": source_code,
+# 37             "score": score_result.model_dump(),
+# 38             "conversation_log": convo_log
+# 39         }
+# 40 
+# 41         return ContextOutputSchema(
+# 42             context=context_data,
+# 43             summary=f"Context for {file_path.name}, {score_result.value} score, {len(convo_log)} log entries"
+# 44         )
 
 
 # db\seeders\files\controller_providers\__init__.py
@@ -1402,7 +1507,7 @@
 # 2 import json
 # 3 from pathlib import Path
 # 4 
-# 5 from app.enums.logging_enums import RunContext  #  ✅ for context type
+# 5 from app.enums.logging_enums import RunContext
 # 6 from app.providers.prompt_provider_base import PromptProviderBase
 # 7 from app.db.schemas import PromptOutputSchema
 # 8 
@@ -1451,7 +1556,11 @@
 # 51 {convo_section}
 # 52 """.strip()
 # 53 
-# 54         return PromptOutputSchema(prompt=full_prompt)
+# 54         #  🧾 Construct summary based on the file path and system
+# 55         short_path = Path(file_path).name if file_path else "unknown file"
+# 56         summary = f"Linting prompt generated for {short_path} (system: {system})"
+# 57 
+# 58         return PromptOutputSchema(prompt=full_prompt, summary=summary)
 
 
 # db\seeders\files\prompts\__init__.py
@@ -1475,97 +1584,109 @@
 # 9 import io
 # 10 import uuid
 # 11 
-# 12 from app.enums.logging_enums import RunContext
-# 13 from app.providers.score_provider_base import ScoreProviderBase
-# 14 from app.db.schemas import ScoreOutputSchema
-# 15 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-# 16 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
-# 17 
-# 18 
-# 19 @contextlib.contextmanager
-# 20 def suppress_output():
-# 21     original_stdout = sys.stdout
-# 22     original_stderr = sys.stderr
-# 23     sys.stdout = io.StringIO()
-# 24     sys.stderr = io.StringIO()
-# 25     try:
-# 26         yield
-# 27     finally:
-# 28         sys.stdout = original_stdout
-# 29         sys.stderr = original_stderr
-# 30 
-# 31 
-# 32 class CodeStabilityScoreProvider(ScoreProviderBase):
-# 33     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 34         original_path = Path(input["file_path"]).resolve()
-# 35         components: Dict[str, bool] = {}
-# 36 
-# 37         #  Read raw code and verify UTF-8
-# 38         try:
-# 39             raw_code = original_path.read_text(encoding="utf-8")
-# 40             components["utf8_valid"] = True
-# 41         except Exception:
-# 42             components["utf8_valid"] = False
-# 43             return self._final_score(components)
-# 44 
-# 45         #  Strip footer annotations without modifying actual code structure
-# 46         stripped_code, _ = split_code_and_notes(raw_code)
+# 12 from pydantic import BaseModel
+# 13 
+# 14 from app.enums.logging_enums import RunContext
+# 15 from app.providers.score_provider_base import ScoreProviderBase
+# 16 from app.db.schemas import CodeStabilityScoreConfig, ScoreOutputSchema, CodeStabilityScoreComponents
+# 17 from app.enums.scoring_enums import SCORING_METRIC_TYPE
+# 18 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+# 19 
+# 20 
+# 21 @contextlib.contextmanager
+# 22 def suppress_output():
+# 23     original_stdout = sys.stdout
+# 24     original_stderr = sys.stderr
+# 25     sys.stdout = io.StringIO()
+# 26     sys.stderr = io.StringIO()
+# 27     try:
+# 28         yield
+# 29     finally:
+# 30         sys.stdout = original_stdout
+# 31         sys.stderr = original_stderr
+# 32 
+# 33 
+# 34 class CodeStabilityScoreProvider(ScoreProviderBase):
+# 35     ConfigSchema = CodeStabilityScoreConfig
+# 36     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
+# 37         original_path = Path(input["file_path"]).resolve()
+# 38         bool_components: Dict[str, bool] = {}
+# 39 
+# 40         #  Read raw code and verify UTF-8
+# 41         try:
+# 42             raw_code = original_path.read_text(encoding="utf-8")
+# 43             bool_components["utf8_valid"] = True
+# 44         except Exception:
+# 45             bool_components["utf8_valid"] = False
+# 46             return self._final_score(bool_components)
 # 47 
-# 48         #  Always write a clean temp file with newline termination
-# 49         safe_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
-# 50         safe_path.write_text(stripped_code.rstrip() + "\n", encoding="utf-8")
-# 51 
-# 52         #  Reload stripped_code from disk to ensure parity with lint input
-# 53         stripped_code = safe_path.read_text(encoding="utf-8")
+# 48         #  Strip footer annotations without modifying actual code structure
+# 49         stripped_code, _ = split_code_and_notes(raw_code)
+# 50 
+# 51         #  Always write a clean temp file with newline termination
+# 52         safe_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
+# 53         safe_path.write_text(stripped_code.rstrip() + "\n", encoding="utf-8")
 # 54 
-# 55         with suppress_output():
-# 56             #  Syntax and compile check
-# 57             try:
-# 58                 compile(stripped_code, str(safe_path), "exec")
-# 59                 ast.parse(stripped_code)
-# 60                 components["syntax_ok"] = True
-# 61             except (SyntaxError, IndentationError):
-# 62                 components["syntax_ok"] = False
-# 63                 return self._final_score(components)
-# 64 
-# 65             #  py_compile
-# 66             try:
-# 67                 py_compile.compile(str(safe_path), doraise=True)
-# 68                 components["py_compile_ok"] = True
-# 69             except Exception:
-# 70                 components["py_compile_ok"] = False
-# 71                 return self._final_score(components)
-# 72 
-# 73             #  Import stripped code
-# 74             try:
-# 75                 spec = importlib.util.spec_from_file_location("mod", str(safe_path))
-# 76                 module = importlib.util.module_from_spec(spec)
-# 77                 spec.loader.exec_module(module)  #  type: ignore
-# 78                 components["can_import"] = True
-# 79             except Exception:
-# 80                 components["can_import"] = False
-# 81                 return self._final_score(components)
-# 82 
-# 83         #  Special check for Ruff parse error
-# 84         ruff_parse_error = "Failed to parse" in stripped_code
-# 85         components["ruff_parse_error"] = not ruff_parse_error
-# 86         if ruff_parse_error:
-# 87             return self._final_score(components)
-# 88 
-# 89         return self._final_score(components)
-# 90 
-# 91     def _final_score(self, components: Dict[str, bool]) -> ScoreOutputSchema:
-# 92         critical_keys = ["utf8_valid", "syntax_ok", "py_compile_ok", "can_import", "ruff_parse_error"]
-# 93         passed = all(components.get(k, False) for k in critical_keys)
-# 94         value = 1.0 if passed else 0.0
-# 95         summary = "✅ Executable" if passed else "❌ Not executable"
-# 96 
-# 97         return ScoreOutputSchema(
-# 98             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
-# 99             value=value,
-# 100             components={k: float(v) for k, v in components.items()},
-# 101             summary=summary
-# 102         )
+# 55         #  Reload stripped_code from disk to ensure parity with lint input
+# 56         stripped_code = safe_path.read_text(encoding="utf-8")
+# 57 
+# 58         with suppress_output():
+# 59             #  Syntax and compile check
+# 60             try:
+# 61                 compile(stripped_code, str(safe_path), "exec")
+# 62                 ast.parse(stripped_code)
+# 63                 bool_components["syntax_ok"] = True
+# 64             except (SyntaxError, IndentationError):
+# 65                 bool_components["syntax_ok"] = False
+# 66                 return self._final_score(bool_components)
+# 67 
+# 68             #  py_compile
+# 69             try:
+# 70                 py_compile.compile(str(safe_path), doraise=True)
+# 71                 bool_components["py_compile_ok"] = True
+# 72             except Exception:
+# 73                 bool_components["py_compile_ok"] = False
+# 74                 return self._final_score(bool_components)
+# 75 
+# 76             #  Import stripped code
+# 77             try:
+# 78                 spec = importlib.util.spec_from_file_location("mod", str(safe_path))
+# 79                 module = importlib.util.module_from_spec(spec)
+# 80                 spec.loader.exec_module(module)  #  type: ignore
+# 81                 bool_components["can_import"] = True
+# 82             except Exception:
+# 83                 bool_components["can_import"] = False
+# 84                 return self._final_score(bool_components)
+# 85 
+# 86         return self._final_score(bool_components)
+# 87 
+# 88     def _final_score(self, bool_components: Dict[str, bool]) -> ScoreOutputSchema:
+# 89         #  📦 Convert to float for schema compatibility
+# 90         components = CodeStabilityScoreComponents(
+# 91             type="code_stability", 
+# 92             utf8_valid=float(bool_components.get("utf8_valid", False)),
+# 93             syntax_ok=float(bool_components.get("syntax_ok", False)),
+# 94             py_compile_ok=float(bool_components.get("py_compile_ok", False)),
+# 95             can_import=float(bool_components.get("can_import", False))
+# 96         )
+# 97         #  ✅ Overall score decision
+# 98         critical_keys = [
+# 99             components.utf8_valid,
+# 100             components.syntax_ok,
+# 101             components.py_compile_ok,
+# 102             components.can_import
+# 103         ]
+# 104         passed = all(v >= 1.0 for v in critical_keys)
+# 105         value = 1.0 if passed else 0.0
+# 106         summary = "✅ Executable" if passed else "❌ Not executable"
+# 107 
+# 108         return ScoreOutputSchema(
+# 109             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
+# 110             value=value,
+# 111             components=components,
+# 112             summary=summary
+# 113         )
+# 114 
 
 
 # db\seeders\files\score_providers\linting_score_provider.py
@@ -1579,192 +1700,199 @@
 # 7 
 # 8 from app.enums.logging_enums import RunContext
 # 9 from app.providers.score_provider_base import ScoreProviderBase
-# 10 from app.db.schemas import ScoreOutputSchema
-# 11 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-# 12 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
-# 13 
-# 14 
-# 15 class LintingScoreProvider(ScoreProviderBase):
-# 16     _DEFAULT_WEIGHTS: Dict[str, float] = {"ruff": 0.7, "black": 0.2, "mypy": 0.1}
-# 17     _DEFAULT_THRESHOLD: float | None = None
-# 18     _MAX_RUFF_VIOLATIONS_CONSIDERED = 10
-# 19 
-# 20     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 21         #  context = self.fork_context(context)
-# 22         
-# 23         file_path = input["file_path"]
-# 24         file_path = self._make_path_from_raw(file_path)
-# 25         full_code = file_path.read_text(encoding="utf-8")
-# 26         clean_code, _ = split_code_and_notes(full_code)
-# 27 
-# 28         stripped_path = self._write_working_copy(clean_code)
-# 29 
-# 30         available = {tp._config.name.lower(): tp for tp in self.tool_providers}
-# 31         ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_path, context)
-# 32         black_score, _ = self._run_tool("black", available, stripped_path, tool_failures, context)
-# 33         mypy_score, _ = self._run_tool("mypy", available, stripped_path, tool_failures, context)
-# 34 
-# 35         weights = self._parse_weights(input.get("weights"))
-# 36         weighted_score = round(
-# 37             ruff_score * weights["ruff"]
-# 38             + black_score * weights["black"]
-# 39             + mypy_score * weights["mypy"],
-# 40             3,
-# 41         )
-# 42 
-# 43         threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
-# 44         meets_threshold = (threshold is None) or (weighted_score >= threshold)
-# 45 
-# 46         components: Dict[str, float] = {
-# 47             "ruff_score": ruff_score,
-# 48             "ruff_violations": float(len(ruff_violations)),
-# 49             "black_score": black_score,
-# 50             "mypy_score": mypy_score,
-# 51             "tool_failure_count": float(len(tool_failures)),
-# 52             "weight_ruff": weights["ruff"],
-# 53             "weight_black": weights["black"],
-# 54             "weight_mypy": weights["mypy"],
-# 55         }
-# 56         if threshold is not None:
-# 57             components["threshold"] = threshold
-# 58             components["meets_threshold"] = 1.0 if meets_threshold else 0.0
-# 59 
-# 60         summary = self._build_summary(
-# 61             ruff_violations=ruff_violations,
-# 62             tool_failures=tool_failures,
-# 63             meets_threshold=meets_threshold,
-# 64             threshold=threshold,
-# 65         )
-# 66 
-# 67         return ScoreOutputSchema(
-# 68             name=SCORING_METRIC_TYPE.LINTING_SCORE,
-# 69             value=weighted_score,
-# 70             components=components,
-# 71             summary=summary,
-# 72         )
-# 73 
-# 74     def _make_path_from_raw(self, maybe_code: str) -> Path:
-# 75         if Path(maybe_code).exists() and "\n" not in maybe_code:
-# 76             return Path(maybe_code).resolve()
-# 77 
-# 78         tmp = Path("experiments/snapshots") / f"{uuid.uuid4().hex}.py"
-# 79         tmp.parent.mkdir(parents=True, exist_ok=True)
-# 80         tmp.write_text(maybe_code, encoding="utf-8")
-# 81         print(f"\U0001f4c4  Created temp file for raw code: {tmp}")
-# 82         return tmp.resolve()
-# 83 
-# 84     def _write_working_copy(self, clean_code: str) -> Path:
-# 85         stripped = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
-# 86         stripped.parent.mkdir(parents=True, exist_ok=True)
-# 87         stripped.write_text(clean_code.rstrip() + "\n", encoding="utf-8")
-# 88         return stripped.resolve()
-# 89 
-# 90     def _run_ruff(
-# 91         self,
-# 92         available: Dict[str, Any],
-# 93         target_path: Path,
-# 94         context: RunContext | None,
-# 95     ) -> Tuple[float, List[str], Dict[str, str]]:
-# 96         tool_failures: Dict[str, str] = {}
-# 97         score, violations = self._run_tool_with_context(
-# 98             tool=available["ruff"],
-# 99             input={"target": str(target_path), "check": True},
-# 100             context=context,
-# 101             collect_violations=True,
-# 102         )
-# 103         score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
-# 104         return score, violations, tool_failures
-# 105 
-# 106     def _run_tool(
-# 107         self,
-# 108         name: str,
-# 109         available: Dict[str, Any],
-# 110         target_path: Path,
-# 111         failures: Dict[str, str],
-# 112         context: RunContext | None,
-# 113         collect_violations: bool = False,
-# 114     ) -> Tuple[float, List[str]]:
-# 115         if name not in available:
-# 116             failures[name] = "not_available"
-# 117             return 0.0, []
-# 118 
-# 119         try:
-# 120             score, violations = self._run_tool_with_context(
-# 121                 tool=available[name],
-# 122                 input={"target": str(target_path), "check": True},
-# 123                 context=context,
-# 124                 collect_violations=collect_violations,
-# 125             )
-# 126         except Exception as exc:
-# 127             failures[name] = f"crashed: {exc}"
-# 128             return 0.0, []
-# 129 
-# 130         if score == 0.0 and not violations:
-# 131             failures[name] = "failed or no output"
-# 132             return (0.0, []) if not collect_violations else (0.0, violations)
-# 133 
-# 134         return (score, violations) if collect_violations else (score, [])
-# 135 
-# 136     def _run_tool_with_context(
-# 137         self,
-# 138         tool,
-# 139         input: dict,
-# 140         context: RunContext | None = None,
-# 141         collect_violations: bool = False
-# 142     ) -> Tuple[float, List[str]]:
-# 143         ctx = self.fork_context()
-# 144 
-# 145         result = tool.run(input=input, context=ctx)
-# 146 
-# 147         violations = getattr(result, "violations", []) or []
-# 148         rc = getattr(result, "return_code", 0)
-# 149 
-# 150         if rc not in {0, 1} and not violations:
-# 151             return 0.0, violations
-# 152 
-# 153         count = len(violations)
-# 154         score = 1.0 - min(1.0, 0.1 * count)
-# 155         return (score, violations) if collect_violations else (score, [])
+# 10 from app.db.schemas import (
+# 11     LintingScoreConfig,
+# 12     ScoreOutputSchema,
+# 13     LintingScoreComponents
+# 14 )
+# 15 from app.enums.scoring_enums import SCORING_METRIC_TYPE
+# 16 from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+# 17 
+# 18 
+# 19 class LintingScoreProvider(ScoreProviderBase):
+# 20     ConfigSchema = LintingScoreConfig 
+# 21     _DEFAULT_WEIGHTS: Dict[str, float] = {"ruff": 0.7, "black": 0.2, "mypy": 0.1}
+# 22     _DEFAULT_THRESHOLD: float | None = None
+# 23     _MAX_RUFF_VIOLATIONS_CONSIDERED = 10
+# 24 
+# 25     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
+# 26         file_path = input["file_path"]
+# 27         file_path = self._make_path_from_raw(file_path)
+# 28         full_code = file_path.read_text(encoding="utf-8")
+# 29         clean_code, _ = split_code_and_notes(full_code)
+# 30 
+# 31         stripped_path = self._write_working_copy(clean_code)
+# 32 
+# 33         available = {tp._config.name.lower(): tp for tp in self.tool_providers}
+# 34         ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_path, context)
+# 35         black_score, black_violations = self._run_tool(
+# 36             "black", available, stripped_path, tool_failures, context, collect_violations=True
+# 37         )
+# 38         mypy_score, mypy_violations = self._run_tool(
+# 39             "mypy", available, stripped_path, tool_failures, context, collect_violations=True
+# 40         )
+# 41 
+# 42         weights = self._parse_weights(input.get("weights"))
+# 43         weighted_score = round(
+# 44             ruff_score * weights["ruff"]
+# 45             + black_score * weights["black"]
+# 46             + mypy_score * weights["mypy"],
+# 47             3,
+# 48         )
+# 49 
+# 50         threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
+# 51         meets_threshold = (threshold is None) or (weighted_score >= threshold)
+# 52 
+# 53         #  🧩 Structured component output
+# 54         components = LintingScoreComponents(
+# 55             type="linting",
+# 56             ruff_score=ruff_score,
+# 57             ruff_violations=ruff_violations,            
+# 58             black_score=black_score,
+# 59             black_violations=black_violations,    
+# 60             mypy_score=mypy_score,
+# 61             mypy_violations=mypy_violations,
+# 62             tool_failure_count=len(tool_failures),
+# 63             weight_ruff=weights["ruff"],
+# 64             weight_black=weights["black"],
+# 65             weight_mypy=weights["mypy"],
+# 66         )
+# 67 
+# 68         summary = self._build_summary(
+# 69             ruff_violations=ruff_violations,
+# 70             tool_failures=tool_failures,
+# 71             meets_threshold=meets_threshold,
+# 72             threshold=threshold,
+# 73         )
+# 74 
+# 75         return ScoreOutputSchema(
+# 76             name=SCORING_METRIC_TYPE.LINTING_SCORE,
+# 77             value=weighted_score,
+# 78             components=components,
+# 79             summary=summary,
+# 80         )
+# 81 
+# 82     def _make_path_from_raw(self, maybe_code: str) -> Path:
+# 83         if Path(maybe_code).exists() and "\n" not in maybe_code:
+# 84             return Path(maybe_code).resolve()
+# 85 
+# 86         tmp = Path("experiments/snapshots") / f"{uuid.uuid4().hex}.py"
+# 87         tmp.parent.mkdir(parents=True, exist_ok=True)
+# 88         tmp.write_text(maybe_code, encoding="utf-8")
+# 89         print(f"\U0001f4c4  Created temp file for raw code: {tmp}")
+# 90         return tmp.resolve()
+# 91 
+# 92     def _write_working_copy(self, clean_code: str) -> Path:
+# 93         stripped = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
+# 94         stripped.parent.mkdir(parents=True, exist_ok=True)
+# 95         stripped.write_text(clean_code.rstrip() + "\n", encoding="utf-8")
+# 96         return stripped.resolve()
+# 97 
+# 98     def _run_ruff(
+# 99         self,
+# 100         available: Dict[str, Any],
+# 101         target_path: Path,
+# 102         context: RunContext | None,
+# 103     ) -> Tuple[float, List[str], Dict[str, str]]:
+# 104         tool_failures: Dict[str, str] = {}
+# 105         score, violations = self._run_tool_with_context(
+# 106             tool=available["ruff"],
+# 107             input={"target": str(target_path), "check": True},
+# 108             context=context,
+# 109             collect_violations=True,
+# 110         )
+# 111         score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
+# 112         return score, violations, tool_failures
+# 113 
+# 114     def _run_tool(
+# 115         self,
+# 116         name: str,
+# 117         available: Dict[str, Any],
+# 118         target_path: Path,
+# 119         failures: Dict[str, str],
+# 120         context: RunContext | None,
+# 121         collect_violations: bool = False,
+# 122     ) -> Tuple[float, List[str]]:
+# 123         if name not in available:
+# 124             failures[name] = "not_available"
+# 125             return 0.0, []
+# 126 
+# 127         try:
+# 128             score, violations = self._run_tool_with_context(
+# 129                 tool=available[name],
+# 130                 input={"target": str(target_path), "check": True},
+# 131                 context=context,
+# 132                 collect_violations=collect_violations,
+# 133             )
+# 134         except Exception as exc:
+# 135             failures[name] = f"crashed: {exc}"
+# 136             return 0.0, []
+# 137 
+# 138         if score == 0.0 and not violations:
+# 139             failures[name] = "failed or no output"
+# 140             return (0.0, []) if not collect_violations else (0.0, violations)
+# 141 
+# 142         return (score, violations) if collect_violations else (score, [])
+# 143 
+# 144     def _run_tool_with_context(
+# 145         self,
+# 146         tool,
+# 147         input: dict,
+# 148         context: RunContext | None = None,
+# 149         collect_violations: bool = False
+# 150     ) -> Tuple[float, List[str]]:
+# 151         ctx = self.fork_context()
+# 152         result = tool.run(input=input, context=ctx)
+# 153 
+# 154         violations = getattr(result, "violations", []) or []
+# 155         rc = getattr(result, "return_code", 0)
 # 156 
-# 157     def _parse_weights(self, custom: Dict[str, float] | None) -> Dict[str, float]:
-# 158         weights = {**self._DEFAULT_WEIGHTS}
-# 159         if custom:
-# 160             weights.update(
-# 161                 {k.lower(): float(v) for k, v in custom.items() if k.lower() in weights}
-# 162             )
-# 163         total = sum(weights.values()) or 1.0
-# 164         return {k: v / total for k, v in weights.items()}
-# 165 
-# 166     def _build_summary(
-# 167         self,
-# 168         *,
-# 169         ruff_violations: List[str],
-# 170         tool_failures: Dict[str, str],
-# 171         meets_threshold: bool,
-# 172         threshold: float | None,
-# 173     ) -> str:
-# 174         lines: List[str] = []
-# 175 
-# 176         if ruff_violations:
-# 177             top_codes = {}
-# 178             for code in ruff_violations:
-# 179                 top_codes[code] = top_codes.get(code, 0) + 1
-# 180             top_sorted = sorted(top_codes.items(), key=lambda kv: kv[1], reverse=True)
-# 181             lines.append(
-# 182                 "Top Ruff violations: "
-# 183                 + ", ".join(f"{c}×{n}" for c, n in top_sorted[:3])
-# 184             )
-# 185         else:
-# 186             lines.append("No Ruff violations detected")
-# 187 
-# 188         if tool_failures:
-# 189             lines.append("⚠️  Tool failures: " + ", ".join(tool_failures))
-# 190 
-# 191         if threshold is not None:
-# 192             state = "✅ meets" if meets_threshold else "❌ below"
-# 193             lines.append(f"{state} threshold {threshold:.2f}")
+# 157         if rc not in {0, 1} and not violations:
+# 158             return 0.0, violations
+# 159 
+# 160         count = len(violations)
+# 161         score = 1.0 - min(1.0, 0.1 * count)
+# 162         return (score, violations) if collect_violations else (score, [])
+# 163 
+# 164     def _parse_weights(self, custom: Dict[str, float] | None) -> Dict[str, float]:
+# 165         weights = {**self._DEFAULT_WEIGHTS}
+# 166         if custom:
+# 167             weights.update(
+# 168                 {k.lower(): float(v) for k, v in custom.items() if k.lower() in weights}
+# 169             )
+# 170         total = sum(weights.values()) or 1.0
+# 171         return {k: v / total for k, v in weights.items()}
+# 172 
+# 173     def _build_summary(
+# 174         self,
+# 175         *,
+# 176         ruff_violations: List[str],
+# 177         tool_failures: Dict[str, str],
+# 178         meets_threshold: bool,
+# 179         threshold: float | None,
+# 180     ) -> str:
+# 181         lines: List[str] = []
+# 182 
+# 183         if ruff_violations:
+# 184             top_codes = {}
+# 185             for code in ruff_violations:
+# 186                 top_codes[code] = top_codes.get(code, 0) + 1
+# 187             top_sorted = sorted(top_codes.items(), key=lambda kv: kv[1], reverse=True)
+# 188             lines.append(
+# 189                 "Top Ruff violations: "
+# 190                 + ", ".join(f"{c}×{n}" for c, n in top_sorted[:3])
+# 191             )
+# 192         else:
+# 193             lines.append("No Ruff violations detected")
 # 194 
-# 195         return "\n".join(lines)
+# 195         if tool_failures:
+# 196             lines.append("⚠️  Tool failures: " + ", ".join(tool_failures))
+# 197 
+# 198         if threshold is not None:
+# 199             state = "✅ meets" if meets_threshold else "❌ below"
+# 200             lines.append(f"{state} threshold {threshold:.2f}")
+# 201 
+# 202         return "\n".join(lines)
 
 
 # db\seeders\files\state_providers\__init__.py
@@ -3273,66 +3401,78 @@
 # 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 # 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 11 
-# 12 SCORES = [
-# 13     {
-# 14         "id": 1,
-# 15         "filename": "linting_score_provider.py",
-# 16         "name": "linting_score_provider",
-# 17         "description": "Scores lint compliance.",
-# 18         "config": {
-# 19             "tool_provider_ids": {
-# 20                 "black": 1,
-# 21                 "ruff": 3,
-# 22                 "mypy": 5,
-# 23                 "radon": 4
-# 24             },
-# 25             "context_provider_id": None
-# 26         },
-# 27         "tags": ["linting"]
-# 28     },
-# 29     {
-# 30         "id": 2,
-# 31         "filename": "code_stability_score_provider.py",
-# 32         "name": "code_stability_score_provider",
-# 33         "description": "Ensures code is structurally and syntactically safe for downstream use.",
-# 34         "config": {
-# 35             "tool_provider_ids": {
-# 36                 "black": 1,
-# 37                 "mypy": 5,
-# 38                 "symbol_graph": 7
-# 39             }
-# 40         },
-# 41         "tags": ["stability", "safety"]
-# 42     }
-# 43 ]
-# 44 
-# 45 def seed_score_providers(db_session: Session):
-# 46     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 47 
-# 48     for entry in SCORES:
-# 49         guid = str(uuid4())
-# 50         dest_filename = f"{guid}.py"
-# 51         source_file = SEED_FILES_DIR / entry["filename"]
-# 52         dest_file = EXTENSIONS_DIR / dest_filename
-# 53 
-# 54         if not source_file.exists():
-# 55             raise FileNotFoundError(f"Score provider script not found: {source_file}")
+# 12 from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
+# 13 
+# 14 SCORES = [
+# 15     {
+# 16         "id": 1,
+# 17         "filename": "linting_score_provider.py",
+# 18         "name": "linting_score_provider",
+# 19         "description": "Scores lint compliance.",
+# 20         "config": {
+# 21             "tool_provider_ids": {
+# 22                 "black": 1,
+# 23                 "ruff": 3,
+# 24                 "mypy": 5,
+# 25                 "radon": 4
+# 26             },
+# 27             #  ✅ Flattened config
+# 28             **LintingScoreConfig(
+# 29                 weight_ruff=0.7,
+# 30                 weight_black=0.2,
+# 31                 weight_mypy=0.1,
+# 32                 fail_threshold=0.75
+# 33             ).model_dump()
+# 34         },
+# 35         "tags": ["linting"]
+# 36     },
+# 37     {
+# 38         "id": 2,
+# 39         "filename": "code_stability_score_provider.py",
+# 40         "name": "code_stability_score_provider",
+# 41         "description": "Ensures code is structurally and syntactically safe for downstream use.",
+# 42         "config": {
+# 43             #  🚫 No tool_provider_ids — not used
+# 44             **CodeStabilityScoreConfig(
+# 45                 failure_penalty=0.25,
+# 46                 diff_penalty=0.3,
+# 47                 test_weight=0.25,
+# 48                 coverage_weight=0.2
+# 49             ).model_dump()
+# 50         },
+# 51         "tags": ["stability", "safety"]
+# 52     }
+# 53 ]
+# 54 
+# 55 
 # 56 
-# 57         shutil.copy(source_file, dest_file)
-# 58 
-# 59         score = ScoreProviderConfig(
-# 60             id=entry["id"],
-# 61             guid=guid,
-# 62             name=entry["name"],
-# 63             description=entry["description"],
-# 64             config=entry["config"],
-# 65             artifact_path=dest_filename
-# 66         )
-# 67 
-# 68         db_session.add(score)
-# 69 
-# 70     db_session.commit()
-# 71     print("Seeded score providers successfully.")
+# 57 def seed_score_providers(db_session: Session):
+# 58     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 59 
+# 60     for entry in SCORES:
+# 61         guid = str(uuid4())
+# 62         dest_filename = f"{guid}.py"
+# 63         source_file = SEED_FILES_DIR / entry["filename"]
+# 64         dest_file = EXTENSIONS_DIR / dest_filename
+# 65 
+# 66         if not source_file.exists():
+# 67             raise FileNotFoundError(f"Score provider script not found: {source_file}")
+# 68 
+# 69         shutil.copy(source_file, dest_file)
+# 70 
+# 71         score = ScoreProviderConfig(
+# 72             id=entry["id"],
+# 73             guid=guid,
+# 74             name=entry["name"],
+# 75             description=entry["description"],
+# 76             config=entry["config"],
+# 77             artifact_path=dest_filename
+# 78         )
+# 79 
+# 80         db_session.add(score)
+# 81 
+# 82     db_session.commit()
+# 83     print("Seeded score providers successfully.")
 
 
 # db\seeders\seed_session_configs.py
@@ -4988,43 +5128,42 @@
 # 121         self.logger.write(LOG_TYPE.AGENT_CONVERSATION, AgentConversationLogSchema(
 # 122             session_id=self._session_id,
 # 123             file_log_id=self._file_log_id,
-# 124             system=input.get("system", "unknown"),
-# 125             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
-# 126             agent_provider_config_id=self._config.id if self._config else -1,
-# 127             content=log_content,
-# 128             timestamp=datetime.now(timezone.utc),
-# 129         ))
-# 130         self._log.debug("✅ AGENT_CONVERSATION log write complete")
-# 131 
-# 132         output.agent_type = self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.UNKNOWN
-# 133 
-# 134         return output
-# 135 
-# 136     def _infer_decision(self, text: str) -> DECISION_TYPE:
-# 137         if "[AGENT_DECISION]accept" in text:
-# 138             return DECISION_TYPE.ACCEPTED
-# 139         if "[AGENT_DECISION]reject" in text:
-# 140             return DECISION_TYPE.REJECTED
-# 141         return DECISION_TYPE.UNKNOWN
-# 142 
-# 143     def _extract_log(self, text: str) -> str | None:
-# 144         return self._extract_block(text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 145 
-# 146     def _default_log(self, decision: DECISION_TYPE) -> str:
-# 147         return f"No conversation log entry found. Agent decision was: {decision.value}."
-# 148 
-# 149     def _extract_code(self, text: str) -> str | None:
-# 150         return self._extract_block(text, "[CODE]", "[/CODE]")
-# 151 
-# 152     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
-# 153         import re
-# 154         pattern = re.compile(re.escape(start_tag) + r"(.*?)" + re.escape(end_tag), re.DOTALL)
-# 155         match = pattern.search(text)
-# 156         return match.group(1).strip() if match else None
-# 157 
-# 158     @abstractmethod
-# 159     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
-# 160         raise NotImplementedError
+# 124             agent_type=self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.BASIC,
+# 125             agent_provider_config_id=self._config.id if self._config else -1,
+# 126             content=log_content,
+# 127             timestamp=datetime.now(timezone.utc),
+# 128         ))
+# 129         self._log.debug("✅ AGENT_CONVERSATION log write complete")
+# 130 
+# 131         output.agent_type = self._config.agent_type if hasattr(self._config, "agent_type") else AGENT.UNKNOWN
+# 132 
+# 133         return output
+# 134 
+# 135     def _infer_decision(self, text: str) -> DECISION_TYPE:
+# 136         if "[AGENT_DECISION]accept" in text:
+# 137             return DECISION_TYPE.ACCEPTED
+# 138         if "[AGENT_DECISION]reject" in text:
+# 139             return DECISION_TYPE.REJECTED
+# 140         return DECISION_TYPE.UNKNOWN
+# 141 
+# 142     def _extract_log(self, text: str) -> str | None:
+# 143         return self._extract_block(text, "[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 144 
+# 145     def _default_log(self, decision: DECISION_TYPE) -> str:
+# 146         return f"No conversation log entry found. Agent decision was: {decision.value}."
+# 147 
+# 148     def _extract_code(self, text: str) -> str | None:
+# 149         return self._extract_block(text, "[CODE]", "[/CODE]")
+# 150 
+# 151     def _extract_block(self, text: str, start_tag: str, end_tag: str) -> str | None:
+# 152         import re
+# 153         pattern = re.compile(re.escape(start_tag) + r"(.*?)" + re.escape(end_tag), re.DOTALL)
+# 154         match = pattern.search(text)
+# 155         return match.group(1).strip() if match else None
+# 156 
+# 157     @abstractmethod
+# 158     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+# 159         raise NotImplementedError
 
 
 # providers\base_provider.py
@@ -5045,185 +5184,230 @@
 # 14 from app.db.schemas import ProviderLogSchema, ErrorLogSchema
 # 15 from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE, RunContext
 # 16 
-# 17 class BaseProvider:
-# 18     def __init__(
-# 19         self,
-# 20         config=None,
-# 21         context: RunContext = None,
-# 22         **kwargs
-# 23     ):
-# 24         self._config = config
-# 25         self._context = deepcopy(context) if context else None
-# 26         self._run_id = str(uuid4())
-# 27         self._engine = init_db(reset=False)
-# 28         self.logger = LoggingProvider()
-# 29         self._log = logging.getLogger(self.__class__.__name__)
-# 30 
-# 31         if self._context:
-# 32             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-# 33                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-# 34                 self._context.execution_chain.append(self._run_id)
-# 35             self._session_id = self._context.session_id
-# 36             self._file_log_id = self._context.file_log_id
-# 37             self._called_by_type = self._context.called_by_type
-# 38             self._called_by_id = self._context.called_by_id
-# 39         else:
-# 40             self._session_id = None
-# 41             self._file_log_id = None
-# 42             self._called_by_type = None
-# 43             self._called_by_id = None
-# 44 
-# 45     def run(self, input: dict | None = None, context: RunContext = None) -> str:
-# 46         input = input or {}
-# 47         self._run_id = str(uuid4())
-# 48 
-# 49         if context:
-# 50             self._context = deepcopy(context)
-# 51             self._session_id     = self._context.session_id
-# 52             self._file_log_id    = self._context.file_log_id
-# 53             self._called_by_type = self._context.called_by_type
-# 54             self._called_by_id   = self._context.called_by_id
-# 55             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-# 56                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-# 57                 self._context.execution_chain.append(self._run_id)
-# 58 
-# 59         start_clock = time.perf_counter()
-# 60         start_time = datetime.now(timezone.utc)
-# 61 
-# 62         try:
-# 63             output = self._run_provider(input)
-# 64         except Exception as exc:
-# 65             latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 66             try:
-# 67                 self.logger.write(
-# 68                     LOG_TYPE.ERROR,
-# 69                     ErrorLogSchema(
-# 70                         session_id=self._session_id,
-# 71                         file_log_id=self._file_log_id,
-# 72                         error_type=self._map_error_type(exc).value,
-# 73                         message=str(exc),
-# 74                         file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 75                         provider_id=self._config.id if self._config else None,
-# 76                         provider_type=self._infer_provider_type(),
-# 77                         timestamp=start_time,
-# 78                         latency_ms=latency_ms,
-# 79                         called_by_type=self._called_by_type if self._called_by_type else None,
-# 80                         called_by_id=self._called_by_id,
-# 81                         run_id=self._run_id,
-# 82                         parent_id=self._context.parent_id if self._context else None,
-# 83                         execution_chain=self._context.execution_chain[:] if self._context else [],
-# 84                     ),
-# 85                 )
-# 86             except Exception:
-# 87                 pass
-# 88             raise
-# 89 
-# 90         latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 91 
-# 92         try:
-# 93             input_str = json.dumps(
-# 94                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
-# 95                 default=str,
-# 96             )
-# 97         except Exception:
-# 98             input_str = ""
-# 99 
-# 100         try:
-# 101             if hasattr(output, "model_dump"):
-# 102                 dumped = output.model_dump()
-# 103                 output_str = json.dumps(dumped, default=str)
-# 104                 output_schema = output.__class__.__name__
-# 105             else:
-# 106                 output_str = json.dumps(output, default=str)
-# 107                 output_schema = None
-# 108         except Exception:
-# 109             output_str = ""
-# 110             output_schema = None
-# 111 
-# 112         try:
-# 113             self.logger.write(
-# 114                 LOG_TYPE.PROVIDER,
-# 115                 ProviderLogSchema(
-# 116                     session_id=self._session_id,
-# 117                     file_log_id=self._file_log_id,
-# 118                     provider_id=self._config.id if self._config else -1,
-# 119                     provider_type=self._infer_provider_type(),
-# 120                     input=input_str,
-# 121                     output=output_str,
-# 122                     output_schema=output_schema,
-# 123                     latency_ms=latency_ms,
-# 124                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
-# 125                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 126                     if getattr(self._config, "artifact_path", None)
-# 127                     else None,
-# 128                     timestamp=start_time,
-# 129                     called_by_type=self._called_by_type if self._called_by_type else None,
-# 130                     called_by_id=self._called_by_id,
-# 131                     run_id=self._run_id,
-# 132                     parent_id=self._context.parent_id if self._context else None,
-# 133                     execution_chain=self._context.execution_chain[:] if self._context else [],
-# 134                 ),
-# 135             )
-# 136         except Exception:
-# 137             raise
-# 138 
-# 139         self._log.debug("✅ Provider run logged")
-# 140         return output
-# 141 
-# 142     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 143         return ERROR_TYPE.RUNTIME
+# 17 DEFAULT_MAX_RETRIES = 2
+# 18 DEFAULT_BACKOFF_SECONDS = 0.25
+# 19 
+# 20 class BaseProvider:
+# 21     def __init__(
+# 22         self,
+# 23         config=None,
+# 24         context: RunContext = None,
+# 25         **kwargs
+# 26     ):
+# 27         self._config = config
+# 28         self._context = deepcopy(context) if context else None
+# 29         self._run_id = str(uuid4())
+# 30         self._engine = init_db(reset=False)
+# 31         self.logger = LoggingProvider()
+# 32         self._log = logging.getLogger(self.__class__.__name__)
+# 33 
+# 34         if self._context:
+# 35             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+# 36                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+# 37                 self._context.execution_chain.append(self._run_id)
+# 38             self._session_id = self._context.session_id
+# 39             self._file_log_id = self._context.file_log_id
+# 40             self._called_by_type = self._context.called_by_type
+# 41             self._called_by_id = self._context.called_by_id
+# 42         else:
+# 43             self._session_id = None
+# 44             self._file_log_id = None
+# 45             self._called_by_type = None
+# 46             self._called_by_id = None
+# 47 
+# 48     def run(self, input: dict | None = None, context: RunContext = None) -> str:
+# 49         input = input or {}
+# 50         max_retries = input.get("max_retries", DEFAULT_MAX_RETRIES)
+# 51         backoff_seconds = input.get("backoff_seconds", DEFAULT_BACKOFF_SECONDS)
+# 52 
+# 53         if context:
+# 54             self._context = deepcopy(context)
+# 55             self._session_id     = self._context.session_id
+# 56             self._file_log_id    = self._context.file_log_id
+# 57             self._called_by_type = self._context.called_by_type
+# 58             self._called_by_id   = self._context.called_by_id
+# 59 
+# 60         for attempt in range(max_retries + 1):
+# 61             self._run_id = str(uuid4())
+# 62 
+# 63             if self._context:
+# 64                 if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+# 65                     self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+# 66                     self._context.execution_chain.append(self._run_id)
+# 67 
+# 68             start_time = datetime.now(timezone.utc)
+# 69             start_clock = time.perf_counter()
+# 70 
+# 71             try:
+# 72                 output = self._run_provider(input)
+# 73                 break
+# 74             except Exception as exc:
+# 75                 latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 76 
+# 77                 #  🔴 Error Log
+# 78                 try:
+# 79                     self.logger.write(
+# 80                         LOG_TYPE.ERROR,
+# 81                         ErrorLogSchema(
+# 82                             session_id=self._session_id,
+# 83                             file_log_id=self._file_log_id,
+# 84                             error_type=self._map_error_type(exc).value,
+# 85                             message=str(exc),
+# 86                             file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 87                             provider_id=self._config.id if self._config else None,
+# 88                             provider_type=self._infer_provider_type(),
+# 89                             timestamp=start_time,
+# 90                             latency_ms=latency_ms,
+# 91                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 92                             called_by_id=self._called_by_id,
+# 93                             run_id=self._run_id,
+# 94                             parent_id=self._context.parent_id if self._context else None,
+# 95                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 96                         ),
+# 97                     )
+# 98                 except Exception:
+# 99                     pass
+# 100 
+# 101                 #  📜 Provider Log for failure (explicit marker)
+# 102                 try:
+# 103                     self.logger.write(
+# 104                         LOG_TYPE.PROVIDER,
+# 105                         ProviderLogSchema(
+# 106                             session_id=self._session_id,
+# 107                             file_log_id=self._file_log_id,
+# 108                             provider_id=self._config.id if self._config else -1,
+# 109                             provider_type=self._infer_provider_type(),
+# 110                             input=json.dumps(input, default=str),
+# 111                             output="ERROR",  #  🚨 Clear indicator
+# 112                             output_schema=None,
+# 113                             latency_ms=latency_ms,
+# 114                             config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 115                             file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 116                             if getattr(self._config, "artifact_path", None)
+# 117                             else None,
+# 118                             timestamp=start_time,
+# 119                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 120                             called_by_id=self._called_by_id,
+# 121                             run_id=self._run_id,
+# 122                             parent_id=self._context.parent_id if self._context else None,
+# 123                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 124                         ),
+# 125                     )
+# 126                 except Exception:
+# 127                     pass
+# 128 
+# 129                 if attempt == max_retries:
+# 130                     raise
+# 131 
+# 132                 time.sleep(backoff_seconds * (2 ** attempt))
+# 133                 input["retry_count"] = attempt + 1
+# 134 
+# 135         latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 136 
+# 137         try:
+# 138             input_str = json.dumps(
+# 139                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 140                 default=str,
+# 141             )
+# 142         except Exception:
+# 143             input_str = ""
 # 144 
-# 145     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 146         cls = self.__class__.__name__.lower()
-# 147         if "tool" in cls:
-# 148             return PROVIDER_TYPE.TOOL
-# 149         if "engine" in cls:
-# 150             return PROVIDER_TYPE.AGENT_ENGINE
-# 151         if "agent" in cls:
-# 152             return PROVIDER_TYPE.AGENT
-# 153         if "prompt" in cls:
-# 154             return PROVIDER_TYPE.PROMPT
-# 155         if "context" in cls:
-# 156             return PROVIDER_TYPE.CONTEXT
-# 157         if "score" in cls:
-# 158             return PROVIDER_TYPE.SCORE
-# 159         if "state" in cls:
-# 160             return PROVIDER_TYPE.STATE
-# 161         if "system" in cls:
-# 162             return PROVIDER_TYPE.SYSTEM
-# 163         if "controller" in cls:
-# 164             return PROVIDER_TYPE.CONTROLLER
-# 165         if "program" in cls:
-# 166             return PROVIDER_TYPE.PROGRAM
-# 167         return PROVIDER_TYPE.UNKNOWN
-# 168 
-# 169     def _compute_config_hash(self, config: dict | None) -> str:
-# 170         config_str = json.dumps(config or {}, sort_keys=True)
-# 171         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
-# 172 
-# 173     def propagate_file_log_id(self, file_log_id: str):
-# 174         self._file_log_id = file_log_id
-# 175 
-# 176         for attr_name in dir(self):
-# 177             attr = getattr(self, attr_name, None)
-# 178 
-# 179             if isinstance(attr, BaseProvider):
-# 180                 attr.propagate_file_log_id(file_log_id)
-# 181 
-# 182             elif isinstance(attr, list):
-# 183                 for item in attr:
-# 184                     if isinstance(item, BaseProvider):
-# 185                         item.propagate_file_log_id(file_log_id)
+# 145         try:
+# 146             if hasattr(output, "model_dump"):
+# 147                 dumped = output.model_dump()
+# 148                 output_str = json.dumps(dumped, default=str)
+# 149                 output_schema = output.__class__.__name__
+# 150             else:
+# 151                 output_str = json.dumps(output, default=str)
+# 152                 output_schema = None
+# 153         except Exception:
+# 154             output_str = ""
+# 155             output_schema = None
+# 156 
+# 157         try:
+# 158             self.logger.write(
+# 159                 LOG_TYPE.PROVIDER,
+# 160                 ProviderLogSchema(
+# 161                     session_id=self._session_id,
+# 162                     file_log_id=self._file_log_id,
+# 163                     provider_id=self._config.id if self._config else -1,
+# 164                     provider_type=self._infer_provider_type(),
+# 165                     input=input_str,
+# 166                     output=output_str,
+# 167                     output_schema=output_schema,
+# 168                     latency_ms=latency_ms,
+# 169                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 170                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 171                     if getattr(self._config, "artifact_path", None)
+# 172                     else None,
+# 173                     timestamp=start_time,
+# 174                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 175                     called_by_id=self._called_by_id,
+# 176                     run_id=self._run_id,
+# 177                     parent_id=self._context.parent_id if self._context else None,
+# 178                     execution_chain=self._context.execution_chain[:] if self._context else [],
+# 179                 ),
+# 180             )
+# 181         except Exception:
+# 182             raise
+# 183 
+# 184         self._log.debug("✅ Provider run logged")
+# 185         return output
 # 186 
-# 187             elif isinstance(attr, dict):
-# 188                 for item in attr.values():
-# 189                     if isinstance(item, BaseProvider):
-# 190                         item.propagate_file_log_id(file_log_id)
-# 191 
-# 192     def fork_context(self) -> RunContext:
-# 193         forked = deepcopy(self._context or RunContext())
-# 194         forked.parent_id = self._run_id
-# 195         return forked
+# 187     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 188         return ERROR_TYPE.RUNTIME
+# 189 
+# 190     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 191         cls = self.__class__.__name__.lower()
+# 192         if "tool" in cls:
+# 193             return PROVIDER_TYPE.TOOL
+# 194         if "engine" in cls:
+# 195             return PROVIDER_TYPE.AGENT_ENGINE
+# 196         if "agent" in cls:
+# 197             return PROVIDER_TYPE.AGENT
+# 198         if "prompt" in cls:
+# 199             return PROVIDER_TYPE.PROMPT
+# 200         if "context" in cls:
+# 201             return PROVIDER_TYPE.CONTEXT
+# 202         if "score" in cls:
+# 203             return PROVIDER_TYPE.SCORE
+# 204         if "state" in cls:
+# 205             return PROVIDER_TYPE.STATE
+# 206         if "system" in cls:
+# 207             return PROVIDER_TYPE.SYSTEM
+# 208         if "controller" in cls:
+# 209             return PROVIDER_TYPE.CONTROLLER
+# 210         if "program" in cls:
+# 211             return PROVIDER_TYPE.PROGRAM
+# 212         return PROVIDER_TYPE.UNKNOWN
+# 213 
+# 214     def _compute_config_hash(self, config: dict | None) -> str:
+# 215         config_str = json.dumps(config or {}, sort_keys=True)
+# 216         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
+# 217 
+# 218     def propagate_file_log_id(self, file_log_id: str):
+# 219         self._file_log_id = file_log_id
+# 220 
+# 221         for attr_name in dir(self):
+# 222             attr = getattr(self, attr_name, None)
+# 223 
+# 224             if isinstance(attr, BaseProvider):
+# 225                 attr.propagate_file_log_id(file_log_id)
+# 226 
+# 227             elif isinstance(attr, list):
+# 228                 for item in attr:
+# 229                     if isinstance(item, BaseProvider):
+# 230                         item.propagate_file_log_id(file_log_id)
+# 231 
+# 232             elif isinstance(attr, dict):
+# 233                 for item in attr.values():
+# 234                     if isinstance(item, BaseProvider):
+# 235                         item.propagate_file_log_id(file_log_id)
+# 236 
+# 237     def fork_context(self) -> RunContext:
+# 238         forked = deepcopy(self._context or RunContext())
+# 239         forked.parent_id = self._run_id
+# 240         return forked
 
 
 # providers\context_provider_base.py
@@ -5355,7 +5539,7 @@
 # 89                     previous_state=current,
 # 90                     state_type=SYSTEM.END,
 # 91                     decision=DECISION_TYPE.REJECTED,
-# 92                     steps=step_count,
+# 92                     steps=state.get("steps", step_count),
 # 93                     max_steps=max_steps,
 # 94                     summary=f"Max steps ({max_steps}) reached",
 # 95                     output=state,
@@ -5399,7 +5583,7 @@
 # 133                     previous_state=state.get("_last_state", SYSTEM.START),
 # 134                     state_type=STATE_TYPE.END,
 # 135                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 136                     steps=step_count,
+# 136                     steps=state.get("steps", step_count),
 # 137                     max_steps=max_steps,
 # 138                     summary=state.get("summary", "Completed"),
 # 139                     output=state,
@@ -5811,43 +5995,55 @@
 # 1 from __future__ import annotations
 # 2 from abc import abstractmethod
 # 3 from copy import deepcopy
-# 4 from app.enums.logging_enums import RunContext
-# 5 from app.providers.base_provider import BaseProvider
-# 6 from typing import TYPE_CHECKING
-# 7 if TYPE_CHECKING:
-# 8     from app.providers.context_provider_base import ContextProviderBase
-# 9     from app.providers.tool_provider_base import ToolProviderBase
-# 10 
-# 11 from app.db.schemas import ScoreOutputSchema
-# 12 
-# 13 class ScoreProviderBase(BaseProvider):
-# 14     def __init__(
-# 15         self,
-# 16         config=None,
-# 17         context_provider=None,
-# 18         tool_providers=None,
-# 19         context: RunContext = None,
-# 20         **kwargs
-# 21     ):
-# 22         super().__init__(config=config, context=context, **kwargs)
-# 23         self._context_provider = context_provider
-# 24         self._tool_providers = tool_providers or []
-# 25 
-# 26     def _run_provider(self, input: dict) -> ScoreOutputSchema:
-# 27         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
-# 28         return self._run(input=input, context=self.fork_context())
+# 4 from typing import TYPE_CHECKING, Type, Optional
+# 5 
+# 6 from app.enums.logging_enums import RunContext
+# 7 from app.providers.base_provider import BaseProvider
+# 8 from app.db.schemas import ScoreOutputSchema, ScoreComponentsBase, ScoreProviderConfig
+# 9 
+# 10 if TYPE_CHECKING:
+# 11     from app.providers.context_provider_base import ContextProviderBase
+# 12     from app.providers.tool_provider_base import ToolProviderBase
+# 13 
+# 14 
+# 15 class ScoreProviderBase(BaseProvider):
+# 16     ConfigSchema: Type[ScoreComponentsBase] = ScoreComponentsBase  #  ⬅️ override in subclasses
+# 17 
+# 18     def __init__(
+# 19         self,
+# 20         config=None,
+# 21         context_provider=None,
+# 22         tool_providers=None,
+# 23         context: RunContext = None,
+# 24         **kwargs
+# 25     ):
+# 26         super().__init__(config=config, context=context, **kwargs)
+# 27         self._context_provider = context_provider
+# 28         self._tool_providers = tool_providers or []
 # 29 
-# 30     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 31         self.context_provider = provider
+# 30         #  ✅ Parse schema-enforced config
+# 31         self.config: ScoreComponentsBase = self._parse_config(config or {})
 # 32 
-# 33     def set_tool_provider(self, provider: ToolProviderBase) -> None:
-# 34         if not hasattr(self, "tool_providers"):
-# 35             self.tool_providers = []
-# 36         self.tool_providers.append(provider)
+# 33     def _parse_config(self, raw_config: dict | ScoreProviderConfig) -> ScoreComponentsBase:
+# 34         if hasattr(raw_config, "config"):
+# 35             raw_config = raw_config.config  #  unwrap SQLAlchemy wrapper
+# 36         return self.ConfigSchema.model_validate(raw_config)
 # 37 
-# 38     @abstractmethod
-# 39     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 40         raise NotImplementedError
+# 38     def _run_provider(self, input: dict) -> ScoreOutputSchema:
+# 39         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
+# 40         return self._run(input=input, context=self.fork_context())
+# 41 
+# 42     def set_context_provider(self, provider: ContextProviderBase) -> None:
+# 43         self.context_provider = provider
+# 44 
+# 45     def set_tool_provider(self, provider: ToolProviderBase) -> None:
+# 46         if not hasattr(self, "tool_providers"):
+# 47             self.tool_providers = []
+# 48         self.tool_providers.append(provider)
+# 49 
+# 50     @abstractmethod
+# 51     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
+# 52         raise NotImplementedError
 
 
 # providers\state_provider_base.py
@@ -5944,7 +6140,7 @@
 # 90                     previous_state=current,
 # 91                     state_type=STATE_TYPE.END,
 # 92                     decision=DECISION_TYPE.REJECTED,
-# 93                     steps=step_count,
+# 93                     steps=state.get("steps", step_count),
 # 94                     max_steps=max_steps,
 # 95                     summary=f"Max steps ({max_steps}) reached",
 # 96                     output=state,
@@ -5998,7 +6194,7 @@
 # 144                     previous_state=state.get("_last_state", AGENT.START),
 # 145                     state_type=STATE_TYPE.END,
 # 146                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 147                     steps=step_count,
+# 147                     steps=state.get("steps", step_count),
 # 148                     max_steps=max_steps,
 # 149                     summary=state.get("summary", "Completed"),
 # 150                     output=state,
@@ -6155,7 +6351,7 @@
 # 90                     previous_state=current,
 # 91                     state_type=STATE_TYPE.END,
 # 92                     decision=DECISION_TYPE.REJECTED,
-# 93                     steps=step_count,
+# 93                     steps=state.get("steps", step_count),
 # 94                     max_steps=max_steps,
 # 95                     summary=f"Max steps ({max_steps}) reached",
 # 96                     output=state,
@@ -6203,7 +6399,7 @@
 # 138                     previous_state=state.get("_last_state", STATE.START),
 # 139                     state_type=STATE_TYPE.END,
 # 140                     decision=state.get("decision", DECISION_TYPE.UNKNOWN),
-# 141                     steps=step_count,
+# 141                     steps=state.get("steps", step_count),
 # 142                     max_steps=max_steps,
 # 143                     summary=state.get("summary", "Completed"),
 # 144                     output=state,
@@ -6475,11 +6671,11 @@
 # 3 from sqlalchemy.orm import Session
 # 4 from app.db.models import AgentConversationLog
 # 5 
-# 6 def get_conversation_log(session: Session, session_id: str, system: str) -> List[str]:
-# 7     """Returns logged conversation entries for the specified session and system."""
+# 6 def get_conversation_log(session: Session, session_id: str, file_log_id: str) -> List[str]:
+# 7     """Returns logged conversation entries for the specified session and file_log_id."""
 # 8     logs = (
 # 9         session.query(AgentConversationLog)
-# 10         .filter_by(session_id=session_id, system=system)
+# 10         .filter_by(session_id=session_id, file_log_id=file_log_id)
 # 11         .order_by(AgentConversationLog.timestamp.asc())
 # 12         .all()
 # 13     )

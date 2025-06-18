@@ -218,7 +218,14 @@ class BaseProvider:
         return PROVIDER_TYPE.UNKNOWN
 
     def _compute_config_hash(self, config: dict | None) -> str:
-        config_str = json.dumps(config or {}, sort_keys=True)
+        """
+        Computes a fingerprint hash based solely on structural components.
+        Ignores param keys like weights or thresholds.
+        """
+        config = config or {}
+        components = config.get("components", {})
+
+        config_str = json.dumps(components, sort_keys=True)
         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
 
     def propagate_file_log_id(self, file_log_id: str):

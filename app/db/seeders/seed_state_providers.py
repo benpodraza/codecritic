@@ -18,10 +18,14 @@ STATE_PROVIDERS = [
         "description": "Runs the generator agent in its own FSM wrapper.",
         "tags": ["linting", "generator"],
         "config": {
-            "score_provider_id": 1,
-            "max_steps": 20,
-            "agents": {
-                AGENT.GENERATOR.value: 2
+            "components": {
+                "score_provider_id": 1,
+                "agents": {
+                    AGENT.GENERATOR.value: 2
+                }
+            },
+            "params": {
+                "max_steps": 20
             }
         }
     },
@@ -32,10 +36,14 @@ STATE_PROVIDERS = [
         "description": "Runs the discriminator agent in its own FSM wrapper.",
         "tags": ["linting", "discriminator"],
         "config": {
-            "score_provider_id": 1,
-            "max_steps": 20,
-            "agents": {
-                AGENT.DISCRIMINATOR.value: 3
+            "components": {
+                "score_provider_id": 1,
+                "agents": {
+                    AGENT.DISCRIMINATOR.value: 3
+                }
+            },
+            "params": {
+                "max_steps": 20
             }
         }
     },
@@ -46,15 +54,18 @@ STATE_PROVIDERS = [
         "description": "Gates code based on parse, compile, import, and static validation success.",
         "tags": ["stability"],
         "config": {
-            "score_provider_id": 1,
-            "max_steps": 20,
-            "agents": {
-                AGENT.STABILITY.value: 4
+            "components": {
+                "score_provider_id": 1,
+                "agents": {
+                    AGENT.STABILITY.value: 4
+                }
+            },
+            "params": {
+                "max_steps": 20
             }
         }
     }
 ]
-
 
 def seed_state_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

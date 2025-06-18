@@ -1,12 +1,14 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from pathlib import Path
-from app.db.seeders.seed_controller_providers import seed_orchestrator_providers
+from app.db.seeders.seed_controller_providers import seed_controller_providers
+from app.db.seeders.seed_program_provider import seed_program_providers
 from app.db.seeders.seed_state_providers import seed_state_providers
 from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers
 from app.db.seeders.seed_context_providers import seed_context_providers
 from app.db.seeders.seed_prompt_providers import seed_prompt_providers
 from app.db.seeders.seed_score_providers import seed_score_providers
+from app.db.seeders.seed_system_providers import seed_system_providers
 from app.db.seeders.seed_tool_providers import seed_tool_providers
 from app.db.seeders.seed_prompts import seed_prompts
 
@@ -25,7 +27,9 @@ def main():
         seed_context_providers(session)
         seed_agent_engine_providers(session)
         seed_state_providers(session)
-        seed_orchestrator_providers(session)
+        seed_system_providers(session)
+        seed_controller_providers(session)
+        seed_program_providers(session)
 
     print(f"Database seeded successfully at {DB_PATH.resolve()}")
 

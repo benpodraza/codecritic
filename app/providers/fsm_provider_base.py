@@ -27,7 +27,13 @@ class FSMProviderBase(BaseProvider):
             context=context,
             **kwargs
         )
-        self._max_steps = getattr(config, "config", {}).get("max_steps", 100)
+
+        # 🔄 Structured config access (Task 9)
+        raw_config = getattr(config, "config", {}) or {}
+        self._params = raw_config.get("params", {})  # fallback safe
+        self._components = raw_config.get("components", {})
+
+        self._max_steps = self._params.get("max_steps", 100)
 
     def transition(self, state: dict, result: dict | None) -> dict:
         next_state = self._transition(state, result)
@@ -82,7 +88,6 @@ class FSMProviderBase(BaseProvider):
             ),
         )
         return next_state
-
 
     @abstractmethod
     def _transition(self, state: dict, result: dict | None) -> dict:

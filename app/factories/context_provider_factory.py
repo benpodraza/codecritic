@@ -20,7 +20,7 @@ class ContextProviderFactory(BaseProviderFactory):
         from app.factories.tool_provider_factory import ToolProviderFactory
 
         instance = super().create(id, context=context)
-        config = instance._config.config or {}
+        components = instance._components  # injected by BaseProviderFactory
         provider_id = instance._config.id
         provider_type = instance._infer_provider_type()
 
@@ -34,7 +34,7 @@ class ContextProviderFactory(BaseProviderFactory):
             execution_chain=context.execution_chain.copy()
         )
 
-        if (score_id := config.get("score_provider_id")):
+        if (score_id := components.get("score_provider_id")):
             if isinstance(score_id, int) and score_id > 0:
                 score = ScoreProviderFactory.create(
                     score_id,
@@ -44,7 +44,7 @@ class ContextProviderFactory(BaseProviderFactory):
                 if hasattr(score, "set_context_provider"):
                     score.set_context_provider(instance)
 
-        for _, tool_id in (config.get("tool_provider_ids") or {}).items():
+        for _, tool_id in (components.get("tool_provider_ids") or {}).items():
             tool = ToolProviderFactory.create(
                 tool_id,
                 context=child_context

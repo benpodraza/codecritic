@@ -27,8 +27,9 @@ class ScoreProviderBase(BaseProvider):
         self._context_provider = context_provider
         self._tool_providers = tool_providers or []
 
-        # ✅ Parse schema-enforced config
-        self.config: ScoreComponentsBase = self._parse_config(config or {})
+        # ✅ Only pass "params" (schema-enforced tunables) to Pydantic
+        raw_params = (getattr(config, "config", {}) or {}).get("params", {})
+        self.config: ScoreComponentsBase = self._parse_config(raw_params)
 
     def _parse_config(self, raw_config: dict | ScoreProviderConfig) -> ScoreComponentsBase:
         if hasattr(raw_config, "config"):

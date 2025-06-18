@@ -19,8 +19,7 @@ class PromptProviderFactory(BaseProviderFactory):
         **kwargs
     ) -> PromptProviderBase:
         instance = super().create(id, context=context)
-
-        config = instance._config.config or {}
+        components = instance._components  # injected by BaseProviderFactory
         provider_id = instance._config.id
         provider_type = instance._infer_provider_type()
 
@@ -51,13 +50,13 @@ class PromptProviderFactory(BaseProviderFactory):
                 conn.close()
             return None
 
-        agent_prompt_text = load_prompt(config.get("agent_prompt_id"), "agent_prompt")
-        system_prompt_text = load_prompt(config.get("system_prompt_id"), "system_prompt")
+        agent_prompt_text = load_prompt(components.get("agent_prompt_id"), "agent_prompt")
+        system_prompt_text = load_prompt(components.get("system_prompt_id"), "system_prompt")
 
         context_provider = None
-        if config.get("context_provider_id"):
+        if components.get("context_provider_id"):
             context_provider = ContextProviderFactory.create(
-                config["context_provider_id"],
+                components["context_provider_id"],
                 context=child_context
             )
 

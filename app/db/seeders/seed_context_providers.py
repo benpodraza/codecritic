@@ -15,7 +15,10 @@ CONTEXT_PROVIDERS = [
         "name": "basic_context_provider",
         "description": "Returns static context for testing.",
         "tags": ["default"],
-        "config": {}
+        "config": {
+            "components": {},
+            "params": {}
+        }
     },
     {
         "id": 2,
@@ -24,8 +27,11 @@ CONTEXT_PROVIDERS = [
         "description": "Generates context for the linting system.",
         "tags": ["linting", "score-aware"],
         "config": {
-            "score_provider_id": 1,
-            "tool_provider_ids": None
+            "components": {
+                "score_provider_id": 1,
+                "tool_provider_ids": None
+            },
+            "params": {}
         }
     }
 ]

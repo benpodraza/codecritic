@@ -7,7 +7,6 @@ from app.db.models import PromptProviderConfig
 CURRENT_DIR = Path(__file__).resolve().parent
 SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 PROVIDERS = [
@@ -17,7 +16,10 @@ PROVIDERS = [
         "name": "basic_prompt_provider",
         "description": "Returns a simple prompt response.",
         "tags": ["default"],
-        "config": {}
+        "config": {
+            "components": {},
+            "params": {}
+        }
     },
     {
         "id": 2,
@@ -26,13 +28,15 @@ PROVIDERS = [
         "description": "Combines linting system and agent prompts.",
         "tags": ["linting", "codequality"],
         "config": {
-            "agent_prompt_id": 2,
-            "system_prompt_id": 2,
-            "context_provider_id": 2
+            "components": {
+                "agent_prompt_id": 2,
+                "system_prompt_id": 2,
+                "context_provider_id": 2
+            },
+            "params": {}
         }
     }
 ]
-
 
 def seed_prompt_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

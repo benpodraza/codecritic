@@ -3,13 +3,12 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ScoreProviderConfig
+from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
 
 CURRENT_DIR = Path(__file__).resolve().parent
 SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-
-from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
 
 SCORES = [
     {
@@ -18,14 +17,15 @@ SCORES = [
         "name": "linting_score_provider",
         "description": "Scores lint compliance.",
         "config": {
-            "tool_provider_ids": {
-                "black": 1,
-                "ruff": 3,
-                "mypy": 5,
-                "radon": 4
+            "components": {
+                "tool_provider_ids": {
+                    "black": 1,
+                    "ruff": 3,
+                    "mypy": 5,
+                    "radon": 4
+                }
             },
-            # ✅ Flattened config
-            **LintingScoreConfig(
+            "params": LintingScoreConfig(
                 weight_ruff=0.7,
                 weight_black=0.2,
                 weight_mypy=0.1,
@@ -40,8 +40,8 @@ SCORES = [
         "name": "code_stability_score_provider",
         "description": "Ensures code is structurally and syntactically safe for downstream use.",
         "config": {
-            # 🚫 No tool_provider_ids — not used
-            **CodeStabilityScoreConfig(
+            "components": {},
+            "params": CodeStabilityScoreConfig(
                 failure_penalty=0.25,
                 diff_penalty=0.3,
                 test_weight=0.25,
@@ -51,8 +51,6 @@ SCORES = [
         "tags": ["stability", "safety"]
     }
 ]
-
-
 
 def seed_score_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -74,7 +72,8 @@ def seed_score_providers(db_session: Session):
             name=entry["name"],
             description=entry["description"],
             config=entry["config"],
-            artifact_path=dest_filename
+            artifact_path=dest_filename,
+            tags=entry["tags"]
         )
 
         db_session.add(score)

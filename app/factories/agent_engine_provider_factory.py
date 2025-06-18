@@ -21,4 +21,14 @@ class AgentEngineProviderFactory(BaseProviderFactory):
             context=context,
             **kwargs
         )
+
+        # 🔧 Extract components and params from config for consistency (if needed downstream)
+        raw_config = instance._config.config or {}
+        components = raw_config.get("components") or {}
+        params     = raw_config.get("params") or {}
+
+        # Optionally inject into instance if base class expects them split
+        instance._components = components
+        instance._params = params
+
         return instance

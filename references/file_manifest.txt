@@ -229,10 +229,5 @@ codecritic
          - wrong_type_hint.py
    - utilities.ipynb
    - working_files
-      - 3ba24848e37b4771b34808bb69541b03_stripped.py
-      - aad9c94823b64c57a298065b779a5722_stripped.py
-      - complex_lint_task..__state_1138584496.py
-      - complex_lint_task..__sys_1138584416.py
-      - complex_lint_task.__ctrl_1138584344.py
-      - complex_lint_task.__prog_1138584127.py
+      - complex_lint_task.py
    - your_database_path.db

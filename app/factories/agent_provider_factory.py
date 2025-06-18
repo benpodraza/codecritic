@@ -23,11 +23,13 @@ class AgentProviderFactory(BaseProviderFactory):
         from app.factories.tool_provider_factory import ToolProviderFactory
 
         preload_instance = super().create(id, context=context)
-        config = preload_instance._config.config or {}
+
+        # ✅ Use already-injected structured config
+        components = preload_instance._components
         provider_id = preload_instance._config.id
         provider_type = preload_instance._infer_provider_type()
 
-        # ─── Child context for subproviders ─────────────────────────────
+        # ─── Child context ─────────────────────────────────────────────
         child_context = RunContext(
             called_by_type=provider_type,
             called_by_id=provider_id,
@@ -40,30 +42,30 @@ class AgentProviderFactory(BaseProviderFactory):
         # ─── Create subproviders ───────────────────────────────────────
         agent_engine = (
             AgentEngineProviderFactory.create(
-                config["agent_engine_provider_id"],
+                components["agent_engine_provider_id"],
                 context=child_context,
-            ) if config.get("agent_engine_provider_id") else None
+            ) if components.get("agent_engine_provider_id") else None
         )
 
         prompt_provider = (
             PromptProviderFactory.create(
-                config["prompt_provider_id"],
+                components["prompt_provider_id"],
                 context=child_context,
-            ) if config.get("prompt_provider_id") else None
+            ) if components.get("prompt_provider_id") else None
         )
 
         context_provider = (
             ContextProviderFactory.create(
-                config["context_provider_id"],
+                components["context_provider_id"],
                 context=child_context,
-            ) if config.get("context_provider_id") else None
+            ) if components.get("context_provider_id") else None
         )
 
         score_provider = (
             ScoreProviderFactory.create(
-                config["score_provider_id"],
+                components["score_provider_id"],
                 context=child_context,
-            ) if config.get("score_provider_id") else None
+            ) if components.get("score_provider_id") else None
         )
 
         tool_providers = [
@@ -71,7 +73,7 @@ class AgentProviderFactory(BaseProviderFactory):
                 tid,
                 context=child_context,
             )
-            for tid in (config.get("tool_provider_ids") or {}).values()
+            for tid in (components.get("tool_provider_ids") or {}).values()
         ]
 
         # ─── Final instance construction ───────────────────────────────

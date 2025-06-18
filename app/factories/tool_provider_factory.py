@@ -20,7 +20,7 @@ class ToolProviderFactory(BaseProviderFactory):
         from app.factories.score_provider_factory import ScoreProviderFactory
 
         instance = super().create(id, context=context)
-        config = instance._config.config or {}
+        components = instance._components
         provider_id = instance._config.id
         provider_type = instance._infer_provider_type()
 
@@ -34,7 +34,7 @@ class ToolProviderFactory(BaseProviderFactory):
             execution_chain=context.execution_chain.copy()
         )
 
-        if (ctx_id := config.get("context_provider_id")):
+        if (ctx_id := components.get("context_provider_id")):
             context_provider = ContextProviderFactory.create(
                 ctx_id,
                 context=child_context
@@ -43,7 +43,7 @@ class ToolProviderFactory(BaseProviderFactory):
             if hasattr(context_provider, "set_tool_provider"):
                 context_provider.set_tool_provider(instance)
 
-        if (score_id := config.get("score_provider_id")):
+        if (score_id := components.get("score_provider_id")):
             if isinstance(score_id, int) and score_id > 0:
                 score_provider = ScoreProviderFactory.create(
                     score_id,

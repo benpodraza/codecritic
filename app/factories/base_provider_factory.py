@@ -11,6 +11,7 @@ EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 
 engine = init_db(reset=False)
 
+
 class BaseProviderFactory:
     config_model = None
     base_class = BaseProvider
@@ -48,5 +49,14 @@ class BaseProviderFactory:
         if provider_class is None:
             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
 
+        # 🎯 Extract and normalize config structure
+        full_config = config.config or {}
+        components = full_config.get("components") or {}
+        params     = full_config.get("params") or {}
+
+        # ✅ Create instance and attach structured config access
         instance = provider_class(config=config, context=context, **kwargs)
+        instance._components = components
+        instance._params = params
+
         return instance

@@ -15,49 +15,49 @@ TOOLS = [
         "filename": "black_tool.py",
         "name": "black",
         "description": "Formats Python code using Black.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 2,
         "filename": "sonarcloud_tool.py",
         "name": "sonarcloud",
         "description": "Static analysis via SonarCloud.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 3,
         "filename": "ruff_tool.py",
         "name": "ruff",
         "description": "Python linting with Ruff.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 4,
         "filename": "radon_tool.py",
         "name": "radon",
         "description": "Analyzes Python code complexity.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 5,
         "filename": "mypy_tool.py",
         "name": "mypy",
         "description": "Static type checking with mypy.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 6,
         "filename": "docformatter_tool.py",
         "name": "docformatter",
         "description": "Formats docstrings using docformatter.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     },
     {
         "id": 7,
         "filename": "symbol_graph.py",
         "name": "symbol_graph",
         "description": "Extracts and analyzes Python symbols into structured graphs.",
-        "config": {}
+        "config": {"components": {}, "params": {}}
     }
 ]
 

@@ -149,3 +149,53 @@
 
 # === NON-PYTHON FILES ===
 
+# snapshots\1\51973d68-641c-4b1f-9ad6-ceaebb8d11fa.meta.json
+
+# 1 {
+# 2   "system": "linting",
+# 3   "agent": "linting_generator_agent_provider",
+# 4   "state": "unknown",
+# 5   "decision": "unknown",
+# 6   "timestamp": "2025-06-18T17:38:32.703559+00:00",
+# 7   "line_count_before": 44,
+# 8   "function_count_before": 6,
+# 9   "class_count_before": 0,
+# 10   "branch_count_before": 7,
+# 11   "call_count_before": 23,
+# 12   "assignment_count_before": 6,
+# 13   "return_count_before": 5,
+# 14   "exception_count_before": 2,
+# 15   "docstring_count_before": 0,
+# 16   "symbol_count_before": 6,
+# 17   "comment_count_before": 0,
+# 18   "import_count_before": 3,
+# 19   "analysis_failed_before": false,
+# 20   "line_count_after": 64,
+# 21   "function_count_after": 6,
+# 22   "class_count_after": 0,
+# 23   "branch_count_after": 7,
+# 24   "call_count_after": 24,
+# 25   "assignment_count_after": 6,
+# 26   "return_count_after": 5,
+# 27   "exception_count_after": 2,
+# 28   "docstring_count_after": 0,
+# 29   "symbol_count_after": 6,
+# 30   "comment_count_after": 8,
+# 31   "import_count_after": 6,
+# 32   "analysis_failed_after": false,
+# 33   "line_count_delta": 20,
+# 34   "function_count_delta": 0,
+# 35   "class_count_delta": 0,
+# 36   "branch_count_delta": 0,
+# 37   "call_count_delta": 1,
+# 38   "assignment_count_delta": 0,
+# 39   "return_count_delta": 0,
+# 40   "exception_count_delta": 0,
+# 41   "docstring_count_delta": 0,
+# 42   "symbol_count_delta": 0,
+# 43   "comment_count_delta": 8,
+# 44   "import_count_delta": 3,
+# 45   "analysis_failed_delta": 0
+# 46 }
+
+

@@ -17,10 +17,14 @@ CONTROLLER_PROVIDERS = [
         "description": "Runs only the preprocessing step (e.g. linting).",
         "tags": ["preprocessing", "controller"],
         "config": {
-            "max_steps": 20, 
-            "score_provider_id": 1,
-            "systems": {
-                SYSTEM.LINTING.value: 1
+            "components": {
+                "score_provider_id": 1,
+                "systems": {
+                    SYSTEM.LINTING.value: 1
+                }
+            },
+            "params": {
+                "max_steps": 20
             }
         }
     }

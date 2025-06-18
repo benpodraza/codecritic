@@ -850,36 +850,40 @@
 # 1 from sqlalchemy.orm import Session
 # 2 from sqlalchemy import create_engine
 # 3 from pathlib import Path
-# 4 from app.db.seeders.seed_controller_providers import seed_orchestrator_providers
-# 5 from app.db.seeders.seed_state_providers import seed_state_providers
-# 6 from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers
-# 7 from app.db.seeders.seed_context_providers import seed_context_providers
-# 8 from app.db.seeders.seed_prompt_providers import seed_prompt_providers
-# 9 from app.db.seeders.seed_score_providers import seed_score_providers
-# 10 from app.db.seeders.seed_tool_providers import seed_tool_providers
-# 11 from app.db.seeders.seed_prompts import seed_prompts
-# 12 
-# 13 #  Ensure your project root matches explicitly
-# 14 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-# 15 DB_PATH = PROJECT_ROOT / "experiments" / "codecritic.sqlite3"
-# 16 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 17 
-# 18 def main():
-# 19     engine = create_engine(f"sqlite:///{DB_PATH}")
-# 20     with Session(bind=engine) as session:
-# 21         seed_prompts(session)
-# 22         seed_prompt_providers(session)
-# 23         seed_tool_providers(session)
-# 24         seed_score_providers(session)
-# 25         seed_context_providers(session)
-# 26         seed_agent_engine_providers(session)
-# 27         seed_state_providers(session)
-# 28         seed_orchestrator_providers(session)
-# 29 
-# 30     print(f"Database seeded successfully at {DB_PATH.resolve()}")
-# 31 
-# 32 if __name__ == "__main__":
-# 33     main()
+# 4 from app.db.seeders.seed_controller_providers import seed_controller_providers
+# 5 from app.db.seeders.seed_program_provider import seed_program_providers
+# 6 from app.db.seeders.seed_state_providers import seed_state_providers
+# 7 from app.db.seeders.seed_agent_engine_providers import seed_agent_engine_providers
+# 8 from app.db.seeders.seed_context_providers import seed_context_providers
+# 9 from app.db.seeders.seed_prompt_providers import seed_prompt_providers
+# 10 from app.db.seeders.seed_score_providers import seed_score_providers
+# 11 from app.db.seeders.seed_system_providers import seed_system_providers
+# 12 from app.db.seeders.seed_tool_providers import seed_tool_providers
+# 13 from app.db.seeders.seed_prompts import seed_prompts
+# 14 
+# 15 #  Ensure your project root matches explicitly
+# 16 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# 17 DB_PATH = PROJECT_ROOT / "experiments" / "codecritic.sqlite3"
+# 18 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 19 
+# 20 def main():
+# 21     engine = create_engine(f"sqlite:///{DB_PATH}")
+# 22     with Session(bind=engine) as session:
+# 23         seed_prompts(session)
+# 24         seed_prompt_providers(session)
+# 25         seed_tool_providers(session)
+# 26         seed_score_providers(session)
+# 27         seed_context_providers(session)
+# 28         seed_agent_engine_providers(session)
+# 29         seed_state_providers(session)
+# 30         seed_system_providers(session)
+# 31         seed_controller_providers(session)
+# 32         seed_program_providers(session)
+# 33 
+# 34     print(f"Database seeded successfully at {DB_PATH.resolve()}")
+# 35 
+# 36 if __name__ == "__main__":
+# 37     main()
 
 
 # db\seeders\__init__.py
@@ -1034,74 +1038,70 @@
 # db\seeders\files\agent_engine_providers\openai_gpt4o_agent_engine_provider.py
 
 # 1 from app.db.schemas import AgentEngineOutput
-# 2 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
-# 3 from app.enums.logging_enums import RunContext
-# 4 from openai import OpenAI
-# 5 import os
-# 6 
-# 7 class OpenAIGPT4oAgentEngineProvider(AgentEngineProviderBase):
-# 8     def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
-# 9         print('')
-# 10         print("ENTERING AGENT ENGINE")
-# 11         prompt_provider = input.get("prompt_provider") 
-# 12         input = {k: v for k, v in input.items() if k != "prompt_provider"}
-# 13 
-# 14         if not prompt_provider:
-# 15             raise ValueError("Prompt provider is required to extract engine output.")
-# 16 
-# 17         print(f"📢 Using prompt_provider: {type(prompt_provider).__name__}")
-# 18         prompt_output = prompt_provider.run(input=input, context=context)
-# 19         print("PROMPT OUTPUT: **************************************")
-# 20         print(prompt_output)
-# 21         print("END")
-# 22         if prompt_output is None:
-# 23             raise RuntimeError("❌ prompt_provider.run() returned None")
-# 24 
-# 25         print("📦 PromptOutputSchema fields:")
-# 26         print(f"  prompt: {getattr(prompt_output, 'prompt', '')[:100]!r}")
-# 27         print(f"  summary: {getattr(prompt_output, 'summary', '')}")
-# 28 
-# 29         prompt = prompt_output.prompt
-# 30 
-# 31         api_key = os.getenv("OPENAI_API_KEY")
-# 32         if not api_key:
-# 33             raise EnvironmentError("OPENAI_API_KEY is not set in the environment.")
-# 34 
-# 35         client = OpenAI(api_key=api_key)
-# 36         response = client.chat.completions.create(
-# 37             model="gpt-4o",
-# 38             messages=[
-# 39                 {"role": "system", "content": "You are a helpful assistant."},
-# 40                 {"role": "user", "content": prompt},
-# 41             ],
-# 42             temperature=0.2,
-# 43             max_tokens=2048,
-# 44         )
-# 45 
-# 46         raw_response = response.choices[0].message.content.strip()
-# 47         print(f"🧠 Raw LLM output (first 300): {raw_response[:300]!r}")
-# 48 
-# 49         try:
-# 50             extracted = prompt_provider._extract(raw_response)
-# 51             print(f"✅ Extracted content length: {len(extracted.content)}")
-# 52             print(f"✅ Decision: {extracted.decision}")
-# 53             print(f"✅ Log: {extracted.log[:100]!r}")
-# 54         except Exception as e:
-# 55             print(f"❌ Failed to extract from response: {e}")
-# 56             print(f"🔍 Raw response was:\n{raw_response}")
-# 57             raise
-# 58 
-# 59         token_count = len(raw_response.split())
-# 60         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
-# 61 
-# 62         return AgentEngineOutput(
-# 63             response=raw_response,
-# 64             token_count=token_count,
-# 65             cost_usd=cost_usd,
-# 66             content=extracted.content,
-# 67             decision=extracted.decision,
-# 68             log=extracted.log
-# 69         )
+# 2 from app.enums.fsm_enums import DECISION_TYPE
+# 3 from app.providers.agent_engine_provider_base import AgentEngineProviderBase
+# 4 from app.enums.logging_enums import RunContext
+# 5 from openai import OpenAI
+# 6 import os
+# 7 
+# 8 class OpenAIGPT4oAgentEngineProvider(AgentEngineProviderBase):
+# 9     def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
+# 10         prompt_provider = input.get("prompt_provider") 
+# 11         input = {k: v for k, v in input.items() if k != "prompt_provider"}
+# 12 
+# 13         if not prompt_provider:
+# 14             raise ValueError("Prompt provider is required to extract engine output.")
+# 15 
+# 16         try:
+# 17             prompt_output = prompt_provider.run(input=input, context=context)
+# 18             if prompt_output is None:
+# 19                 raise RuntimeError("❌ prompt_provider.run() returned None")
+# 20             prompt = prompt_output.prompt
+# 21         except Exception as e:
+# 22             print("❌ Error during prompt generation:")
+# 23             print(e)
+# 24             raise
+# 25 
+# 26         api_key = os.getenv("OPENAI_API_KEY")
+# 27         if not api_key:
+# 28             raise EnvironmentError("OPENAI_API_KEY is not set in the environment.")
+# 29 
+# 30         try:
+# 31             client = OpenAI(api_key=api_key)
+# 32             response = client.chat.completions.create(
+# 33                 model="gpt-4o",
+# 34                 messages=[
+# 35                     {"role": "system", "content": "You are a helpful assistant."},
+# 36                     {"role": "user", "content": prompt},
+# 37                 ],
+# 38                 temperature=0.2,
+# 39                 max_tokens=2048,
+# 40             )
+# 41             raw_response = response.choices[0].message.content.strip()
+# 42         except Exception as e:
+# 43             print("❌ Error during OpenAI API call:")
+# 44             print(e)
+# 45             raise
+# 46 
+# 47         try:
+# 48             extracted = prompt_provider._extract(raw_response)
+# 49         except Exception as e:
+# 50             print("❌ Error during response extraction:")
+# 51             print(e)
+# 52             print(f"🔍 Raw response was:\n{raw_response}")
+# 53             raise
+# 54 
+# 55         token_count = len(raw_response.split())
+# 56         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
+# 57 
+# 58         return AgentEngineOutput(
+# 59             response=raw_response,
+# 60             token_count=token_count,
+# 61             cost_usd=cost_usd,
+# 62             content=extracted.content,
+# 63             decision=DECISION_TYPE.UNKNOWN,
+# 64             log=extracted.log
+# 65         )
 
 
 # db\seeders\files\agent_providers\__init__.py
@@ -1206,140 +1206,136 @@
 # 17         snapshot = SnapshotArchive(self._engine).read_latest(session_id=self._session_id)
 # 18 
 # 19         if not snapshot:
-# 20             return AgentOutputSchema(
-# 21                 decision=DECISION_TYPE.REJECTED,
-# 22                 log="No snapshot found.",
-# 23                 response=(
-# 24                     "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-# 25                     "[CONVERSATION_LOG_ENTRY]No snapshot found.[/CONVERSATION_LOG_ENTRY]"
-# 26                 ),
-# 27                 file_path=None,
-# 28                 score=None
-# 29             )
-# 30 
-# 31         before_code = snapshot["before"]
-# 32         after_code = snapshot["after"]
-# 33         before_path = Path(snapshot["before_path"]).resolve()
-# 34         after_path = Path(snapshot["after_path"]).resolve()
-# 35 
-# 36         before_result = self._score_provider.run(
-# 37             {"file_path": str(before_path)},
-# 38             context=self.fork_context()
-# 39         )
-# 40         after_result = self._score_provider.run(
-# 41             {"file_path": str(after_path)},
-# 42             context=self.fork_context()
-# 43         )
-# 44 
-# 45         before_score = before_result.value
-# 46         after_score = after_result.value
-# 47 
-# 48         def safe_relative(path: Path) -> str:
-# 49             try:
-# 50                 return str(path.relative_to(Path.cwd()))
-# 51             except ValueError:
-# 52                 return str(path)
-# 53 
-# 54         if before_code == after_code:
-# 55             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-# 56             log_msg = (
-# 57                 "No meaningful change, but score already passing."
-# 58                 if decision == DECISION_TYPE.ACCEPTED
-# 59                 else "No meaningful change and score below threshold."
-# 60             )
-# 61             return AgentOutputSchema(
-# 62                 decision=decision,
-# 63                 log=log_msg,
-# 64                 response=(
-# 65                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 66                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
-# 67                 ),
-# 68                 file_path=safe_relative(before_path),
-# 69                 score=before_score
-# 70             )
-# 71 
-# 72         #  Summarize the diff if the code has changed
+# 20             full_log = "No snapshot found."
+# 21             return AgentOutputSchema(
+# 22                 decision=DECISION_TYPE.REJECTED,
+# 23                 log=full_log,
+# 24                 response=(
+# 25                     f"[AGENT_DECISION]reject[/AGENT_DECISION]\n"
+# 26                     f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
+# 27                 ),
+# 28                 file_path=None,
+# 29                 score=None
+# 30             )
+# 31 
+# 32         before_code = snapshot["before"]
+# 33         after_code = snapshot["after"]
+# 34         before_path = Path(snapshot["before_path"]).resolve()
+# 35         after_path = Path(snapshot["after_path"]).resolve()
+# 36 
+# 37         before_result = self._score_provider.run(
+# 38             {"file_path": str(before_path)},
+# 39             context=self.fork_context()
+# 40         )
+# 41         after_result = self._score_provider.run(
+# 42             {"file_path": str(after_path)},
+# 43             context=self.fork_context()
+# 44         )
+# 45 
+# 46         before_score = before_result.value
+# 47         after_score = after_result.value
+# 48 
+# 49         def safe_relative(path: Path) -> str:
+# 50             try:
+# 51                 return str(path.relative_to(Path.cwd()))
+# 52             except ValueError:
+# 53                 return str(path)
+# 54 
+# 55         if before_code == after_code:
+# 56             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
+# 57             full_log = (
+# 58                 "No meaningful change, but score already passing."
+# 59                 if decision == DECISION_TYPE.ACCEPTED
+# 60                 else "No meaningful change and score below threshold."
+# 61             )
+# 62             return AgentOutputSchema(
+# 63                 decision=decision,
+# 64                 log=full_log,
+# 65                 response=(
+# 66                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 67                     f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
+# 68                 ),
+# 69                 file_path=safe_relative(before_path),
+# 70                 score=before_score
+# 71             )
+# 72 
 # 73         summary = summarize_diff(before_code, after_code).strip()
 # 74         if not summary:
 # 75             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-# 76             log_msg = (
+# 76             full_log = (
 # 77                 "Diff could not be summarized, but prior version passes."
 # 78                 if decision == DECISION_TYPE.ACCEPTED
 # 79                 else "Diff could not be summarized and prior version fails."
 # 80             )
 # 81             return AgentOutputSchema(
 # 82                 decision=decision,
-# 83                 log=log_msg,
+# 83                 log=full_log,
 # 84                 response=(
 # 85                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 86                     f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+# 86                     f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
 # 87                 ),
 # 88                 file_path=safe_relative(before_path),
 # 89                 score=before_score
 # 90             )
 # 91 
-# 92         #  Inspect violations (if any)
-# 93         after_components = getattr(after_result, "components", {})
-# 94         violation_msgs = []
-# 95 
-# 96         def append_count(name: str, val: int):
-# 97             if val:
-# 98                 violation_msgs.append(f"{name}: {val}")
-# 99 
-# 100         def get_violations(field) -> list[str]:
-# 101             val = getattr(after_components, field, None)
-# 102             if isinstance(val, list):
-# 103                 return val
-# 104             if isinstance(val, int):
-# 105                 return [f"{val} issues"]
-# 106             return []
+# 92         after_components = getattr(after_result, "components", {})
+# 93         violation_msgs = []
+# 94 
+# 95         def get_violations(field) -> list[str]:
+# 96             val = getattr(after_components, field, None)
+# 97             if isinstance(val, list):
+# 98                 return val
+# 99             if isinstance(val, int):
+# 100                 return [f"{val} issues"]
+# 101             return []
+# 102 
+# 103         def append_messages(name: str, msgs: list[str]):
+# 104             if msgs:
+# 105                 joined = "\n    - " + "\n    - ".join(msgs)
+# 106                 violation_msgs.append(f"{name}:\n{joined}")
 # 107 
-# 108         def append_messages(name: str, msgs: list[str]):
-# 109             if msgs:
-# 110                 joined = "\n    - " + "\n    - ".join(msgs)
-# 111                 violation_msgs.append(f"{name}:\n{joined}")
-# 112 
-# 113         append_messages("ruff", get_violations("ruff_violations"))
-# 114         append_messages("black", get_violations("black_violations"))
-# 115         append_messages("mypy", get_violations("mypy_violations"))
+# 108         append_messages("ruff", get_violations("ruff_violations"))
+# 109         append_messages("black", get_violations("black_violations"))
+# 110         append_messages("mypy", get_violations("mypy_violations"))
+# 111 
+# 112         violations_summary = (
+# 113             f"\n\n\u26a0\ufe0f Remaining violations:\n\n" + "\n\n".join(violation_msgs)
+# 114             if violation_msgs else "No Remaining violations"
+# 115         )
 # 116 
-# 117         violations_summary = (
-# 118             f"\n\n⚠️ Remaining violations:\n\n" + "\n\n".join(violation_msgs)
-# 119             if violation_msgs else "No Remaining violations"
-# 120         )
-# 121 
-# 122         #  Check the scores for acceptance or improvement
-# 123         if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
-# 124             decision = DECISION_TYPE.ACCEPTED
-# 125             chosen_code = after_code
-# 126             score = after_score
-# 127         elif after_score < LINTING_PASS_THRESHOLD and after_score > before_score:
-# 128             decision = DECISION_TYPE.IMPROVED
-# 129             chosen_code = after_code
-# 130             score = after_score
-# 131         else:
-# 132             decision = DECISION_TYPE.REJECTED
-# 133             chosen_code = before_code
-# 134             score = before_score
-# 135 
-# 136         #  Promote improved file to a working path
-# 137         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-# 138         temp_path.parent.mkdir(parents=True, exist_ok=True)
+# 117         if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
+# 118             decision = DECISION_TYPE.ACCEPTED
+# 119             chosen_code = after_code
+# 120             score = after_score
+# 121         elif after_score < LINTING_PASS_THRESHOLD and after_score > before_score:
+# 122             decision = DECISION_TYPE.IMPROVED
+# 123             chosen_code = after_code
+# 124             score = after_score
+# 125         else:
+# 126             decision = DECISION_TYPE.REJECTED
+# 127             chosen_code = before_code
+# 128             score = before_score
+# 129 
+# 130         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+# 131         temp_path.parent.mkdir(parents=True, exist_ok=True)
+# 132         source_path = after_path if chosen_code == after_code else before_path
+# 133         shutil.copyfile(source_path, temp_path)
+# 134 
+# 135         full_log = (
+# 136             f"✅ Score improved from {before_score:.2f} to {after_score:.2f} and passes threshold."
+# 137             f"{violations_summary}\n\n{summary}"
+# 138         )
 # 139 
-# 140         source_path = after_path if chosen_code == after_code else before_path
-# 141         shutil.copyfile(source_path, temp_path)
-# 142 
-# 143         return AgentOutputSchema(
-# 144             decision=decision,
-# 145             log=summary,
-# 146             response=(
-# 147                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-# 148                 f"[CONVERSATION_LOG_ENTRY]✅ Score improved from {before_score:.2f} to {after_score:.2f} and passes threshold."
-# 149                 f"{violations_summary}\n\n{summary}[/CONVERSATION_LOG_ENTRY]"
-# 150             ),
-# 151             file_path=safe_relative(temp_path),
-# 152             score=score
-# 153         )
+# 140         return AgentOutputSchema(
+# 141             decision=decision,
+# 142             log=full_log,
+# 143             response=(
+# 144                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
+# 145                 f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
+# 146             ),
+# 147             file_path=safe_relative(temp_path),
+# 148             score=score
+# 149         )
 
 
 # db\seeders\files\agent_providers\linting_generator_agent_provider.py
@@ -1358,55 +1354,52 @@
 # 12 
 # 13     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
 # 14         file_path = input.get("file_path")
-# 15         if not file_path:
-# 16             print("FILE PATH IS MISSING")
-# 17             raise ValueError("Missing required field: file_path")
-# 18         print("FILE PATH FOUND!!")
-# 19         system = input.get("system", "linting")
-# 20 
-# 21         if not self._prompt_provider:
-# 22             raise ValueError("Prompt provider is not set")
-# 23         if not self._agent_engine:
-# 24             raise ValueError("Agent engine is not set")
-# 25 
-# 26         #  🔧 Generate prompt and run engine
-# 27         prompt_output = self._prompt_provider.run(input=input, context=context)
-# 28         engine_output = self._agent_engine.run(
-# 29             input={
-# 30                 "prompt": prompt_output.prompt,
-# 31                 "before": file_path,
-# 32                 "agent_type": self._config.agent_type,
-# 33                 "agent_id": self._config.id,
-# 34                 "system": system,
-# 35                 "state_context": input.get("state_context", {}),
-# 36                 "prompt_provider": self._prompt_provider, 
-# 37             },
-# 38             context=context
-# 39         )
-# 40 
-# 41         #  🔧 Write snapshot
-# 42         before_path = Path(file_path).resolve()
-# 43         snapshot = SnapshotContext(
-# 44             context=context,
-# 45             decision=engine_output.decision,
-# 46             log=engine_output.log,
-# 47             state=input.get("state_context", {}).get("state", "unknown"),
-# 48             agent_name=self._config.name,
-# 49             system=system,
-# 50             before_path=before_path,
-# 51             after_content=engine_output.content,
-# 52         )
-# 53 
-# 54         snapshot_id = SnapshotArchive(self._engine).record(snapshot=snapshot)
-# 55 
-# 56         return AgentOutputSchema(
-# 57             response=engine_output.response,
-# 58             log=engine_output.log,
-# 59             decision=DECISION_TYPE(engine_output.decision),
-# 60             snapshot_id=snapshot_id,
-# 61             file_path=str(before_path),
-# 62             score=getattr(engine_output, "score", None)
-# 63         )
+# 15 
+# 16         system = input.get("system", "linting")
+# 17 
+# 18         if not self._prompt_provider:
+# 19             raise ValueError("Prompt provider is not set")
+# 20         if not self._agent_engine:
+# 21             raise ValueError("Agent engine is not set")
+# 22 
+# 23         #  🔧 Generate prompt and run engine
+# 24         prompt_output = self._prompt_provider.run(input=input, context=context)
+# 25         engine_output = self._agent_engine.run(
+# 26             input={
+# 27                 "prompt": prompt_output.prompt,
+# 28                 "file_path": file_path,
+# 29                 "agent_type": self._config.agent_type,
+# 30                 "agent_id": self._config.id,
+# 31                 "system": system,
+# 32                 "state_context": input.get("state_context", {}),
+# 33                 "prompt_provider": self._prompt_provider, 
+# 34             },
+# 35             context=context
+# 36         )
+# 37 
+# 38         #  🔧 Write snapshot
+# 39         before_path = Path(file_path).resolve()
+# 40         snapshot = SnapshotContext(
+# 41             context=context,
+# 42             decision=engine_output.decision,
+# 43             log=engine_output.log,
+# 44             state=input.get("state_context", {}).get("state", "unknown"),
+# 45             agent_name=self._config.name,
+# 46             system=system,
+# 47             before_path=before_path,
+# 48             after_content=engine_output.content,
+# 49         )
+# 50 
+# 51         snapshot_id = SnapshotArchive(self._engine).record(snapshot=snapshot)
+# 52 
+# 53         return AgentOutputSchema(
+# 54             response=engine_output.response,
+# 55             log=engine_output.log,
+# 56             decision=DECISION_TYPE(engine_output.decision),
+# 57             snapshot_id=snapshot_id,
+# 58             file_path=str(before_path),
+# 59             score=getattr(engine_output, "score", None)
+# 60         )
 
 
 # db\seeders\files\context_providers\__init__.py
@@ -1642,67 +1635,56 @@
 # 10 
 # 11 class LintingPromptProvider(PromptProviderBase):
 # 12     def _run(self, input: dict, context: RunContext | None = None) -> PromptOutputSchema:
-# 13         print("ENTERING THE PROMPT PROVIDER")
-# 14         session_id = self._session_id
-# 15         system = input.get("system", "unknown")
-# 16         file_path = input.get("file_path")
-# 17 
-# 18         if not self.agent_text or not self.system_text or not self._context_provider:
-# 19             raise ValueError("Missing required prompt text or context provider")
-# 20 
-# 21         print("GOT what we NEED")
-# 22 
-# 23         #  ✅ propagate context to context provider
-# 24         context_output = self._context_provider.run(
-# 25             {
-# 26                 "file_path": file_path,
-# 27                 "system": system
-# 28             },
-# 29             context=context
-# 30         )
-# 31 
-# 32         print('')
-# 33         print('context_output')
-# 34         print(context_output)
-# 35 
-# 36         context = (
-# 37             context_output.context
-# 38             if hasattr(context_output, "context")
-# 39             else json.loads(context_output)
-# 40         )
+# 13         session_id = self._session_id
+# 14         system = input.get("system", "unknown")
+# 15         file_path = input.get("file_path")
+# 16 
+# 17         if not self.agent_text or not self.system_text or not self._context_provider:
+# 18             raise ValueError("Missing required prompt text or context provider")
+# 19 
+# 20         #  ✅ propagate context to context provider
+# 21         context_output = self._context_provider.run(
+# 22             {
+# 23                 "file_path": file_path,
+# 24                 "system": system
+# 25             },
+# 26             context=context
+# 27         )
+# 28 
+# 29         context = (
+# 30             context_output.context
+# 31             if hasattr(context_output, "context")
+# 32             else json.loads(context_output)
+# 33         )
+# 34 
+# 35         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
+# 36 
+# 37         full_prompt = f"""
+# 38 {self.system_text}
+# 39 
+# 40 ---
 # 41 
-# 42         convo_section = "\n".join(context.get("conversation_log", [])) or "(none)"
+# 42 {self.agent_text}
 # 43 
-# 44         full_prompt = f"""
-# 45 {self.system_text}
-# 46 
-# 47 ---
+# 44 ---
+# 45 
+# 46 [CONTEXT]
+# 47 {json.dumps(context, indent=2)}
 # 48 
-# 49 {self.agent_text}
+# 49 ---
 # 50 
-# 51 ---
-# 52 
-# 53 [CONTEXT]
-# 54 {json.dumps(context, indent=2)}
-# 55 
-# 56 ---
-# 57 
-# 58 [CONVERSATION LOG]
-# 59 {convo_section}
-# 60 """.strip()
-# 61 
-# 62         #  🧾 Construct summary based on the file path and system
-# 63         short_path = Path(file_path).name if file_path else "unknown file"
-# 64         summary = f"Linting prompt generated for {short_path} (system: {system})"
-# 65 
-# 66         print('')
-# 67         print("RETURNING PROMPT")
-# 68         print(full_prompt[:100])
-# 69 
-# 70         return PromptOutputSchema(prompt=full_prompt, summary=summary)
-# 71 
-# 72     def _extract(self, response: str) -> AgentEngineExtraction:
-# 73         return extract_code_blocks(response)
+# 51 [CONVERSATION LOG]
+# 52 {convo_section}
+# 53 """.strip()
+# 54 
+# 55         #  🧾 Construct summary based on the file path and system
+# 56         short_path = Path(file_path).name if file_path else "unknown file"
+# 57         summary = f"Linting prompt generated for {short_path} (system: {system})"
+# 58 
+# 59         return PromptOutputSchema(prompt=full_prompt, summary=summary)
+# 60 
+# 61     def _extract(self, response: str) -> AgentEngineExtraction:
+# 62         return extract_code_blocks(response)
 
 
 # db\seeders\files\prompts\__init__.py
@@ -4993,37 +4975,22 @@
 # 25         self.tool_providers = tool_providers or []
 # 26 
 # 27     def _run_provider(self, input: dict) -> AgentEngineOutput:
-# 28         print(f"🚦 Entering AgentEngineProviderBase._run_provider → Input keys: {list(input.keys())}")
-# 29         print(f"🚦 Entering AgentEngineProviderBase._run_provider → Called from: {self._run.__module__}")
+# 28 
+# 29         output = self._run(input=input, context=self.fork_context())
 # 30 
-# 31         before = input.get("before")
-# 32         try:
-# 33             _ = Path(before).resolve(strict=False)
-# 34         except TypeError:
-# 35             print("before missing")
-# 36             print(input)
-# 37             raise ValueError(f"❌ Invalid path-like object for 'before': got {before} ({type(before).__name__})")
-# 38 
-# 39         output = self._run(input=input, context=self.fork_context())
+# 31         if not isinstance(output, AgentEngineOutput):
+# 32             raise ValueError("Expected AgentEngineOutput from _run")
+# 33 
+# 34         if not output.content or not output.decision or not output.log:
+# 35             self._log.error("❌ Extraction failed: missing one or more required fields in AgentEngineOutput")
+# 36             raise ValueError("Extraction failed: missing content or decision or log entry")
+# 37 
+# 38         return output
+# 39 
 # 40 
-# 41         print(f"🧪 Output type: {type(output).__name__}")
-# 42         print(f"📤 Output content preview: {getattr(output, 'content', '')[:80]!r}")
-# 43         print(f"📤 Output decision: {getattr(output, 'decision', 'MISSING')}")
-# 44         print(f"📤 Output log preview: {getattr(output, 'log', '')[:80]!r}")
-# 45 
-# 46         if not isinstance(output, AgentEngineOutput):
-# 47             raise ValueError("Expected AgentEngineOutput from _run")
-# 48 
-# 49         if not output.content or not output.decision or not output.log:
-# 50             self._log.error("❌ Extraction failed: missing one or more required fields in AgentEngineOutput")
-# 51             raise ValueError("Extraction failed: missing content or decision or log entry")
-# 52 
-# 53         return output
-# 54 
-# 55 
-# 56     @abstractmethod
-# 57     def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
-# 58         raise NotImplementedError
+# 41     @abstractmethod
+# 42     def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
+# 43         raise NotImplementedError
 
 
 # providers\agent_provider_base.py
@@ -5164,184 +5131,178 @@
 # 72                 output = self._run_provider(input)
 # 73                 break
 # 74             except Exception as exc:
-# 75                 print("RUN PROVIDER PRODUCS AN ERROR")
-# 76                 print(exc)
-# 77                 print("📋 Expanded RunContext:")
-# 78                 for k, v in vars(self._context).items():
-# 79                     print(f"  {k}: {v}")
-# 80                 latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 81 
-# 82                 #  🔴 Error Log
-# 83                 try:
-# 84                     self.logger.write(
-# 85                         LOG_TYPE.ERROR,
-# 86                         ErrorLogSchema(
-# 87                             session_id=self._session_id,
-# 88                             file_log_id=self._file_log_id,
-# 89                             error_type=self._map_error_type(exc).value,
-# 90                             message=str(exc),
-# 91                             file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 92                             provider_id=self._config.id if self._config else None,
-# 93                             provider_type=self._infer_provider_type(),
-# 94                             timestamp=start_time,
-# 95                             latency_ms=latency_ms,
-# 96                             called_by_type=self._called_by_type if self._called_by_type else None,
-# 97                             called_by_id=self._called_by_id,
-# 98                             run_id=self._run_id,
-# 99                             parent_id=self._context.parent_id if self._context else None,
-# 100                             execution_chain=self._context.execution_chain[:] if self._context else [],
-# 101                         ),
-# 102                     )
-# 103                 except Exception:
-# 104                     pass
-# 105 
-# 106                 #  📜 Provider Log for failure (explicit marker)
-# 107                 try:
-# 108                     self.logger.write(
-# 109                         LOG_TYPE.PROVIDER,
-# 110                         ProviderLogSchema(
-# 111                             session_id=self._session_id,
-# 112                             file_log_id=self._file_log_id,
-# 113                             provider_id=self._config.id if self._config else -1,
-# 114                             provider_type=self._infer_provider_type(),
-# 115                             input=json.dumps(input, default=str),
-# 116                             output="ERROR",  #  🚨 Clear indicator
-# 117                             output_schema=None,
-# 118                             latency_ms=latency_ms,
-# 119                             config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
-# 120                             file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 121                             if getattr(self._config, "artifact_path", None)
-# 122                             else None,
-# 123                             timestamp=start_time,
-# 124                             called_by_type=self._called_by_type if self._called_by_type else None,
-# 125                             called_by_id=self._called_by_id,
-# 126                             run_id=self._run_id,
-# 127                             parent_id=self._context.parent_id if self._context else None,
-# 128                             execution_chain=self._context.execution_chain[:] if self._context else [],
-# 129                         ),
-# 130                     )
-# 131                 except Exception:
-# 132                     pass
-# 133 
-# 134                 if attempt == max_retries:
-# 135                     raise
+# 75                 latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 76 
+# 77                 #  🔴 Error Log
+# 78                 try:
+# 79                     self.logger.write(
+# 80                         LOG_TYPE.ERROR,
+# 81                         ErrorLogSchema(
+# 82                             session_id=self._session_id,
+# 83                             file_log_id=self._file_log_id,
+# 84                             error_type=self._map_error_type(exc).value,
+# 85                             message=str(exc),
+# 86                             file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 87                             provider_id=self._config.id if self._config else None,
+# 88                             provider_type=self._infer_provider_type(),
+# 89                             timestamp=start_time,
+# 90                             latency_ms=latency_ms,
+# 91                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 92                             called_by_id=self._called_by_id,
+# 93                             run_id=self._run_id,
+# 94                             parent_id=self._context.parent_id if self._context else None,
+# 95                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 96                         ),
+# 97                     )
+# 98                 except Exception:
+# 99                     pass
+# 100 
+# 101                 #  📜 Provider Log for failure (explicit marker)
+# 102                 try:
+# 103                     self.logger.write(
+# 104                         LOG_TYPE.PROVIDER,
+# 105                         ProviderLogSchema(
+# 106                             session_id=self._session_id,
+# 107                             file_log_id=self._file_log_id,
+# 108                             provider_id=self._config.id if self._config else -1,
+# 109                             provider_type=self._infer_provider_type(),
+# 110                             input=json.dumps(input, default=str),
+# 111                             output="ERROR",  #  🚨 Clear indicator
+# 112                             output_schema=None,
+# 113                             latency_ms=latency_ms,
+# 114                             config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 115                             file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 116                             if getattr(self._config, "artifact_path", None)
+# 117                             else None,
+# 118                             timestamp=start_time,
+# 119                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 120                             called_by_id=self._called_by_id,
+# 121                             run_id=self._run_id,
+# 122                             parent_id=self._context.parent_id if self._context else None,
+# 123                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 124                         ),
+# 125                     )
+# 126                 except Exception:
+# 127                     pass
+# 128 
+# 129                 if attempt == max_retries:
+# 130                     raise
+# 131 
+# 132                 time.sleep(backoff_seconds * (2 ** attempt))
+# 133                 input["retry_count"] = attempt + 1
+# 134 
+# 135         latency_ms = int((time.perf_counter() - start_clock) * 1000)
 # 136 
-# 137                 time.sleep(backoff_seconds * (2 ** attempt))
-# 138                 input["retry_count"] = attempt + 1
-# 139 
-# 140         latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 141 
-# 142         try:
-# 143             input_str = json.dumps(
-# 144                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
-# 145                 default=str,
-# 146             )
-# 147         except Exception:
-# 148             input_str = ""
-# 149 
-# 150         try:
-# 151             if hasattr(output, "model_dump"):
-# 152                 dumped = output.model_dump()
-# 153                 output_str = json.dumps(dumped, default=str)
-# 154                 output_schema = output.__class__.__name__
-# 155             else:
-# 156                 output_str = json.dumps(output, default=str)
-# 157                 output_schema = None
-# 158         except Exception:
-# 159             output_str = ""
-# 160             output_schema = None
-# 161 
-# 162         try:
-# 163 
-# 164             self.logger.write(
-# 165                 LOG_TYPE.PROVIDER,
-# 166                 ProviderLogSchema(
-# 167                     session_id=self._session_id,
-# 168                     file_log_id=self._file_log_id,
-# 169                     provider_id=self._config.id if self._config else -1,
-# 170                     provider_type=self._infer_provider_type(),
-# 171                     input=input_str,
-# 172                     output=output_str,
-# 173                     output_schema=output_schema,
-# 174                     latency_ms=latency_ms,
-# 175                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
-# 176                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 177                     if getattr(self._config, "artifact_path", None)
-# 178                     else None,
-# 179                     timestamp=start_time,
-# 180                     called_by_type=self._called_by_type if self._called_by_type else None,
-# 181                     called_by_id=self._called_by_id,
-# 182                     run_id=self._run_id,
-# 183                     parent_id=self._context.parent_id if self._context else None,
-# 184                     execution_chain=self._context.execution_chain[:] if self._context else [],
-# 185                 ),
-# 186             )
-# 187         except Exception as e:
-# 188             print(f"❌ Logging failed: {e}")
-# 189             raise
-# 190 
-# 191         self._log.debug("✅ Provider run logged")
-# 192         print(f"✅ Returning output from provider: {output}")
-# 193         return output
-# 194 
-# 195     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 196         if isinstance(exc, ValueError) and "Extraction failed" in str(exc):
-# 197             return ERROR_TYPE.VALIDATION
-# 198         if isinstance(exc, NotImplementedError):
-# 199             return ERROR_TYPE.CONFIGURATION
-# 200         return ERROR_TYPE.RUNTIME
-# 201 
-# 202     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 203         cls = self.__class__.__name__.lower()
-# 204         if "tool" in cls:
-# 205             return PROVIDER_TYPE.TOOL
-# 206         if "engine" in cls:
-# 207             return PROVIDER_TYPE.AGENT_ENGINE
-# 208         if "agent" in cls:
-# 209             return PROVIDER_TYPE.AGENT
-# 210         if "prompt" in cls:
-# 211             return PROVIDER_TYPE.PROMPT
-# 212         if "context" in cls:
-# 213             return PROVIDER_TYPE.CONTEXT
-# 214         if "score" in cls:
-# 215             return PROVIDER_TYPE.SCORE
-# 216         if "state" in cls:
-# 217             return PROVIDER_TYPE.STATE
-# 218         if "system" in cls:
-# 219             return PROVIDER_TYPE.SYSTEM
-# 220         if "controller" in cls:
-# 221             return PROVIDER_TYPE.CONTROLLER
-# 222         if "program" in cls:
-# 223             return PROVIDER_TYPE.PROGRAM
-# 224         return PROVIDER_TYPE.UNKNOWN
-# 225 
-# 226     def _compute_config_hash(self, config: dict | None) -> str:
-# 227         config_str = json.dumps(config or {}, sort_keys=True)
-# 228         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
+# 137         try:
+# 138             input_str = json.dumps(
+# 139                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 140                 default=str,
+# 141             )
+# 142         except Exception:
+# 143             input_str = ""
+# 144 
+# 145         try:
+# 146             if hasattr(output, "model_dump"):
+# 147                 dumped = output.model_dump()
+# 148                 output_str = json.dumps(dumped, default=str)
+# 149                 output_schema = output.__class__.__name__
+# 150             else:
+# 151                 output_str = json.dumps(output, default=str)
+# 152                 output_schema = None
+# 153         except Exception:
+# 154             output_str = ""
+# 155             output_schema = None
+# 156 
+# 157         try:
+# 158 
+# 159             self.logger.write(
+# 160                 LOG_TYPE.PROVIDER,
+# 161                 ProviderLogSchema(
+# 162                     session_id=self._session_id,
+# 163                     file_log_id=self._file_log_id,
+# 164                     provider_id=self._config.id if self._config else -1,
+# 165                     provider_type=self._infer_provider_type(),
+# 166                     input=input_str,
+# 167                     output=output_str,
+# 168                     output_schema=output_schema,
+# 169                     latency_ms=latency_ms,
+# 170                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 171                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 172                     if getattr(self._config, "artifact_path", None)
+# 173                     else None,
+# 174                     timestamp=start_time,
+# 175                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 176                     called_by_id=self._called_by_id,
+# 177                     run_id=self._run_id,
+# 178                     parent_id=self._context.parent_id if self._context else None,
+# 179                     execution_chain=self._context.execution_chain[:] if self._context else [],
+# 180                 ),
+# 181             )
+# 182         except Exception as e:
+# 183             print(f"❌ Logging failed: {e}")
+# 184             raise
+# 185 
+# 186         self._log.debug("✅ Provider run logged")
+# 187         return output
+# 188 
+# 189     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 190         if isinstance(exc, ValueError) and "Extraction failed" in str(exc):
+# 191             return ERROR_TYPE.VALIDATION
+# 192         if isinstance(exc, NotImplementedError):
+# 193             return ERROR_TYPE.CONFIGURATION
+# 194         return ERROR_TYPE.RUNTIME
+# 195 
+# 196     def _infer_provider_type(self) -> PROVIDER_TYPE:
+# 197         cls = self.__class__.__name__.lower()
+# 198         if "tool" in cls:
+# 199             return PROVIDER_TYPE.TOOL
+# 200         if "engine" in cls:
+# 201             return PROVIDER_TYPE.AGENT_ENGINE
+# 202         if "agent" in cls:
+# 203             return PROVIDER_TYPE.AGENT
+# 204         if "prompt" in cls:
+# 205             return PROVIDER_TYPE.PROMPT
+# 206         if "context" in cls:
+# 207             return PROVIDER_TYPE.CONTEXT
+# 208         if "score" in cls:
+# 209             return PROVIDER_TYPE.SCORE
+# 210         if "state" in cls:
+# 211             return PROVIDER_TYPE.STATE
+# 212         if "system" in cls:
+# 213             return PROVIDER_TYPE.SYSTEM
+# 214         if "controller" in cls:
+# 215             return PROVIDER_TYPE.CONTROLLER
+# 216         if "program" in cls:
+# 217             return PROVIDER_TYPE.PROGRAM
+# 218         return PROVIDER_TYPE.UNKNOWN
+# 219 
+# 220     def _compute_config_hash(self, config: dict | None) -> str:
+# 221         config_str = json.dumps(config or {}, sort_keys=True)
+# 222         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
+# 223 
+# 224     def propagate_file_log_id(self, file_log_id: str):
+# 225         self._file_log_id = file_log_id
+# 226 
+# 227         for attr_name in dir(self):
+# 228             attr = getattr(self, attr_name, None)
 # 229 
-# 230     def propagate_file_log_id(self, file_log_id: str):
-# 231         self._file_log_id = file_log_id
+# 230             if isinstance(attr, BaseProvider):
+# 231                 attr.propagate_file_log_id(file_log_id)
 # 232 
-# 233         for attr_name in dir(self):
-# 234             attr = getattr(self, attr_name, None)
-# 235 
-# 236             if isinstance(attr, BaseProvider):
-# 237                 attr.propagate_file_log_id(file_log_id)
-# 238 
-# 239             elif isinstance(attr, list):
-# 240                 for item in attr:
-# 241                     if isinstance(item, BaseProvider):
-# 242                         item.propagate_file_log_id(file_log_id)
-# 243 
-# 244             elif isinstance(attr, dict):
-# 245                 for item in attr.values():
-# 246                     if isinstance(item, BaseProvider):
-# 247                         item.propagate_file_log_id(file_log_id)
-# 248 
-# 249     def fork_context(self) -> RunContext:
-# 250         forked = deepcopy(self._context or RunContext())
-# 251         forked.parent_id = self._run_id
-# 252         return forked
+# 233             elif isinstance(attr, list):
+# 234                 for item in attr:
+# 235                     if isinstance(item, BaseProvider):
+# 236                         item.propagate_file_log_id(file_log_id)
+# 237 
+# 238             elif isinstance(attr, dict):
+# 239                 for item in attr.values():
+# 240                     if isinstance(item, BaseProvider):
+# 241                         item.propagate_file_log_id(file_log_id)
+# 242 
+# 243     def fork_context(self) -> RunContext:
+# 244         forked = deepcopy(self._context or RunContext())
+# 245         forked.parent_id = self._run_id
+# 246         return forked
 
 
 # providers\context_provider_base.py
@@ -5915,18 +5876,15 @@
 # 28 
 # 29     def _run_provider(self, input: dict) -> PromptOutputSchema:
 # 30         result = self._run(input=input, context=self.fork_context())
-# 31         print("")
-# 32         print("RUN PROMPT RESULT")
-# 33         print(result)
-# 34         return result
-# 35 
-# 36     @abstractmethod
-# 37     def _run(self, input: dict, context: RunContext | None = None) -> PromptOutputSchema:
-# 38         raise NotImplementedError
-# 39     
-# 40     @abstractmethod
-# 41     def _extract(self, response: str) -> AgentEngineExtraction:
-# 42         raise NotImplementedError
+# 31         return result
+# 32 
+# 33     @abstractmethod
+# 34     def _run(self, input: dict, context: RunContext | None = None) -> PromptOutputSchema:
+# 35         raise NotImplementedError
+# 36     
+# 37     @abstractmethod
+# 38     def _extract(self, response: str) -> AgentEngineExtraction:
+# 39         raise NotImplementedError
 
 
 # providers\score_provider_base.py
@@ -6521,30 +6479,22 @@
 # 5 
 # 6 
 # 7 def extract_code_blocks(response: str) -> AgentEngineExtraction:
-# 8     print("EXTRACTING CODE BLOCKS")
-# 9     print(response)
-# 10     def extract_block(start: str, end: str) -> str:
-# 11         match = re.search(re.escape(start) + r"(.*?)" + re.escape(end), response, re.DOTALL)
-# 12         return match.group(1).strip() if match else ""
-# 13 
-# 14     content = extract_block("[CODE]", "[/CODE]")
-# 15     decision = extract_block("[AGENT_DECISION]", "[/AGENT_DECISION]")
-# 16     log = extract_block("[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
-# 17 
-# 18     print('')
-# 19     print("content")
-# 20     print(content)
-# 21     print('')
-# 22     print("decision")
-# 23     print(decision)
-# 24     print('')
-# 25     print("log")
-# 26     print(log)
-# 27 
-# 28     if not content or not decision or not log:
-# 29         raise ValueError("Extraction failed: missing content, decision, or log entry")
-# 30 
-# 31     return AgentEngineExtraction(content=content, decision=decision, log=log)
+# 8     def extract_block(start: str, end: str) -> str:
+# 9         match = re.search(re.escape(start) + r"(.*?)" + re.escape(end), response, re.DOTALL)
+# 10         return match.group(1).strip() if match else ""
+# 11 
+# 12     content = extract_block("[CODE]", "[/CODE]")
+# 13     decision = extract_block("[AGENT_DECISION]", "[/AGENT_DECISION]") 
+# 14     log = extract_block("[CONVERSATION_LOG_ENTRY]", "[/CONVERSATION_LOG_ENTRY]")
+# 15 
+# 16     if not content:
+# 17         raise ValueError("Extraction failed: missing content block")
+# 18 
+# 19     return AgentEngineExtraction(
+# 20         content=content,
+# 21         decision=decision or "DECISION_TYPE.UNKNOWN", 
+# 22         log=log or "(no log provided)"
+# 23     )
 
 
 # utilities\file_management\__init__.py

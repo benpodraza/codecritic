@@ -19,12 +19,16 @@ SYSTEM_PROVIDERS = [
         "system_type": SYSTEM.LINTING.value,
         "tags": ["linting", "system"],
         "config": {
-            "score_provider_id": 1,
-            "max_steps": 20,
-            "states": {
-                STATE.GENERATE.value: 1,
-                STATE.DISCRIMINATE.value: 2,
-                STATE.CODE_STABILITY.value: 3
+            "components": {
+                "score_provider_id": 1,
+                "states": {
+                    STATE.GENERATE.value: 1,
+                    STATE.DISCRIMINATE.value: 2,
+                    STATE.CODE_STABILITY.value: 3
+                }
+            },
+            "params": {
+                "max_steps": 20
             }
         }
     }

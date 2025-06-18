@@ -16,7 +16,10 @@ AGENT_PROVIDERS = [
         "description": "Returns a hardcoded result.",
         "agent_type": "basic",
         "tags": ["test"],
-        "config": {}
+        "config": {
+            "components": {},
+            "params": {}
+        }
     },
     {
         "id": 2,
@@ -26,16 +29,19 @@ AGENT_PROVIDERS = [
         "agent_type": "generator",
         "tags": ["linting", "generator"],
         "config": {
-            "agent_engine_provider_id": 2,
-            "prompt_provider_id": 2,
-            "context_provider_id": 2,
-            "score_provider_id": 1,
-            "tool_provider_ids": {
-                "black": 1,
-                "ruff": 3,
-                "mypy": 5,
-                "radon": 4
-            }
+            "components": {
+                "agent_engine_provider_id": 2,
+                "prompt_provider_id": 2,
+                "context_provider_id": 2,
+                "score_provider_id": 1,
+                "tool_provider_ids": {
+                    "black": 1,
+                    "ruff": 3,
+                    "mypy": 5,
+                    "radon": 4
+                }
+            },
+            "params": {}
         }
     },
     {
@@ -46,7 +52,10 @@ AGENT_PROVIDERS = [
         "agent_type": "discriminator",
         "tags": ["linting", "discriminator"],
         "config": {
-            "score_provider_id": 1
+            "components": {
+                "score_provider_id": 1
+            },
+            "params": {}
         }
     },
     {
@@ -57,11 +66,13 @@ AGENT_PROVIDERS = [
         "agent_type": "stability",
         "tags": ["stability"],
         "config": {
-            "score_provider_id": 2
+            "components": {
+                "score_provider_id": 2
+            },
+            "params": {}
         }
     }
 ]
-
 
 def seed_agent_providers(db_session: Session):
     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)

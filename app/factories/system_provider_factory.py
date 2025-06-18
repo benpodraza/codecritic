@@ -23,7 +23,7 @@ class SystemProviderFactory(BaseProviderFactory):
         from app.factories.tool_provider_factory import ToolProviderFactory
 
         preload_instance = super().create(id, context=context)
-        config = preload_instance._config.config or {}
+        components = preload_instance._components
         provider_id = preload_instance._config.id
         provider_type = preload_instance._infer_provider_type()
 
@@ -40,16 +40,16 @@ class SystemProviderFactory(BaseProviderFactory):
         # ─── Subproviders ──────────────────────────────────────────────
         context_provider = (
             ContextProviderFactory.create(
-                config["context_provider_id"],
+                components["context_provider_id"],
                 context=child_context
-            ) if config.get("context_provider_id") else None
+            ) if components.get("context_provider_id") else None
         )
 
         score_provider = (
             ScoreProviderFactory.create(
-                config["score_provider_id"],
+                components["score_provider_id"],
                 context=child_context
-            ) if config.get("score_provider_id") else None
+            ) if components.get("score_provider_id") else None
         )
 
         tool_providers = [
@@ -57,7 +57,7 @@ class SystemProviderFactory(BaseProviderFactory):
                 tool_id,
                 context=child_context
             )
-            for _, tool_id in (config.get("tool_provider_ids") or {}).items()
+            for _, tool_id in (components.get("tool_provider_ids") or {}).items()
         ]
 
         state_providers = {
@@ -65,7 +65,7 @@ class SystemProviderFactory(BaseProviderFactory):
                 state_id,
                 context=child_context
             )
-            for name, state_id in (config.get("states") or {}).items()
+            for name, state_id in (components.get("states") or {}).items()
         }
 
         # ─── Final instantiation ───────────────────────────────────────

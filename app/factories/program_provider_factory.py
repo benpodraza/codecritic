@@ -22,7 +22,7 @@ class ProgramProviderFactory(BaseProviderFactory):
         from app.factories.controller_provider_factory import ControllerProviderFactory
 
         inst = super().create(id, context=context)
-        config = inst._config.config or {}
+        components = inst._components  # structured access injected by BaseProviderFactory
         provider_id = inst._config.id
         provider_type = inst._infer_provider_type()
 
@@ -39,16 +39,16 @@ class ProgramProviderFactory(BaseProviderFactory):
         # ─── Subproviders ──────────────────────────────────────────────
         context_provider = (
             ContextProviderFactory.create(
-                config["context_provider_id"],
+                components["context_provider_id"],
                 context=child_context
-            ) if config.get("context_provider_id") else None
+            ) if components.get("context_provider_id") else None
         )
 
         score_provider = (
             ScoreProviderFactory.create(
-                config["score_provider_id"],
+                components["score_provider_id"],
                 context=child_context
-            ) if config.get("score_provider_id") else None
+            ) if components.get("score_provider_id") else None
         )
 
         tool_providers = [
@@ -56,7 +56,7 @@ class ProgramProviderFactory(BaseProviderFactory):
                 tid,
                 context=child_context
             )
-            for tid in (config.get("tool_provider_ids") or {}).values()
+            for tid in (components.get("tool_provider_ids") or {}).values()
         ]
 
         controller_providers = {
@@ -64,7 +64,7 @@ class ProgramProviderFactory(BaseProviderFactory):
                 controller_id,
                 context=child_context
             )
-            for name, controller_id in (config.get("controllers") or {}).items()
+            for name, controller_id in (components.get("controllers") or {}).items()
         }
 
         # ─── Final instantiation ───────────────────────────────────────

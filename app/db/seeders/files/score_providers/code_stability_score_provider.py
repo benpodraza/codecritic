@@ -15,7 +15,7 @@ from app.enums.logging_enums import RunContext
 from app.providers.score_provider_base import ScoreProviderBase
 from app.db.schemas import CodeStabilityScoreConfig, ScoreOutputSchema, CodeStabilityScoreComponents
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+from app.utilities.metadata.footer.code_annnotation_utils import split_content_and_notes
 
 
 @contextlib.contextmanager
@@ -46,7 +46,7 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
             return self._final_score(bool_components)
 
         # Strip footer annotations without modifying actual code structure
-        stripped_code, _ = split_code_and_notes(raw_code)
+        stripped_code, _ = split_content_and_notes(raw_code)
 
         # Always write a clean temp file with newline termination
         safe_path = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"

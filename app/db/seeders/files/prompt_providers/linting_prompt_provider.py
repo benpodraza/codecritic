@@ -4,7 +4,8 @@ from pathlib import Path
 
 from app.enums.logging_enums import RunContext
 from app.providers.prompt_provider_base import PromptProviderBase
-from app.db.schemas import PromptOutputSchema
+from app.db.schemas import AgentEngineExtraction, PromptOutputSchema
+from app.utilities.extract_code_block import extract_code_blocks
 
 
 class LintingPromptProvider(PromptProviderBase):
@@ -56,3 +57,6 @@ class LintingPromptProvider(PromptProviderBase):
         summary = f"Linting prompt generated for {short_path} (system: {system})"
 
         return PromptOutputSchema(prompt=full_prompt, summary=summary)
+
+    def _extract(self, response: str) -> AgentEngineExtraction:
+        return extract_code_blocks(response)

@@ -155,6 +155,7 @@ class BaseProvider:
             output_schema = None
 
         try:
+
             self.logger.write(
                 LOG_TYPE.PROVIDER,
                 ProviderLogSchema(
@@ -178,13 +179,18 @@ class BaseProvider:
                     execution_chain=self._context.execution_chain[:] if self._context else [],
                 ),
             )
-        except Exception:
+        except Exception as e:
+            print(f"❌ Logging failed: {e}")
             raise
 
         self._log.debug("✅ Provider run logged")
         return output
 
     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+        if isinstance(exc, ValueError) and "Extraction failed" in str(exc):
+            return ERROR_TYPE.VALIDATION
+        if isinstance(exc, NotImplementedError):
+            return ERROR_TYPE.CONFIGURATION
         return ERROR_TYPE.RUNTIME
 
     def _infer_provider_type(self) -> PROVIDER_TYPE:

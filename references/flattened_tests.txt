@@ -1716,7 +1716,7 @@
 # 2  "cells": [
 # 3   {
 # 4    "cell_type": "code",
-# 5    "execution_count": 1,
+# 5    "execution_count": null,
 # 6    "id": "87d59942",
 # 7    "metadata": {},
 # 8    "outputs": [
@@ -2886,7 +2886,7 @@
 # 1172     "df_agent[\"snapshot_id\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"snapshot_id\"))\n",
 # 1173     "df_agent[\"summary\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"summary\"))\n",
 # 1174     "df_agent[\"code\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"code\"))\n",
-# 1175     "df_agent[\"agent_decision\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"agent_decision\"))\n",
+# 1175     "df_agent[\"decision\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"decision\"))\n",
 # 1176     "df_agent[\"conversation_log_entry\"] = df_agent[\"output_parsed\"].apply(lambda x: x.get(\"conversation_log_entry\"))\n",
 # 1177     "\n",
 # 1178     "#  Drop intermediate column\n",
@@ -2900,7 +2900,7 @@
 # 1186     "    \"latency_ms\", \"output_schema\", \"config_hash\", \"input\", \"output\",\n",
 # 1187     "    \n",
 # 1188     "    #  AgentEngineOutput fields\n",
-# 1189     "    \"agent_decision\", \"summary\", \"conversation_log_entry\",\n",
+# 1189     "    \"decision\", \"summary\", \"conversation_log_entry\",\n",
 # 1190     "    \"response\", \"code\", \"token_count\", \"cost_usd\", \"snapshot_id\"\n",
 # 1191     "]\n",
 # 1192     "\n",

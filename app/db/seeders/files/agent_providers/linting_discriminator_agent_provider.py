@@ -7,23 +7,23 @@ from app.enums.fsm_enums import DECISION_TYPE
 from app.enums.logging_enums import RunContext
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
-from app.utilities.metadata.snapshots.snapshot_reader import read_latest_snapshot
 from app.utilities.diff_utils import summarize_diff
+from app.utilities.metadata.snapshots.snapshot_archive import SnapshotArchive
 
 LINTING_PASS_THRESHOLD = 0.85
 
 class LintingDiscriminatorAgentProvider(AgentProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
-
-        snapshot = read_latest_snapshot(session_id=self._session_id)
+        snapshot = SnapshotArchive(self._engine).read_latest(session_id=self._session_id)
 
         if not snapshot:
+            full_log = "No snapshot found."
             return AgentOutputSchema(
                 decision=DECISION_TYPE.REJECTED,
-                log="No snapshot found.",
+                log=full_log,
                 response=(
-                    "[AGENT_DECISION]reject[/AGENT_DECISION]\n"
-                    "[CONVERSATION_LOG_ENTRY]No snapshot found.[/CONVERSATION_LOG_ENTRY]"
+                    f"[AGENT_DECISION]reject[/AGENT_DECISION]\n"
+                    f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
                 ),
                 file_path=None,
                 score=None
@@ -54,49 +54,43 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
 
         if before_code == after_code:
             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-            log_msg = (
+            full_log = (
                 "No meaningful change, but score already passing."
                 if decision == DECISION_TYPE.ACCEPTED
                 else "No meaningful change and score below threshold."
             )
             return AgentOutputSchema(
                 decision=decision,
-                log=log_msg,
+                log=full_log,
                 response=(
                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-                    f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+                    f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
                 ),
                 file_path=safe_relative(before_path),
                 score=before_score
             )
 
-        # Summarize the diff if the code has changed
         summary = summarize_diff(before_code, after_code).strip()
         if not summary:
             decision = DECISION_TYPE.ACCEPTED if before_score >= LINTING_PASS_THRESHOLD else DECISION_TYPE.REJECTED
-            log_msg = (
+            full_log = (
                 "Diff could not be summarized, but prior version passes."
                 if decision == DECISION_TYPE.ACCEPTED
                 else "Diff could not be summarized and prior version fails."
             )
             return AgentOutputSchema(
                 decision=decision,
-                log=log_msg,
+                log=full_log,
                 response=(
                     f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-                    f"[CONVERSATION_LOG_ENTRY]{log_msg}[/CONVERSATION_LOG_ENTRY]"
+                    f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
                 ),
                 file_path=safe_relative(before_path),
                 score=before_score
             )
 
-        # Inspect violations (if any)
         after_components = getattr(after_result, "components", {})
         violation_msgs = []
-
-        def append_count(name: str, val: int):
-            if val:
-                violation_msgs.append(f"{name}: {val}")
 
         def get_violations(field) -> list[str]:
             val = getattr(after_components, field, None)
@@ -111,18 +105,15 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
                 joined = "\n    - " + "\n    - ".join(msgs)
                 violation_msgs.append(f"{name}:\n{joined}")
 
-
-        
         append_messages("ruff", get_violations("ruff_violations"))
         append_messages("black", get_violations("black_violations"))
         append_messages("mypy", get_violations("mypy_violations"))
 
         violations_summary = (
-            f"\n\n⚠️ Remaining violations:\n\n" + "\n\n".join(violation_msgs)
+            f"\n\n\u26a0\ufe0f Remaining violations:\n\n" + "\n\n".join(violation_msgs)
             if violation_msgs else "No Remaining violations"
         )
 
-        # Check the scores for acceptance or improvement
         if after_score >= LINTING_PASS_THRESHOLD and after_score >= before_score:
             decision = DECISION_TYPE.ACCEPTED
             chosen_code = after_code
@@ -136,20 +127,22 @@ class LintingDiscriminatorAgentProvider(AgentProviderBase):
             chosen_code = before_code
             score = before_score
 
-        # Promote improved file to a working path (if chosen_code came from after_code)
         temp_path = Path("working_files") / f"temp_agent_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
         temp_path.parent.mkdir(parents=True, exist_ok=True)
-
         source_path = after_path if chosen_code == after_code else before_path
         shutil.copyfile(source_path, temp_path)
 
+        full_log = (
+            f"✅ Score improved from {before_score:.2f} to {after_score:.2f} and passes threshold."
+            f"{violations_summary}\n\n{summary}"
+        )
+
         return AgentOutputSchema(
             decision=decision,
-            log=summary,
+            log=full_log,
             response=(
                 f"[AGENT_DECISION]{decision}[/AGENT_DECISION]\n"
-                f"[CONVERSATION_LOG_ENTRY]✅ Score improved from {before_score:.2f} to {after_score:.2f} and passes threshold."
-                f"{violations_summary}\n\n{summary}[/CONVERSATION_LOG_ENTRY]"
+                f"[CONVERSATION_LOG_ENTRY]{full_log}[/CONVERSATION_LOG_ENTRY]"
             ),
             file_path=safe_relative(temp_path),
             score=score

@@ -1,6 +1,6 @@
 from app.enums.logging_enums import RunContext  # ✅ for type annotation
 from app.providers.prompt_provider_base import PromptProviderBase
-from app.db.schemas import PromptOutputSchema
+from app.db.schemas import AgentEngineExtraction, PromptOutputSchema
 
 class BasicPromptProvider(PromptProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> PromptOutputSchema:
@@ -15,4 +15,11 @@ class BasicPromptProvider(PromptProviderBase):
         return PromptOutputSchema(
             prompt=prompt,
             summary="Basic prompt using agent and system config"
+        )
+    
+    def _extract(self, response: str) -> AgentEngineExtraction:
+        return AgentEngineExtraction(
+            content="# no code provided",
+            decision="accept",
+            log="Basic agent executed successfully."
         )

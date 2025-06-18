@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE, TRANSITION_REASON_TYPE
-from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE
+from app.enums.logging_enums import ERROR_TYPE, PROVIDER_TYPE, RunContext
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 from app.enums.controller_enums import CONTROLLER
 from app.enums.system_enums import SYSTEM
@@ -329,9 +329,9 @@ class AgentEngineOutput(BaseModel):
     cost_usd: float
     snapshot_id: Optional[str] = None
     summary: Optional[str] = None
-    code: Optional[str] = None 
-    agent_decision: Optional[str] = None
-    conversation_log_entry: Optional[str] = None
+    content: Optional[str] = None 
+    decision: Optional[str] = None
+    log: Optional[str] = None
 
 
 class AgentOutputSchema(BaseModel):
@@ -382,6 +382,19 @@ class Snapshot(BaseModel):
     score: float
     decision: DECISION_TYPE
 
+class SnapshotContext(BaseModel):
+    context: RunContext
+    decision: str
+    log: str
+    state: str
+    agent_name: str
+    system: str
+    before_path: Path
+    after_content: str
+
+    class Config:
+        arbitrary_types_allowed = True
+
 class SystemState(BaseModel):
     system: str
     file_path: str
@@ -389,6 +402,11 @@ class SystemState(BaseModel):
     final_file: Optional[str] = None
     snapshots: List[Snapshot]
     state: Optional[str] = "active"
+
+class AgentEngineExtraction(BaseModel):
+    content: str
+    decision: str
+    log: str
 
 
 # Score Providers

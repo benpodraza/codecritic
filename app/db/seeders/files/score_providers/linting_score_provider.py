@@ -13,7 +13,7 @@ from app.db.schemas import (
     LintingScoreComponents
 )
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-from app.utilities.metadata.footer.code_annnotation_utils import split_code_and_notes
+from app.utilities.metadata.footer.code_annnotation_utils import split_content_and_notes
 
 
 class LintingScoreProvider(ScoreProviderBase):
@@ -26,7 +26,7 @@ class LintingScoreProvider(ScoreProviderBase):
         file_path = input["file_path"]
         file_path = self._make_path_from_raw(file_path)
         full_code = file_path.read_text(encoding="utf-8")
-        clean_code, _ = split_code_and_notes(full_code)
+        clean_code, _ = split_content_and_notes(full_code)
 
         stripped_path = self._write_working_copy(clean_code)
 

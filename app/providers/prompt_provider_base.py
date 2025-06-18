@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 
 from app.db.models import AgentPrompt, SystemPrompt
-from app.db.schemas import PromptOutputSchema
+from app.db.schemas import AgentEngineExtraction, PromptOutputSchema
 from app.enums.logging_enums import RunContext
 from app.providers.base_provider import BaseProvider
 from app.factories.context_provider_factory import ContextProviderFactory
@@ -27,8 +27,13 @@ class PromptProviderBase(BaseProvider):
         self._context_provider = context_provider
 
     def _run_provider(self, input: dict) -> PromptOutputSchema:
-        return self._run(input=input, context=self.fork_context())
+        result = self._run(input=input, context=self.fork_context())
+        return result
 
     @abstractmethod
     def _run(self, input: dict, context: RunContext | None = None) -> PromptOutputSchema:
+        raise NotImplementedError
+    
+    @abstractmethod
+    def _extract(self, response: str) -> AgentEngineExtraction:
         raise NotImplementedError

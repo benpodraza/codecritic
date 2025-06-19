@@ -6,6 +6,7 @@ from app.db.base import Base
 from uuid import uuid4
 
 from app.enums.agent_enums import AGENT
+from app.enums.logging_enums import PROVIDER_TYPE
 from app.enums.system_enums import SYSTEM
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -43,6 +44,7 @@ class PromptProviderConfig(Base):
     artifact_path = Column(String, nullable=False)
     config = Column(JSON, nullable=False) 
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class ToolProviderConfig(Base):
     __tablename__ = "tool_provider_config"
@@ -53,6 +55,7 @@ class ToolProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class ScoreProviderConfig(Base):
     __tablename__ = "score_provider_config" 
@@ -63,6 +66,7 @@ class ScoreProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class ContextProviderConfig(Base):
     __tablename__ = "context_provider_config" 
@@ -73,6 +77,7 @@ class ContextProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class AgentEngineProviderConfig(Base):
     __tablename__ = "agent_engine_provider_config" 
@@ -86,6 +91,7 @@ class AgentEngineProviderConfig(Base):
     cost_per_1k_tokens = Column(Float, nullable=True, default=0.0)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 
 class AgentProviderConfig(Base):
@@ -99,6 +105,7 @@ class AgentProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class StateProviderConfig(Base):
     __tablename__ = "state_provider_config"
@@ -110,6 +117,7 @@ class StateProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class SystemProviderConfig(Base):
     __tablename__ = "system_provider_config"
@@ -122,6 +130,7 @@ class SystemProviderConfig(Base):
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
     system_type = Column(String, nullable=False)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class ControllerProviderConfig(Base):
     __tablename__ = "controller_provider_config"
@@ -133,7 +142,7 @@ class ControllerProviderConfig(Base):
     config = Column(JSON, nullable=True)   
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
-
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 
 class ProgramProviderConfig(Base):
     __tablename__ = "program_provider_config"
@@ -145,6 +154,8 @@ class ProgramProviderConfig(Base):
     config = Column(JSON, nullable=True)
     artifact_path = Column(String, nullable=False)
     tags = Column(JSON, nullable=True)
+    provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+
 
 class SessionConfig(Base):
     __tablename__ = "session_config"

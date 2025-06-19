@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import StateProviderConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 from app.enums.state_enums import STATE
 from app.enums.agent_enums import AGENT
 
@@ -89,6 +90,7 @@ def seed_state_providers(db_session: Session):
             config=entry["config"],
             artifact_path=dest_filename,
             tags=entry["tags"],
+            provider_type=PROVIDER_TYPE.STATE, 
         )
 
         db_session.add(record)

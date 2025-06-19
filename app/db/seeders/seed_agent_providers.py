@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import AgentProviderConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -96,7 +97,8 @@ def seed_agent_providers(db_session: Session):
             artifact_path=dest_filename,
             tags=entry["tags"],
             config=entry["config"],
-            agent_type=entry["agent_type"]
+            agent_type=entry["agent_type"],
+            provider_type=PROVIDER_TYPE.AGENT,
         )
 
         db_session.add(config)

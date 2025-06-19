@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ControllerProviderConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 from app.enums.system_enums import SYSTEM 
 
 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
@@ -48,6 +49,7 @@ def seed_controller_providers(db_session: Session):
             config=entry["config"],
             artifact_path=dest.name,
             tags=entry["tags"],
+            provider_type=PROVIDER_TYPE.CONTROLLER,
         )
         db_session.add(rec)
     db_session.commit()

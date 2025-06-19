@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from datetime import datetime, timezone
 import hashlib
@@ -17,7 +17,7 @@ from app.enums.logging_enums import PROVIDER_TYPE, ERROR_TYPE, RunContext
 DEFAULT_MAX_RETRIES = 2
 DEFAULT_BACKOFF_SECONDS = 0.25
 
-class BaseProvider:
+class BaseProvider(ABC):
     def __init__(
         self,
         config=None,
@@ -30,6 +30,7 @@ class BaseProvider:
         self._engine = init_db(reset=False)
         self.logger = LoggingProvider()
         self._log = logging.getLogger(self.__class__.__name__)
+        self._provider_type = getattr(config, "provider_type", PROVIDER_TYPE.UNKNOWN)
 
         if self._context:
             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
@@ -85,7 +86,7 @@ class BaseProvider:
                             message=str(exc),
                             file_path=str(Path(__file__).relative_to(Path.cwd())),
                             provider_id=self._config.id if self._config else None,
-                            provider_type=self._infer_provider_type(),
+                            provider_type=self._provider_type,
                             timestamp=start_time,
                             latency_ms=latency_ms,
                             called_by_type=self._called_by_type if self._called_by_type else None,
@@ -106,7 +107,7 @@ class BaseProvider:
                             session_id=self._session_id,
                             file_log_id=self._file_log_id,
                             provider_id=self._config.id if self._config else -1,
-                            provider_type=self._infer_provider_type(),
+                            provider_type=self._provider_type,
                             input=json.dumps(input, default=str),
                             output="ERROR",  # 🚨 Clear indicator
                             output_schema=None,
@@ -162,7 +163,7 @@ class BaseProvider:
                     session_id=self._session_id,
                     file_log_id=self._file_log_id,
                     provider_id=self._config.id if self._config else -1,
-                    provider_type=self._infer_provider_type(),
+                    provider_type=self._provider_type,
                     input=input_str,
                     output=output_str,
                     output_schema=output_schema,
@@ -187,35 +188,20 @@ class BaseProvider:
         return output
 
     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-        if isinstance(exc, ValueError) and "Extraction failed" in str(exc):
-            return ERROR_TYPE.VALIDATION
-        if isinstance(exc, NotImplementedError):
+        msg = str(exc).lower()
+        if "timeout" in msg or "timed out" in msg:
+            return ERROR_TYPE.TIMEOUT
+        elif "auth" in msg or "unauthorized" in msg or "forbidden" in msg:
+            return ERROR_TYPE.AUTHENTICATION
+        elif "connect" in msg or "unreachable" in msg or "network" in msg:
+            return ERROR_TYPE.CONNECTION
+        elif "config" in msg or "invalid argument" in msg:
             return ERROR_TYPE.CONFIGURATION
-        return ERROR_TYPE.RUNTIME
-
-    def _infer_provider_type(self) -> PROVIDER_TYPE:
-        cls = self.__class__.__name__.lower()
-        if "tool" in cls:
-            return PROVIDER_TYPE.TOOL
-        if "engine" in cls:
-            return PROVIDER_TYPE.AGENT_ENGINE
-        if "agent" in cls:
-            return PROVIDER_TYPE.AGENT
-        if "prompt" in cls:
-            return PROVIDER_TYPE.PROMPT
-        if "context" in cls:
-            return PROVIDER_TYPE.CONTEXT
-        if "score" in cls:
-            return PROVIDER_TYPE.SCORE
-        if "state" in cls:
-            return PROVIDER_TYPE.STATE
-        if "system" in cls:
-            return PROVIDER_TYPE.SYSTEM
-        if "controller" in cls:
-            return PROVIDER_TYPE.CONTROLLER
-        if "program" in cls:
-            return PROVIDER_TYPE.PROGRAM
-        return PROVIDER_TYPE.UNKNOWN
+        elif "validation" in msg or "schema" in msg:
+            return ERROR_TYPE.VALIDATION
+        elif "runtime" in msg or "execution failed" in msg:
+            return ERROR_TYPE.RUNTIME
+        return ERROR_TYPE.UNKNOWN
 
     def _compute_config_hash(self, config: dict | None) -> str:
         """
@@ -228,26 +214,9 @@ class BaseProvider:
         config_str = json.dumps(components, sort_keys=True)
         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
 
-    def propagate_file_log_id(self, file_log_id: str):
-        self._file_log_id = file_log_id
-
-        for attr_name in dir(self):
-            attr = getattr(self, attr_name, None)
-
-            if isinstance(attr, BaseProvider):
-                attr.propagate_file_log_id(file_log_id)
-
-            elif isinstance(attr, list):
-                for item in attr:
-                    if isinstance(item, BaseProvider):
-                        item.propagate_file_log_id(file_log_id)
-
-            elif isinstance(attr, dict):
-                for item in attr.values():
-                    if isinstance(item, BaseProvider):
-                        item.propagate_file_log_id(file_log_id)
-
     def fork_context(self) -> RunContext:
         forked = deepcopy(self._context or RunContext())
         forked.parent_id = self._run_id
+        forked.called_by_type = self._provider_type
+        forked.called_by_id = getattr(self._config, "id", None)
         return forked

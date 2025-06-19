@@ -3,7 +3,8 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ProgramProviderConfig
-from app.enums.controller_enums import CONTROLLER  # ✅ Import your FSM state enum
+from app.enums.controller_enums import CONTROLLER
+from app.enums.logging_enums import PROVIDER_TYPE  # ✅ Import your FSM state enum
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
@@ -51,6 +52,7 @@ def seed_program_providers(db_session: Session):
             config        = entry["config"],
             artifact_path = dst.name,
             tags          = entry["tags"],
+            provider_type = PROVIDER_TYPE.PROGRAM,
         )
         db_session.add(record)
 

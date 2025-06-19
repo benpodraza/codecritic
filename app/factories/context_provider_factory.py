@@ -19,10 +19,10 @@ class ContextProviderFactory(BaseProviderFactory):
         from app.factories.score_provider_factory import ScoreProviderFactory
         from app.factories.tool_provider_factory import ToolProviderFactory
 
-        instance = super().create(id, context=context)
-        components = instance._components  # injected by BaseProviderFactory
-        provider_id = instance._config.id
-        provider_type = instance._infer_provider_type()
+        preload_instance = super().create(id, context=context)
+        components = preload_instance._components  # injected by BaseProviderFactory
+        provider_id = preload_instance._config.id
+        provider_type = preload_instance._provider_type
 
         # ─── Child context for subproviders ─────────────────────────────
         child_context = RunContext(
@@ -30,7 +30,7 @@ class ContextProviderFactory(BaseProviderFactory):
             called_by_id=provider_id,
             session_id=context.session_id,
             file_log_id=context.file_log_id,
-            parent_id=instance._run_id,
+            parent_id=preload_instance._run_id,
             execution_chain=context.execution_chain.copy()
         )
 
@@ -40,15 +40,15 @@ class ContextProviderFactory(BaseProviderFactory):
                     score_id,
                     context=child_context
                 )
-                instance.set_score_provider(score)
+                preload_instance.set_score_provider(score)
                 if hasattr(score, "set_context_provider"):
-                    score.set_context_provider(instance)
+                    score.set_context_provider(preload_instance)
 
         for _, tool_id in (components.get("tool_provider_ids") or {}).items():
             tool = ToolProviderFactory.create(
                 tool_id,
                 context=child_context
             )
-            instance.set_tool_provider(tool)
+            preload_instance.set_tool_provider(tool)
 
-        return instance
+        return preload_instance

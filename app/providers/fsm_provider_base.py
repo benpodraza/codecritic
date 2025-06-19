@@ -70,7 +70,7 @@ class FSMProviderBase(BaseProvider):
             StateTransitionLogSchema(
                 session_id=self._session_id,
                 file_log_id=self._file_log_id, 
-                entity_type=self._infer_provider_type(),
+                entity_type=self._provider_type,
                 entity_id=self._config.id,
                 from_state=state.get("state"),
                 to_state=next_state.get("state", "unknown"),

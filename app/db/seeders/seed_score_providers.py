@@ -4,6 +4,7 @@ import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ScoreProviderConfig
 from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 
 CURRENT_DIR = Path(__file__).resolve().parent
 SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
@@ -73,7 +74,8 @@ def seed_score_providers(db_session: Session):
             description=entry["description"],
             config=entry["config"],
             artifact_path=dest_filename,
-            tags=entry["tags"]
+            tags=entry["tags"],
+            provider_type=PROVIDER_TYPE.SCORE,
         )
 
         db_session.add(score)

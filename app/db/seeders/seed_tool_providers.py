@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ToolProviderConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 
 CURRENT_DIR = Path(__file__).resolve().parent
 SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
@@ -81,7 +82,8 @@ def seed_tool_providers(db_session: Session):
             name=entry["name"],
             description=entry["description"],
             config=entry["config"],
-            artifact_path=dest_filename
+            artifact_path=dest_filename,
+            provider_type=PROVIDER_TYPE.TOOL,
         )
 
         db_session.add(tool)

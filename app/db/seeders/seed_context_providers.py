@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 from sqlalchemy.orm import Session
 from app.db.models import ContextProviderConfig
+from app.enums.logging_enums import PROVIDER_TYPE
 
 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/context_providers"
 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
@@ -57,7 +58,8 @@ def seed_context_providers(db_session: Session):
             description=entry["description"],
             artifact_path=dest_filename,
             tags=entry["tags"],
-            config=entry["config"]
+            config=entry["config"],
+            provider_type=PROVIDER_TYPE.CONTEXT,
         )
 
         db_session.add(config)

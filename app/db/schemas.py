@@ -54,6 +54,7 @@ class PromptProviderConfig(BaseModel):
     artifact_path: Path
     config: Optional[Dict[str, Any]] = None
     tags: Optional[List[str]] = Field(default_factory=list)
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.PROMPT
 
     @field_validator("artifact_path")
     @classmethod
@@ -70,6 +71,7 @@ class ToolProviderConfig(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[List[str]] = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.TOOL
 
     @field_validator("artifact_path")
     @classmethod
@@ -87,6 +89,7 @@ class ScoreProviderConfig(BaseModel):
     artifact_path: Optional[Path] = None
     tags: Optional[List[str]] = None
     table_name: str = "score_provider"
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.SCORE
 
     @field_validator("artifact_path")
     @classmethod
@@ -107,6 +110,7 @@ class AgentEngineProviderConfig(BaseModel):
     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
     artifact_path: Path
     tags: Optional[List[str]] = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.AGENT_ENGINE
 
     @field_validator("artifact_path")
     @classmethod
@@ -125,6 +129,7 @@ class AgentProviderConfigSchema(BaseModel):
     artifact_path: Path
     tags: Optional[list[str]] = None
     agent_type: AGENT = AGENT.UNKNOWN 
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.AGENT
 
     @field_validator("artifact_path")
     @classmethod
@@ -141,6 +146,7 @@ class StateProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[list[str]] = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.STATE
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:
@@ -157,6 +163,7 @@ class SystemProviderConfigSchema(BaseModel):
     artifact_path: Path
     tags: Optional[list[str]] = None
     system_type: SYSTEM
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.SYSTEM
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:
@@ -172,6 +179,7 @@ class ControllerProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[list[str]] = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.CONTROLLER
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:
@@ -187,6 +195,7 @@ class ProgramProviderConfigSchema(BaseModel):
     config: Optional[Dict[str, Any]] = None
     artifact_path: Path
     tags: Optional[List[str]] = None
+    provider_type: PROVIDER_TYPE = PROVIDER_TYPE.PROGRAM
 
     @classmethod
     def validate_artifact_path(cls, v: Path) -> Path:

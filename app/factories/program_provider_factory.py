@@ -21,10 +21,10 @@ class ProgramProviderFactory(BaseProviderFactory):
         from app.factories.tool_provider_factory import ToolProviderFactory
         from app.factories.controller_provider_factory import ControllerProviderFactory
 
-        inst = super().create(id, context=context)
-        components = inst._components  # structured access injected by BaseProviderFactory
-        provider_id = inst._config.id
-        provider_type = inst._infer_provider_type()
+        preload_instance = super().create(id, context=context)
+        components = preload_instance._components  # structured access injected by BaseProviderFactory
+        provider_id = preload_instance._config.id
+        provider_type = preload_instance._provider_type
 
         # ─── Child context ─────────────────────────────────────────────
         child_context = RunContext(
@@ -32,7 +32,7 @@ class ProgramProviderFactory(BaseProviderFactory):
             called_by_id=provider_id,
             session_id=context.session_id,
             file_log_id=context.file_log_id,
-            parent_id=inst._run_id,
+            parent_id=preload_instance._run_id,
             execution_chain=context.execution_chain.copy()
         )
 
@@ -68,9 +68,9 @@ class ProgramProviderFactory(BaseProviderFactory):
         }
 
         # ─── Final instantiation ───────────────────────────────────────
-        cls_type = type(inst)
+        cls_type = type(preload_instance)
         instance = cls_type(
-            config=inst._config,
+            config=preload_instance._config,
             context_provider=context_provider,
             score_provider=score_provider,
             tool_providers=tool_providers,

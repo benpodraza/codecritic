@@ -78,282 +78,293 @@
 # 6 from uuid import uuid4
 # 7 
 # 8 from app.enums.agent_enums import AGENT
-# 9 from app.enums.system_enums import SYSTEM
-# 10 from sqlalchemy.orm import Mapped, mapped_column
-# 11 
-# 12 # #  PROMPT CONFIGS
-# 13 
-# 14 class AgentPrompt(Base):
-# 15     __tablename__ = 'agent_prompt'
-# 16     id = Column(Integer, primary_key=True, index=True)
-# 17     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 18     name = Column(String, nullable=False)
-# 19     description = Column(String)
-# 20     artifact_path = Column(String, nullable=False)
-# 21     tags = Column(JSON, nullable=True)
-# 22 
-# 23 class SystemPrompt(Base):
-# 24     __tablename__ = 'system_prompt'
-# 25     id = Column(Integer, primary_key=True, index=True)
-# 26     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 27     name = Column(String, nullable=False)
-# 28     system_type = Column(Enum(SYSTEM), nullable=False) 
-# 29     description = Column(String)
-# 30     artifact_path = Column(String, nullable=False)
-# 31     tags = Column(JSON, nullable=True)
-# 32 
+# 9 from app.enums.logging_enums import PROVIDER_TYPE
+# 10 from app.enums.system_enums import SYSTEM
+# 11 from sqlalchemy.orm import Mapped, mapped_column
+# 12 
+# 13 # #  PROMPT CONFIGS
+# 14 
+# 15 class AgentPrompt(Base):
+# 16     __tablename__ = 'agent_prompt'
+# 17     id = Column(Integer, primary_key=True, index=True)
+# 18     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 19     name = Column(String, nullable=False)
+# 20     description = Column(String)
+# 21     artifact_path = Column(String, nullable=False)
+# 22     tags = Column(JSON, nullable=True)
+# 23 
+# 24 class SystemPrompt(Base):
+# 25     __tablename__ = 'system_prompt'
+# 26     id = Column(Integer, primary_key=True, index=True)
+# 27     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 28     name = Column(String, nullable=False)
+# 29     system_type = Column(Enum(SYSTEM), nullable=False) 
+# 30     description = Column(String)
+# 31     artifact_path = Column(String, nullable=False)
+# 32     tags = Column(JSON, nullable=True)
 # 33 
-# 34 # #  PROVIDER CONFGIS
-# 35 
-# 36 class PromptProviderConfig(Base):
-# 37     __tablename__ = "prompt_provider_config"
-# 38 
-# 39     id = Column(Integer, primary_key=True, index=True)
-# 40     guid = Column(String, unique=True, nullable=False)
-# 41     name = Column(String, nullable=False)
-# 42     description = Column(String, nullable=True)
-# 43     artifact_path = Column(String, nullable=False)
-# 44     config = Column(JSON, nullable=False) 
-# 45     tags = Column(JSON, nullable=True)
-# 46 
-# 47 class ToolProviderConfig(Base):
-# 48     __tablename__ = "tool_provider_config"
-# 49     id = Column(Integer, primary_key=True)
-# 50     guid = Column(String, unique=True, nullable=False)
-# 51     name = Column(String, nullable=False)
-# 52     description = Column(String, nullable=True)
-# 53     config = Column(JSON, nullable=True)
-# 54     artifact_path = Column(String, nullable=False)
-# 55     tags = Column(JSON, nullable=True)
-# 56 
-# 57 class ScoreProviderConfig(Base):
-# 58     __tablename__ = "score_provider_config" 
-# 59     id = Column(Integer, primary_key=True)
-# 60     guid = Column(String, unique=True, nullable=False)
-# 61     name = Column(String, nullable=False)
-# 62     description = Column(String, nullable=True)
-# 63     config = Column(JSON, nullable=True)
-# 64     artifact_path = Column(String, nullable=False)
-# 65     tags = Column(JSON, nullable=True)
-# 66 
-# 67 class ContextProviderConfig(Base):
-# 68     __tablename__ = "context_provider_config" 
-# 69     id = Column(Integer, primary_key=True)
-# 70     guid = Column(String, unique=True, nullable=False)
-# 71     name = Column(String, nullable=False)
-# 72     description = Column(String, nullable=True)
-# 73     config = Column(JSON, nullable=True)
-# 74     artifact_path = Column(String, nullable=False)
-# 75     tags = Column(JSON, nullable=True)
-# 76 
-# 77 class AgentEngineProviderConfig(Base):
-# 78     __tablename__ = "agent_engine_provider_config" 
-# 79 
-# 80     id = Column(Integer, primary_key=True)
-# 81     guid = Column(String, unique=True, nullable=False)
-# 82     name = Column(String, nullable=False)
-# 83     description = Column(String, nullable=True)
-# 84     model= Column(String, nullable=False)
-# 85     config = Column(JSON, nullable=True)
-# 86     cost_per_1k_tokens = Column(Float, nullable=True, default=0.0)
-# 87     artifact_path = Column(String, nullable=False)
-# 88     tags = Column(JSON, nullable=True)
-# 89 
-# 90 
-# 91 class AgentProviderConfig(Base):
-# 92     __tablename__ = "agent_provider_config" 
-# 93 
-# 94     id = Column(Integer, primary_key=True)
-# 95     guid = Column(String, unique=True, nullable=False)
-# 96     name = Column(String, nullable=False)
-# 97     description = Column(String, nullable=True)
-# 98     agent_type = Column(Enum(AGENT), nullable=False) 
-# 99     config = Column(JSON, nullable=True)
-# 100     artifact_path = Column(String, nullable=False)
-# 101     tags = Column(JSON, nullable=True)
-# 102 
-# 103 class StateProviderConfig(Base):
-# 104     __tablename__ = "state_provider_config"
-# 105 
-# 106     id = Column(Integer, primary_key=True)
-# 107     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 108     name = Column(String, nullable=False)
-# 109     description = Column(String, nullable=True)
-# 110     config = Column(JSON, nullable=True)
-# 111     artifact_path = Column(String, nullable=False)
-# 112     tags = Column(JSON, nullable=True)
-# 113 
-# 114 class SystemProviderConfig(Base):
-# 115     __tablename__ = "system_provider_config"
-# 116 
-# 117     id = Column(Integer, primary_key=True)
-# 118     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 119     name = Column(String, nullable=False)
-# 120     description = Column(String, nullable=True)
-# 121     config = Column(JSON, nullable=True)
-# 122     artifact_path = Column(String, nullable=False)
-# 123     tags = Column(JSON, nullable=True)
-# 124     system_type = Column(String, nullable=False)
-# 125 
-# 126 class ControllerProviderConfig(Base):
-# 127     __tablename__ = "controller_provider_config"
-# 128 
-# 129     id = Column(Integer, primary_key=True)
-# 130     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 131     name = Column(String, nullable=False)
-# 132     description = Column(String, nullable=True)
-# 133     config = Column(JSON, nullable=True)   
-# 134     artifact_path = Column(String, nullable=False)
-# 135     tags = Column(JSON, nullable=True)
-# 136 
+# 34 
+# 35 # #  PROVIDER CONFGIS
+# 36 
+# 37 class PromptProviderConfig(Base):
+# 38     __tablename__ = "prompt_provider_config"
+# 39 
+# 40     id = Column(Integer, primary_key=True, index=True)
+# 41     guid = Column(String, unique=True, nullable=False)
+# 42     name = Column(String, nullable=False)
+# 43     description = Column(String, nullable=True)
+# 44     artifact_path = Column(String, nullable=False)
+# 45     config = Column(JSON, nullable=False) 
+# 46     tags = Column(JSON, nullable=True)
+# 47     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 48 
+# 49 class ToolProviderConfig(Base):
+# 50     __tablename__ = "tool_provider_config"
+# 51     id = Column(Integer, primary_key=True)
+# 52     guid = Column(String, unique=True, nullable=False)
+# 53     name = Column(String, nullable=False)
+# 54     description = Column(String, nullable=True)
+# 55     config = Column(JSON, nullable=True)
+# 56     artifact_path = Column(String, nullable=False)
+# 57     tags = Column(JSON, nullable=True)
+# 58     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 59 
+# 60 class ScoreProviderConfig(Base):
+# 61     __tablename__ = "score_provider_config" 
+# 62     id = Column(Integer, primary_key=True)
+# 63     guid = Column(String, unique=True, nullable=False)
+# 64     name = Column(String, nullable=False)
+# 65     description = Column(String, nullable=True)
+# 66     config = Column(JSON, nullable=True)
+# 67     artifact_path = Column(String, nullable=False)
+# 68     tags = Column(JSON, nullable=True)
+# 69     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 70 
+# 71 class ContextProviderConfig(Base):
+# 72     __tablename__ = "context_provider_config" 
+# 73     id = Column(Integer, primary_key=True)
+# 74     guid = Column(String, unique=True, nullable=False)
+# 75     name = Column(String, nullable=False)
+# 76     description = Column(String, nullable=True)
+# 77     config = Column(JSON, nullable=True)
+# 78     artifact_path = Column(String, nullable=False)
+# 79     tags = Column(JSON, nullable=True)
+# 80     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 81 
+# 82 class AgentEngineProviderConfig(Base):
+# 83     __tablename__ = "agent_engine_provider_config" 
+# 84 
+# 85     id = Column(Integer, primary_key=True)
+# 86     guid = Column(String, unique=True, nullable=False)
+# 87     name = Column(String, nullable=False)
+# 88     description = Column(String, nullable=True)
+# 89     model= Column(String, nullable=False)
+# 90     config = Column(JSON, nullable=True)
+# 91     cost_per_1k_tokens = Column(Float, nullable=True, default=0.0)
+# 92     artifact_path = Column(String, nullable=False)
+# 93     tags = Column(JSON, nullable=True)
+# 94     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 95 
+# 96 
+# 97 class AgentProviderConfig(Base):
+# 98     __tablename__ = "agent_provider_config" 
+# 99 
+# 100     id = Column(Integer, primary_key=True)
+# 101     guid = Column(String, unique=True, nullable=False)
+# 102     name = Column(String, nullable=False)
+# 103     description = Column(String, nullable=True)
+# 104     agent_type = Column(Enum(AGENT), nullable=False) 
+# 105     config = Column(JSON, nullable=True)
+# 106     artifact_path = Column(String, nullable=False)
+# 107     tags = Column(JSON, nullable=True)
+# 108     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 109 
+# 110 class StateProviderConfig(Base):
+# 111     __tablename__ = "state_provider_config"
+# 112 
+# 113     id = Column(Integer, primary_key=True)
+# 114     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 115     name = Column(String, nullable=False)
+# 116     description = Column(String, nullable=True)
+# 117     config = Column(JSON, nullable=True)
+# 118     artifact_path = Column(String, nullable=False)
+# 119     tags = Column(JSON, nullable=True)
+# 120     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 121 
+# 122 class SystemProviderConfig(Base):
+# 123     __tablename__ = "system_provider_config"
+# 124 
+# 125     id = Column(Integer, primary_key=True)
+# 126     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 127     name = Column(String, nullable=False)
+# 128     description = Column(String, nullable=True)
+# 129     config = Column(JSON, nullable=True)
+# 130     artifact_path = Column(String, nullable=False)
+# 131     tags = Column(JSON, nullable=True)
+# 132     system_type = Column(String, nullable=False)
+# 133     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 134 
+# 135 class ControllerProviderConfig(Base):
+# 136     __tablename__ = "controller_provider_config"
 # 137 
-# 138 class ProgramProviderConfig(Base):
-# 139     __tablename__ = "program_provider_config"
-# 140 
-# 141     id = Column(Integer, primary_key=True)
-# 142     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
-# 143     name = Column(String, nullable=False)
-# 144     description = Column(String, nullable=True)
-# 145     config = Column(JSON, nullable=True)
-# 146     artifact_path = Column(String, nullable=False)
-# 147     tags = Column(JSON, nullable=True)
-# 148 
-# 149 class SessionConfig(Base):
-# 150     __tablename__ = "session_config"
-# 151 
-# 152     id = Column(Integer, primary_key=True)
-# 153     program_provider_id = Column(String, unique=True, nullable=False)
-# 154     name = Column(String, nullable=False)
-# 155     description = Column(String, nullable=True)
-# 156     environment_type = Column(String, nullable=False)  #  e.g., "experiment", "live", "staging"
-# 157     tags = Column(JSON, nullable=True)
+# 138     id = Column(Integer, primary_key=True)
+# 139     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 140     name = Column(String, nullable=False)
+# 141     description = Column(String, nullable=True)
+# 142     config = Column(JSON, nullable=True)   
+# 143     artifact_path = Column(String, nullable=False)
+# 144     tags = Column(JSON, nullable=True)
+# 145     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
+# 146 
+# 147 class ProgramProviderConfig(Base):
+# 148     __tablename__ = "program_provider_config"
+# 149 
+# 150     id = Column(Integer, primary_key=True)
+# 151     guid = Column(TEXT, unique=True, default=lambda: str(uuid4()))
+# 152     name = Column(String, nullable=False)
+# 153     description = Column(String, nullable=True)
+# 154     config = Column(JSON, nullable=True)
+# 155     artifact_path = Column(String, nullable=False)
+# 156     tags = Column(JSON, nullable=True)
+# 157     provider_type = Column(Enum(PROVIDER_TYPE), nullable=False, default=PROVIDER_TYPE.AGENT)
 # 158 
 # 159 
-# 160 # #  LOGS
-# 161 
-# 162 class ProviderLog(Base):
-# 163     __tablename__ = "provider_log"
-# 164 
-# 165     id = Column(Integer, primary_key=True, index=True)
-# 166     session_id = Column(String, nullable=False)
-# 167     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 168     provider_id = Column(Integer, nullable=False)
-# 169     provider_type = Column(String, nullable=False)
-# 170     input = Column(String, nullable=True)
-# 171     output = Column(String, nullable=True)
-# 172     output_schema = Column(String, nullable=True) 
-# 173     latency_ms = Column(Integer, nullable=True)   
-# 174     config_hash = Column(String, nullable=True)   
-# 175     file_name = Column(String, nullable=True)
-# 176     called_by_type = Column(String, nullable=True)
-# 177     called_by_id = Column(Integer, nullable=True)
-# 178     run_id = Column(TEXT, nullable=False, index=True)
-# 179     file_log_id = Column(TEXT, nullable=True)
-# 180     parent_id = Column(TEXT, nullable=True)
-# 181     execution_chain = Column(JSON, nullable=False, default=list)
-# 182 
-# 183     
-# 184 class StateTransitionLog(Base):
-# 185     __tablename__ = "state_transition_log"
-# 186 
-# 187     id = Column(Integer, primary_key=True, index=True)
-# 188     session_id = Column(String, nullable=False)
-# 189     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 190     entity_type = Column(String, nullable=False)
-# 191     entity_id = Column(Integer, nullable=False)
-# 192     from_state = Column(String, nullable=False)
-# 193     to_state = Column(String, nullable=False)
-# 194     reason = Column(String, nullable=True)
-# 195     decision = Column(String, nullable=True)    
-# 196     triggered_by = Column(String, nullable=True)   
-# 197     step = Column(Integer, nullable=True)   
-# 198     transition_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-# 199     input_snapshot_id = Column(String, nullable=True)
-# 200     output_snapshot_id = Column(String, nullable=True)
-# 201     run_id = Column(TEXT, nullable=False, index=True)
-# 202     called_by_type = Column(String, nullable=True)
-# 203     called_by_id = Column(Integer, nullable=True) 
-# 204     file_log_id = Column(TEXT, nullable=True)
-# 205     parent_id = Column(TEXT, nullable=True)
-# 206     execution_chain = Column(JSON, nullable=False, default=list)
-# 207 
-# 208 class AgentConversationLog(Base):
-# 209     __tablename__ = "agent_conversation_log"
-# 210 
-# 211     id = Column(Integer, primary_key=True, index=True)
-# 212     session_id = Column(String, nullable=False)
-# 213     agent_provider_config_id = Column(Integer, nullable=False)
-# 214     agent_type = Column(String, nullable=False) 
-# 215     content = Column(String, nullable=False)
-# 216     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 217     run_id = Column(TEXT, nullable=False, index=True)
-# 218     file_log_id = Column(TEXT, nullable=True)
-# 219     
-# 220 
-# 221 class ErrorLog(Base):
-# 222     __tablename__ = "error_log"
-# 223 
-# 224     id = Column(Integer, primary_key=True, index=True)
-# 225     session_id = Column(String, nullable=False)
-# 226     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 227     latency_ms = Column(Integer, nullable=True) 
-# 228     provider_id = Column(Integer, nullable=True)
-# 229     provider_type = Column(String, nullable=True)
-# 230     error_type = Column(String, nullable=False)
-# 231     message = Column(String, nullable=False)
-# 232     file_path = Column(String, nullable=True)
-# 233     called_by_type = Column(String, nullable=True)
-# 234     called_by_id = Column(Integer, nullable=True)
-# 235     run_id = Column(TEXT, nullable=False, index=True)
-# 236     file_log_id = Column(TEXT, nullable=True)
-# 237     parent_id = Column(TEXT, nullable=True)
-# 238     execution_chain = Column(JSON, nullable=False, default=list)
-# 239 
-# 240 class SnapshotMetrics(Base):
-# 241     __tablename__ = "snapshot_metrics"
-# 242 
-# 243     id = Column(Integer, primary_key=True)
-# 244     session_id = Column(String, nullable=False)
-# 245     snapshot_id = Column(String, nullable=False)
-# 246     system = Column(String, nullable=True)
-# 247     agent = Column(String, nullable=True)
-# 248     agent_type = Column(Enum(AGENT), nullable=True)
-# 249     agent_id = Column(Integer, nullable=True)
-# 250     score = Column(Float, nullable=True)
-# 251     state = Column(String, nullable=True)
-# 252     decision = Column(String, nullable=True)
-# 253     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
-# 254     file_log_id = Column(TEXT, nullable=True)
-# 255 
-# 256     #  structural metrics
-# 257     line_count_before = Column(Integer)
-# 258     line_count_after = Column(Integer)
-# 259     function_count_before = Column(Integer)
-# 260     function_count_after = Column(Integer)
-# 261     symbol_count_before = Column(Integer)
-# 262     symbol_count_after = Column(Integer)
-# 263     branch_count_before = Column(Integer)
-# 264     branch_count_after = Column(Integer)
-# 265     comment_count_before = Column(Integer)
-# 266     comment_count_after = Column(Integer)
-# 267 
-# 268     #  deltas
-# 269     line_count_delta = Column(Integer)
-# 270     function_count_delta = Column(Integer)
-# 271     symbol_count_delta = Column(Integer)
-# 272     branch_count_delta = Column(Integer)
-# 273     comment_count_delta = Column(Integer)
-# 274 
-# 275 
-# 276 class FileLog(Base):
-# 277     __tablename__ = "file_log"
+# 160 class SessionConfig(Base):
+# 161     __tablename__ = "session_config"
+# 162 
+# 163     id = Column(Integer, primary_key=True)
+# 164     program_provider_id = Column(String, unique=True, nullable=False)
+# 165     name = Column(String, nullable=False)
+# 166     description = Column(String, nullable=True)
+# 167     environment_type = Column(String, nullable=False)  #  e.g., "experiment", "live", "staging"
+# 168     tags = Column(JSON, nullable=True)
+# 169 
+# 170 
+# 171 # #  LOGS
+# 172 
+# 173 class ProviderLog(Base):
+# 174     __tablename__ = "provider_log"
+# 175 
+# 176     id = Column(Integer, primary_key=True, index=True)
+# 177     session_id = Column(String, nullable=False)
+# 178     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 179     provider_id = Column(Integer, nullable=False)
+# 180     provider_type = Column(String, nullable=False)
+# 181     input = Column(String, nullable=True)
+# 182     output = Column(String, nullable=True)
+# 183     output_schema = Column(String, nullable=True) 
+# 184     latency_ms = Column(Integer, nullable=True)   
+# 185     config_hash = Column(String, nullable=True)   
+# 186     file_name = Column(String, nullable=True)
+# 187     called_by_type = Column(String, nullable=True)
+# 188     called_by_id = Column(Integer, nullable=True)
+# 189     run_id = Column(TEXT, nullable=False, index=True)
+# 190     file_log_id = Column(TEXT, nullable=True)
+# 191     parent_id = Column(TEXT, nullable=True)
+# 192     execution_chain = Column(JSON, nullable=False, default=list)
+# 193 
+# 194     
+# 195 class StateTransitionLog(Base):
+# 196     __tablename__ = "state_transition_log"
+# 197 
+# 198     id = Column(Integer, primary_key=True, index=True)
+# 199     session_id = Column(String, nullable=False)
+# 200     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 201     entity_type = Column(String, nullable=False)
+# 202     entity_id = Column(Integer, nullable=False)
+# 203     from_state = Column(String, nullable=False)
+# 204     to_state = Column(String, nullable=False)
+# 205     reason = Column(String, nullable=True)
+# 206     decision = Column(String, nullable=True)    
+# 207     triggered_by = Column(String, nullable=True)   
+# 208     step = Column(Integer, nullable=True)   
+# 209     transition_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+# 210     input_snapshot_id = Column(String, nullable=True)
+# 211     output_snapshot_id = Column(String, nullable=True)
+# 212     run_id = Column(TEXT, nullable=False, index=True)
+# 213     called_by_type = Column(String, nullable=True)
+# 214     called_by_id = Column(Integer, nullable=True) 
+# 215     file_log_id = Column(TEXT, nullable=True)
+# 216     parent_id = Column(TEXT, nullable=True)
+# 217     execution_chain = Column(JSON, nullable=False, default=list)
+# 218 
+# 219 class AgentConversationLog(Base):
+# 220     __tablename__ = "agent_conversation_log"
+# 221 
+# 222     id = Column(Integer, primary_key=True, index=True)
+# 223     session_id = Column(String, nullable=False)
+# 224     agent_provider_config_id = Column(Integer, nullable=False)
+# 225     agent_type = Column(String, nullable=False) 
+# 226     content = Column(String, nullable=False)
+# 227     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 228     run_id = Column(TEXT, nullable=False, index=True)
+# 229     file_log_id = Column(TEXT, nullable=True)
+# 230     
+# 231 
+# 232 class ErrorLog(Base):
+# 233     __tablename__ = "error_log"
+# 234 
+# 235     id = Column(Integer, primary_key=True, index=True)
+# 236     session_id = Column(String, nullable=False)
+# 237     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 238     latency_ms = Column(Integer, nullable=True) 
+# 239     provider_id = Column(Integer, nullable=True)
+# 240     provider_type = Column(String, nullable=True)
+# 241     error_type = Column(String, nullable=False)
+# 242     message = Column(String, nullable=False)
+# 243     file_path = Column(String, nullable=True)
+# 244     called_by_type = Column(String, nullable=True)
+# 245     called_by_id = Column(Integer, nullable=True)
+# 246     run_id = Column(TEXT, nullable=False, index=True)
+# 247     file_log_id = Column(TEXT, nullable=True)
+# 248     parent_id = Column(TEXT, nullable=True)
+# 249     execution_chain = Column(JSON, nullable=False, default=list)
+# 250 
+# 251 class SnapshotMetrics(Base):
+# 252     __tablename__ = "snapshot_metrics"
+# 253 
+# 254     id = Column(Integer, primary_key=True)
+# 255     session_id = Column(String, nullable=False)
+# 256     snapshot_id = Column(String, nullable=False)
+# 257     system = Column(String, nullable=True)
+# 258     agent = Column(String, nullable=True)
+# 259     agent_type = Column(Enum(AGENT), nullable=True)
+# 260     agent_id = Column(Integer, nullable=True)
+# 261     score = Column(Float, nullable=True)
+# 262     state = Column(String, nullable=True)
+# 263     decision = Column(String, nullable=True)
+# 264     timestamp = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+# 265     file_log_id = Column(TEXT, nullable=True)
+# 266 
+# 267     #  structural metrics
+# 268     line_count_before = Column(Integer)
+# 269     line_count_after = Column(Integer)
+# 270     function_count_before = Column(Integer)
+# 271     function_count_after = Column(Integer)
+# 272     symbol_count_before = Column(Integer)
+# 273     symbol_count_after = Column(Integer)
+# 274     branch_count_before = Column(Integer)
+# 275     branch_count_after = Column(Integer)
+# 276     comment_count_before = Column(Integer)
+# 277     comment_count_after = Column(Integer)
 # 278 
-# 279     id = Column(Integer, primary_key=True, autoincrement=True)
-# 280     session_id = Column(String, nullable=False)
-# 281     file_name = Column(String, nullable=False)
-# 282     original_path = Column(String)
-# 283     length_bytes = Column(Integer)
-# 284     created_at = Column(DateTime, default=datetime.now(timezone.utc))
+# 279     #  deltas
+# 280     line_count_delta = Column(Integer)
+# 281     function_count_delta = Column(Integer)
+# 282     symbol_count_delta = Column(Integer)
+# 283     branch_count_delta = Column(Integer)
+# 284     comment_count_delta = Column(Integer)
+# 285 
+# 286 
+# 287 class FileLog(Base):
+# 288     __tablename__ = "file_log"
+# 289 
+# 290     id = Column(Integer, primary_key=True, autoincrement=True)
+# 291     session_id = Column(String, nullable=False)
+# 292     file_name = Column(String, nullable=False)
+# 293     original_path = Column(String)
+# 294     length_bytes = Column(Integer)
+# 295     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
 
 # db\schemas.py
@@ -414,435 +425,444 @@
 # 54     artifact_path: Path
 # 55     config: Optional[Dict[str, Any]] = None
 # 56     tags: Optional[List[str]] = Field(default_factory=list)
-# 57 
-# 58     @field_validator("artifact_path")
-# 59     @classmethod
-# 60     def validate_artifact_path(cls, v: Path) -> Path:
-# 61         if not v.is_absolute() and ".." in v.parts:
-# 62             raise ValueError("Invalid artifact path")
-# 63         return v
-# 64 
-# 65 class ToolProviderConfig(BaseModel):
-# 66     id: Optional[int] = None
-# 67     guid: UUID = Field(default_factory=uuid4)
-# 68     name: str
-# 69     description: Optional[str] = None
-# 70     config: Optional[Dict[str, Any]] = None
-# 71     artifact_path: Path
-# 72     tags: Optional[List[str]] = None
-# 73 
-# 74     @field_validator("artifact_path")
-# 75     @classmethod
-# 76     def validate_artifact_path(cls, v: Path) -> Path:
-# 77         if not v.is_absolute() and ".." in v.parts:
-# 78             raise ValueError("Invalid artifact path")
-# 79         return v
-# 80 
-# 81 
-# 82 class ScoreProviderConfig(BaseModel):
-# 83     id: Optional[int] = None
-# 84     guid: UUID = Field(default_factory=uuid4)
-# 85     name: str
-# 86     description: Optional[str] = None
-# 87     artifact_path: Optional[Path] = None
-# 88     tags: Optional[List[str]] = None
-# 89     table_name: str = "score_provider"
-# 90 
-# 91     @field_validator("artifact_path")
-# 92     @classmethod
-# 93     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
-# 94         if v is None:
-# 95             return v
-# 96         if not v.is_absolute() and ".." in v.parts:
-# 97             raise ValueError("Invalid artifact path")
-# 98         return v
-# 99         
-# 100 class AgentEngineProviderConfig(BaseModel):
-# 101     id: Optional[int] = None
-# 102     guid: UUID = Field(default_factory=uuid4)
-# 103     name: str
-# 104     description: Optional[str] = None
-# 105     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
-# 106     config: Optional[Dict[str, Any]] = None
-# 107     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
-# 108     artifact_path: Path
-# 109     tags: Optional[List[str]] = None
-# 110 
-# 111     @field_validator("artifact_path")
-# 112     @classmethod
-# 113     def validate_artifact_path(cls, v: Path) -> Path:
-# 114         if not v.is_absolute() and ".." in v.parts:
-# 115             raise ValueError("Invalid artifact path")
-# 116         return v
-# 117 
-# 118 
-# 119 class AgentProviderConfigSchema(BaseModel):
-# 120     id: Optional[int] = None
-# 121     guid: UUID = Field(default_factory=uuid4)
-# 122     name: str
-# 123     description: Optional[str] = None
-# 124     config: Optional[Dict[str, Any]] = None
-# 125     artifact_path: Path
-# 126     tags: Optional[list[str]] = None
-# 127     agent_type: AGENT = AGENT.UNKNOWN 
-# 128 
-# 129     @field_validator("artifact_path")
-# 130     @classmethod
-# 131     def validate_artifact_path(cls, v: Path) -> Path:
-# 132         if not v.is_absolute() and ".." in v.parts:
-# 133             raise ValueError("Invalid artifact path")
-# 134         return v
-# 135 
-# 136 class StateProviderConfigSchema(BaseModel):
-# 137     id: Optional[int] = None
-# 138     guid: UUID = Field(default_factory=uuid4)
-# 139     name: str
-# 140     description: Optional[str] = None
-# 141     config: Optional[Dict[str, Any]] = None
-# 142     artifact_path: Path
-# 143     tags: Optional[list[str]] = None
-# 144 
-# 145     @classmethod
-# 146     def validate_artifact_path(cls, v: Path) -> Path:
-# 147         if not v.is_absolute() and ".." in v.parts:
-# 148             raise ValueError("Invalid artifact path")
-# 149         return v
+# 57     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.PROMPT
+# 58 
+# 59     @field_validator("artifact_path")
+# 60     @classmethod
+# 61     def validate_artifact_path(cls, v: Path) -> Path:
+# 62         if not v.is_absolute() and ".." in v.parts:
+# 63             raise ValueError("Invalid artifact path")
+# 64         return v
+# 65 
+# 66 class ToolProviderConfig(BaseModel):
+# 67     id: Optional[int] = None
+# 68     guid: UUID = Field(default_factory=uuid4)
+# 69     name: str
+# 70     description: Optional[str] = None
+# 71     config: Optional[Dict[str, Any]] = None
+# 72     artifact_path: Path
+# 73     tags: Optional[List[str]] = None
+# 74     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.TOOL
+# 75 
+# 76     @field_validator("artifact_path")
+# 77     @classmethod
+# 78     def validate_artifact_path(cls, v: Path) -> Path:
+# 79         if not v.is_absolute() and ".." in v.parts:
+# 80             raise ValueError("Invalid artifact path")
+# 81         return v
+# 82 
+# 83 
+# 84 class ScoreProviderConfig(BaseModel):
+# 85     id: Optional[int] = None
+# 86     guid: UUID = Field(default_factory=uuid4)
+# 87     name: str
+# 88     description: Optional[str] = None
+# 89     artifact_path: Optional[Path] = None
+# 90     tags: Optional[List[str]] = None
+# 91     table_name: str = "score_provider"
+# 92     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.SCORE
+# 93 
+# 94     @field_validator("artifact_path")
+# 95     @classmethod
+# 96     def validate_artifact_path(cls, v: Optional[Path]) -> Optional[Path]:
+# 97         if v is None:
+# 98             return v
+# 99         if not v.is_absolute() and ".." in v.parts:
+# 100             raise ValueError("Invalid artifact path")
+# 101         return v
+# 102         
+# 103 class AgentEngineProviderConfig(BaseModel):
+# 104     id: Optional[int] = None
+# 105     guid: UUID = Field(default_factory=uuid4)
+# 106     name: str
+# 107     description: Optional[str] = None
+# 108     model: AGENT_ENGINE_MODEL  #  ✅ Enum enforced
+# 109     config: Optional[Dict[str, Any]] = None
+# 110     cost_per_1k_tokens: Optional[float] = Field(default=0.0)
+# 111     artifact_path: Path
+# 112     tags: Optional[List[str]] = None
+# 113     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.AGENT_ENGINE
+# 114 
+# 115     @field_validator("artifact_path")
+# 116     @classmethod
+# 117     def validate_artifact_path(cls, v: Path) -> Path:
+# 118         if not v.is_absolute() and ".." in v.parts:
+# 119             raise ValueError("Invalid artifact path")
+# 120         return v
+# 121 
+# 122 
+# 123 class AgentProviderConfigSchema(BaseModel):
+# 124     id: Optional[int] = None
+# 125     guid: UUID = Field(default_factory=uuid4)
+# 126     name: str
+# 127     description: Optional[str] = None
+# 128     config: Optional[Dict[str, Any]] = None
+# 129     artifact_path: Path
+# 130     tags: Optional[list[str]] = None
+# 131     agent_type: AGENT = AGENT.UNKNOWN 
+# 132     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.AGENT
+# 133 
+# 134     @field_validator("artifact_path")
+# 135     @classmethod
+# 136     def validate_artifact_path(cls, v: Path) -> Path:
+# 137         if not v.is_absolute() and ".." in v.parts:
+# 138             raise ValueError("Invalid artifact path")
+# 139         return v
+# 140 
+# 141 class StateProviderConfigSchema(BaseModel):
+# 142     id: Optional[int] = None
+# 143     guid: UUID = Field(default_factory=uuid4)
+# 144     name: str
+# 145     description: Optional[str] = None
+# 146     config: Optional[Dict[str, Any]] = None
+# 147     artifact_path: Path
+# 148     tags: Optional[list[str]] = None
+# 149     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.STATE
 # 150 
-# 151 class SystemProviderConfigSchema(BaseModel):
-# 152     id: Optional[int] = None
-# 153     guid: UUID = Field(default_factory=uuid4)
-# 154     name: str
-# 155     description: Optional[str] = None
-# 156     config: Optional[Dict[str, Any]] = None
-# 157     artifact_path: Path
-# 158     tags: Optional[list[str]] = None
-# 159     system_type: SYSTEM
-# 160 
-# 161     @classmethod
-# 162     def validate_artifact_path(cls, v: Path) -> Path:
-# 163         if not v.is_absolute() and ".." in v.parts:
-# 164             raise ValueError("Invalid artifact path")
-# 165         return v
-# 166 
-# 167 class ControllerProviderConfigSchema(BaseModel):
-# 168     id: Optional[int] = None
-# 169     guid: UUID = Field(default_factory=uuid4)
-# 170     name: str
-# 171     description: Optional[str] = None
-# 172     config: Optional[Dict[str, Any]] = None
-# 173     artifact_path: Path
-# 174     tags: Optional[list[str]] = None
-# 175 
-# 176     @classmethod
-# 177     def validate_artifact_path(cls, v: Path) -> Path:
-# 178         if not v.is_absolute() and ".." in v.parts:
-# 179             raise ValueError("Invalid artifact path")
-# 180         return v
-# 181 
-# 182 class ProgramProviderConfigSchema(BaseModel):
-# 183     id: Optional[int] = None
-# 184     guid: UUID = Field(default_factory=uuid4)
-# 185     name: str
-# 186     description: Optional[str] = None
-# 187     config: Optional[Dict[str, Any]] = None
-# 188     artifact_path: Path
-# 189     tags: Optional[List[str]] = None
-# 190 
-# 191     @classmethod
-# 192     def validate_artifact_path(cls, v: Path) -> Path:
-# 193         if not v.is_absolute() and ".." in v.parts:
-# 194             raise ValueError("Invalid artifact path")
-# 195         return v
-# 196 
-# 197 class SessionConfigSchema(BaseModel):
-# 198     id: Optional[int] = None
-# 199     session_id: str
-# 200     name: str
-# 201     description: Optional[str] = None
-# 202     environment_type: str  #  e.g., "experiment", "live", "staging"
-# 203     config: Optional[Dict[str, Any]] = None
-# 204     tags: Optional[List[str]] = None
-# 205     
-# 206 
-# 207 #  LOGS
-# 208 
-# 209 @dataclass
-# 210 class ProviderLogSchema:
-# 211     session_id: str
-# 212     provider_id: int
-# 213     provider_type: PROVIDER_TYPE
-# 214     input: Optional[str] = None
-# 215     output: Optional[str] = None
-# 216     output_schema: Optional[str] = None
-# 217     latency_ms: Optional[int] = None
-# 218     config_hash: Optional[str] = None
-# 219     file_name: Optional[str] = None
-# 220     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 221     called_by_type: Optional[PROVIDER_TYPE] = None
-# 222     called_by_id: Optional[int] = None
-# 223     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 224     file_log_id: Optional[str] = None
-# 225     parent_id: Optional[str] = None
-# 226     execution_chain: List[str] = field(default_factory=list)
-# 227 
-# 228 @dataclass
-# 229 class StateTransitionLogSchema:
-# 230     session_id: str
-# 231     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
-# 232     entity_id: int
-# 233     from_state: str
-# 234     to_state: str
-# 235     reason: TRANSITION_REASON_TYPE
-# 236     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 237     triggered_by: str | None = None
-# 238     step: int | None = None
-# 239     transition_metadata: dict | None = None
-# 240     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 241     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 242     called_by_type: PROVIDER_TYPE | None = None
-# 243     called_by_id: int | None = None 
-# 244     file_log_id: Optional[str] = None
-# 245     parent_id: Optional[str] = None
-# 246     execution_chain: List[str] = field(default_factory=list)
-# 247 
-# 248 @dataclass
-# 249 class AgentConversationLogSchema:
-# 250     session_id: str
-# 251     agent_type: AGENT
-# 252     agent_provider_config_id: int
-# 253     content: str
-# 254     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 255     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 256     file_log_id: Optional[str] = None
-# 257 
-# 258 @dataclass
-# 259 class ErrorLogSchema:
-# 260     session_id: str
-# 261     error_type: ERROR_TYPE
-# 262     message: str
-# 263     file_path: str | None = None
-# 264     provider_id: int | None = None
-# 265     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
-# 266     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-# 267     latency_ms: Optional[int] = None
-# 268     called_by_type: Optional[PROVIDER_TYPE] = None
-# 269     called_by_id: Optional[int] = None
-# 270     run_id: str = field(default_factory=lambda: str(uuid4()))
-# 271     file_log_id: Optional[str] = None
-# 272     parent_id: Optional[str] = None
-# 273     execution_chain: List[str] = field(default_factory=list)
-# 274     
-# 275 @dataclass
-# 276 class SnapshotMetricsSchema:
-# 277     session_id: str
-# 278     snapshot_id: str
-# 279     system: SYSTEM
-# 280     agent: str
-# 281     agent_type: AGENT 
-# 282     agent_id: int
-# 283     score: float
-# 284     state: str 
-# 285     decision: DECISION_TYPE
-# 286     timestamp: datetime
-# 287     file_log_id: str
-# 288 
-# 289     line_count_before: int
-# 290     line_count_after: int
-# 291     function_count_before: int
-# 292     function_count_after: int
-# 293     symbol_count_before: int
-# 294     symbol_count_after: int
-# 295     branch_count_before: int
-# 296     branch_count_after: int
-# 297     comment_count_before: int
-# 298     comment_count_after: int
-# 299 
-# 300     line_count_delta: int
-# 301     function_count_delta: int
-# 302     symbol_count_delta: int
-# 303     branch_count_delta: int
-# 304     comment_count_delta: int
-# 305 
-# 306 @dataclass
-# 307 class FileLogSchema:
-# 308     session_id: str
-# 309     file_name: str
-# 310     id: Optional[int] = None
-# 311     original_path: Optional[str] = None
-# 312     length_bytes: Optional[int] = None
-# 313 
+# 151     @classmethod
+# 152     def validate_artifact_path(cls, v: Path) -> Path:
+# 153         if not v.is_absolute() and ".." in v.parts:
+# 154             raise ValueError("Invalid artifact path")
+# 155         return v
+# 156 
+# 157 class SystemProviderConfigSchema(BaseModel):
+# 158     id: Optional[int] = None
+# 159     guid: UUID = Field(default_factory=uuid4)
+# 160     name: str
+# 161     description: Optional[str] = None
+# 162     config: Optional[Dict[str, Any]] = None
+# 163     artifact_path: Path
+# 164     tags: Optional[list[str]] = None
+# 165     system_type: SYSTEM
+# 166     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.SYSTEM
+# 167 
+# 168     @classmethod
+# 169     def validate_artifact_path(cls, v: Path) -> Path:
+# 170         if not v.is_absolute() and ".." in v.parts:
+# 171             raise ValueError("Invalid artifact path")
+# 172         return v
+# 173 
+# 174 class ControllerProviderConfigSchema(BaseModel):
+# 175     id: Optional[int] = None
+# 176     guid: UUID = Field(default_factory=uuid4)
+# 177     name: str
+# 178     description: Optional[str] = None
+# 179     config: Optional[Dict[str, Any]] = None
+# 180     artifact_path: Path
+# 181     tags: Optional[list[str]] = None
+# 182     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.CONTROLLER
+# 183 
+# 184     @classmethod
+# 185     def validate_artifact_path(cls, v: Path) -> Path:
+# 186         if not v.is_absolute() and ".." in v.parts:
+# 187             raise ValueError("Invalid artifact path")
+# 188         return v
+# 189 
+# 190 class ProgramProviderConfigSchema(BaseModel):
+# 191     id: Optional[int] = None
+# 192     guid: UUID = Field(default_factory=uuid4)
+# 193     name: str
+# 194     description: Optional[str] = None
+# 195     config: Optional[Dict[str, Any]] = None
+# 196     artifact_path: Path
+# 197     tags: Optional[List[str]] = None
+# 198     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.PROGRAM
+# 199 
+# 200     @classmethod
+# 201     def validate_artifact_path(cls, v: Path) -> Path:
+# 202         if not v.is_absolute() and ".." in v.parts:
+# 203             raise ValueError("Invalid artifact path")
+# 204         return v
+# 205 
+# 206 class SessionConfigSchema(BaseModel):
+# 207     id: Optional[int] = None
+# 208     session_id: str
+# 209     name: str
+# 210     description: Optional[str] = None
+# 211     environment_type: str  #  e.g., "experiment", "live", "staging"
+# 212     config: Optional[Dict[str, Any]] = None
+# 213     tags: Optional[List[str]] = None
+# 214     
+# 215 
+# 216 #  LOGS
+# 217 
+# 218 @dataclass
+# 219 class ProviderLogSchema:
+# 220     session_id: str
+# 221     provider_id: int
+# 222     provider_type: PROVIDER_TYPE
+# 223     input: Optional[str] = None
+# 224     output: Optional[str] = None
+# 225     output_schema: Optional[str] = None
+# 226     latency_ms: Optional[int] = None
+# 227     config_hash: Optional[str] = None
+# 228     file_name: Optional[str] = None
+# 229     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 230     called_by_type: Optional[PROVIDER_TYPE] = None
+# 231     called_by_id: Optional[int] = None
+# 232     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 233     file_log_id: Optional[str] = None
+# 234     parent_id: Optional[str] = None
+# 235     execution_chain: List[str] = field(default_factory=list)
+# 236 
+# 237 @dataclass
+# 238 class StateTransitionLogSchema:
+# 239     session_id: str
+# 240     entity_type: PROVIDER_TYPE  #  e.g., "StateProvider", "SystemProvider", etc.
+# 241     entity_id: int
+# 242     from_state: str
+# 243     to_state: str
+# 244     reason: TRANSITION_REASON_TYPE
+# 245     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 246     triggered_by: str | None = None
+# 247     step: int | None = None
+# 248     transition_metadata: dict | None = None
+# 249     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 250     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 251     called_by_type: PROVIDER_TYPE | None = None
+# 252     called_by_id: int | None = None 
+# 253     file_log_id: Optional[str] = None
+# 254     parent_id: Optional[str] = None
+# 255     execution_chain: List[str] = field(default_factory=list)
+# 256 
+# 257 @dataclass
+# 258 class AgentConversationLogSchema:
+# 259     session_id: str
+# 260     agent_type: AGENT
+# 261     agent_provider_config_id: int
+# 262     content: str
+# 263     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 264     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 265     file_log_id: Optional[str] = None
+# 266 
+# 267 @dataclass
+# 268 class ErrorLogSchema:
+# 269     session_id: str
+# 270     error_type: ERROR_TYPE
+# 271     message: str
+# 272     file_path: str | None = None
+# 273     provider_id: int | None = None
+# 274     provider_type: PROVIDER_TYPE = PROVIDER_TYPE.UNKNOWN
+# 275     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+# 276     latency_ms: Optional[int] = None
+# 277     called_by_type: Optional[PROVIDER_TYPE] = None
+# 278     called_by_id: Optional[int] = None
+# 279     run_id: str = field(default_factory=lambda: str(uuid4()))
+# 280     file_log_id: Optional[str] = None
+# 281     parent_id: Optional[str] = None
+# 282     execution_chain: List[str] = field(default_factory=list)
+# 283     
+# 284 @dataclass
+# 285 class SnapshotMetricsSchema:
+# 286     session_id: str
+# 287     snapshot_id: str
+# 288     system: SYSTEM
+# 289     agent: str
+# 290     agent_type: AGENT 
+# 291     agent_id: int
+# 292     score: float
+# 293     state: str 
+# 294     decision: DECISION_TYPE
+# 295     timestamp: datetime
+# 296     file_log_id: str
+# 297 
+# 298     line_count_before: int
+# 299     line_count_after: int
+# 300     function_count_before: int
+# 301     function_count_after: int
+# 302     symbol_count_before: int
+# 303     symbol_count_after: int
+# 304     branch_count_before: int
+# 305     branch_count_after: int
+# 306     comment_count_before: int
+# 307     comment_count_after: int
+# 308 
+# 309     line_count_delta: int
+# 310     function_count_delta: int
+# 311     symbol_count_delta: int
+# 312     branch_count_delta: int
+# 313     comment_count_delta: int
 # 314 
-# 315 #  Provider output schemas (for logs)
-# 316 
-# 317 class ToolOutputSchema(BaseModel):
-# 318     return_code: int
-# 319     stdout: Optional[str] = None
-# 320     stderr: Optional[str] = None
-# 321     violations: Optional[List[str]] = None  #  for linters like ruff
-# 322     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
-# 323     summary: Optional[str] = None  #  optional human-readable summary
-# 324 
+# 315 @dataclass
+# 316 class FileLogSchema:
+# 317     session_id: str
+# 318     file_name: str
+# 319     id: Optional[int] = None
+# 320     original_path: Optional[str] = None
+# 321     length_bytes: Optional[int] = None
+# 322 
+# 323 
+# 324 #  Provider output schemas (for logs)
 # 325 
-# 326 class AgentEngineOutput(BaseModel):
-# 327     response: str
-# 328     token_count: int
-# 329     cost_usd: float
-# 330     snapshot_id: Optional[str] = None
-# 331     summary: Optional[str] = None
-# 332     content: Optional[str] = None 
-# 333     decision: Optional[str] = None
-# 334     log: Optional[str] = None
-# 335 
-# 336 
-# 337 class AgentOutputSchema(BaseModel):
-# 338     agent_type: Optional[AGENT] = AGENT.UNKNOWN 
-# 339     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
-# 340     score: Optional[float] = None
-# 341     response: Optional[str] = None
-# 342     log: Optional[str] = None
-# 343     file_path: Optional[str] = None
+# 326 class ToolOutputSchema(BaseModel):
+# 327     return_code: int
+# 328     stdout: Optional[str] = None
+# 329     stderr: Optional[str] = None
+# 330     violations: Optional[List[str]] = None  #  for linters like ruff
+# 331     metrics: Optional[Dict[str, Any]] = None  #  for tools like sonarcloud
+# 332     summary: Optional[str] = None  #  optional human-readable summary
+# 333 
+# 334 
+# 335 class AgentEngineOutput(BaseModel):
+# 336     response: str
+# 337     token_count: int
+# 338     cost_usd: float
+# 339     snapshot_id: Optional[str] = None
+# 340     summary: Optional[str] = None
+# 341     content: Optional[str] = None 
+# 342     decision: Optional[str] = None
+# 343     log: Optional[str] = None
 # 344 
 # 345 
-# 346 class ContextOutputSchema(BaseModel):
-# 347     context: Dict[str, Any]
-# 348     summary: Optional[str] = None
-# 349 
-# 350 
-# 351 class PromptOutputSchema(BaseModel):
-# 352     prompt: str
-# 353     summary: Optional[str] = None
+# 346 class AgentOutputSchema(BaseModel):
+# 347     agent_type: Optional[AGENT] = AGENT.UNKNOWN 
+# 348     decision: DECISION_TYPE = DECISION_TYPE.UNKNOWN
+# 349     score: Optional[float] = None
+# 350     response: Optional[str] = None
+# 351     log: Optional[str] = None
+# 352     file_path: Optional[str] = None
+# 353 
 # 354 
-# 355 
-# 356 class FSMOutputSchema(BaseModel):
-# 357     state: STATE
-# 358     previous_state: Optional[STATE] = None
-# 359     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
-# 360     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
-# 361     steps: int = Field(..., ge=0)
-# 362     max_steps: int = Field(default=20, gt=0)
-# 363     summary: Optional[str] = None
-# 364     output: Optional[Dict[str, Any]] = None
-# 365     provider_name: Optional[str] = None
-# 366 
-# 367 class SystemOutputSchema(FSMOutputSchema): pass
-# 368 
-# 369 class StateOutputSchema(FSMOutputSchema): 
-# 370     previous_state: Optional[AGENT] = None
-# 371 class ProgramOutputSchema(FSMOutputSchema):
-# 372     previous_state: Optional[CONTROLLER] = None
-# 373 class ControllerOutputSchema(FSMOutputSchema): 
-# 374     previous_state: Optional[SYSTEM] = None
+# 355 class ContextOutputSchema(BaseModel):
+# 356     context: Dict[str, Any]
+# 357     summary: Optional[str] = None
+# 358 
+# 359 
+# 360 class PromptOutputSchema(BaseModel):
+# 361     prompt: str
+# 362     summary: Optional[str] = None
+# 363 
+# 364 
+# 365 class FSMOutputSchema(BaseModel):
+# 366     state: STATE
+# 367     previous_state: Optional[STATE] = None
+# 368     state_type: STATE_TYPE = STATE_TYPE.INTERMEDIATE
+# 369     decision: Optional[DECISION_TYPE] = DECISION_TYPE.UNKNOWN
+# 370     steps: int = Field(..., ge=0)
+# 371     max_steps: int = Field(default=20, gt=0)
+# 372     summary: Optional[str] = None
+# 373     output: Optional[Dict[str, Any]] = None
+# 374     provider_name: Optional[str] = None
 # 375 
-# 376 
-# 377 #  DTOs
-# 378 
-# 379 class Snapshot(BaseModel):
-# 380     timestamp: datetime
-# 381     file: str
-# 382     score: float
-# 383     decision: DECISION_TYPE
+# 376 class SystemOutputSchema(FSMOutputSchema): pass
+# 377 
+# 378 class StateOutputSchema(FSMOutputSchema): 
+# 379     previous_state: Optional[AGENT] = None
+# 380 class ProgramOutputSchema(FSMOutputSchema):
+# 381     previous_state: Optional[CONTROLLER] = None
+# 382 class ControllerOutputSchema(FSMOutputSchema): 
+# 383     previous_state: Optional[SYSTEM] = None
 # 384 
-# 385 class SnapshotContext(BaseModel):
-# 386     context: RunContext
-# 387     decision: str
-# 388     log: str
-# 389     state: str
-# 390     agent_name: str
-# 391     system: str
-# 392     before_path: Path
-# 393     after_content: str
-# 394 
-# 395     class Config:
-# 396         arbitrary_types_allowed = True
-# 397 
-# 398 class SystemState(BaseModel):
-# 399     system: str
-# 400     file_path: str
-# 401     working_file: str
-# 402     final_file: Optional[str] = None
-# 403     snapshots: List[Snapshot]
-# 404     state: Optional[str] = "active"
-# 405 
-# 406 class AgentEngineExtraction(BaseModel):
-# 407     content: str
-# 408     decision: str
-# 409     log: str
-# 410 
-# 411 
-# 412 #  Score Providers
-# 413 
-# 414 from typing import Annotated, Union, Optional, Literal
-# 415 from pydantic import BaseModel, Field, computed_field
-# 416 from app.enums.scoring_enums import SCORING_METRIC_TYPE
-# 417 
-# 418 #  ─────────────────────────────────────────────────────────────
-# 419 #  🧩 BASE SCHEMAS
-# 420 #  ─────────────────────────────────────────────────────────────
-# 421 
-# 422 class ScoreConfigBase(BaseModel):
-# 423     """Base schema for input config (weights, thresholds, etc.)"""
-# 424     pass
-# 425 
-# 426 class ScoreComponentsBase(BaseModel):
-# 427     """Base schema for output components (results/metrics)"""
-# 428     pass
-# 429 
+# 385 
+# 386 #  DTOs
+# 387 
+# 388 class Snapshot(BaseModel):
+# 389     timestamp: datetime
+# 390     file: str
+# 391     score: float
+# 392     decision: DECISION_TYPE
+# 393 
+# 394 class SnapshotContext(BaseModel):
+# 395     context: RunContext
+# 396     decision: str
+# 397     log: str
+# 398     state: str
+# 399     agent_name: str
+# 400     system: str
+# 401     before_path: Path
+# 402     after_content: str
+# 403 
+# 404     class Config:
+# 405         arbitrary_types_allowed = True
+# 406 
+# 407 class SystemState(BaseModel):
+# 408     system: str
+# 409     file_path: str
+# 410     working_file: str
+# 411     final_file: Optional[str] = None
+# 412     snapshots: List[Snapshot]
+# 413     state: Optional[str] = "active"
+# 414 
+# 415 class AgentEngineExtraction(BaseModel):
+# 416     content: str
+# 417     decision: str
+# 418     log: str
+# 419 
+# 420 
+# 421 #  Score Providers
+# 422 
+# 423 from typing import Annotated, Union, Optional, Literal
+# 424 from pydantic import BaseModel, Field, computed_field
+# 425 from app.enums.scoring_enums import SCORING_METRIC_TYPE
+# 426 
+# 427 #  ─────────────────────────────────────────────────────────────
+# 428 #  🧩 BASE SCHEMAS
+# 429 #  ─────────────────────────────────────────────────────────────
 # 430 
-# 431 #  ─────────────────────────────────────────────────────────────
-# 432 #  🧪 Linting Score
-# 433 #  ─────────────────────────────────────────────────────────────
+# 431 class ScoreConfigBase(BaseModel):
+# 432     """Base schema for input config (weights, thresholds, etc.)"""
+# 433     pass
 # 434 
-# 435 class LintingScoreConfig(ScoreConfigBase):
-# 436     weight_ruff: float
-# 437     weight_black: float
-# 438     weight_mypy: float
-# 439     fail_threshold: float = 0.5
-# 440 
-# 441 class LintingScoreComponents(ScoreComponentsBase):
-# 442     type: Literal["linting"]
-# 443     ruff_score: float
-# 444     ruff_violations: List[str]
-# 445     black_score: float
-# 446     black_violations: List[str]
-# 447     mypy_score: float
-# 448     mypy_violations: List[str]
-# 449     tool_failure_count: int
-# 450     weight_ruff: float
-# 451     weight_black: float
-# 452     weight_mypy: float
-# 453     
-# 454 
-# 455 
-# 456 #  ─────────────────────────────────────────────────────────────
-# 457 #  🧬 Code Stability Score
-# 458 #  ─────────────────────────────────────────────────────────────
-# 459 
-# 460 class CodeStabilityScoreConfig(ScoreConfigBase):
-# 461     failure_penalty: float
-# 462     diff_penalty: float
-# 463     test_weight: float
-# 464     coverage_weight: float
-# 465 
-# 466 class CodeStabilityScoreComponents(ScoreComponentsBase):
-# 467     type: Literal["code_stability"]
-# 468     utf8_valid: float
-# 469     syntax_ok: float
-# 470     py_compile_ok: float
-# 471     can_import: float
-# 472 
-# 473 
-# 474 #  ─────────────────────────────────────────────────────────────
-# 475 #  🧾 Final Output Schema
-# 476 #  ─────────────────────────────────────────────────────────────
-# 477 
-# 478 class ScoreOutputSchema(BaseModel):
-# 479     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
-# 480     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
-# 481     components: Union[
-# 482         Annotated[LintingScoreComponents, Field(discriminator="type")],
-# 483         Annotated[CodeStabilityScoreComponents, Field(discriminator="type")]
-# 484     ] = Field(..., description="Structured component scores (schema depends on provider)")
-# 485     summary: Optional[str] = None
+# 435 class ScoreComponentsBase(BaseModel):
+# 436     """Base schema for output components (results/metrics)"""
+# 437     pass
+# 438 
+# 439 
+# 440 #  ─────────────────────────────────────────────────────────────
+# 441 #  🧪 Linting Score
+# 442 #  ─────────────────────────────────────────────────────────────
+# 443 
+# 444 class LintingScoreConfig(ScoreConfigBase):
+# 445     weight_ruff: float
+# 446     weight_black: float
+# 447     weight_mypy: float
+# 448     fail_threshold: float = 0.5
+# 449 
+# 450 class LintingScoreComponents(ScoreComponentsBase):
+# 451     type: Literal["linting"]
+# 452     ruff_score: float
+# 453     ruff_violations: List[str]
+# 454     black_score: float
+# 455     black_violations: List[str]
+# 456     mypy_score: float
+# 457     mypy_violations: List[str]
+# 458     tool_failure_count: int
+# 459     weight_ruff: float
+# 460     weight_black: float
+# 461     weight_mypy: float
+# 462     
+# 463 
+# 464 
+# 465 #  ─────────────────────────────────────────────────────────────
+# 466 #  🧬 Code Stability Score
+# 467 #  ─────────────────────────────────────────────────────────────
+# 468 
+# 469 class CodeStabilityScoreConfig(ScoreConfigBase):
+# 470     failure_penalty: float
+# 471     diff_penalty: float
+# 472     test_weight: float
+# 473     coverage_weight: float
+# 474 
+# 475 class CodeStabilityScoreComponents(ScoreComponentsBase):
+# 476     type: Literal["code_stability"]
+# 477     utf8_valid: float
+# 478     syntax_ok: float
+# 479     py_compile_ok: float
+# 480     can_import: float
+# 481 
+# 482 
+# 483 #  ─────────────────────────────────────────────────────────────
+# 484 #  🧾 Final Output Schema
+# 485 #  ─────────────────────────────────────────────────────────────
+# 486 
+# 487 class ScoreOutputSchema(BaseModel):
+# 488     name: SCORING_METRIC_TYPE = Field(..., description="The type of scoring metric used")
+# 489     value: float = Field(..., description="Final weighted score (normalized 0.0–1.0 scale)")
+# 490     components: Union[
+# 491         Annotated[LintingScoreComponents, Field(discriminator="type")],
+# 492         Annotated[CodeStabilityScoreComponents, Field(discriminator="type")]
+# 493     ] = Field(..., description="Structured component scores (schema depends on provider)")
+# 494     summary: Optional[str] = None
 
 
 # db\seed.py
@@ -3026,79 +3046,81 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import AgentEngineProviderConfig
-# 6 
-# 7 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_engine_providers"
-# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 AGENT_ENGINES = [
-# 12     {
-# 13         "id": 1,
-# 14         "filename": "basic_agent_engine_provider.py",
-# 15         "name": "basic_agent_engine_provider",
-# 16         "description": "Returns a mock LLM response.",
-# 17         "model": "mock-llm",
-# 18         "tags": ["default"],
-# 19         "cost_per_1k_tokens": 0.0
-# 20     },
-# 21     {
-# 22         "id": 2,
-# 23         "filename": "openai_gpt4o_agent_engine_provider.py",
-# 24         "name": "openai_gpt_4o_agent_engine",
-# 25         "description": "Runs GPT-4o via OpenAI API.",
-# 26         "model": "gpt-4o",
-# 27         "tags": ["openai", "production"],
-# 28         "cost_per_1k_tokens": 0.005
-# 29     },
-# 30     {
-# 31         "id": 3,
-# 32         "filename": "gemini_1_5_pro_agent_engine_provider.py",
-# 33         "name": "gemini_1_5_pro_agent_engine",
-# 34         "description": "Runs Gemini 1.5 Pro via Google AI API.",
-# 35         "model": "gemini-1.5-pro",
-# 36         "tags": ["google", "production"],
-# 37         "cost_per_1k_tokens": 0.007
-# 38     },
-# 39     {
-# 40         "id": 4,
-# 41         "filename": "claude_3_sonnet_agent_engine_provider.py",
-# 42         "name": "claude_3_sonnet_agent_engine",
-# 43         "description": "Runs Claude 3 Sonnet via AWS Bedrock.",
-# 44         "model": "claude-3-sonnet",
-# 45         "tags": ["aws", "bedrock", "production"],
-# 46         "cost_per_1k_tokens": 0.003
-# 47     },
-# 48 ]
-# 49 
-# 50 def seed_agent_engine_providers(db_session: Session):
-# 51     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 52 
-# 53     for entry in AGENT_ENGINES:
-# 54         guid = str(uuid4())
-# 55         source_file = SEED_FILES_DIR / entry["filename"]
-# 56         dest_file = EXTENSIONS_DIR / f"{guid}.py"
-# 57 
-# 58         if not source_file.exists():
-# 59             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
-# 60 
-# 61         shutil.copy(source_file, dest_file)
-# 62 
-# 63         config = AgentEngineProviderConfig(
-# 64             id=entry["id"],
-# 65             guid=guid,
-# 66             name=entry["name"],
-# 67             description=entry["description"],
-# 68             model=entry["model"],
-# 69             config={},
-# 70             cost_per_1k_tokens=entry["cost_per_1k_tokens"],
-# 71             artifact_path=str(dest_file),
-# 72             tags=entry["tags"],
-# 73         )
-# 74 
-# 75         db_session.add(config)
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 
+# 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_engine_providers"
+# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 AGENT_ENGINES = [
+# 13     {
+# 14         "id": 1,
+# 15         "filename": "basic_agent_engine_provider.py",
+# 16         "name": "basic_agent_engine_provider",
+# 17         "description": "Returns a mock LLM response.",
+# 18         "model": "mock-llm",
+# 19         "tags": ["default"],
+# 20         "cost_per_1k_tokens": 0.0
+# 21     },
+# 22     {
+# 23         "id": 2,
+# 24         "filename": "openai_gpt4o_agent_engine_provider.py",
+# 25         "name": "openai_gpt_4o_agent_engine",
+# 26         "description": "Runs GPT-4o via OpenAI API.",
+# 27         "model": "gpt-4o",
+# 28         "tags": ["openai", "production"],
+# 29         "cost_per_1k_tokens": 0.005
+# 30     },
+# 31     {
+# 32         "id": 3,
+# 33         "filename": "gemini_1_5_pro_agent_engine_provider.py",
+# 34         "name": "gemini_1_5_pro_agent_engine",
+# 35         "description": "Runs Gemini 1.5 Pro via Google AI API.",
+# 36         "model": "gemini-1.5-pro",
+# 37         "tags": ["google", "production"],
+# 38         "cost_per_1k_tokens": 0.007
+# 39     },
+# 40     {
+# 41         "id": 4,
+# 42         "filename": "claude_3_sonnet_agent_engine_provider.py",
+# 43         "name": "claude_3_sonnet_agent_engine",
+# 44         "description": "Runs Claude 3 Sonnet via AWS Bedrock.",
+# 45         "model": "claude-3-sonnet",
+# 46         "tags": ["aws", "bedrock", "production"],
+# 47         "cost_per_1k_tokens": 0.003
+# 48     },
+# 49 ]
+# 50 
+# 51 def seed_agent_engine_providers(db_session: Session):
+# 52     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 53 
+# 54     for entry in AGENT_ENGINES:
+# 55         guid = str(uuid4())
+# 56         source_file = SEED_FILES_DIR / entry["filename"]
+# 57         dest_file = EXTENSIONS_DIR / f"{guid}.py"
+# 58 
+# 59         if not source_file.exists():
+# 60             raise FileNotFoundError(f"Agent engine script not found: {source_file}")
+# 61 
+# 62         shutil.copy(source_file, dest_file)
+# 63 
+# 64         config = AgentEngineProviderConfig(
+# 65             id=entry["id"],
+# 66             guid=guid,
+# 67             name=entry["name"],
+# 68             description=entry["description"],
+# 69             model=entry["model"],
+# 70             config={},
+# 71             cost_per_1k_tokens=entry["cost_per_1k_tokens"],
+# 72             artifact_path=str(dest_file),
+# 73             tags=entry["tags"],
+# 74             provider_type=PROVIDER_TYPE.AGENT_ENGINE,
+# 75         )
 # 76 
-# 77     db_session.commit()
-# 78     print("✅ Seeded agent engine configurations successfully.")
+# 77         db_session.add(config)
+# 78 
+# 79     db_session.commit()
+# 80     print("✅ Seeded agent engine configurations successfully.")
 
 
 # db\seeders\seed_agent_providers.py
@@ -3108,95 +3130,108 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import AgentProviderConfig
-# 6 
-# 7 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_providers"
-# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 AGENT_PROVIDERS = [
-# 12     {
-# 13         "id": 1,
-# 14         "filename": "basic_agent_provider.py",
-# 15         "name": "basic_agent_provider",
-# 16         "description": "Returns a hardcoded result.",
-# 17         "agent_type": "basic",
-# 18         "tags": ["test"],
-# 19         "config": {}
-# 20     },
-# 21     {
-# 22         "id": 2,
-# 23         "filename": "linting_generator_agent_provider.py",
-# 24         "name": "linting_generator_agent_provider",
-# 25         "description": "Runs GPT-4o to generate linting corrections.",
-# 26         "agent_type": "generator",
-# 27         "tags": ["linting", "generator"],
-# 28         "config": {
-# 29             "agent_engine_provider_id": 2,
-# 30             "prompt_provider_id": 2,
-# 31             "context_provider_id": 2,
-# 32             "score_provider_id": 1,
-# 33             "tool_provider_ids": {
-# 34                 "black": 1,
-# 35                 "ruff": 3,
-# 36                 "mypy": 5,
-# 37                 "radon": 4
-# 38             }
-# 39         }
-# 40     },
-# 41     {
-# 42         "id": 3,
-# 43         "filename": "linting_discriminator_agent_provider.py",
-# 44         "name": "linting_discriminator_agent_provider",
-# 45         "description": "Evaluates generator output for acceptance.",
-# 46         "agent_type": "discriminator",
-# 47         "tags": ["linting", "discriminator"],
-# 48         "config": {
-# 49             "score_provider_id": 1
-# 50         }
-# 51     },
-# 52     {
-# 53         "id": 4,
-# 54         "filename": "code_stability_agent_provider.py",
-# 55         "name": "code_stability_agent_provider",
-# 56         "description": "Rejects output if code is not parseable, importable, compilable, or type-valid.",
-# 57         "agent_type": "stability",
-# 58         "tags": ["stability"],
-# 59         "config": {
-# 60             "score_provider_id": 2
-# 61         }
-# 62     }
-# 63 ]
-# 64 
-# 65 
-# 66 def seed_agent_providers(db_session: Session):
-# 67     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 68 
-# 69     for entry in AGENT_PROVIDERS:
-# 70         guid = str(uuid4())
-# 71         dest_filename = f"{guid}.py"
-# 72         source_file = SEED_FILES_DIR / entry["filename"]
-# 73         dest_file = EXTENSIONS_DIR / dest_filename
-# 74 
-# 75         if not source_file.exists():
-# 76             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 
+# 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_providers"
+# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 AGENT_PROVIDERS = [
+# 13     {
+# 14         "id": 1,
+# 15         "filename": "basic_agent_provider.py",
+# 16         "name": "basic_agent_provider",
+# 17         "description": "Returns a hardcoded result.",
+# 18         "agent_type": "basic",
+# 19         "tags": ["test"],
+# 20         "config": {
+# 21             "components": {},
+# 22             "params": {}
+# 23         }
+# 24     },
+# 25     {
+# 26         "id": 2,
+# 27         "filename": "linting_generator_agent_provider.py",
+# 28         "name": "linting_generator_agent_provider",
+# 29         "description": "Runs GPT-4o to generate linting corrections.",
+# 30         "agent_type": "generator",
+# 31         "tags": ["linting", "generator"],
+# 32         "config": {
+# 33             "components": {
+# 34                 "agent_engine_provider_id": 2,
+# 35                 "prompt_provider_id": 2,
+# 36                 "context_provider_id": 2,
+# 37                 "score_provider_id": 1,
+# 38                 "tool_provider_ids": {
+# 39                     "black": 1,
+# 40                     "ruff": 3,
+# 41                     "mypy": 5,
+# 42                     "radon": 4
+# 43                 }
+# 44             },
+# 45             "params": {}
+# 46         }
+# 47     },
+# 48     {
+# 49         "id": 3,
+# 50         "filename": "linting_discriminator_agent_provider.py",
+# 51         "name": "linting_discriminator_agent_provider",
+# 52         "description": "Evaluates generator output for acceptance.",
+# 53         "agent_type": "discriminator",
+# 54         "tags": ["linting", "discriminator"],
+# 55         "config": {
+# 56             "components": {
+# 57                 "score_provider_id": 1
+# 58             },
+# 59             "params": {}
+# 60         }
+# 61     },
+# 62     {
+# 63         "id": 4,
+# 64         "filename": "code_stability_agent_provider.py",
+# 65         "name": "code_stability_agent_provider",
+# 66         "description": "Rejects output if code is not parseable, importable, compilable, or type-valid.",
+# 67         "agent_type": "stability",
+# 68         "tags": ["stability"],
+# 69         "config": {
+# 70             "components": {
+# 71                 "score_provider_id": 2
+# 72             },
+# 73             "params": {}
+# 74         }
+# 75     }
+# 76 ]
 # 77 
-# 78         shutil.copy(source_file, dest_file)
-# 79 
-# 80         config = AgentProviderConfig(
-# 81             id=entry["id"],
-# 82             guid=guid,
-# 83             name=entry["name"],
-# 84             description=entry["description"],
-# 85             artifact_path=dest_filename,
-# 86             tags=entry["tags"],
-# 87             config=entry["config"],
-# 88             agent_type=entry["agent_type"]
-# 89         )
-# 90 
-# 91         db_session.add(config)
-# 92 
-# 93     db_session.commit()
-# 94     print("Seeded agent provider configurations successfully.")
+# 78 def seed_agent_providers(db_session: Session):
+# 79     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 80 
+# 81     for entry in AGENT_PROVIDERS:
+# 82         guid = str(uuid4())
+# 83         dest_filename = f"{guid}.py"
+# 84         source_file = SEED_FILES_DIR / entry["filename"]
+# 85         dest_file = EXTENSIONS_DIR / dest_filename
+# 86 
+# 87         if not source_file.exists():
+# 88             raise FileNotFoundError(f"Agent provider script not found: {source_file}")
+# 89 
+# 90         shutil.copy(source_file, dest_file)
+# 91 
+# 92         config = AgentProviderConfig(
+# 93             id=entry["id"],
+# 94             guid=guid,
+# 95             name=entry["name"],
+# 96             description=entry["description"],
+# 97             artifact_path=dest_filename,
+# 98             tags=entry["tags"],
+# 99             config=entry["config"],
+# 100             agent_type=entry["agent_type"],
+# 101             provider_type=PROVIDER_TYPE.AGENT,
+# 102         )
+# 103 
+# 104         db_session.add(config)
+# 105 
+# 106     db_session.commit()
+# 107     print("Seeded agent provider configurations successfully.")
 
 
 # db\seeders\seed_context_providers.py
@@ -3206,61 +3241,69 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ContextProviderConfig
-# 6 
-# 7 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/context_providers"
-# 8 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 9 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 10 
-# 11 CONTEXT_PROVIDERS = [
-# 12     {
-# 13         "id": 1,
-# 14         "filename": "basic_context_provider.py",
-# 15         "name": "basic_context_provider",
-# 16         "description": "Returns static context for testing.",
-# 17         "tags": ["default"],
-# 18         "config": {}
-# 19     },
-# 20     {
-# 21         "id": 2,
-# 22         "filename": "linting_context_provider.py",
-# 23         "name": "linting_context_provider",
-# 24         "description": "Generates context for the linting system.",
-# 25         "tags": ["linting", "score-aware"],
-# 26         "config": {
-# 27             "score_provider_id": 1,
-# 28             "tool_provider_ids": None
-# 29         }
-# 30     }
-# 31 ]
-# 32 
-# 33 def seed_context_providers(db_session: Session):
-# 34     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 35 
-# 36     for entry in CONTEXT_PROVIDERS:
-# 37         guid = str(uuid4())
-# 38         dest_filename = f"{guid}.py"
-# 39         source_file = SEED_FILES_DIR / entry["filename"]
-# 40         dest_file = EXTENSIONS_DIR / dest_filename
-# 41 
-# 42         if not source_file.exists():
-# 43             raise FileNotFoundError(f"Context provider script not found: {source_file}")
-# 44 
-# 45         shutil.copy(source_file, dest_file)
-# 46 
-# 47         config = ContextProviderConfig(
-# 48             id=entry["id"],
-# 49             guid=guid,
-# 50             name=entry["name"],
-# 51             description=entry["description"],
-# 52             artifact_path=dest_filename,
-# 53             tags=entry["tags"],
-# 54             config=entry["config"]
-# 55         )
-# 56 
-# 57         db_session.add(config)
-# 58 
-# 59     db_session.commit()
-# 60     print("Seeded context provider configurations successfully.")
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 
+# 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/context_providers"
+# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 11 
+# 12 CONTEXT_PROVIDERS = [
+# 13     {
+# 14         "id": 1,
+# 15         "filename": "basic_context_provider.py",
+# 16         "name": "basic_context_provider",
+# 17         "description": "Returns static context for testing.",
+# 18         "tags": ["default"],
+# 19         "config": {
+# 20             "components": {},
+# 21             "params": {}
+# 22         }
+# 23     },
+# 24     {
+# 25         "id": 2,
+# 26         "filename": "linting_context_provider.py",
+# 27         "name": "linting_context_provider",
+# 28         "description": "Generates context for the linting system.",
+# 29         "tags": ["linting", "score-aware"],
+# 30         "config": {
+# 31             "components": {
+# 32                 "score_provider_id": 1,
+# 33                 "tool_provider_ids": None
+# 34             },
+# 35             "params": {}
+# 36         }
+# 37     }
+# 38 ]
+# 39 
+# 40 def seed_context_providers(db_session: Session):
+# 41     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 42 
+# 43     for entry in CONTEXT_PROVIDERS:
+# 44         guid = str(uuid4())
+# 45         dest_filename = f"{guid}.py"
+# 46         source_file = SEED_FILES_DIR / entry["filename"]
+# 47         dest_file = EXTENSIONS_DIR / dest_filename
+# 48 
+# 49         if not source_file.exists():
+# 50             raise FileNotFoundError(f"Context provider script not found: {source_file}")
+# 51 
+# 52         shutil.copy(source_file, dest_file)
+# 53 
+# 54         config = ContextProviderConfig(
+# 55             id=entry["id"],
+# 56             guid=guid,
+# 57             name=entry["name"],
+# 58             description=entry["description"],
+# 59             artifact_path=dest_filename,
+# 60             tags=entry["tags"],
+# 61             config=entry["config"],
+# 62             provider_type=PROVIDER_TYPE.CONTEXT,
+# 63         )
+# 64 
+# 65         db_session.add(config)
+# 66 
+# 67     db_session.commit()
+# 68     print("Seeded context provider configurations successfully.")
 
 
 # db\seeders\seed_controller_providers.py
@@ -3270,51 +3313,57 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ControllerProviderConfig
-# 6 from app.enums.system_enums import SYSTEM 
-# 7 
-# 8 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
-# 9 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
-# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 11 
-# 12 CONTROLLER_PROVIDERS = [
-# 13     {
-# 14         "id": 1,
-# 15         "filename": "preprocessing_controller_provider.py",
-# 16         "name": "preprocessing_controller",
-# 17         "description": "Runs only the preprocessing step (e.g. linting).",
-# 18         "tags": ["preprocessing", "controller"],
-# 19         "config": {
-# 20             "max_steps": 20, 
-# 21             "score_provider_id": 1,
-# 22             "systems": {
-# 23                 SYSTEM.LINTING.value: 1
-# 24             }
-# 25         }
-# 26     }
-# 27 ]
-# 28 
-# 29 def seed_controller_providers(db_session: Session):
-# 30     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 31     for entry in CONTROLLER_PROVIDERS:
-# 32         guid = str(uuid4())
-# 33         src = SEED_FILES_DIR / entry["filename"]
-# 34         dest = EXTENSIONS_DIR / f"{guid}.py"
-# 35         if not src.exists():
-# 36             raise FileNotFoundError(f"Missing script: {src}")
-# 37         shutil.copy(src, dest)
-# 38 
-# 39         rec = ControllerProviderConfig(
-# 40             id=entry["id"],
-# 41             guid=guid,
-# 42             name=entry["name"],
-# 43             description=entry["description"],
-# 44             config=entry["config"],
-# 45             artifact_path=dest.name,
-# 46             tags=entry["tags"],
-# 47         )
-# 48         db_session.add(rec)
-# 49     db_session.commit()
-# 50     print("✅ Seeded controller providers")
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 from app.enums.system_enums import SYSTEM 
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
+# 10 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 CONTROLLER_PROVIDERS = [
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "preprocessing_controller_provider.py",
+# 17         "name": "preprocessing_controller",
+# 18         "description": "Runs only the preprocessing step (e.g. linting).",
+# 19         "tags": ["preprocessing", "controller"],
+# 20         "config": {
+# 21             "components": {
+# 22                 "score_provider_id": 1,
+# 23                 "systems": {
+# 24                     SYSTEM.LINTING.value: 1
+# 25                 }
+# 26             },
+# 27             "params": {
+# 28                 "max_steps": 20
+# 29             }
+# 30         }
+# 31     }
+# 32 ]
+# 33 
+# 34 def seed_controller_providers(db_session: Session):
+# 35     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 36     for entry in CONTROLLER_PROVIDERS:
+# 37         guid = str(uuid4())
+# 38         src = SEED_FILES_DIR / entry["filename"]
+# 39         dest = EXTENSIONS_DIR / f"{guid}.py"
+# 40         if not src.exists():
+# 41             raise FileNotFoundError(f"Missing script: {src}")
+# 42         shutil.copy(src, dest)
+# 43 
+# 44         rec = ControllerProviderConfig(
+# 45             id=entry["id"],
+# 46             guid=guid,
+# 47             name=entry["name"],
+# 48             description=entry["description"],
+# 49             config=entry["config"],
+# 50             artifact_path=dest.name,
+# 51             tags=entry["tags"],
+# 52             provider_type=PROVIDER_TYPE.CONTROLLER,
+# 53         )
+# 54         db_session.add(rec)
+# 55     db_session.commit()
+# 56     print("✅ Seeded controller providers")
 
 
 # db\seeders\seed_program_provider.py
@@ -3324,55 +3373,61 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ProgramProviderConfig
-# 6 from app.enums.controller_enums import CONTROLLER  #  ✅ Import your FSM state enum
-# 7 
-# 8 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
-# 9 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
-# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 11 
-# 12 PROGRAM_PROVIDERS = [
-# 13     {
-# 14         "id": 1,
-# 15         "filename": "codecritic_program_provider.py",
-# 16         "name": "codecritic_program",
-# 17         "description": "Top-level orchestration of all system controllers.",
-# 18         "tags": ["program", "codecritic"],
-# 19         "config": {
-# 20             "max_steps": 20, 
-# 21             "score_provider_id": 1,
-# 22             "controllers": {
-# 23                 CONTROLLER.PREPROCESSING.value: 1
-# 24             }
-# 25         }
-# 26     }
-# 27 ]
-# 28 
-# 29 def seed_program_providers(db_session: Session):
-# 30     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 31 
-# 32     for entry in PROGRAM_PROVIDERS:
-# 33         guid = str(uuid4())
-# 34         src  = SEED_FILES_DIR / entry["filename"]
-# 35         dst  = EXTENSIONS_DIR / f"{guid}.py"
+# 6 from app.enums.controller_enums import CONTROLLER
+# 7 from app.enums.logging_enums import PROVIDER_TYPE  #  ✅ Import your FSM state enum
+# 8 
+# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/program_providers"
+# 10 PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 PROGRAM_PROVIDERS = [
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "codecritic_program_provider.py",
+# 17         "name": "codecritic_program",
+# 18         "description": "Top-level orchestration of all system controllers.",
+# 19         "tags": ["program", "codecritic"],
+# 20         "config": {
+# 21             "components": {
+# 22                 "score_provider_id": 1,
+# 23                 "controllers": {
+# 24                     CONTROLLER.PREPROCESSING.value: 1
+# 25                 }
+# 26             },
+# 27             "params": {
+# 28                 "max_steps": 20
+# 29             }
+# 30         }
+# 31     }
+# 32 ]
+# 33 
+# 34 def seed_program_providers(db_session: Session):
+# 35     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
 # 36 
-# 37         if not src.exists():
-# 38             raise FileNotFoundError(f"❌ Missing file: {src}")
-# 39 
-# 40         shutil.copy(src, dst)
+# 37     for entry in PROGRAM_PROVIDERS:
+# 38         guid = str(uuid4())
+# 39         src  = SEED_FILES_DIR / entry["filename"]
+# 40         dst  = EXTENSIONS_DIR / f"{guid}.py"
 # 41 
-# 42         record = ProgramProviderConfig(
-# 43             id            = entry["id"],
-# 44             guid          = guid,
-# 45             name          = entry["name"],
-# 46             description   = entry["description"],
-# 47             config        = entry["config"],
-# 48             artifact_path = dst.name,
-# 49             tags          = entry["tags"],
-# 50         )
-# 51         db_session.add(record)
-# 52 
-# 53     db_session.commit()
-# 54     print("✅ Seeded program providers")
+# 42         if not src.exists():
+# 43             raise FileNotFoundError(f"❌ Missing file: {src}")
+# 44 
+# 45         shutil.copy(src, dst)
+# 46 
+# 47         record = ProgramProviderConfig(
+# 48             id            = entry["id"],
+# 49             guid          = guid,
+# 50             name          = entry["name"],
+# 51             description   = entry["description"],
+# 52             config        = entry["config"],
+# 53             artifact_path = dst.name,
+# 54             tags          = entry["tags"],
+# 55             provider_type = PROVIDER_TYPE.PROGRAM,
+# 56         )
+# 57         db_session.add(record)
+# 58 
+# 59     db_session.commit()
+# 60     print("✅ Seeded program providers")
 
 
 # db\seeders\seed_prompt_providers.py
@@ -3382,11 +3437,11 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import PromptProviderConfig
-# 6 
-# 7 CURRENT_DIR = Path(__file__).resolve().parent
-# 8 SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
-# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 10 
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 
+# 8 CURRENT_DIR = Path(__file__).resolve().parent
+# 9 SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
+# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
 # 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 12 
 # 13 PROVIDERS = [
@@ -3396,51 +3451,57 @@
 # 17         "name": "basic_prompt_provider",
 # 18         "description": "Returns a simple prompt response.",
 # 19         "tags": ["default"],
-# 20         "config": {}
-# 21     },
-# 22     {
-# 23         "id": 2,
-# 24         "filename": "linting_prompt_provider.py",
-# 25         "name": "linting_prompt_provider",
-# 26         "description": "Combines linting system and agent prompts.",
-# 27         "tags": ["linting", "codequality"],
-# 28         "config": {
-# 29             "agent_prompt_id": 2,
-# 30             "system_prompt_id": 2,
-# 31             "context_provider_id": 2
-# 32         }
-# 33     }
-# 34 ]
-# 35 
-# 36 
-# 37 def seed_prompt_providers(db_session: Session):
-# 38     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 39 
-# 40     for entry in PROVIDERS:
-# 41         guid = str(uuid4())
-# 42         dest_filename = f"{guid}.py"
-# 43         source_file = SEED_FILES_DIR / entry["filename"]
-# 44         dest_file = EXTENSIONS_DIR / dest_filename
-# 45 
-# 46         if not source_file.exists():
-# 47             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
-# 48 
-# 49         shutil.copy(source_file, dest_file)
+# 20         "config": {
+# 21             "components": {},
+# 22             "params": {}
+# 23         }
+# 24     },
+# 25     {
+# 26         "id": 2,
+# 27         "filename": "linting_prompt_provider.py",
+# 28         "name": "linting_prompt_provider",
+# 29         "description": "Combines linting system and agent prompts.",
+# 30         "tags": ["linting", "codequality"],
+# 31         "config": {
+# 32             "components": {
+# 33                 "agent_prompt_id": 2,
+# 34                 "system_prompt_id": 2,
+# 35                 "context_provider_id": 2
+# 36             },
+# 37             "params": {}
+# 38         }
+# 39     }
+# 40 ]
+# 41 
+# 42 def seed_prompt_providers(db_session: Session):
+# 43     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 44 
+# 45     for entry in PROVIDERS:
+# 46         guid = str(uuid4())
+# 47         dest_filename = f"{guid}.py"
+# 48         source_file = SEED_FILES_DIR / entry["filename"]
+# 49         dest_file = EXTENSIONS_DIR / dest_filename
 # 50 
-# 51         config = PromptProviderConfig(
-# 52             id=entry["id"],
-# 53             guid=guid,
-# 54             name=entry["name"],
-# 55             description=entry["description"],
-# 56             config=entry["config"],
-# 57             artifact_path=dest_filename,
-# 58             tags=entry["tags"]
-# 59         )
-# 60 
-# 61         db_session.add(config)
-# 62 
-# 63     db_session.commit()
-# 64     print("Seeded prompt provider configurations successfully.")
+# 51         if not source_file.exists():
+# 52             raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
+# 53 
+# 54         shutil.copy(source_file, dest_file)
+# 55 
+# 56         config = PromptProviderConfig(
+# 57             id=entry["id"],
+# 58             guid=guid,
+# 59             name=entry["name"],
+# 60             description=entry["description"],
+# 61             config=entry["config"],
+# 62             artifact_path=dest_filename,
+# 63             tags=entry["tags"],
+# 64             provider_type=PROVIDER_TYPE.PROMPT, 
+# 65         )
+# 66 
+# 67         db_session.add(config)
+# 68 
+# 69     db_session.commit()
+# 70     print("Seeded prompt provider configurations successfully.")
 
 
 # db\seeders\seed_prompts.py
@@ -3552,13 +3613,13 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ScoreProviderConfig
-# 6 
-# 7 CURRENT_DIR = Path(__file__).resolve().parent
-# 8 SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
-# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 11 
-# 12 from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
+# 6 from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
+# 7 from app.enums.logging_enums import PROVIDER_TYPE
+# 8 
+# 9 CURRENT_DIR = Path(__file__).resolve().parent
+# 10 SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
+# 11 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
 # 13 
 # 14 SCORES = [
 # 15     {
@@ -3567,69 +3628,70 @@
 # 18         "name": "linting_score_provider",
 # 19         "description": "Scores lint compliance.",
 # 20         "config": {
-# 21             "tool_provider_ids": {
-# 22                 "black": 1,
-# 23                 "ruff": 3,
-# 24                 "mypy": 5,
-# 25                 "radon": 4
-# 26             },
-# 27             #  ✅ Flattened config
-# 28             **LintingScoreConfig(
-# 29                 weight_ruff=0.7,
-# 30                 weight_black=0.2,
-# 31                 weight_mypy=0.1,
-# 32                 fail_threshold=0.75
-# 33             ).model_dump()
-# 34         },
-# 35         "tags": ["linting"]
-# 36     },
-# 37     {
-# 38         "id": 2,
-# 39         "filename": "code_stability_score_provider.py",
-# 40         "name": "code_stability_score_provider",
-# 41         "description": "Ensures code is structurally and syntactically safe for downstream use.",
-# 42         "config": {
-# 43             #  🚫 No tool_provider_ids — not used
-# 44             **CodeStabilityScoreConfig(
-# 45                 failure_penalty=0.25,
-# 46                 diff_penalty=0.3,
-# 47                 test_weight=0.25,
-# 48                 coverage_weight=0.2
-# 49             ).model_dump()
-# 50         },
-# 51         "tags": ["stability", "safety"]
-# 52     }
-# 53 ]
-# 54 
+# 21             "components": {
+# 22                 "tool_provider_ids": {
+# 23                     "black": 1,
+# 24                     "ruff": 3,
+# 25                     "mypy": 5,
+# 26                     "radon": 4
+# 27                 }
+# 28             },
+# 29             "params": LintingScoreConfig(
+# 30                 weight_ruff=0.7,
+# 31                 weight_black=0.2,
+# 32                 weight_mypy=0.1,
+# 33                 fail_threshold=0.75
+# 34             ).model_dump()
+# 35         },
+# 36         "tags": ["linting"]
+# 37     },
+# 38     {
+# 39         "id": 2,
+# 40         "filename": "code_stability_score_provider.py",
+# 41         "name": "code_stability_score_provider",
+# 42         "description": "Ensures code is structurally and syntactically safe for downstream use.",
+# 43         "config": {
+# 44             "components": {},
+# 45             "params": CodeStabilityScoreConfig(
+# 46                 failure_penalty=0.25,
+# 47                 diff_penalty=0.3,
+# 48                 test_weight=0.25,
+# 49                 coverage_weight=0.2
+# 50             ).model_dump()
+# 51         },
+# 52         "tags": ["stability", "safety"]
+# 53     }
+# 54 ]
 # 55 
-# 56 
-# 57 def seed_score_providers(db_session: Session):
-# 58     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 59 
-# 60     for entry in SCORES:
-# 61         guid = str(uuid4())
-# 62         dest_filename = f"{guid}.py"
-# 63         source_file = SEED_FILES_DIR / entry["filename"]
-# 64         dest_file = EXTENSIONS_DIR / dest_filename
-# 65 
-# 66         if not source_file.exists():
-# 67             raise FileNotFoundError(f"Score provider script not found: {source_file}")
-# 68 
-# 69         shutil.copy(source_file, dest_file)
-# 70 
-# 71         score = ScoreProviderConfig(
-# 72             id=entry["id"],
-# 73             guid=guid,
-# 74             name=entry["name"],
-# 75             description=entry["description"],
-# 76             config=entry["config"],
-# 77             artifact_path=dest_filename
-# 78         )
-# 79 
-# 80         db_session.add(score)
-# 81 
-# 82     db_session.commit()
-# 83     print("Seeded score providers successfully.")
+# 56 def seed_score_providers(db_session: Session):
+# 57     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 58 
+# 59     for entry in SCORES:
+# 60         guid = str(uuid4())
+# 61         dest_filename = f"{guid}.py"
+# 62         source_file = SEED_FILES_DIR / entry["filename"]
+# 63         dest_file = EXTENSIONS_DIR / dest_filename
+# 64 
+# 65         if not source_file.exists():
+# 66             raise FileNotFoundError(f"Score provider script not found: {source_file}")
+# 67 
+# 68         shutil.copy(source_file, dest_file)
+# 69 
+# 70         score = ScoreProviderConfig(
+# 71             id=entry["id"],
+# 72             guid=guid,
+# 73             name=entry["name"],
+# 74             description=entry["description"],
+# 75             config=entry["config"],
+# 76             artifact_path=dest_filename,
+# 77             tags=entry["tags"],
+# 78             provider_type=PROVIDER_TYPE.SCORE,
+# 79         )
+# 80 
+# 81         db_session.add(score)
+# 82 
+# 83     db_session.commit()
+# 84     print("Seeded score providers successfully.")
 
 
 # db\seeders\seed_session_configs.py
@@ -3673,87 +3735,100 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import StateProviderConfig
-# 6 from app.enums.state_enums import STATE
-# 7 from app.enums.agent_enums import AGENT
-# 8 
-# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/state_providers"
-# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 12 
-# 13 STATE_PROVIDERS = [
-# 14     {
-# 15         "id": 1,
-# 16         "filename": "linting_generator_state_provider.py",
-# 17         "name": "LintingGeneratorStateProvider",
-# 18         "description": "Runs the generator agent in its own FSM wrapper.",
-# 19         "tags": ["linting", "generator"],
-# 20         "config": {
-# 21             "score_provider_id": 1,
-# 22             "max_steps": 20,
-# 23             "agents": {
-# 24                 AGENT.GENERATOR.value: 2
-# 25             }
-# 26         }
-# 27     },
-# 28     {
-# 29         "id": 2,
-# 30         "filename": "linting_discriminator_state_provider.py",
-# 31         "name": "LintingDiscriminatorStateProvider",
-# 32         "description": "Runs the discriminator agent in its own FSM wrapper.",
-# 33         "tags": ["linting", "discriminator"],
-# 34         "config": {
-# 35             "score_provider_id": 1,
-# 36             "max_steps": 20,
-# 37             "agents": {
-# 38                 AGENT.DISCRIMINATOR.value: 3
-# 39             }
-# 40         }
-# 41     },
-# 42     {
-# 43         "id": 3,
-# 44         "filename": "code_stability_state_provider.py",
-# 45         "name": "CodeStabilityStateProvider",
-# 46         "description": "Gates code based on parse, compile, import, and static validation success.",
-# 47         "tags": ["stability"],
-# 48         "config": {
-# 49             "score_provider_id": 1,
-# 50             "max_steps": 20,
-# 51             "agents": {
-# 52                 AGENT.STABILITY.value: 4
-# 53             }
-# 54         }
-# 55     }
-# 56 ]
-# 57 
-# 58 
-# 59 def seed_state_providers(db_session: Session):
-# 60     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 61 
-# 62     for entry in STATE_PROVIDERS:
-# 63         guid = str(uuid4())
-# 64         source_file = SEED_FILES_DIR / entry["filename"]
-# 65         dest_filename = f"{guid}.py"
-# 66         dest_file = EXTENSIONS_DIR / dest_filename
-# 67 
-# 68         if not source_file.exists():
-# 69             raise FileNotFoundError(f"State provider script not found: {source_file}")
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 from app.enums.state_enums import STATE
+# 8 from app.enums.agent_enums import AGENT
+# 9 
+# 10 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/state_providers"
+# 11 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 13 
+# 14 STATE_PROVIDERS = [
+# 15     {
+# 16         "id": 1,
+# 17         "filename": "linting_generator_state_provider.py",
+# 18         "name": "LintingGeneratorStateProvider",
+# 19         "description": "Runs the generator agent in its own FSM wrapper.",
+# 20         "tags": ["linting", "generator"],
+# 21         "config": {
+# 22             "components": {
+# 23                 "score_provider_id": 1,
+# 24                 "agents": {
+# 25                     AGENT.GENERATOR.value: 2
+# 26                 }
+# 27             },
+# 28             "params": {
+# 29                 "max_steps": 20
+# 30             }
+# 31         }
+# 32     },
+# 33     {
+# 34         "id": 2,
+# 35         "filename": "linting_discriminator_state_provider.py",
+# 36         "name": "LintingDiscriminatorStateProvider",
+# 37         "description": "Runs the discriminator agent in its own FSM wrapper.",
+# 38         "tags": ["linting", "discriminator"],
+# 39         "config": {
+# 40             "components": {
+# 41                 "score_provider_id": 1,
+# 42                 "agents": {
+# 43                     AGENT.DISCRIMINATOR.value: 3
+# 44                 }
+# 45             },
+# 46             "params": {
+# 47                 "max_steps": 20
+# 48             }
+# 49         }
+# 50     },
+# 51     {
+# 52         "id": 3,
+# 53         "filename": "code_stability_state_provider.py",
+# 54         "name": "CodeStabilityStateProvider",
+# 55         "description": "Gates code based on parse, compile, import, and static validation success.",
+# 56         "tags": ["stability"],
+# 57         "config": {
+# 58             "components": {
+# 59                 "score_provider_id": 1,
+# 60                 "agents": {
+# 61                     AGENT.STABILITY.value: 4
+# 62                 }
+# 63             },
+# 64             "params": {
+# 65                 "max_steps": 20
+# 66             }
+# 67         }
+# 68     }
+# 69 ]
 # 70 
-# 71         shutil.copy(source_file, dest_file)
-# 72 
-# 73         record = StateProviderConfig(
-# 74             id=entry["id"],
-# 75             guid=guid,
-# 76             name=entry["name"],
-# 77             description=entry["description"],
-# 78             config=entry["config"],
-# 79             artifact_path=dest_filename,
-# 80             tags=entry["tags"],
-# 81         )
+# 71 def seed_state_providers(db_session: Session):
+# 72     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 73 
+# 74     for entry in STATE_PROVIDERS:
+# 75         guid = str(uuid4())
+# 76         source_file = SEED_FILES_DIR / entry["filename"]
+# 77         dest_filename = f"{guid}.py"
+# 78         dest_file = EXTENSIONS_DIR / dest_filename
+# 79 
+# 80         if not source_file.exists():
+# 81             raise FileNotFoundError(f"State provider script not found: {source_file}")
 # 82 
-# 83         db_session.add(record)
+# 83         shutil.copy(source_file, dest_file)
 # 84 
-# 85     db_session.commit()
-# 86     print("✅ Seeded state provider configurations successfully.")
+# 85         record = StateProviderConfig(
+# 86             id=entry["id"],
+# 87             guid=guid,
+# 88             name=entry["name"],
+# 89             description=entry["description"],
+# 90             config=entry["config"],
+# 91             artifact_path=dest_filename,
+# 92             tags=entry["tags"],
+# 93             provider_type=PROVIDER_TYPE.STATE, 
+# 94         )
+# 95 
+# 96         db_session.add(record)
+# 97 
+# 98     db_session.commit()
+# 99     print("✅ Seeded state provider configurations successfully.")
 
 
 # db\seeders\seed_system_providers.py
@@ -3763,62 +3838,68 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import SystemProviderConfig
-# 6 from app.enums.state_enums import STATE
-# 7 from app.enums.system_enums import SYSTEM
-# 8 
-# 9 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
-# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 12 
-# 13 SYSTEM_PROVIDERS = [
-# 14     {
-# 15         "id": 1,
-# 16         "filename": "linting_system_provider.py",
-# 17         "name": "linting_system_provider",
-# 18         "description": "System to iteratively lint and evaluate Python code.",
-# 19         "system_type": SYSTEM.LINTING.value,
-# 20         "tags": ["linting", "system"],
-# 21         "config": {
-# 22             "score_provider_id": 1,
-# 23             "max_steps": 20,
-# 24             "states": {
-# 25                 STATE.GENERATE.value: 1,
-# 26                 STATE.DISCRIMINATE.value: 2,
-# 27                 STATE.CODE_STABILITY.value: 3
-# 28             }
-# 29         }
-# 30     }
-# 31 ]
-# 32 
-# 33 def seed_system_providers(db_session: Session):
-# 34     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 35 
-# 36     for entry in SYSTEM_PROVIDERS:
-# 37         guid = str(uuid4())
-# 38         source_file = SEED_FILES_DIR / entry["filename"]
-# 39         dest_filename = f"{guid}.py"
-# 40         dest_file = EXTENSIONS_DIR / dest_filename
-# 41 
-# 42         if not source_file.exists():
-# 43             raise FileNotFoundError(f"System provider script not found: {source_file}")
-# 44 
-# 45         shutil.copy(source_file, dest_file)
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 from app.enums.state_enums import STATE
+# 8 from app.enums.system_enums import SYSTEM
+# 9 
+# 10 SEED_FILES_DIR = Path(__file__).resolve().parent / "files/system_providers"
+# 11 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 12 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 13 
+# 14 SYSTEM_PROVIDERS = [
+# 15     {
+# 16         "id": 1,
+# 17         "filename": "linting_system_provider.py",
+# 18         "name": "linting_system_provider",
+# 19         "description": "System to iteratively lint and evaluate Python code.",
+# 20         "system_type": SYSTEM.LINTING.value,
+# 21         "tags": ["linting", "system"],
+# 22         "config": {
+# 23             "components": {
+# 24                 "score_provider_id": 1,
+# 25                 "states": {
+# 26                     STATE.GENERATE.value: 1,
+# 27                     STATE.DISCRIMINATE.value: 2,
+# 28                     STATE.CODE_STABILITY.value: 3
+# 29                 }
+# 30             },
+# 31             "params": {
+# 32                 "max_steps": 20
+# 33             }
+# 34         }
+# 35     }
+# 36 ]
+# 37 
+# 38 def seed_system_providers(db_session: Session):
+# 39     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 40 
+# 41     for entry in SYSTEM_PROVIDERS:
+# 42         guid = str(uuid4())
+# 43         source_file = SEED_FILES_DIR / entry["filename"]
+# 44         dest_filename = f"{guid}.py"
+# 45         dest_file = EXTENSIONS_DIR / dest_filename
 # 46 
-# 47         record = SystemProviderConfig(
-# 48             id=entry["id"],
-# 49             guid=guid,
-# 50             name=entry["name"],
-# 51             description=entry["description"],
-# 52             system_type=entry["system_type"],
-# 53             config=entry["config"],
-# 54             artifact_path=dest_filename,
-# 55             tags=entry["tags"],
-# 56         )
-# 57 
-# 58         db_session.add(record)
-# 59 
-# 60     db_session.commit()
-# 61     print("✅ Seeded system provider configurations successfully.")
+# 47         if not source_file.exists():
+# 48             raise FileNotFoundError(f"System provider script not found: {source_file}")
+# 49 
+# 50         shutil.copy(source_file, dest_file)
+# 51 
+# 52         record = SystemProviderConfig(
+# 53             id=entry["id"],
+# 54             guid=guid,
+# 55             name=entry["name"],
+# 56             description=entry["description"],
+# 57             system_type=entry["system_type"],
+# 58             config=entry["config"],
+# 59             artifact_path=dest_filename,
+# 60             tags=entry["tags"],
+# 61             provider_type=PROVIDER_TYPE.SYSTEM,
+# 62         )
+# 63 
+# 64         db_session.add(record)
+# 65 
+# 66     db_session.commit()
+# 67     print("✅ Seeded system provider configurations successfully.")
 
 
 # db\seeders\seed_tool_providers.py
@@ -3828,91 +3909,93 @@
 # 3 import shutil
 # 4 from sqlalchemy.orm import Session
 # 5 from app.db.models import ToolProviderConfig
-# 6 
-# 7 CURRENT_DIR = Path(__file__).resolve().parent
-# 8 SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
-# 9 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-# 10 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
-# 11 
-# 12 TOOLS = [
-# 13     {
-# 14         "id": 1,
-# 15         "filename": "black_tool.py",
-# 16         "name": "black",
-# 17         "description": "Formats Python code using Black.",
-# 18         "config": {}
-# 19     },
-# 20     {
-# 21         "id": 2,
-# 22         "filename": "sonarcloud_tool.py",
-# 23         "name": "sonarcloud",
-# 24         "description": "Static analysis via SonarCloud.",
-# 25         "config": {}
-# 26     },
-# 27     {
-# 28         "id": 3,
-# 29         "filename": "ruff_tool.py",
-# 30         "name": "ruff",
-# 31         "description": "Python linting with Ruff.",
-# 32         "config": {}
-# 33     },
-# 34     {
-# 35         "id": 4,
-# 36         "filename": "radon_tool.py",
-# 37         "name": "radon",
-# 38         "description": "Analyzes Python code complexity.",
-# 39         "config": {}
-# 40     },
-# 41     {
-# 42         "id": 5,
-# 43         "filename": "mypy_tool.py",
-# 44         "name": "mypy",
-# 45         "description": "Static type checking with mypy.",
-# 46         "config": {}
-# 47     },
-# 48     {
-# 49         "id": 6,
-# 50         "filename": "docformatter_tool.py",
-# 51         "name": "docformatter",
-# 52         "description": "Formats docstrings using docformatter.",
-# 53         "config": {}
-# 54     },
-# 55     {
-# 56         "id": 7,
-# 57         "filename": "symbol_graph.py",
-# 58         "name": "symbol_graph",
-# 59         "description": "Extracts and analyzes Python symbols into structured graphs.",
-# 60         "config": {}
-# 61     }
-# 62 ]
-# 63 
-# 64 def seed_tool_providers(db_session: Session):
-# 65     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-# 66 
-# 67     for entry in TOOLS:
-# 68         guid = str(uuid4())
-# 69         dest_filename = f"{guid}.py"
-# 70         source_file = SEED_FILES_DIR / entry["filename"]
-# 71         dest_file = EXTENSIONS_DIR / dest_filename
-# 72 
-# 73         if not source_file.exists():
-# 74             raise FileNotFoundError(f"Tool script not found: {source_file}")
-# 75 
-# 76         shutil.copy(source_file, dest_file)
-# 77 
-# 78         tool = ToolProviderConfig(
-# 79             id=entry["id"],
-# 80             guid=guid,
-# 81             name=entry["name"],
-# 82             description=entry["description"],
-# 83             config=entry["config"],
-# 84             artifact_path=dest_filename
-# 85         )
-# 86 
-# 87         db_session.add(tool)
+# 6 from app.enums.logging_enums import PROVIDER_TYPE
+# 7 
+# 8 CURRENT_DIR = Path(__file__).resolve().parent
+# 9 SEED_FILES_DIR = CURRENT_DIR / "files/tool_providers"
+# 10 PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
+# 11 EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+# 12 
+# 13 TOOLS = [
+# 14     {
+# 15         "id": 1,
+# 16         "filename": "black_tool.py",
+# 17         "name": "black",
+# 18         "description": "Formats Python code using Black.",
+# 19         "config": {"components": {}, "params": {}}
+# 20     },
+# 21     {
+# 22         "id": 2,
+# 23         "filename": "sonarcloud_tool.py",
+# 24         "name": "sonarcloud",
+# 25         "description": "Static analysis via SonarCloud.",
+# 26         "config": {"components": {}, "params": {}}
+# 27     },
+# 28     {
+# 29         "id": 3,
+# 30         "filename": "ruff_tool.py",
+# 31         "name": "ruff",
+# 32         "description": "Python linting with Ruff.",
+# 33         "config": {"components": {}, "params": {}}
+# 34     },
+# 35     {
+# 36         "id": 4,
+# 37         "filename": "radon_tool.py",
+# 38         "name": "radon",
+# 39         "description": "Analyzes Python code complexity.",
+# 40         "config": {"components": {}, "params": {}}
+# 41     },
+# 42     {
+# 43         "id": 5,
+# 44         "filename": "mypy_tool.py",
+# 45         "name": "mypy",
+# 46         "description": "Static type checking with mypy.",
+# 47         "config": {"components": {}, "params": {}}
+# 48     },
+# 49     {
+# 50         "id": 6,
+# 51         "filename": "docformatter_tool.py",
+# 52         "name": "docformatter",
+# 53         "description": "Formats docstrings using docformatter.",
+# 54         "config": {"components": {}, "params": {}}
+# 55     },
+# 56     {
+# 57         "id": 7,
+# 58         "filename": "symbol_graph.py",
+# 59         "name": "symbol_graph",
+# 60         "description": "Extracts and analyzes Python symbols into structured graphs.",
+# 61         "config": {"components": {}, "params": {}}
+# 62     }
+# 63 ]
+# 64 
+# 65 def seed_tool_providers(db_session: Session):
+# 66     EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
+# 67 
+# 68     for entry in TOOLS:
+# 69         guid = str(uuid4())
+# 70         dest_filename = f"{guid}.py"
+# 71         source_file = SEED_FILES_DIR / entry["filename"]
+# 72         dest_file = EXTENSIONS_DIR / dest_filename
+# 73 
+# 74         if not source_file.exists():
+# 75             raise FileNotFoundError(f"Tool script not found: {source_file}")
+# 76 
+# 77         shutil.copy(source_file, dest_file)
+# 78 
+# 79         tool = ToolProviderConfig(
+# 80             id=entry["id"],
+# 81             guid=guid,
+# 82             name=entry["name"],
+# 83             description=entry["description"],
+# 84             config=entry["config"],
+# 85             artifact_path=dest_filename,
+# 86             provider_type=PROVIDER_TYPE.TOOL,
+# 87         )
 # 88 
-# 89     db_session.commit()
-# 90     print("Seeded tool configurations successfully.")
+# 89         db_session.add(tool)
+# 90 
+# 91     db_session.commit()
+# 92     print("Seeded tool configurations successfully.")
 
 
 # enums\__init__.py
@@ -4205,7 +4288,17 @@
 # 21             context=context,
 # 22             **kwargs
 # 23         )
-# 24         return instance
+# 24 
+# 25         #  🔧 Extract components and params from config for consistency (if needed downstream)
+# 26         raw_config = instance._config.config or {}
+# 27         components = raw_config.get("components") or {}
+# 28         params     = raw_config.get("params") or {}
+# 29 
+# 30         #  Optionally inject into instance if base class expects them split
+# 31         instance._components = components
+# 32         instance._params = params
+# 33 
+# 34         return instance
 
 
 # factories\agent_provider_factory.py
@@ -4235,68 +4328,70 @@
 # 23         from app.factories.tool_provider_factory import ToolProviderFactory
 # 24 
 # 25         preload_instance = super().create(id, context=context)
-# 26         config = preload_instance._config.config or {}
-# 27         provider_id = preload_instance._config.id
-# 28         provider_type = preload_instance._infer_provider_type()
-# 29 
-# 30         #  ─── Child context for subproviders ─────────────────────────────
-# 31         child_context = RunContext(
-# 32             called_by_type=provider_type,
-# 33             called_by_id=provider_id,
-# 34             session_id=context.session_id,
-# 35             file_log_id=context.file_log_id,
-# 36             parent_id=preload_instance._run_id,
-# 37             execution_chain=context.execution_chain.copy()
-# 38         )
-# 39 
-# 40         #  ─── Create subproviders ───────────────────────────────────────
-# 41         agent_engine = (
-# 42             AgentEngineProviderFactory.create(
-# 43                 config["agent_engine_provider_id"],
-# 44                 context=child_context,
-# 45             ) if config.get("agent_engine_provider_id") else None
-# 46         )
-# 47 
-# 48         prompt_provider = (
-# 49             PromptProviderFactory.create(
-# 50                 config["prompt_provider_id"],
-# 51                 context=child_context,
-# 52             ) if config.get("prompt_provider_id") else None
-# 53         )
-# 54 
-# 55         context_provider = (
-# 56             ContextProviderFactory.create(
-# 57                 config["context_provider_id"],
-# 58                 context=child_context,
-# 59             ) if config.get("context_provider_id") else None
-# 60         )
-# 61 
-# 62         score_provider = (
-# 63             ScoreProviderFactory.create(
-# 64                 config["score_provider_id"],
-# 65                 context=child_context,
-# 66             ) if config.get("score_provider_id") else None
-# 67         )
-# 68 
-# 69         tool_providers = [
-# 70             ToolProviderFactory.create(
-# 71                 tid,
-# 72                 context=child_context,
-# 73             )
-# 74             for tid in (config.get("tool_provider_ids") or {}).values()
-# 75         ]
-# 76 
-# 77         #  ─── Final instance construction ───────────────────────────────
-# 78         cls_type = type(preload_instance)
-# 79         return cls_type(
-# 80             config=preload_instance._config,
-# 81             agent_engine=agent_engine,
-# 82             prompt_provider=prompt_provider,
-# 83             context_provider=context_provider,
-# 84             score_provider=score_provider,
-# 85             tool_providers=tool_providers,
-# 86             context=context
-# 87         )
+# 26 
+# 27         #  ✅ Use already-injected structured config
+# 28         components = preload_instance._components
+# 29         provider_id = preload_instance._config.id
+# 30         provider_type = preload_instance._provider_type
+# 31 
+# 32         #  ─── Child context ─────────────────────────────────────────────
+# 33         child_context = RunContext(
+# 34             called_by_type=provider_type,
+# 35             called_by_id=provider_id,
+# 36             session_id=context.session_id,
+# 37             file_log_id=context.file_log_id,
+# 38             parent_id=preload_instance._run_id,
+# 39             execution_chain=context.execution_chain.copy()
+# 40         )
+# 41 
+# 42         #  ─── Create subproviders ───────────────────────────────────────
+# 43         agent_engine = (
+# 44             AgentEngineProviderFactory.create(
+# 45                 components["agent_engine_provider_id"],
+# 46                 context=child_context,
+# 47             ) if components.get("agent_engine_provider_id") else None
+# 48         )
+# 49 
+# 50         prompt_provider = (
+# 51             PromptProviderFactory.create(
+# 52                 components["prompt_provider_id"],
+# 53                 context=child_context,
+# 54             ) if components.get("prompt_provider_id") else None
+# 55         )
+# 56 
+# 57         context_provider = (
+# 58             ContextProviderFactory.create(
+# 59                 components["context_provider_id"],
+# 60                 context=child_context,
+# 61             ) if components.get("context_provider_id") else None
+# 62         )
+# 63 
+# 64         score_provider = (
+# 65             ScoreProviderFactory.create(
+# 66                 components["score_provider_id"],
+# 67                 context=child_context,
+# 68             ) if components.get("score_provider_id") else None
+# 69         )
+# 70 
+# 71         tool_providers = [
+# 72             ToolProviderFactory.create(
+# 73                 tid,
+# 74                 context=child_context,
+# 75             )
+# 76             for tid in (components.get("tool_provider_ids") or {}).values()
+# 77         ]
+# 78 
+# 79         #  ─── Final instance construction ───────────────────────────────
+# 80         cls_type = type(preload_instance)
+# 81         return cls_type(
+# 82             config=preload_instance._config,
+# 83             agent_engine=agent_engine,
+# 84             prompt_provider=prompt_provider,
+# 85             context_provider=context_provider,
+# 86             score_provider=score_provider,
+# 87             tool_providers=tool_providers,
+# 88             context=context
+# 89         )
 
 
 # factories\base_provider_factory.py
@@ -4314,45 +4409,55 @@
 # 11 
 # 12 engine = init_db(reset=False)
 # 13 
-# 14 class BaseProviderFactory:
-# 15     config_model = None
-# 16     base_class = BaseProvider
-# 17 
-# 18     @classmethod
-# 19     def create(
-# 20         cls,
-# 21         id: int,
-# 22         *,
-# 23         context: RunContext,
-# 24         **kwargs
-# 25     ) -> BaseProvider:
-# 26         with Session(bind=engine) as session:
-# 27             config = session.get(cls.config_model, int(id))
-# 28             if not config:
-# 29                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
-# 30 
-# 31             ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
-# 32             if not ext_path.exists():
-# 33                 raise FileNotFoundError(f"Extension not found: {ext_path}")
-# 34 
-# 35         spec = spec_from_file_location(ext_path.stem, ext_path)
-# 36         if spec is None or spec.loader is None:
-# 37             raise ImportError(f"Cannot load module spec for {ext_path}")
-# 38 
-# 39         module = module_from_spec(spec)
-# 40         spec.loader.exec_module(module)
-# 41 
-# 42         provider_class = next(
-# 43             (obj for obj in vars(module).values()
-# 44              if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class),
-# 45             None
-# 46         )
-# 47 
-# 48         if provider_class is None:
-# 49             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
-# 50 
-# 51         instance = provider_class(config=config, context=context, **kwargs)
-# 52         return instance
+# 14 
+# 15 class BaseProviderFactory:
+# 16     config_model = None
+# 17     base_class = BaseProvider
+# 18 
+# 19     @classmethod
+# 20     def create(
+# 21         cls,
+# 22         id: int,
+# 23         *,
+# 24         context: RunContext,
+# 25         **kwargs
+# 26     ) -> BaseProvider:
+# 27         with Session(bind=engine) as session:
+# 28             config = session.get(cls.config_model, int(id))
+# 29             if not config:
+# 30                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
+# 31 
+# 32             ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
+# 33             if not ext_path.exists():
+# 34                 raise FileNotFoundError(f"Extension not found: {ext_path}")
+# 35 
+# 36         spec = spec_from_file_location(ext_path.stem, ext_path)
+# 37         if spec is None or spec.loader is None:
+# 38             raise ImportError(f"Cannot load module spec for {ext_path}")
+# 39 
+# 40         module = module_from_spec(spec)
+# 41         spec.loader.exec_module(module)
+# 42 
+# 43         provider_class = next(
+# 44             (obj for obj in vars(module).values()
+# 45              if isinstance(obj, type) and issubclass(obj, cls.base_class) and obj is not cls.base_class),
+# 46             None
+# 47         )
+# 48 
+# 49         if provider_class is None:
+# 50             raise ImportError(f"No valid subclass of {cls.base_class.__name__} found in {ext_path}")
+# 51 
+# 52         #  🎯 Extract and normalize config structure
+# 53         full_config = config.config or {}
+# 54         components = full_config.get("components") or {}
+# 55         params     = full_config.get("params") or {}
+# 56 
+# 57         #  ✅ Create instance and attach structured config access
+# 58         instance = provider_class(config=config, context=context, **kwargs)
+# 59         instance._components = components
+# 60         instance._params = params
+# 61 
+# 62         return instance
 
 
 # factories\context_provider_factory.py
@@ -4378,10 +4483,10 @@
 # 19         from app.factories.score_provider_factory import ScoreProviderFactory
 # 20         from app.factories.tool_provider_factory import ToolProviderFactory
 # 21 
-# 22         instance = super().create(id, context=context)
-# 23         config = instance._config.config or {}
-# 24         provider_id = instance._config.id
-# 25         provider_type = instance._infer_provider_type()
+# 22         preload_instance = super().create(id, context=context)
+# 23         components = preload_instance._components  #  injected by BaseProviderFactory
+# 24         provider_id = preload_instance._config.id
+# 25         provider_type = preload_instance._provider_type
 # 26 
 # 27         #  ─── Child context for subproviders ─────────────────────────────
 # 28         child_context = RunContext(
@@ -4389,28 +4494,28 @@
 # 30             called_by_id=provider_id,
 # 31             session_id=context.session_id,
 # 32             file_log_id=context.file_log_id,
-# 33             parent_id=instance._run_id,
+# 33             parent_id=preload_instance._run_id,
 # 34             execution_chain=context.execution_chain.copy()
 # 35         )
 # 36 
-# 37         if (score_id := config.get("score_provider_id")):
+# 37         if (score_id := components.get("score_provider_id")):
 # 38             if isinstance(score_id, int) and score_id > 0:
 # 39                 score = ScoreProviderFactory.create(
 # 40                     score_id,
 # 41                     context=child_context
 # 42                 )
-# 43                 instance.set_score_provider(score)
+# 43                 preload_instance.set_score_provider(score)
 # 44                 if hasattr(score, "set_context_provider"):
-# 45                     score.set_context_provider(instance)
+# 45                     score.set_context_provider(preload_instance)
 # 46 
-# 47         for _, tool_id in (config.get("tool_provider_ids") or {}).items():
+# 47         for _, tool_id in (components.get("tool_provider_ids") or {}).items():
 # 48             tool = ToolProviderFactory.create(
 # 49                 tool_id,
 # 50                 context=child_context
 # 51             )
-# 52             instance.set_tool_provider(tool)
+# 52             preload_instance.set_tool_provider(tool)
 # 53 
-# 54         return instance
+# 54         return preload_instance
 
 
 # factories\controller_provider_factory.py
@@ -4438,10 +4543,10 @@
 # 21         from app.factories.tool_provider_factory import ToolProviderFactory
 # 22         from app.factories.system_provider_factory import SystemProviderFactory
 # 23 
-# 24         inst = super().create(id, context=context)
-# 25         config = inst._config.config or {}
-# 26         provider_id = inst._config.id
-# 27         provider_type = inst._infer_provider_type()
+# 24         preload_instance = super().create(id, context=context)
+# 25         components = preload_instance._components
+# 26         provider_id = preload_instance._config.id
+# 27         provider_type = preload_instance._provider_type
 # 28 
 # 29         #  ─── Child context ─────────────────────────────────────────────
 # 30         child_context = RunContext(
@@ -4449,23 +4554,23 @@
 # 32             called_by_id=provider_id,
 # 33             session_id=context.session_id,
 # 34             file_log_id=context.file_log_id,
-# 35             parent_id=inst._run_id,
+# 35             parent_id=preload_instance._run_id,
 # 36             execution_chain=context.execution_chain.copy()
 # 37         )
 # 38 
 # 39         #  ─── Subproviders ──────────────────────────────────────────────
 # 40         context_provider = (
 # 41             ContextProviderFactory.create(
-# 42                 config["context_provider_id"],
+# 42                 components["context_provider_id"],
 # 43                 context=child_context
-# 44             ) if config.get("context_provider_id") else None
+# 44             ) if components.get("context_provider_id") else None
 # 45         )
 # 46 
 # 47         score_provider = (
 # 48             ScoreProviderFactory.create(
-# 49                 config["score_provider_id"],
+# 49                 components["score_provider_id"],
 # 50                 context=child_context
-# 51             ) if config.get("score_provider_id") else None
+# 51             ) if components.get("score_provider_id") else None
 # 52         )
 # 53 
 # 54         tool_providers = [
@@ -4473,7 +4578,7 @@
 # 56                 tid,
 # 57                 context=child_context
 # 58             )
-# 59             for tid in (config.get("tool_provider_ids") or {}).values()
+# 59             for tid in (components.get("tool_provider_ids") or {}).values()
 # 60         ]
 # 61 
 # 62         system_providers = {
@@ -4481,13 +4586,13 @@
 # 64                 sys_id,
 # 65                 context=child_context
 # 66             )
-# 67             for name, sys_id in (config.get("systems") or {}).items()
+# 67             for name, sys_id in (components.get("systems") or {}).items()
 # 68         }
 # 69 
 # 70         #  ─── Final instantiation ───────────────────────────────────────
-# 71         cls_type = type(inst)
+# 71         cls_type = type(preload_instance)
 # 72         return cls_type(
-# 73             config=inst._config,
+# 73             config=preload_instance._config,
 # 74             context_provider=context_provider,
 # 75             score_provider=score_provider,
 # 76             tool_providers=tool_providers,
@@ -4521,10 +4626,10 @@
 # 21         from app.factories.tool_provider_factory import ToolProviderFactory
 # 22         from app.factories.controller_provider_factory import ControllerProviderFactory
 # 23 
-# 24         inst = super().create(id, context=context)
-# 25         config = inst._config.config or {}
-# 26         provider_id = inst._config.id
-# 27         provider_type = inst._infer_provider_type()
+# 24         preload_instance = super().create(id, context=context)
+# 25         components = preload_instance._components  #  structured access injected by BaseProviderFactory
+# 26         provider_id = preload_instance._config.id
+# 27         provider_type = preload_instance._provider_type
 # 28 
 # 29         #  ─── Child context ─────────────────────────────────────────────
 # 30         child_context = RunContext(
@@ -4532,23 +4637,23 @@
 # 32             called_by_id=provider_id,
 # 33             session_id=context.session_id,
 # 34             file_log_id=context.file_log_id,
-# 35             parent_id=inst._run_id,
+# 35             parent_id=preload_instance._run_id,
 # 36             execution_chain=context.execution_chain.copy()
 # 37         )
 # 38 
 # 39         #  ─── Subproviders ──────────────────────────────────────────────
 # 40         context_provider = (
 # 41             ContextProviderFactory.create(
-# 42                 config["context_provider_id"],
+# 42                 components["context_provider_id"],
 # 43                 context=child_context
-# 44             ) if config.get("context_provider_id") else None
+# 44             ) if components.get("context_provider_id") else None
 # 45         )
 # 46 
 # 47         score_provider = (
 # 48             ScoreProviderFactory.create(
-# 49                 config["score_provider_id"],
+# 49                 components["score_provider_id"],
 # 50                 context=child_context
-# 51             ) if config.get("score_provider_id") else None
+# 51             ) if components.get("score_provider_id") else None
 # 52         )
 # 53 
 # 54         tool_providers = [
@@ -4556,7 +4661,7 @@
 # 56                 tid,
 # 57                 context=child_context
 # 58             )
-# 59             for tid in (config.get("tool_provider_ids") or {}).values()
+# 59             for tid in (components.get("tool_provider_ids") or {}).values()
 # 60         ]
 # 61 
 # 62         controller_providers = {
@@ -4564,13 +4669,13 @@
 # 64                 controller_id,
 # 65                 context=child_context
 # 66             )
-# 67             for name, controller_id in (config.get("controllers") or {}).items()
+# 67             for name, controller_id in (components.get("controllers") or {}).items()
 # 68         }
 # 69 
 # 70         #  ─── Final instantiation ───────────────────────────────────────
-# 71         cls_type = type(inst)
+# 71         cls_type = type(preload_instance)
 # 72         instance = cls_type(
-# 73             config=inst._config,
+# 73             config=preload_instance._config,
 # 74             context_provider=context_provider,
 # 75             score_provider=score_provider,
 # 76             tool_providers=tool_providers,
@@ -4603,57 +4708,56 @@
 # 18         context: RunContext,
 # 19         **kwargs
 # 20     ) -> PromptProviderBase:
-# 21         instance = super().create(id, context=context)
-# 22 
-# 23         config = instance._config.config or {}
-# 24         provider_id = instance._config.id
-# 25         provider_type = instance._infer_provider_type()
-# 26 
-# 27         #  ─── Child context ─────────────────────────────────────────────
-# 28         child_context = RunContext(
-# 29             called_by_type=provider_type,
-# 30             called_by_id=provider_id,
-# 31             session_id=context.session_id,
-# 32             file_log_id=context.file_log_id,
-# 33             parent_id=instance._run_id,
-# 34             execution_chain=context.execution_chain.copy()
-# 35         )
-# 36 
-# 37         #  ─── Prompt loading ────────────────────────────────────────────
-# 38         def load_prompt(prompt_id: int, table: str) -> str | None:
-# 39             if not prompt_id:
-# 40                 return None
-# 41             conn = instance._engine.raw_connection()
-# 42             try:
-# 43                 cur = conn.cursor()
-# 44                 cur.execute(f"SELECT artifact_path FROM {table} WHERE id = ?", (prompt_id,))
-# 45                 row = cur.fetchone()
-# 46                 if row:
-# 47                     artifact_path = row[0]
-# 48                     if artifact_path:
-# 49                         return (Path("extensions") / artifact_path).read_text(encoding="utf-8").strip()
-# 50             finally:
-# 51                 conn.close()
-# 52             return None
-# 53 
-# 54         agent_prompt_text = load_prompt(config.get("agent_prompt_id"), "agent_prompt")
-# 55         system_prompt_text = load_prompt(config.get("system_prompt_id"), "system_prompt")
-# 56 
-# 57         context_provider = None
-# 58         if config.get("context_provider_id"):
-# 59             context_provider = ContextProviderFactory.create(
-# 60                 config["context_provider_id"],
-# 61                 context=child_context
-# 62             )
-# 63 
-# 64         cls_type = type(instance)
-# 65         return cls_type(
-# 66             config=instance._config,
-# 67             agent_text=agent_prompt_text,
-# 68             system_text=system_prompt_text,
-# 69             context_provider=context_provider,
-# 70             context=context
-# 71         )
+# 21         preload_instance = super().create(id, context=context)
+# 22         components = preload_instance._components  #  injected by BaseProviderFactory
+# 23         provider_id = preload_instance._config.id
+# 24         provider_type = preload_instance._provider_type
+# 25 
+# 26         #  ─── Child context ─────────────────────────────────────────────
+# 27         child_context = RunContext(
+# 28             called_by_type=provider_type,
+# 29             called_by_id=provider_id,
+# 30             session_id=context.session_id,
+# 31             file_log_id=context.file_log_id,
+# 32             parent_id=preload_instance._run_id,
+# 33             execution_chain=context.execution_chain.copy()
+# 34         )
+# 35 
+# 36         #  ─── Prompt loading ────────────────────────────────────────────
+# 37         def load_prompt(prompt_id: int, table: str) -> str | None:
+# 38             if not prompt_id:
+# 39                 return None
+# 40             conn = preload_instance._engine.raw_connection()
+# 41             try:
+# 42                 cur = conn.cursor()
+# 43                 cur.execute(f"SELECT artifact_path FROM {table} WHERE id = ?", (prompt_id,))
+# 44                 row = cur.fetchone()
+# 45                 if row:
+# 46                     artifact_path = row[0]
+# 47                     if artifact_path:
+# 48                         return (Path("extensions") / artifact_path).read_text(encoding="utf-8").strip()
+# 49             finally:
+# 50                 conn.close()
+# 51             return None
+# 52 
+# 53         agent_prompt_text = load_prompt(components.get("agent_prompt_id"), "agent_prompt")
+# 54         system_prompt_text = load_prompt(components.get("system_prompt_id"), "system_prompt")
+# 55 
+# 56         context_provider = None
+# 57         if components.get("context_provider_id"):
+# 58             context_provider = ContextProviderFactory.create(
+# 59                 components["context_provider_id"],
+# 60                 context=child_context
+# 61             )
+# 62 
+# 63         cls_type = type(preload_instance)
+# 64         return cls_type(
+# 65             config=preload_instance._config,
+# 66             agent_text=agent_prompt_text,
+# 67             system_text=system_prompt_text,
+# 68             context_provider=context_provider,
+# 69             context=context
+# 70         )
 
 
 # factories\score_provider_factory.py
@@ -4679,10 +4783,10 @@
 # 19         from app.factories.tool_provider_factory import ToolProviderFactory
 # 20         from app.factories.context_provider_factory import ContextProviderFactory
 # 21 
-# 22         instance = super().create(id, context=context)
-# 23         config = instance._config.config or {}
-# 24         provider_id = instance._config.id
-# 25         provider_type = instance._infer_provider_type()
+# 22         preload_instance = super().create(id, context=context)
+# 23         components = preload_instance._components  #  provided by BaseProviderFactory
+# 24         provider_id = preload_instance._config.id
+# 25         provider_type = preload_instance._provider_type
 # 26 
 # 27         #  ─── Child context ─────────────────────────────────────────────
 # 28         child_context = RunContext(
@@ -4690,27 +4794,27 @@
 # 30             called_by_id=provider_id,
 # 31             session_id=context.session_id,
 # 32             file_log_id=context.file_log_id,
-# 33             parent_id=instance._run_id,
+# 33             parent_id=preload_instance._run_id,
 # 34             execution_chain=context.execution_chain.copy()
 # 35         )
 # 36 
-# 37         if (ctx_id := config.get("context_provider_id")):
+# 37         if (ctx_id := components.get("context_provider_id")):
 # 38             context_provider = ContextProviderFactory.create(
 # 39                 ctx_id,
 # 40                 context=child_context
 # 41             )
-# 42             instance.set_context_provider(context_provider)
+# 42             preload_instance.set_context_provider(context_provider)
 # 43             if hasattr(context_provider, "set_score_provider"):
-# 44                 context_provider.set_score_provider(instance)
+# 44                 context_provider.set_score_provider(preload_instance)
 # 45 
-# 46         for _, tool_id in (config.get("tool_provider_ids") or {}).items():
+# 46         for _, tool_id in (components.get("tool_provider_ids") or {}).items():
 # 47             tool = ToolProviderFactory.create(
 # 48                 tool_id,
 # 49                 context=child_context
 # 50             )
-# 51             instance.set_tool_provider(tool)
+# 51             preload_instance.set_tool_provider(tool)
 # 52 
-# 53         return instance
+# 53         return preload_instance
 
 
 # factories\state_provider_factory.py
@@ -4739,9 +4843,9 @@
 # 22         from app.factories.tool_provider_factory import ToolProviderFactory
 # 23 
 # 24         preload_instance = super().create(id, context=context)
-# 25         config = preload_instance._config.config or {}
+# 25         components = preload_instance._components  #  structured config
 # 26         provider_id = preload_instance._config.id
-# 27         provider_type = preload_instance._infer_provider_type()
+# 27         provider_type = preload_instance._provider_type
 # 28 
 # 29         #  ─── Child context ─────────────────────────────────────────────
 # 30         child_context = RunContext(
@@ -4759,23 +4863,23 @@
 # 42                 agent_id,
 # 43                 context=child_context
 # 44             )
-# 45             for name, agent_id in config.get("agents", {}).items()
+# 45             for name, agent_id in components.get("agents", {}).items()
 # 46         }
 # 47 
 # 48         context_provider = (
 # 49             ContextProviderFactory.create(
-# 50                 config["context_provider_id"],
+# 50                 components["context_provider_id"],
 # 51                 context=child_context
 # 52             )
-# 53             if config.get("context_provider_id") else None
+# 53             if components.get("context_provider_id") else None
 # 54         )
 # 55 
 # 56         score_provider = (
 # 57             ScoreProviderFactory.create(
-# 58                 config["score_provider_id"],
+# 58                 components["score_provider_id"],
 # 59                 context=child_context
 # 60             )
-# 61             if config.get("score_provider_id") else None
+# 61             if components.get("score_provider_id") else None
 # 62         )
 # 63 
 # 64         tool_providers = [
@@ -4783,7 +4887,7 @@
 # 66                 tool_id,
 # 67                 context=child_context
 # 68             )
-# 69             for _, tool_id in (config.get("tool_provider_ids") or {}).items()
+# 69             for _, tool_id in (components.get("tool_provider_ids") or {}).items()
 # 70         ]
 # 71 
 # 72         #  ─── Final instantiation ───────────────────────────────────────
@@ -4825,9 +4929,9 @@
 # 23         from app.factories.tool_provider_factory import ToolProviderFactory
 # 24 
 # 25         preload_instance = super().create(id, context=context)
-# 26         config = preload_instance._config.config or {}
+# 26         components = preload_instance._components
 # 27         provider_id = preload_instance._config.id
-# 28         provider_type = preload_instance._infer_provider_type()
+# 28         provider_type = preload_instance._provider_type
 # 29 
 # 30         #  ─── Child context ─────────────────────────────────────────────
 # 31         child_context = RunContext(
@@ -4842,16 +4946,16 @@
 # 40         #  ─── Subproviders ──────────────────────────────────────────────
 # 41         context_provider = (
 # 42             ContextProviderFactory.create(
-# 43                 config["context_provider_id"],
+# 43                 components["context_provider_id"],
 # 44                 context=child_context
-# 45             ) if config.get("context_provider_id") else None
+# 45             ) if components.get("context_provider_id") else None
 # 46         )
 # 47 
 # 48         score_provider = (
 # 49             ScoreProviderFactory.create(
-# 50                 config["score_provider_id"],
+# 50                 components["score_provider_id"],
 # 51                 context=child_context
-# 52             ) if config.get("score_provider_id") else None
+# 52             ) if components.get("score_provider_id") else None
 # 53         )
 # 54 
 # 55         tool_providers = [
@@ -4859,7 +4963,7 @@
 # 57                 tool_id,
 # 58                 context=child_context
 # 59             )
-# 60             for _, tool_id in (config.get("tool_provider_ids") or {}).items()
+# 60             for _, tool_id in (components.get("tool_provider_ids") or {}).items()
 # 61         ]
 # 62 
 # 63         state_providers = {
@@ -4867,7 +4971,7 @@
 # 65                 state_id,
 # 66                 context=child_context
 # 67             )
-# 68             for name, state_id in (config.get("states") or {}).items()
+# 68             for name, state_id in (components.get("states") or {}).items()
 # 69         }
 # 70 
 # 71         #  ─── Final instantiation ───────────────────────────────────────
@@ -4905,10 +5009,10 @@
 # 19         from app.factories.context_provider_factory import ContextProviderFactory
 # 20         from app.factories.score_provider_factory import ScoreProviderFactory
 # 21 
-# 22         instance = super().create(id, context=context)
-# 23         config = instance._config.config or {}
-# 24         provider_id = instance._config.id
-# 25         provider_type = instance._infer_provider_type()
+# 22         preload_instance = super().create(id, context=context)
+# 23         components = preload_instance._components
+# 24         provider_id = preload_instance._config.id
+# 25         provider_type = preload_instance._provider_type
 # 26 
 # 27         #  ─── Child context ─────────────────────────────────────────────
 # 28         child_context = RunContext(
@@ -4916,30 +5020,30 @@
 # 30             called_by_id=provider_id,
 # 31             session_id=context.session_id,
 # 32             file_log_id=context.file_log_id,
-# 33             parent_id=instance._run_id,
+# 33             parent_id=preload_instance._run_id,
 # 34             execution_chain=context.execution_chain.copy()
 # 35         )
 # 36 
-# 37         if (ctx_id := config.get("context_provider_id")):
+# 37         if (ctx_id := components.get("context_provider_id")):
 # 38             context_provider = ContextProviderFactory.create(
 # 39                 ctx_id,
 # 40                 context=child_context
 # 41             )
-# 42             instance.set_context_provider(context_provider)
+# 42             preload_instance.set_context_provider(context_provider)
 # 43             if hasattr(context_provider, "set_tool_provider"):
-# 44                 context_provider.set_tool_provider(instance)
+# 44                 context_provider.set_tool_provider(preload_instance)
 # 45 
-# 46         if (score_id := config.get("score_provider_id")):
+# 46         if (score_id := components.get("score_provider_id")):
 # 47             if isinstance(score_id, int) and score_id > 0:
 # 48                 score_provider = ScoreProviderFactory.create(
 # 49                     score_id,
 # 50                     context=child_context
 # 51                 )
-# 52                 instance.set_score_provider(score_provider)
+# 52                 preload_instance.set_score_provider(score_provider)
 # 53                 if hasattr(score_provider, "set_tool_provider"):
-# 54                     score_provider.set_tool_provider(instance)
+# 54                     score_provider.set_tool_provider(preload_instance)
 # 55 
-# 56         return instance
+# 56         return preload_instance
 
 
 # providers\__init__.py
@@ -5057,7 +5161,7 @@
 
 # providers\base_provider.py
 
-# 1 from abc import abstractmethod
+# 1 from abc import ABC, abstractmethod
 # 2 from copy import deepcopy
 # 3 from datetime import datetime, timezone
 # 4 import hashlib
@@ -5076,7 +5180,7 @@
 # 17 DEFAULT_MAX_RETRIES = 2
 # 18 DEFAULT_BACKOFF_SECONDS = 0.25
 # 19 
-# 20 class BaseProvider:
+# 20 class BaseProvider(ABC):
 # 21     def __init__(
 # 22         self,
 # 23         config=None,
@@ -5089,220 +5193,196 @@
 # 30         self._engine = init_db(reset=False)
 # 31         self.logger = LoggingProvider()
 # 32         self._log = logging.getLogger(self.__class__.__name__)
-# 33 
-# 34         if self._context:
-# 35             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-# 36                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-# 37                 self._context.execution_chain.append(self._run_id)
-# 38             self._session_id = self._context.session_id
-# 39             self._file_log_id = self._context.file_log_id
-# 40             self._called_by_type = self._context.called_by_type
-# 41             self._called_by_id = self._context.called_by_id
-# 42         else:
-# 43             self._session_id = None
-# 44             self._file_log_id = None
-# 45             self._called_by_type = None
-# 46             self._called_by_id = None
-# 47 
-# 48     def run(self, input: dict | None = None, context: RunContext = None) -> str:
-# 49         input = input or {}
-# 50         max_retries = input.get("max_retries", DEFAULT_MAX_RETRIES)
-# 51         backoff_seconds = input.get("backoff_seconds", DEFAULT_BACKOFF_SECONDS)
-# 52 
-# 53         if context:
-# 54             self._context = deepcopy(context)
-# 55             self._session_id     = self._context.session_id
-# 56             self._file_log_id    = self._context.file_log_id
-# 57             self._called_by_type = self._context.called_by_type
-# 58             self._called_by_id   = self._context.called_by_id
-# 59 
-# 60         for attempt in range(max_retries + 1):
-# 61             self._run_id = str(uuid4())
-# 62 
-# 63             if self._context:
-# 64                 if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
-# 65                     self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
-# 66                     self._context.execution_chain.append(self._run_id)
-# 67 
-# 68             start_time = datetime.now(timezone.utc)
-# 69             start_clock = time.perf_counter()
-# 70 
-# 71             try:
-# 72                 output = self._run_provider(input)
-# 73                 break
-# 74             except Exception as exc:
-# 75                 latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 76 
-# 77                 #  🔴 Error Log
-# 78                 try:
-# 79                     self.logger.write(
-# 80                         LOG_TYPE.ERROR,
-# 81                         ErrorLogSchema(
-# 82                             session_id=self._session_id,
-# 83                             file_log_id=self._file_log_id,
-# 84                             error_type=self._map_error_type(exc).value,
-# 85                             message=str(exc),
-# 86                             file_path=str(Path(__file__).relative_to(Path.cwd())),
-# 87                             provider_id=self._config.id if self._config else None,
-# 88                             provider_type=self._infer_provider_type(),
-# 89                             timestamp=start_time,
-# 90                             latency_ms=latency_ms,
-# 91                             called_by_type=self._called_by_type if self._called_by_type else None,
-# 92                             called_by_id=self._called_by_id,
-# 93                             run_id=self._run_id,
-# 94                             parent_id=self._context.parent_id if self._context else None,
-# 95                             execution_chain=self._context.execution_chain[:] if self._context else [],
-# 96                         ),
-# 97                     )
-# 98                 except Exception:
-# 99                     pass
-# 100 
-# 101                 #  📜 Provider Log for failure (explicit marker)
-# 102                 try:
-# 103                     self.logger.write(
-# 104                         LOG_TYPE.PROVIDER,
-# 105                         ProviderLogSchema(
-# 106                             session_id=self._session_id,
-# 107                             file_log_id=self._file_log_id,
-# 108                             provider_id=self._config.id if self._config else -1,
-# 109                             provider_type=self._infer_provider_type(),
-# 110                             input=json.dumps(input, default=str),
-# 111                             output="ERROR",  #  🚨 Clear indicator
-# 112                             output_schema=None,
-# 113                             latency_ms=latency_ms,
-# 114                             config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
-# 115                             file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 116                             if getattr(self._config, "artifact_path", None)
-# 117                             else None,
-# 118                             timestamp=start_time,
-# 119                             called_by_type=self._called_by_type if self._called_by_type else None,
-# 120                             called_by_id=self._called_by_id,
-# 121                             run_id=self._run_id,
-# 122                             parent_id=self._context.parent_id if self._context else None,
-# 123                             execution_chain=self._context.execution_chain[:] if self._context else [],
-# 124                         ),
-# 125                     )
-# 126                 except Exception:
-# 127                     pass
-# 128 
-# 129                 if attempt == max_retries:
-# 130                     raise
-# 131 
-# 132                 time.sleep(backoff_seconds * (2 ** attempt))
-# 133                 input["retry_count"] = attempt + 1
-# 134 
-# 135         latency_ms = int((time.perf_counter() - start_clock) * 1000)
-# 136 
-# 137         try:
-# 138             input_str = json.dumps(
-# 139                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
-# 140                 default=str,
-# 141             )
-# 142         except Exception:
-# 143             input_str = ""
-# 144 
-# 145         try:
-# 146             if hasattr(output, "model_dump"):
-# 147                 dumped = output.model_dump()
-# 148                 output_str = json.dumps(dumped, default=str)
-# 149                 output_schema = output.__class__.__name__
-# 150             else:
-# 151                 output_str = json.dumps(output, default=str)
-# 152                 output_schema = None
-# 153         except Exception:
-# 154             output_str = ""
-# 155             output_schema = None
-# 156 
-# 157         try:
-# 158 
-# 159             self.logger.write(
-# 160                 LOG_TYPE.PROVIDER,
-# 161                 ProviderLogSchema(
-# 162                     session_id=self._session_id,
-# 163                     file_log_id=self._file_log_id,
-# 164                     provider_id=self._config.id if self._config else -1,
-# 165                     provider_type=self._infer_provider_type(),
-# 166                     input=input_str,
-# 167                     output=output_str,
-# 168                     output_schema=output_schema,
-# 169                     latency_ms=latency_ms,
-# 170                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
-# 171                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
-# 172                     if getattr(self._config, "artifact_path", None)
-# 173                     else None,
-# 174                     timestamp=start_time,
-# 175                     called_by_type=self._called_by_type if self._called_by_type else None,
-# 176                     called_by_id=self._called_by_id,
-# 177                     run_id=self._run_id,
-# 178                     parent_id=self._context.parent_id if self._context else None,
-# 179                     execution_chain=self._context.execution_chain[:] if self._context else [],
-# 180                 ),
-# 181             )
-# 182         except Exception as e:
-# 183             print(f"❌ Logging failed: {e}")
-# 184             raise
-# 185 
-# 186         self._log.debug("✅ Provider run logged")
-# 187         return output
-# 188 
-# 189     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
-# 190         if isinstance(exc, ValueError) and "Extraction failed" in str(exc):
-# 191             return ERROR_TYPE.VALIDATION
-# 192         if isinstance(exc, NotImplementedError):
-# 193             return ERROR_TYPE.CONFIGURATION
-# 194         return ERROR_TYPE.RUNTIME
-# 195 
-# 196     def _infer_provider_type(self) -> PROVIDER_TYPE:
-# 197         cls = self.__class__.__name__.lower()
-# 198         if "tool" in cls:
-# 199             return PROVIDER_TYPE.TOOL
-# 200         if "engine" in cls:
-# 201             return PROVIDER_TYPE.AGENT_ENGINE
-# 202         if "agent" in cls:
-# 203             return PROVIDER_TYPE.AGENT
-# 204         if "prompt" in cls:
-# 205             return PROVIDER_TYPE.PROMPT
-# 206         if "context" in cls:
-# 207             return PROVIDER_TYPE.CONTEXT
-# 208         if "score" in cls:
-# 209             return PROVIDER_TYPE.SCORE
-# 210         if "state" in cls:
-# 211             return PROVIDER_TYPE.STATE
-# 212         if "system" in cls:
-# 213             return PROVIDER_TYPE.SYSTEM
-# 214         if "controller" in cls:
-# 215             return PROVIDER_TYPE.CONTROLLER
-# 216         if "program" in cls:
-# 217             return PROVIDER_TYPE.PROGRAM
-# 218         return PROVIDER_TYPE.UNKNOWN
-# 219 
-# 220     def _compute_config_hash(self, config: dict | None) -> str:
-# 221         config_str = json.dumps(config or {}, sort_keys=True)
-# 222         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
-# 223 
-# 224     def propagate_file_log_id(self, file_log_id: str):
-# 225         self._file_log_id = file_log_id
-# 226 
-# 227         for attr_name in dir(self):
-# 228             attr = getattr(self, attr_name, None)
-# 229 
-# 230             if isinstance(attr, BaseProvider):
-# 231                 attr.propagate_file_log_id(file_log_id)
-# 232 
-# 233             elif isinstance(attr, list):
-# 234                 for item in attr:
-# 235                     if isinstance(item, BaseProvider):
-# 236                         item.propagate_file_log_id(file_log_id)
-# 237 
-# 238             elif isinstance(attr, dict):
-# 239                 for item in attr.values():
-# 240                     if isinstance(item, BaseProvider):
-# 241                         item.propagate_file_log_id(file_log_id)
-# 242 
-# 243     def fork_context(self) -> RunContext:
-# 244         forked = deepcopy(self._context or RunContext())
-# 245         forked.parent_id = self._run_id
-# 246         return forked
+# 33         self._provider_type = getattr(config, "provider_type", PROVIDER_TYPE.UNKNOWN)
+# 34 
+# 35         if self._context:
+# 36             if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+# 37                 self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+# 38                 self._context.execution_chain.append(self._run_id)
+# 39             self._session_id = self._context.session_id
+# 40             self._file_log_id = self._context.file_log_id
+# 41             self._called_by_type = self._context.called_by_type
+# 42             self._called_by_id = self._context.called_by_id
+# 43         else:
+# 44             self._session_id = None
+# 45             self._file_log_id = None
+# 46             self._called_by_type = None
+# 47             self._called_by_id = None
+# 48 
+# 49     def run(self, input: dict | None = None, context: RunContext = None) -> str:
+# 50         input = input or {}
+# 51         max_retries = input.get("max_retries", DEFAULT_MAX_RETRIES)
+# 52         backoff_seconds = input.get("backoff_seconds", DEFAULT_BACKOFF_SECONDS)
+# 53 
+# 54         if context:
+# 55             self._context = deepcopy(context)
+# 56             self._session_id     = self._context.session_id
+# 57             self._file_log_id    = self._context.file_log_id
+# 58             self._called_by_type = self._context.called_by_type
+# 59             self._called_by_id   = self._context.called_by_id
+# 60 
+# 61         for attempt in range(max_retries + 1):
+# 62             self._run_id = str(uuid4())
+# 63 
+# 64             if self._context:
+# 65                 if not self._context.execution_chain or self._context.execution_chain[-1] != self._run_id:
+# 66                     self._context.parent_id = self._context.execution_chain[-1] if self._context.execution_chain else None
+# 67                     self._context.execution_chain.append(self._run_id)
+# 68 
+# 69             start_time = datetime.now(timezone.utc)
+# 70             start_clock = time.perf_counter()
+# 71 
+# 72             try:
+# 73                 output = self._run_provider(input)
+# 74                 break
+# 75             except Exception as exc:
+# 76                 latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 77 
+# 78                 #  🔴 Error Log
+# 79                 try:
+# 80                     self.logger.write(
+# 81                         LOG_TYPE.ERROR,
+# 82                         ErrorLogSchema(
+# 83                             session_id=self._session_id,
+# 84                             file_log_id=self._file_log_id,
+# 85                             error_type=self._map_error_type(exc).value,
+# 86                             message=str(exc),
+# 87                             file_path=str(Path(__file__).relative_to(Path.cwd())),
+# 88                             provider_id=self._config.id if self._config else None,
+# 89                             provider_type=self._provider_type,
+# 90                             timestamp=start_time,
+# 91                             latency_ms=latency_ms,
+# 92                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 93                             called_by_id=self._called_by_id,
+# 94                             run_id=self._run_id,
+# 95                             parent_id=self._context.parent_id if self._context else None,
+# 96                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 97                         ),
+# 98                     )
+# 99                 except Exception:
+# 100                     pass
+# 101 
+# 102                 #  📜 Provider Log for failure (explicit marker)
+# 103                 try:
+# 104                     self.logger.write(
+# 105                         LOG_TYPE.PROVIDER,
+# 106                         ProviderLogSchema(
+# 107                             session_id=self._session_id,
+# 108                             file_log_id=self._file_log_id,
+# 109                             provider_id=self._config.id if self._config else -1,
+# 110                             provider_type=self._provider_type,
+# 111                             input=json.dumps(input, default=str),
+# 112                             output="ERROR",  #  🚨 Clear indicator
+# 113                             output_schema=None,
+# 114                             latency_ms=latency_ms,
+# 115                             config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 116                             file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 117                             if getattr(self._config, "artifact_path", None)
+# 118                             else None,
+# 119                             timestamp=start_time,
+# 120                             called_by_type=self._called_by_type if self._called_by_type else None,
+# 121                             called_by_id=self._called_by_id,
+# 122                             run_id=self._run_id,
+# 123                             parent_id=self._context.parent_id if self._context else None,
+# 124                             execution_chain=self._context.execution_chain[:] if self._context else [],
+# 125                         ),
+# 126                     )
+# 127                 except Exception:
+# 128                     pass
+# 129 
+# 130                 if attempt == max_retries:
+# 131                     raise
+# 132 
+# 133                 time.sleep(backoff_seconds * (2 ** attempt))
+# 134                 input["retry_count"] = attempt + 1
+# 135 
+# 136         latency_ms = int((time.perf_counter() - start_clock) * 1000)
+# 137 
+# 138         try:
+# 139             input_str = json.dumps(
+# 140                 {k: v.model_dump() if hasattr(v, "model_dump") else v for k, v in input.items()},
+# 141                 default=str,
+# 142             )
+# 143         except Exception:
+# 144             input_str = ""
+# 145 
+# 146         try:
+# 147             if hasattr(output, "model_dump"):
+# 148                 dumped = output.model_dump()
+# 149                 output_str = json.dumps(dumped, default=str)
+# 150                 output_schema = output.__class__.__name__
+# 151             else:
+# 152                 output_str = json.dumps(output, default=str)
+# 153                 output_schema = None
+# 154         except Exception:
+# 155             output_str = ""
+# 156             output_schema = None
+# 157 
+# 158         try:
+# 159 
+# 160             self.logger.write(
+# 161                 LOG_TYPE.PROVIDER,
+# 162                 ProviderLogSchema(
+# 163                     session_id=self._session_id,
+# 164                     file_log_id=self._file_log_id,
+# 165                     provider_id=self._config.id if self._config else -1,
+# 166                     provider_type=self._provider_type,
+# 167                     input=input_str,
+# 168                     output=output_str,
+# 169                     output_schema=output_schema,
+# 170                     latency_ms=latency_ms,
+# 171                     config_hash=self._compute_config_hash(getattr(self._config, "config", {})),
+# 172                     file_name=getattr(self._config, "artifact_path", "").split("/")[-1]
+# 173                     if getattr(self._config, "artifact_path", None)
+# 174                     else None,
+# 175                     timestamp=start_time,
+# 176                     called_by_type=self._called_by_type if self._called_by_type else None,
+# 177                     called_by_id=self._called_by_id,
+# 178                     run_id=self._run_id,
+# 179                     parent_id=self._context.parent_id if self._context else None,
+# 180                     execution_chain=self._context.execution_chain[:] if self._context else [],
+# 181                 ),
+# 182             )
+# 183         except Exception as e:
+# 184             print(f"❌ Logging failed: {e}")
+# 185             raise
+# 186 
+# 187         self._log.debug("✅ Provider run logged")
+# 188         return output
+# 189 
+# 190     def _map_error_type(self, exc: Exception) -> ERROR_TYPE:
+# 191         msg = str(exc).lower()
+# 192         if "timeout" in msg or "timed out" in msg:
+# 193             return ERROR_TYPE.TIMEOUT
+# 194         elif "auth" in msg or "unauthorized" in msg or "forbidden" in msg:
+# 195             return ERROR_TYPE.AUTHENTICATION
+# 196         elif "connect" in msg or "unreachable" in msg or "network" in msg:
+# 197             return ERROR_TYPE.CONNECTION
+# 198         elif "config" in msg or "invalid argument" in msg:
+# 199             return ERROR_TYPE.CONFIGURATION
+# 200         elif "validation" in msg or "schema" in msg:
+# 201             return ERROR_TYPE.VALIDATION
+# 202         elif "runtime" in msg or "execution failed" in msg:
+# 203             return ERROR_TYPE.RUNTIME
+# 204         return ERROR_TYPE.UNKNOWN
+# 205 
+# 206     def _compute_config_hash(self, config: dict | None) -> str:
+# 207         """
+# 208         Computes a fingerprint hash based solely on structural components.
+# 209         Ignores param keys like weights or thresholds.
+# 210         """
+# 211         config = config or {}
+# 212         components = config.get("components", {})
+# 213 
+# 214         config_str = json.dumps(components, sort_keys=True)
+# 215         return hashlib.md5(config_str.encode("utf-8")).hexdigest()
+# 216 
+# 217     def fork_context(self) -> RunContext:
+# 218         forked = deepcopy(self._context or RunContext())
+# 219         forked.parent_id = self._run_id
+# 220         forked.called_by_type = self._provider_type
+# 221         forked.called_by_id = getattr(self._config, "id", None)
+# 222         return forked
 
 
 # providers\context_provider_base.py
@@ -5567,66 +5647,71 @@
 # 27             context=context,
 # 28             **kwargs
 # 29         )
-# 30         self._max_steps = getattr(config, "config", {}).get("max_steps", 100)
-# 31 
-# 32     def transition(self, state: dict, result: dict | None) -> dict:
-# 33         next_state = self._transition(state, result)
-# 34 
-# 35         required_keys = {"state", "reason"}
-# 36         missing_keys = required_keys - next_state.keys()
-# 37         if missing_keys:
-# 38             raise ValueError(f"❌ Transition result missing keys: {missing_keys}\nReturned: {next_state}")
-# 39         state["steps"] = state.get("steps", 0) + 1
+# 30 
+# 31         #  🔄 Structured config access (Task 9)
+# 32         raw_config = getattr(config, "config", {}) or {}
+# 33         self._params = raw_config.get("params", {})  #  fallback safe
+# 34         self._components = raw_config.get("components", {})
+# 35 
+# 36         self._max_steps = self._params.get("max_steps", 100)
+# 37 
+# 38     def transition(self, state: dict, result: dict | None) -> dict:
+# 39         next_state = self._transition(state, result)
 # 40 
-# 41         #  Ensure original_file is carried forward
-# 42         original_file = state.get("original_file")
-# 43 
-# 44         #  Initialize or update transition_metadata
-# 45         transition_metadata = next_state.get("transition_metadata", {}) or {}
-# 46         transition_metadata["original_file"] = original_file
-# 47 
-# 48         #  Optional: Add run_id to the metadata as well
-# 49         transition_metadata["run_id"] = state.get("run_id")
-# 50 
-# 51         #  Optional: agent_output propagation (if result has a dumpable output)
-# 52         if isinstance(result, dict):
-# 53             transition_metadata["agent_output"] = result.get("output")
-# 54             transition_metadata["file_path"] = result.get("file_path")
-# 55 
-# 56         next_state["transition_metadata"] = transition_metadata
-# 57 
-# 58         is_terminal = next_state.get("state_type") == "end" or next_state.get("state") == "end"
-# 59 
-# 60         decision = getattr(result, "decision", DECISION_TYPE.UNKNOWN)
-# 61         #  Log the state transition with relevant details
-# 62         self.logger.write(
-# 63             LOG_TYPE.STATE_TRANSITION,
-# 64             StateTransitionLogSchema(
-# 65                 session_id=self._session_id,
-# 66                 file_log_id=self._file_log_id, 
-# 67                 entity_type=self._infer_provider_type(),
-# 68                 entity_id=self._config.id,
-# 69                 from_state=state.get("state"),
-# 70                 to_state=next_state.get("state", "unknown"),
-# 71                 reason=TRANSITION_REASON_TYPE(next_state["reason"]),
-# 72                 decision=decision,
-# 73                 triggered_by=self._config.name,
-# 74                 step=state["steps"],
-# 75                 transition_metadata=transition_metadata,
-# 76                 timestamp=datetime.now(timezone.utc),
-# 77                 run_id=self._run_id,
-# 78                 called_by_type=self._called_by_type if self._called_by_type else None,
-# 79                 called_by_id=self._called_by_id,
-# 80                 parent_id=self._context.parent_id if self._context else None,
-# 81                 execution_chain=self._context.execution_chain[:] if self._context else [],
-# 82             ),
-# 83         )
-# 84         return next_state
-# 85 
-# 86 
-# 87     @abstractmethod
-# 88     def _transition(self, state: dict, result: dict | None) -> dict:
-# 89         raise NotImplementedError
+# 41         required_keys = {"state", "reason"}
+# 42         missing_keys = required_keys - next_state.keys()
+# 43         if missing_keys:
+# 44             raise ValueError(f"❌ Transition result missing keys: {missing_keys}\nReturned: {next_state}")
+# 45         state["steps"] = state.get("steps", 0) + 1
+# 46 
+# 47         #  Ensure original_file is carried forward
+# 48         original_file = state.get("original_file")
+# 49 
+# 50         #  Initialize or update transition_metadata
+# 51         transition_metadata = next_state.get("transition_metadata", {}) or {}
+# 52         transition_metadata["original_file"] = original_file
+# 53 
+# 54         #  Optional: Add run_id to the metadata as well
+# 55         transition_metadata["run_id"] = state.get("run_id")
+# 56 
+# 57         #  Optional: agent_output propagation (if result has a dumpable output)
+# 58         if isinstance(result, dict):
+# 59             transition_metadata["agent_output"] = result.get("output")
+# 60             transition_metadata["file_path"] = result.get("file_path")
+# 61 
+# 62         next_state["transition_metadata"] = transition_metadata
+# 63 
+# 64         is_terminal = next_state.get("state_type") == "end" or next_state.get("state") == "end"
+# 65 
+# 66         decision = getattr(result, "decision", DECISION_TYPE.UNKNOWN)
+# 67         #  Log the state transition with relevant details
+# 68         self.logger.write(
+# 69             LOG_TYPE.STATE_TRANSITION,
+# 70             StateTransitionLogSchema(
+# 71                 session_id=self._session_id,
+# 72                 file_log_id=self._file_log_id, 
+# 73                 entity_type=self._provider_type,
+# 74                 entity_id=self._config.id,
+# 75                 from_state=state.get("state"),
+# 76                 to_state=next_state.get("state", "unknown"),
+# 77                 reason=TRANSITION_REASON_TYPE(next_state["reason"]),
+# 78                 decision=decision,
+# 79                 triggered_by=self._config.name,
+# 80                 step=state["steps"],
+# 81                 transition_metadata=transition_metadata,
+# 82                 timestamp=datetime.now(timezone.utc),
+# 83                 run_id=self._run_id,
+# 84                 called_by_type=self._called_by_type if self._called_by_type else None,
+# 85                 called_by_id=self._called_by_id,
+# 86                 parent_id=self._context.parent_id if self._context else None,
+# 87                 execution_chain=self._context.execution_chain[:] if self._context else [],
+# 88             ),
+# 89         )
+# 90         return next_state
+# 91 
+# 92     @abstractmethod
+# 93     def _transition(self, state: dict, result: dict | None) -> dict:
+# 94         raise NotImplementedError
 
 
 # providers\program_provider_base.py
@@ -5918,29 +6003,30 @@
 # 27         self._context_provider = context_provider
 # 28         self._tool_providers = tool_providers or []
 # 29 
-# 30         #  ✅ Parse schema-enforced config
-# 31         self.config: ScoreComponentsBase = self._parse_config(config or {})
-# 32 
-# 33     def _parse_config(self, raw_config: dict | ScoreProviderConfig) -> ScoreComponentsBase:
-# 34         if hasattr(raw_config, "config"):
-# 35             raw_config = raw_config.config  #  unwrap SQLAlchemy wrapper
-# 36         return self.ConfigSchema.model_validate(raw_config)
-# 37 
-# 38     def _run_provider(self, input: dict) -> ScoreOutputSchema:
-# 39         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
-# 40         return self._run(input=input, context=self.fork_context())
-# 41 
-# 42     def set_context_provider(self, provider: ContextProviderBase) -> None:
-# 43         self.context_provider = provider
-# 44 
-# 45     def set_tool_provider(self, provider: ToolProviderBase) -> None:
-# 46         if not hasattr(self, "tool_providers"):
-# 47             self.tool_providers = []
-# 48         self.tool_providers.append(provider)
-# 49 
-# 50     @abstractmethod
-# 51     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-# 52         raise NotImplementedError
+# 30         #  ✅ Only pass "params" (schema-enforced tunables) to Pydantic
+# 31         raw_params = (getattr(config, "config", {}) or {}).get("params", {})
+# 32         self.config: ScoreComponentsBase = self._parse_config(raw_params)
+# 33 
+# 34     def _parse_config(self, raw_config: dict | ScoreProviderConfig) -> ScoreComponentsBase:
+# 35         if hasattr(raw_config, "config"):
+# 36             raw_config = raw_config.config  #  unwrap SQLAlchemy wrapper
+# 37         return self.ConfigSchema.model_validate(raw_config)
+# 38 
+# 39     def _run_provider(self, input: dict) -> ScoreOutputSchema:
+# 40         caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
+# 41         return self._run(input=input, context=self.fork_context())
+# 42 
+# 43     def set_context_provider(self, provider: ContextProviderBase) -> None:
+# 44         self.context_provider = provider
+# 45 
+# 46     def set_tool_provider(self, provider: ToolProviderBase) -> None:
+# 47         if not hasattr(self, "tool_providers"):
+# 48             self.tool_providers = []
+# 49         self.tool_providers.append(provider)
+# 50 
+# 51     @abstractmethod
+# 52     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
+# 53         raise NotImplementedError
 
 
 # providers\state_provider_base.py

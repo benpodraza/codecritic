@@ -18,10 +18,10 @@ class PromptProviderFactory(BaseProviderFactory):
         context: RunContext,
         **kwargs
     ) -> PromptProviderBase:
-        instance = super().create(id, context=context)
-        components = instance._components  # injected by BaseProviderFactory
-        provider_id = instance._config.id
-        provider_type = instance._infer_provider_type()
+        preload_instance = super().create(id, context=context)
+        components = preload_instance._components  # injected by BaseProviderFactory
+        provider_id = preload_instance._config.id
+        provider_type = preload_instance._provider_type
 
         # ─── Child context ─────────────────────────────────────────────
         child_context = RunContext(
@@ -29,7 +29,7 @@ class PromptProviderFactory(BaseProviderFactory):
             called_by_id=provider_id,
             session_id=context.session_id,
             file_log_id=context.file_log_id,
-            parent_id=instance._run_id,
+            parent_id=preload_instance._run_id,
             execution_chain=context.execution_chain.copy()
         )
 
@@ -37,7 +37,7 @@ class PromptProviderFactory(BaseProviderFactory):
         def load_prompt(prompt_id: int, table: str) -> str | None:
             if not prompt_id:
                 return None
-            conn = instance._engine.raw_connection()
+            conn = preload_instance._engine.raw_connection()
             try:
                 cur = conn.cursor()
                 cur.execute(f"SELECT artifact_path FROM {table} WHERE id = ?", (prompt_id,))
@@ -60,9 +60,9 @@ class PromptProviderFactory(BaseProviderFactory):
                 context=child_context
             )
 
-        cls_type = type(instance)
+        cls_type = type(preload_instance)
         return cls_type(
-            config=instance._config,
+            config=preload_instance._config,
             agent_text=agent_prompt_text,
             system_text=system_prompt_text,
             context_provider=context_provider,

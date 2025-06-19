@@ -27,7 +27,7 @@ class AgentProviderFactory(BaseProviderFactory):
         # ✅ Use already-injected structured config
         components = preload_instance._components
         provider_id = preload_instance._config.id
-        provider_type = preload_instance._infer_provider_type()
+        provider_type = preload_instance._provider_type
 
         # ─── Child context ─────────────────────────────────────────────
         child_context = RunContext(

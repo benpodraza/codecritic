@@ -46,22 +46,3 @@ def append_agent_note(file_content: str, system: str, agent_name: str, note: str
     return base.rstrip() + "\n\n" + formatted_note
 
 
-# def prepare_file_for_linting(original_path: str) -> str:
-#     original = Path(original_path)
-#     raw = original.read_text(encoding="utf-8")
-
-#     from .code_annnotation_utils import split_content_and_notes
-#     code_part, _ = split_content_and_notes(raw)
-
-#     try:
-#         ast.parse(code_part)
-#     except SyntaxError:
-#         # Append safety pass to guarantee valid syntax
-#         code_part += "\npass  # [Auto-patched for linting]\n"
-
-#     temp_file = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
-#     temp_file.write_text(code_part.rstrip() + "\n", encoding="utf-8")
-
-#     return str(temp_file)
-
-

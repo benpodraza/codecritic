@@ -1,6 +1,5 @@
 from __future__ import annotations
 import json
-from pathlib import Path
 
 from app.enums.logging_enums import RunContext
 from app.providers.prompt_provider_base import PromptProviderBase
@@ -17,7 +16,6 @@ class LintingPromptProvider(PromptProviderBase):
         if not self.agent_text or not self.system_text or not self._context_provider:
             raise ValueError("Missing required prompt text or context provider")
 
-        # ✅ propagate context to context provider
         context_output = self._context_provider.run(
             {
                 "file_path": file_path,
@@ -52,8 +50,7 @@ class LintingPromptProvider(PromptProviderBase):
 {convo_section}
 """.strip()
 
-        # 🧾 Construct summary based on the file path and system
-        short_path = Path(file_path).name if file_path else "unknown file"
+        short_path = file_path.split("/")[-1] if file_path else "unknown file"
         summary = f"Linting prompt generated for {short_path} (system: {system})"
 
         return PromptOutputSchema(prompt=full_prompt, summary=summary)

@@ -11,31 +11,40 @@ class Gemini1_5ProAgentEngineProvider(AgentEngineProviderBase):
         if not self.prompt_provider:
             raise ValueError("Prompt provider is required to extract engine output.")
 
-        # Step 1: Run prompt provider to generate prompt
         prompt_output = self.prompt_provider.run(input=input, context=context)
         prompt = prompt_output.prompt
 
-        # Step 2: Call Gemini API with prompt
         api_key = os.getenv("GOOGLE_API_KEY")
+        uri = os.getenv("GOOGLE_URI")
         if not api_key:
             raise EnvironmentError("GOOGLE_API_KEY is not set in the environment.")
+        if not uri:
+            raise EnvironmentError("GOOGLE_URI is not set in the environment.")
 
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
-            f"?key={api_key}"
-        )
+        temperature = float(input.get("temperature", 0.2))
+        max_tokens = int(input.get("max_tokens", 2048))
+
+        url = f"{uri}?key={api_key}"
         response_raw = requests.post(
             url,
             headers={"Content-Type": "application/json"},
-            json={"contents": [{"parts": [{"text": prompt}]}]},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": temperature,
+                    "maxOutputTokens": max_tokens
+                }
+            },
         )
         response_raw.raise_for_status()
-        raw_response = response_raw.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-        # Step 3: Extract structured response using prompt provider
+        try:
+            raw_response = response_raw.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError, TypeError) as e:
+            raise RuntimeError(f"❌ Gemini response structure unexpected: {e}")
+
         extracted = self.prompt_provider._extract(raw_response)
 
-        # Step 4: Build engine output
         token_count = len(raw_response.split())
         cost_usd = token_count * (self._config.cost_per_1k_tokens or 0.0) / 1000
 

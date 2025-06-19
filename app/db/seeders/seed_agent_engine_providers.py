@@ -1,18 +1,16 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import AgentEngineProviderConfig
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_engine_providers"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 AGENT_ENGINES = [
     {
         "id": 1,
-        "filename": "basic_agent_engine_provider.py",
+        "filename": "agent_engine_providers/basic_agent_engine_provider.py",
         "name": "basic_agent_engine_provider",
         "description": "Returns a mock LLM response.",
         "model": "mock-llm",
@@ -21,7 +19,7 @@ AGENT_ENGINES = [
     },
     {
         "id": 2,
-        "filename": "openai_gpt4o_agent_engine_provider.py",
+        "filename": "agent_engine_providers/openai_gpt4o_agent_engine_provider.py",
         "name": "openai_gpt_4o_agent_engine",
         "description": "Runs GPT-4o via OpenAI API.",
         "model": "gpt-4o",
@@ -30,7 +28,7 @@ AGENT_ENGINES = [
     },
     {
         "id": 3,
-        "filename": "gemini_1_5_pro_agent_engine_provider.py",
+        "filename": "agent_engine_providers/gemini_1_5_pro_agent_engine_provider.py",
         "name": "gemini_1_5_pro_agent_engine",
         "description": "Runs Gemini 1.5 Pro via Google AI API.",
         "model": "gemini-1.5-pro",
@@ -39,7 +37,7 @@ AGENT_ENGINES = [
     },
     {
         "id": 4,
-        "filename": "claude_3_sonnet_agent_engine_provider.py",
+        "filename": "agent_engine_providers/claude_3_sonnet_agent_engine_provider.py",
         "name": "claude_3_sonnet_agent_engine",
         "description": "Runs Claude 3 Sonnet via AWS Bedrock.",
         "model": "claude-3-sonnet",
@@ -49,17 +47,11 @@ AGENT_ENGINES = [
 ]
 
 def seed_agent_engine_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     for entry in AGENT_ENGINES:
         guid = str(uuid4())
-        source_file = SEED_FILES_DIR / entry["filename"]
-        dest_file = EXTENSIONS_DIR / f"{guid}.py"
-
-        if not source_file.exists():
-            raise FileNotFoundError(f"Agent engine script not found: {source_file}")
-
-        shutil.copy(source_file, dest_file)
+        dest_filename = f"{guid}.py"
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         config = AgentEngineProviderConfig(
             id=entry["id"],
@@ -69,7 +61,7 @@ def seed_agent_engine_providers(db_session: Session):
             model=entry["model"],
             config={},
             cost_per_1k_tokens=entry["cost_per_1k_tokens"],
-            artifact_path=str(dest_file),
+            artifact_path=dest_filename,
             tags=entry["tags"],
             provider_type=PROVIDER_TYPE.AGENT_ENGINE,
         )

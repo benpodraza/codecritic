@@ -3,22 +3,29 @@ import subprocess
 import sys
 import re
 from typing import Any, Dict, List, Optional
+
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 from app.enums.logging_enums import RunContext
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class BlackToolProviderV2(ToolProviderBase):
     """
-    Runs `black` either in --check (diff‑only) mode or full formatting mode and
-    maps Black’s native exit‑codes onto the 1 / 0 contract.
+    Runs `black` either in --check (diff-only) mode or full formatting mode and
+    maps Black’s native exit codes onto the 1 / 0 contract.
     """
 
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target: str = input.get("target")
+        target_name: str = input.get("target")
         check: bool = bool(input.get("check", False))
 
-        # Optionally track context lineage
+        # 🔁 Resolve the actual path (via file manager)
+        resolved_type = fm.resolve_existing_filetype(target_name)
+        target_path = fm._resolve(resolved_type, target_name)
+
+        # 📌 Optionally update context lineage
         if context:
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [self._run_id]
@@ -29,13 +36,13 @@ class BlackToolProviderV2(ToolProviderBase):
             "black",
             "--diff" if check else "--quiet",
             "--check" if check else "",
-            target,
+            str(target_path),
         ]
-        cmd = [c for c in cmd if c]  # strip empties
+        cmd = [c for c in cmd if c]  # Strip empty elements
 
         try:
             proc = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf‑8", errors="ignore"
+                cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
             )
         except Exception as exc:
             return self._runtime_error(str(exc))
@@ -47,7 +54,7 @@ class BlackToolProviderV2(ToolProviderBase):
         if check:
             if raw_code == 0:
                 return self._success(
-                    summary="✅ Black check passed (no reformatting needed)",
+                    summary="✅ Black check passed (no reformatting needed)",
                     metrics={
                         "files_checked": 1,
                         "files_reformatted": 0,
@@ -61,10 +68,10 @@ class BlackToolProviderV2(ToolProviderBase):
                 return self._failure(
                     stdout=stdout,
                     summary=(
-                        f"❌ Black would reformat the file "
+                        f"❌ Black would reformat the file "
                         f"({diff_hunks} changed hunk{'s' if diff_hunks != 1 else ''})"
                     ),
-                    violations=[f"WOULD_REFORMAT:{target}"],
+                    violations=[f"WOULD_REFORMAT:{target_name}"],
                     metrics={
                         "files_checked": 1,
                         "files_reformatted": 1,
@@ -77,7 +84,7 @@ class BlackToolProviderV2(ToolProviderBase):
 
         if raw_code == 0:
             return self._success(
-                summary="✅ Black formatted the file successfully",
+                summary="✅ Black formatted the file successfully",
                 metrics={
                     "files_reformatted": 1,
                     "raw_return_code": raw_code,
@@ -86,7 +93,7 @@ class BlackToolProviderV2(ToolProviderBase):
 
         return self._runtime_error(stderr or stdout, raw_code)
 
-    # ────────────────────────────────────────────────────────────── helpers
+    # ──────────────────────────────────────────────── helpers
     def _success(
         self,
         summary: str,
@@ -129,5 +136,5 @@ class BlackToolProviderV2(ToolProviderBase):
             stderr=message,
             violations=["RUNTIME_ERROR"],
             metrics={"raw_return_code": raw_code, "exception": 1},
-            summary=f"❌ Black execution failed: {message}",
+            summary=f"❌ Black execution failed: {message}",
         )

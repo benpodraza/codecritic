@@ -1,26 +1,24 @@
-import gc
+from app.db.connection import DB_FILENAME, close_connection, get_file_manager, FILETYPE
 from sqlalchemy import create_engine
-from app.db.connection import DB_PATH, close_connection
 from app.db.models import Base
 
 def init_db(reset: bool = False):
-    # Explicitly close lingering DB-API connections
     close_connection()
 
-    # Explicitly create and dispose of engine before deletion
+    DB_PATH = get_file_manager()._resolve(FILETYPE.DATABASE, DB_FILENAME)
+
     engine = create_engine(f"sqlite:///{DB_PATH}")
     engine.dispose()
 
     if reset and DB_PATH.exists():
         try:
-            DB_PATH.unlink()
+            get_file_manager().delete(FILETYPE.DATABASE, DB_FILENAME)
         except PermissionError as e:
-            print(f"⚠️ Unable to delete {DB_PATH}: {e}")
+            print(f"⚠️ Unable to delete {DB_FILENAME}: {e}")
             print("⚠️ Attempting to force garbage collection.")
             gc.collect()
-            DB_PATH.unlink()  # try again after GC
+            get_file_manager().delete(FILETYPE.DATABASE, DB_FILENAME)
 
-    # Recreate engine after deletion
     engine = create_engine(f"sqlite:///{DB_PATH}")
     Base.metadata.create_all(bind=engine)
     

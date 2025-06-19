@@ -1,27 +1,31 @@
 import os
+from pathlib import Path
 import subprocess
 import time
 import uuid
 import json
 import tempfile
-from pathlib import Path
 from typing import Dict
 from copy import deepcopy
 
 from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class SonarCloudToolProvider(ToolProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        # ✅ Clone context to maintain execution chain isolation
         if context:
             context = deepcopy(context)
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [str(uuid.uuid4())]
 
-        target_path = Path(input.get("target"))
+        target_name = input.get("target")
+        resolved_type = fm.resolve_existing_filetype(target_name)
+        target_path = fm._resolve(resolved_type, target_name)
+
         if not target_path.exists():
             raise FileNotFoundError(f"{target_path} does not exist")
 

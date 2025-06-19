@@ -1,20 +1,17 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import ScoreProviderConfig
 from app.db.schemas import LintingScoreConfig, CodeStabilityScoreConfig
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-CURRENT_DIR = Path(__file__).resolve().parent
-SEED_FILES_DIR = CURRENT_DIR / "files/score_providers"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 SCORES = [
     {
         "id": 1,
-        "filename": "linting_score_provider.py",
+        "filename": "score_providers/linting_score_provider.py",
         "name": "linting_score_provider",
         "description": "Scores lint compliance.",
         "config": {
@@ -37,7 +34,7 @@ SCORES = [
     },
     {
         "id": 2,
-        "filename": "code_stability_score_provider.py",
+        "filename": "score_providers/code_stability_score_provider.py",
         "name": "code_stability_score_provider",
         "description": "Ensures code is structurally and syntactically safe for downstream use.",
         "config": {
@@ -54,18 +51,11 @@ SCORES = [
 ]
 
 def seed_score_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     for entry in SCORES:
         guid = str(uuid4())
         dest_filename = f"{guid}.py"
-        source_file = SEED_FILES_DIR / entry["filename"]
-        dest_file = EXTENSIONS_DIR / dest_filename
-
-        if not source_file.exists():
-            raise FileNotFoundError(f"Score provider script not found: {source_file}")
-
-        shutil.copy(source_file, dest_file)
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         score = ScoreProviderConfig(
             id=entry["id"],
@@ -81,4 +71,4 @@ def seed_score_providers(db_session: Session):
         db_session.add(score)
 
     db_session.commit()
-    print("Seeded score providers successfully.")
+    print("✅ Seeded score providers successfully.")

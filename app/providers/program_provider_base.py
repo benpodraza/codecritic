@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 from abc import abstractmethod
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-import shutil
 from typing import Dict
 
 from app.enums.controller_enums import CONTROLLER
@@ -14,6 +14,10 @@ from app.db.schemas import ProgramOutputSchema, FileLogSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
 from app.utilities.metadata.logging.logging_provider import LoggingProvider
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
+
+fm = get_file_manager()
+
 
 class ProgramProviderBase(FSMProviderBase):
     def __init__(
@@ -25,60 +29,45 @@ class ProgramProviderBase(FSMProviderBase):
         tool_providers=None,
         context: RunContext = None,
     ):
-        super().__init__(
-            config=config,
-            context=context
-        )
+        super().__init__(config=config, context=context)
         self._states = controller_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
         self._session_id = context.session_id
         self._file_log_id = context.file_log_id
-        self._generated_files: list[Path] = []
+        self._generated_files: list[str] = []
 
     def _run_provider(self, input: dict) -> ProgramOutputSchema:
         session_id = self._session_id
-
         incoming_file = input.get("file_path")
-        self.incoming_file = incoming_file
+        if not incoming_file:
+            raise ValueError("ProgramProvider requires 'file_path' in input")
 
+        self.incoming_file = incoming_file
         output_path = input.get("output_path", "working_files")
 
-        src = Path(incoming_file).resolve()
-        root = extract_base_filename(src)
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-        working_dir = Path("working_files").resolve()
-        working_dir.mkdir(parents=True, exist_ok=True)
-        self.working_file = working_dir / f"{root}.__prog_{timestamp}{src.suffix}"
-        shutil.copy(src, self.working_file)
-        self._generated_files.append(self.working_file)
-
-        # 🔹 Log file and get file_log_id
-        original_path = str(src)
-        file_name = src.name
-        length_bytes = src.stat().st_size
+        root = extract_base_filename(incoming_file)
+        working_filename = f"{root}.__prog_{timestamp}.py"
+        self.working_file = working_filename
+        fm.copy(FILETYPE.INPUT, incoming_file, FILETYPE.WORKING, dst_filename=working_filename)
+        fm.copy(FILETYPE.INPUT, incoming_file, FILETYPE.WORKING, dst_filename=Path(incoming_file).name)
+        self._generated_files.append(working_filename)
 
         file_log = FileLogSchema(
             session_id=session_id,
-            file_name=file_name,
-            original_path=original_path,
-            length_bytes=length_bytes
+            file_name=Path(incoming_file).name,
+            original_path=incoming_file,
+            length_bytes=len(fm.load(FILETYPE.INPUT, incoming_file).encode("utf-8")),
         )
         self._file_log_id = LoggingProvider().write(LOG_TYPE.FILE, file_log)
         self._context.file_log_id = self._file_log_id
         self.context = self._context
 
-        input_path = Path(incoming_file)
-        try:
-            relative_path = str(input_path.relative_to(Path.cwd()))
-        except ValueError:
-            relative_path = str(input_path)
-
-        # 🔹 Build initial FSM state
         state = {
             "state": CONTROLLER.START,
-            "file_path": str(self.working_file),
+            "file_path": working_filename,
             "session_id": session_id,
             "file_log_id": self._file_log_id,
             "reason": input.get("reason", CONTROLLER.START.value),
@@ -86,7 +75,7 @@ class ProgramProviderBase(FSMProviderBase):
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", CONTROLLER.START),
             "decision": DECISION_TYPE.UNKNOWN,
-            "original_file": relative_path,
+            "original_file": incoming_file,
             "run_id": self._run_id,
         }
 
@@ -123,35 +112,24 @@ class ProgramProviderBase(FSMProviderBase):
 
                 best_file = select_best_file_by_score(
                     file_a=state.get("file_path"),
-                    file_b=self.incoming_file,
+                    file_b=Path(self.incoming_file).name,
                     score_provider=self.score_provider,
                     context=self._context
                 )
 
-                final_path = Path(output_path) / Path(self.incoming_file).name
-                shutil.copy(Path(best_file).resolve(), final_path)
-                state["file_path"] = str(final_path)
+                final_name = Path(self.incoming_file).name
+                fm.copy(FILETYPE.WORKING, best_file, FILETYPE.WORKING, dst_filename=final_name)
+                state["file_path"] = final_name
                 state["decision"] = final_decision
 
-                for f in Path("working_files").glob("temp_*.py"):
-                    if f.resolve() != final_path.resolve():
-                        try:
-                            f.unlink()
-                        except Exception:
-                            pass
-
-                for f in Path("working_files").glob("*_stripped.py"):
-                    try:
-                        f.unlink()
-                    except Exception:
-                        pass
+                for f in fm.list_files(FILETYPE.WORKING):
+                    if f.startswith("temp_") and f != final_name:
+                        fm.delete(FILETYPE.WORKING, f)
+                    elif f.endswith("_stripped.py"):
+                        fm.delete(FILETYPE.WORKING, f)
 
                 for path in self._generated_files:
-                    if path.exists():
-                        try:
-                            path.unlink()
-                        except Exception:
-                            pass
+                    fm.delete(FILETYPE.WORKING, path)
 
                 return ProgramOutputSchema(
                     state=CONTROLLER.END,
@@ -181,12 +159,11 @@ class ProgramProviderBase(FSMProviderBase):
             output = provider.run(input=provider_input, context=self.fork_context())
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-            promoted_path = Path("working_files") / f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
             if "file_path" in output.output:
-                src_path = Path(output.output["file_path"]).resolve()
-                shutil.copy(src_path, promoted_path)
-                self._generated_files.append(promoted_path)
-                state["file_path"] = str(promoted_path)
+                promoted_name = f"temp_prog_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                fm.copy(FILETYPE.WORKING, output.output["file_path"], FILETYPE.WORKING, dst_filename=promoted_name)
+                self._generated_files.append(promoted_name)
+                state["file_path"] = promoted_name
 
             transition_result = self.transition(state, output)
             transition_result.pop("file_path", None)

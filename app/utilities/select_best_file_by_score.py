@@ -1,8 +1,10 @@
 from pathlib import Path
-from typing import Callable
+import inspect
 
 from app.providers.score_provider_base import ScoreProviderBase
+from app.utilities.file_management.file_utils import get_file_manager
 
+fm = get_file_manager()
 
 def select_best_file_by_score(
     file_a: str,
@@ -11,23 +13,25 @@ def select_best_file_by_score(
     context
 ) -> str:
     """
-    Compare two file paths using a scoring provider (with .run(input, session_id).value)
-    and return the file path with the higher score.
-
-    Args:
-        file_a (str): First file path to compare.
-        file_b (str): Second file path to compare.
-        scoring_provider: Object with a .run(dict, session_id) method that returns .value.
-        system (str): System identifier passed into the scoring input.
-        session_id (str): Session identifier passed into the scoring call.
-
-    Returns:
-        str: File path with the higher score.
+    Compare two file paths using a scoring provider and return the file path (as string) with the higher score.
     """
-    path_a = Path(file_a).resolve()
-    path_b = Path(file_b).resolve()
 
-    score_a = score_provider.run({"file_path": str(path_a)}, context=context).value
-    score_b = score_provider.run({"file_path": str(path_b)}, context=context).value
+    try:
+        ftype_a = fm.resolve_existing_filetype(file_a)
+        ftype_b = fm.resolve_existing_filetype(file_b)
+    except FileNotFoundError as e:
+        print(f"❌ Could not resolve file type: {e}")
+        raise FileNotFoundError("One or both input files do not exist.")
 
-    return str(path_a if score_a >= score_b else path_b)
+    exists_a = fm.exists(ftype_a, file_a)
+    exists_b = fm.exists(ftype_b, file_b)
+
+
+    if not exists_a or not exists_b:
+        raise FileNotFoundError("One or both input files do not exist.")
+
+    # Score using logical file names
+    score_a = score_provider.run({"file_path": file_a}, context=context).value
+    score_b = score_provider.run({"file_path": file_b}, context=context).value
+
+    return file_a if score_a >= score_b else file_b

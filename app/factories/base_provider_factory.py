@@ -1,16 +1,12 @@
 from sqlalchemy.orm import Session
 from importlib.util import spec_from_file_location, module_from_spec
-from pathlib import Path
 
 from app.db import init_db  # global DB engine instance
 from app.providers.base_provider import BaseProvider
 from app.enums.logging_enums import PROVIDER_TYPE, RunContext
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
 engine = init_db(reset=False)
-
 
 class BaseProviderFactory:
     config_model = None
@@ -29,9 +25,11 @@ class BaseProviderFactory:
             if not config:
                 raise ValueError(f"{cls.config_model.__name__} ID {id} not found")
 
-            ext_path = (EXTENSIONS_DIR / config.artifact_path).resolve()
-            if not ext_path.exists():
-                raise FileNotFoundError(f"Extension not found: {ext_path}")
+            fm = get_file_manager()
+            if not fm.exists(FILETYPE.EXTENSION, config.artifact_path):
+                raise FileNotFoundError(f"Extension not found: {config.artifact_path}")
+
+            ext_path = fm._resolve(FILETYPE.EXTENSION, config.artifact_path)
 
         spec = spec_from_file_location(ext_path.stem, ext_path)
         if spec is None or spec.loader is None:

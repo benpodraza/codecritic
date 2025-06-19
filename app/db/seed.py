@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
-from pathlib import Path
+
 from app.db.seeders.seed_controller_providers import seed_controller_providers
 from app.db.seeders.seed_program_provider import seed_program_providers
 from app.db.seeders.seed_state_providers import seed_state_providers
@@ -12,10 +12,11 @@ from app.db.seeders.seed_system_providers import seed_system_providers
 from app.db.seeders.seed_tool_providers import seed_tool_providers
 from app.db.seeders.seed_prompts import seed_prompts
 
-# Ensure your project root matches explicitly
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DB_PATH = PROJECT_ROOT / "experiments" / "codecritic.sqlite3"
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
+
+DB_FILENAME = "codecritic.sqlite3"
+fm = get_file_manager()
+DB_PATH = fm._resolve(FILETYPE.DATABASE, DB_FILENAME)
 
 def main():
     engine = create_engine(f"sqlite:///{DB_PATH}")
@@ -31,7 +32,7 @@ def main():
         seed_controller_providers(session)
         seed_program_providers(session)
 
-    print(f"Database seeded successfully at {DB_PATH.resolve()}")
+    print(f"Database seeded successfully at {DB_PATH}")
 
 if __name__ == "__main__":
     main()

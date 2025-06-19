@@ -1,9 +1,7 @@
 from __future__ import annotations
+
 from abc import abstractmethod
-from copy import deepcopy
 from datetime import datetime
-from pathlib import Path
-import shutil
 from typing import Dict
 
 from app.enums.fsm_enums import STATE_TYPE, DECISION_TYPE, TRANSITION_REASON_TYPE
@@ -11,9 +9,12 @@ from app.enums.logging_enums import RunContext
 from app.enums.state_enums import STATE
 from app.enums.system_enums import SYSTEM
 from app.providers.fsm_provider_base import FSMProviderBase
-from app.db.schemas import FSMOutputSchema, SystemOutputSchema
+from app.db.schemas import SystemOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
+
+fm = get_file_manager()
 
 
 class SystemProviderBase(FSMProviderBase):
@@ -28,45 +29,37 @@ class SystemProviderBase(FSMProviderBase):
         **kwargs
     ):
         super().__init__(config=config, context=context, **kwargs)
-        self._states= state_providers or {}
+        self._states = state_providers or {}
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
-        self._generated_files = []
+        self._generated_files: list[str] = []
 
     def _run_provider(self, input: dict) -> SystemOutputSchema:
         session_id = input.get("session_id")
 
-        incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+        incoming_file = input.get("file_path")
         if not incoming_file:
-            raise ValueError("❌ SystemProvider requires 'file_path', 'file_name', or 'before' in input")
+            raise ValueError("❌ SystemProvider requires 'file_path' in input")
 
         self.incoming_file = incoming_file
-        src = Path(incoming_file).resolve()
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-        working_dir = Path("working_files").resolve()
-        working_dir.mkdir(parents=True, exist_ok=True)
-        root = extract_base_filename(src)
-        self.working_file = working_dir / f"{root}.__sys_{timestamp}{src.suffix}"
-        shutil.copy(src, self.working_file)
-        self._generated_files.append(self.working_file)
-
-        input_path = Path(incoming_file)
-        try:
-            relative_path = str(input_path.relative_to(Path.cwd()))
-        except ValueError:
-            relative_path = str(input_path)
+        root = extract_base_filename(incoming_file)
+        working_filename = f"{root}__sys_{timestamp}.py"
+        self.working_file = working_filename
+        fm.copy(FILETYPE.WORKING, incoming_file, FILETYPE.WORKING, dst_filename=working_filename)
+        self._generated_files.append(working_filename)
 
         state = {
             "state": STATE.START,
-            "file_path": str(self.working_file),
+            "file_path": working_filename,
             "session_id": session_id,
             "reason": input.get("reason", STATE.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", STATE.START),
             "decision": DECISION_TYPE.UNKNOWN,
-            "original_file": relative_path,
+            "original_file": incoming_file,
             "run_id": self._run_id,
         }
 
@@ -106,30 +99,18 @@ class SystemProviderBase(FSMProviderBase):
                     context=self._context
                 )
 
-                temp_path = Path("working_files") / f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-                shutil.copy(Path(best_file), temp_path)
-                state["file_path"] = str(temp_path)
+                temp_name = f"temp_sys_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                fm.copy(FILETYPE.WORKING, best_file, FILETYPE.WORKING, dst_filename=temp_name)
+                state["file_path"] = temp_name
 
-                # Clean up old temporary files
-                for f in Path("working_files").glob("temp_sys_*.py"):
-                    if f.resolve() != temp_path.resolve():
-                        try:
-                            f.unlink()
-                        except Exception:
-                            pass
-
-                for f in Path("working_files").glob("*_stripped.py"):
-                    try:
-                        f.unlink()
-                    except Exception:
-                        pass
+                for f in fm.list_files(FILETYPE.WORKING):
+                    if f.startswith("temp_sys_") and f != temp_name:
+                        fm.delete(FILETYPE.WORKING, f)
+                    elif f.endswith("_stripped.py"):
+                        fm.delete(FILETYPE.WORKING, f)
 
                 for path in self._generated_files:
-                    if path.exists():
-                        try:
-                            path.unlink()
-                        except Exception:
-                            pass
+                    fm.delete(FILETYPE.WORKING, path)
 
                 return SystemOutputSchema(
                     state=STATE.END,
@@ -158,7 +139,6 @@ class SystemProviderBase(FSMProviderBase):
             provider_input = {k: v for k, v in state.items() if k != "state"}
             output = provider.run(input=provider_input, context=self.fork_context())
 
-
             new_file_path = output.output.get("file_path")
             if new_file_path:
                 state["file_path"] = str(new_file_path)
@@ -175,11 +155,10 @@ class SystemProviderBase(FSMProviderBase):
                 "file_path": flat_output.get("file_path"),
             })
             transition_result["transition_metadata"] = transition_metadata
+            transition_result.pop("file_path", None)
 
             raw_state = transition_result.get("state", current)
             state_enum = raw_state if isinstance(raw_state, STATE) else STATE(raw_state)
-
-            transition_result.pop("file_path", None)
 
             state = {
                 **state,
@@ -188,8 +167,6 @@ class SystemProviderBase(FSMProviderBase):
                 "_last_state": current,
                 "state_output": flat_output,
             }
-
-
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

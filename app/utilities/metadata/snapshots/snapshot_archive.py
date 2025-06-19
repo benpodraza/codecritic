@@ -3,35 +3,40 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy.orm import Session
-from dataclasses import dataclass
 
 from app.db.models import SnapshotMetrics
 from app.db.schemas import DECISION_TYPE, SnapshotContext
-from app.enums.logging_enums import RunContext
 from app.utilities.metadata.snapshots.analyze_code_metrics import analyze_code, compute_deltas
 from app.utilities.metadata.footer.code_annnotation_utils import append_agent_note
-
-
-SNAPSHOT_ROOT = Path(__file__).resolve().parents[4] / "experiments" / "snapshots"
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
 
 class SnapshotArchive:
-    def __init__(self, engine, root: Path | str | None = None) -> None:
-        self.root = Path(root) if root else SNAPSHOT_ROOT
-        self.root.mkdir(parents=True, exist_ok=True)
+    def __init__(self, engine) -> None:
         self.engine = engine
+        self.fm = get_file_manager()
 
     def record(self, *, snapshot: SnapshotContext) -> str:
-        if not snapshot.before_path.exists():
-            raise FileNotFoundError(f"Cannot snapshot non-existent file: {snapshot.before_path}")
+        # 🔁 Determine canonical path via file manager
+        before_candidate = str(snapshot.before_path)
+        try:
+            resolved_type = self.fm.resolve_existing_filetype(before_candidate)
+            path = self.fm._resolve(resolved_type, before_candidate)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Cannot snapshot non‑existent file: {snapshot.before_path}")
 
-        before_content = snapshot.before_path.read_text(encoding="utf-8")
+        before_content = self.fm.load(resolved_type, path.name)
 
         if not snapshot.after_content or not snapshot.decision or not snapshot.log:
             raise ValueError("Extraction failed: missing content or decision or log entry")
 
         after_content = snapshot.after_content.rstrip() + "\n\n"
-        after_content = append_agent_note(after_content, system=snapshot.system, agent_name=snapshot.agent_name, note=snapshot.log)
+        after_content = append_agent_note(
+            after_content,
+            system=snapshot.system,
+            agent_name=snapshot.agent_name,
+            note=snapshot.log,
+        )
 
         before_metrics = analyze_code(before_content)
         after_metrics = analyze_code(after_content)
@@ -51,13 +56,12 @@ class SnapshotArchive:
             **deltas,
         }
 
-        session_root = self.root / str(context.session_id)
-        session_root.mkdir(parents=True, exist_ok=True)
         snapshot_id = str(uuid.uuid4())
+        base_filename = f"{context.file_log_id}__{snapshot_id}"
 
-        (session_root / f"{snapshot_id}.before").write_text(before_content, encoding="utf-8")
-        (session_root / f"{snapshot_id}.after").write_text(after_content, encoding="utf-8")
-        (session_root / f"{snapshot_id}.meta.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+        self.fm.save(FILETYPE.SNAPSHOT, f"{base_filename}.before", before_content)
+        self.fm.save(FILETYPE.SNAPSHOT, f"{base_filename}.after", after_content)
+        self.fm.save(FILETYPE.SNAPSHOT, f"{base_filename}.meta.json", json.dumps(metadata, indent=2))
 
         with Session(bind=self.engine) as session:
             entry = SnapshotMetrics(
@@ -74,29 +78,38 @@ class SnapshotArchive:
                     k: metadata.get(k)
                     for k in SnapshotMetrics.__table__.columns.keys()
                     if k.endswith("_before") or k.endswith("_after") or k.endswith("_delta")
-                }
+                },
             )
             session.add(entry)
             session.commit()
 
         return snapshot_id
 
-    def read_latest(self, session_id: str) -> dict | None:
-        session_root = self.root / str(session_id)
-        if not session_root.exists():
+    def read_latest(self, file_log_id: int) -> dict | None:
+        with Session(bind=self.engine) as session:
+            row = (
+                session.query(SnapshotMetrics)
+                .filter(SnapshotMetrics.file_log_id == file_log_id)
+                .order_by(SnapshotMetrics.timestamp.desc())
+                .first()
+            )
+
+        if not row:
             return None
 
-        snapshots = sorted(session_root.glob("*.before"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not snapshots:
+        base_filename = f"{file_log_id}__{row.snapshot_id}"
+        before_name = f"{base_filename}.before"
+        after_name = f"{base_filename}.after"
+
+        if not self.fm.exists(FILETYPE.SNAPSHOT, before_name) or not self.fm.exists(FILETYPE.SNAPSHOT, after_name):
             return None
 
-        latest_id = snapshots[0].stem
-        before_path = session_root / f"{latest_id}.before"
-        after_path = session_root / f"{latest_id}.after"
+        before_path = self.fm._resolve(FILETYPE.SNAPSHOT, before_name)
+        after_path = self.fm._resolve(FILETYPE.SNAPSHOT, after_name)
 
         return {
-            "before": before_path.read_text(encoding="utf-8"),
-            "after": after_path.read_text(encoding="utf-8"),
+            "before": self.fm.load(FILETYPE.SNAPSHOT, before_name),
+            "after": self.fm.load(FILETYPE.SNAPSHOT, after_name),
             "before_path": str(before_path),
             "after_path": str(after_path),
         }

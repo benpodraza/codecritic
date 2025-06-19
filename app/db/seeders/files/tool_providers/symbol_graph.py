@@ -2,29 +2,20 @@ from __future__ import annotations
 
 import ast
 import json
-from pathlib import Path
 from typing import Any, Dict
 from copy import deepcopy
 
 from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
+from app.utilities.file_management.file_utils import get_file_manager, FileManagerBase
+
+fm = get_file_manager()
 
 
-class SymbolGraph:
-    def __init__(self) -> None:
-        self.graph: Dict[str, Any] = {}
-
-    def parse_file(self, filepath: str | Path) -> None:
-        from ast import parse
-
-        filepath = Path(filepath)
-        source = filepath.read_text(encoding="utf-8")
-        tree = parse(source, filename=str(filepath))
-
-        visitor = _SymbolGraphVisitor(filepath.stem, str(filepath), self.graph)
-        visitor.visit(tree)
-
+# ───────────────────────────────────────────────────────────────
+# 📦 Tool Implementation
+# ───────────────────────────────────────────────────────────────
 
 class SymbolGraphToolProvider(ToolProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
@@ -34,24 +25,66 @@ class SymbolGraphToolProvider(ToolProviderBase):
             context.execution_chain = context.execution_chain[:] + [str(self._run_id)]
 
         target = input.get("target")
-        path = Path(target)
-        if not path.exists():
-            raise FileNotFoundError(f"{target} does not exist")
+        recurse = input.get("recurse", False)
 
-        symbol_graph_util = SymbolGraph()
-        symbol_graph_util.parse_file(target)
+        symbol_graph = SymbolGraph(file_manager=fm)
+        symbol_graph.parse(target, recurse=recurse)
 
-        result_json = json.dumps(symbol_graph_util.graph, indent=2)
+        result_json = json.dumps(symbol_graph.graph, indent=2)
 
         return ToolOutputSchema(
             return_code=1,
             stdout=result_json,
             stderr=None,
             violations=None,
-            metrics=symbol_graph_util.graph,
-            summary="Symbol graph extraction successful"
+            metrics=symbol_graph.graph,
+            summary=f"Parsed symbol graph from {target}"
         )
 
+
+# ───────────────────────────────────────────────────────────────
+# 🧠 Symbol Graph Utility (Backend-Agnostic)
+# ───────────────────────────────────────────────────────────────
+
+class SymbolGraph:
+    def __init__(self, file_manager: FileManagerBase):
+        self.graph: Dict[str, Any] = {}
+        self.fm = file_manager
+
+    def parse(self, path: str, recurse: bool = False) -> None:
+        try:
+            resolved_type = self.fm.resolve_existing_filetype(path)
+            resolved_path = self.fm._resolve(resolved_type, path)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"❌ Path not found or invalid: {path}")
+
+        if resolved_path.is_file():
+            self._parse_file(resolved_path)
+        elif resolved_path.is_dir():
+            files = (
+                self.fm.list_files(resolved_type, recursive=recurse)
+                if recurse else
+                self.fm.list_files(resolved_type)
+            )
+            for file in files:
+                file_path = self.fm._resolve(resolved_type, file)
+                self._parse_file(file_path)
+        else:
+            raise FileNotFoundError(f"❌ Path not found or invalid: {path}")
+
+    def _parse_file(self, path: str) -> None:
+        source = self.fm.load(path)
+        tree = ast.parse(source, filename=path)
+        visitor = _SymbolGraphVisitor(self._module_name(path), path, self.graph)
+        visitor.visit(tree)
+
+    def _module_name(self, path: str) -> str:
+        return path.rstrip("/").split("/")[-1].split(".")[0]
+
+
+# ───────────────────────────────────────────────────────────────
+# 🔍 AST Graph Visitor
+# ───────────────────────────────────────────────────────────────
 
 class _SymbolGraphVisitor(ast.NodeVisitor):
     def __init__(self, module: str, file_path: str, graph: Dict[str, Any]) -> None:
@@ -73,6 +106,15 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         self.scope.pop()
         self.current = None
 
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        qual = self._qualify(node.name)
+        self._record(qual, "class", node)
+        self.scope.append(node.name)
+        self.current = qual
+        self.generic_visit(node)
+        self.scope.pop()
+        self.current = None
+
     def _process_function_or_async_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         qual = self._qualify(node.name)
         self.graph[qual] = {
@@ -88,15 +130,6 @@ class _SymbolGraphVisitor(ast.NodeVisitor):
         }
         self.scope.append(node.name)
         self.current = qual
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        qual = self._qualify(node.name)
-        self._record(qual, "class", node)
-        self.scope.append(node.name)
-        self.current = qual
-        self.generic_visit(node)
-        self.scope.pop()
-        self.current = None
 
     def _qualify(self, name: str) -> str:
         return ".".join([self.module, *self.scope, name])

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 import uuid
-from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
 from app.enums.logging_enums import RunContext
@@ -14,7 +13,9 @@ from app.db.schemas import (
 )
 from app.enums.scoring_enums import SCORING_METRIC_TYPE
 from app.utilities.metadata.footer.code_annnotation_utils import split_content_and_notes
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class LintingScoreProvider(ScoreProviderBase):
     ConfigSchema = LintingScoreConfig 
@@ -23,88 +24,104 @@ class LintingScoreProvider(ScoreProviderBase):
     _MAX_RUFF_VIOLATIONS_CONSIDERED = 10
 
     def _run(self, input: dict, context: RunContext | None = None) -> ScoreOutputSchema:
-        file_path = input["file_path"]
-        file_path = self._make_path_from_raw(file_path)
-        full_code = file_path.read_text(encoding="utf-8")
-        clean_code, _ = split_content_and_notes(full_code)
+        stripped_filename = None
 
-        stripped_path = self._write_working_copy(clean_code)
+        try:
+            file_path = input.get("file_path")
+            if not file_path or not isinstance(file_path, str):
+                raise ValueError("❌ 'file_path' is required and must be a non-empty string.")
 
-        available = {tp._config.name.lower(): tp for tp in self.tool_providers}
-        ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_path, context)
-        black_score, black_violations = self._run_tool(
-            "black", available, stripped_path, tool_failures, context, collect_violations=True
-        )
-        mypy_score, mypy_violations = self._run_tool(
-            "mypy", available, stripped_path, tool_failures, context, collect_violations=True
-        )
+            input_file, resolved_type = self._make_path_from_raw(file_path)
+            full_code = fm.load(resolved_type, input_file)
+            clean_code, _ = split_content_and_notes(full_code)
 
-        weights = self._parse_weights(input.get("weights"))
-        weighted_score = round(
-            ruff_score * weights["ruff"]
-            + black_score * weights["black"]
-            + mypy_score * weights["mypy"],
-            3,
-        )
+            stripped_filename = self._write_working_copy(clean_code)
 
-        threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
-        meets_threshold = (threshold is None) or (weighted_score >= threshold)
+            available = {tp._config.name.lower(): tp for tp in self.tool_providers}
+            if not stripped_filename:
+                raise ValueError("❌ Internal error: stripped_filename was not generated")
 
-        # 🧩 Structured component output
-        components = LintingScoreComponents(
-            type="linting",
-            ruff_score=ruff_score,
-            ruff_violations=ruff_violations,            
-            black_score=black_score,
-            black_violations=black_violations,    
-            mypy_score=mypy_score,
-            mypy_violations=mypy_violations,
-            tool_failure_count=len(tool_failures),
-            weight_ruff=weights["ruff"],
-            weight_black=weights["black"],
-            weight_mypy=weights["mypy"],
-        )
+            ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_filename, context)
+            black_score, black_violations = self._run_tool(
+                "black", available, stripped_filename, tool_failures, context, collect_violations=True
+            )
+            mypy_score, mypy_violations = self._run_tool(
+                "mypy", available, stripped_filename, tool_failures, context, collect_violations=True
+            )
 
-        summary = self._build_summary(
-            ruff_violations=ruff_violations,
-            tool_failures=tool_failures,
-            meets_threshold=meets_threshold,
-            threshold=threshold,
-        )
+            weights = self._parse_weights(input.get("weights"))
+            weighted_score = round(
+                ruff_score * weights["ruff"]
+                + black_score * weights["black"]
+                + mypy_score * weights["mypy"],
+                3,
+            )
 
-        return ScoreOutputSchema(
-            name=SCORING_METRIC_TYPE.LINTING_SCORE,
-            value=weighted_score,
-            components=components,
-            summary=summary,
-        )
+            threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
+            meets_threshold = (threshold is None) or (weighted_score >= threshold)
 
-    def _make_path_from_raw(self, maybe_code: str) -> Path:
-        if Path(maybe_code).exists() and "\n" not in maybe_code:
-            return Path(maybe_code).resolve()
+            components = LintingScoreComponents(
+                type="linting",
+                ruff_score=ruff_score,
+                ruff_violations=ruff_violations,
+                black_score=black_score,
+                black_violations=black_violations,
+                mypy_score=mypy_score,
+                mypy_violations=mypy_violations,
+                tool_failure_count=len(tool_failures),
+                weight_ruff=weights["ruff"],
+                weight_black=weights["black"],
+                weight_mypy=weights["mypy"],
+            )
 
-        tmp = Path("experiments/snapshots") / f"{uuid.uuid4().hex}.py"
-        tmp.parent.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(maybe_code, encoding="utf-8")
-        print(f"\U0001f4c4  Created temp file for raw code: {tmp}")
-        return tmp.resolve()
+            summary = self._build_summary(
+                ruff_violations=ruff_violations,
+                tool_failures=tool_failures,
+                meets_threshold=meets_threshold,
+                threshold=threshold,
+            )
 
-    def _write_working_copy(self, clean_code: str) -> Path:
-        stripped = Path("working_files") / f"{uuid.uuid4().hex}_stripped.py"
-        stripped.parent.mkdir(parents=True, exist_ok=True)
-        stripped.write_text(clean_code.rstrip() + "\n", encoding="utf-8")
-        return stripped.resolve()
+            return ScoreOutputSchema(
+                name=SCORING_METRIC_TYPE.LINTING_SCORE,
+                value=weighted_score,
+                components=components,
+                summary=summary,
+            )
+
+        finally:
+            if stripped_filename:
+                fm.delete(FILETYPE.WORKING, stripped_filename)
+
+
+    def _make_path_from_raw(self, maybe_code: str) -> tuple[str, FILETYPE]:
+        if "\n" not in maybe_code:
+            try:
+                for ft in [FILETYPE.WORKING, FILETYPE.SNAPSHOT, FILETYPE.INPUT]:
+                    candidate = fm._resolve(ft, maybe_code)
+                    if candidate.exists():
+                        return maybe_code, ft
+            except Exception:
+                pass
+
+        name = f"{uuid.uuid4().hex}.py"
+        fm.save(FILETYPE.SNAPSHOT, name, maybe_code)
+        return name, FILETYPE.SNAPSHOT
+
+    def _write_working_copy(self, clean_code: str) -> str:
+        name = f"{uuid.uuid4().hex}_stripped.py"
+        fm.save(FILETYPE.WORKING, name, clean_code.rstrip() + "\n")
+        return name
 
     def _run_ruff(
         self,
         available: Dict[str, Any],
-        target_path: Path,
+        target_filename: str,
         context: RunContext | None,
     ) -> Tuple[float, List[str], Dict[str, str]]:
         tool_failures: Dict[str, str] = {}
         score, violations = self._run_tool_with_context(
             tool=available["ruff"],
-            input={"target": str(target_path), "check": True},
+            input={"target": target_filename, "check": True},
             context=context,
             collect_violations=True,
         )
@@ -115,7 +132,7 @@ class LintingScoreProvider(ScoreProviderBase):
         self,
         name: str,
         available: Dict[str, Any],
-        target_path: Path,
+        target_filename: str,
         failures: Dict[str, str],
         context: RunContext | None,
         collect_violations: bool = False,
@@ -127,7 +144,7 @@ class LintingScoreProvider(ScoreProviderBase):
         try:
             score, violations = self._run_tool_with_context(
                 tool=available[name],
-                input={"target": str(target_path), "check": True},
+                input={"target": target_filename, "check": True},   # same fix
                 context=context,
                 collect_violations=collect_violations,
             )

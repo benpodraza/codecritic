@@ -1,9 +1,8 @@
 from __future__ import annotations
+
 from abc import abstractmethod
 from copy import deepcopy
 from datetime import datetime
-from pathlib import Path
-import shutil
 from typing import Dict
 
 from app.enums.fsm_enums import DECISION_TYPE, STATE_TYPE
@@ -13,6 +12,9 @@ from app.providers.fsm_provider_base import FSMProviderBase
 from app.db.schemas import ControllerOutputSchema
 from app.utilities.extract_base_filename import extract_base_filename
 from app.utilities.select_best_file_by_score import select_best_file_by_score
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
+
+fm = get_file_manager()
 
 
 class ControllerProviderBase(FSMProviderBase):
@@ -31,41 +33,31 @@ class ControllerProviderBase(FSMProviderBase):
         self.context_provider = context_provider
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
-        self._generated_files = []
+        self._generated_files: list[str] = []
 
     def _run_provider(self, input: dict) -> ControllerOutputSchema:
         session_id = input.get("session_id")
-
-        incoming_file = input.get("file_path") or input.get("file_name") or input.get("before")
+        incoming_file = input.get("file_path")
         if not incoming_file:
-            raise ValueError("❌ ControllerProvider requires 'file_path', 'file_name', or 'before' in input")
+            raise ValueError("❌ ControllerProvider requires 'file_path' in input")
 
         self.incoming_file = incoming_file
-        src = Path(incoming_file).resolve()
         timestamp = datetime.now().strftime('%H%M%S%f')[:10]
-        working_dir = Path("working_files").resolve()
-        working_dir.mkdir(parents=True, exist_ok=True)
-        root = extract_base_filename(src)
-        self.working_file = working_dir / f"{root}__ctrl_{timestamp}{src.suffix}"
-        shutil.copy(src, self.working_file)
+        root = extract_base_filename(incoming_file)
+        self.working_file = f"{root}__ctrl_{timestamp}.py"
+        fm.copy(FILETYPE.WORKING, incoming_file, FILETYPE.WORKING, dst_filename=self.working_file)
         self._generated_files.append(self.working_file)
-
-        input_path = Path(incoming_file)
-        try:
-            relative_path = str(input_path.relative_to(Path.cwd()))
-        except ValueError:
-            relative_path = str(input_path)
 
         state = {
             "state": SYSTEM.START,
-            "file_path": str(self.working_file),
+            "file_path": self.working_file,
             "session_id": session_id,
             "reason": input.get("reason", SYSTEM.START.value),
             "steps": input.get("steps", 0),
             "retry_count": input.get("retry_count", 0),
             "_last_state": input.get("_last_state", SYSTEM.START),
             "decision": DECISION_TYPE.UNKNOWN,
-            "original_file": relative_path,
+            "original_file": incoming_file,
             "run_id": self._run_id,
         }
 
@@ -102,29 +94,19 @@ class ControllerProviderBase(FSMProviderBase):
                     context=self._context
                 )
 
-                temp_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
-                shutil.copy(Path(best_file), temp_path)
-                state["file_path"] = str(temp_path)
+                temp_name = f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                fm.copy(FILETYPE.WORKING, best_file, FILETYPE.WORKING, dst_filename=temp_name)
+                state["file_path"] = temp_name
 
-                for f in Path("working_files").glob("temp_ctrl_*.py"):
-                    if f.resolve() != temp_path.resolve():
-                        try:
-                            f.unlink()
-                        except Exception:
-                            pass
-
-                for f in Path("working_files").glob("*_stripped.py"):
-                    try:
-                        f.unlink()
-                    except Exception:
-                        pass
+                # 🧼 Cleanup
+                for f in fm.list_files(FILETYPE.WORKING):
+                    if f.startswith("temp_ctrl_") and f != temp_name:
+                        fm.delete(FILETYPE.WORKING, f)
+                    elif f.endswith("_stripped.py"):
+                        fm.delete(FILETYPE.WORKING, f)
 
                 for path in self._generated_files:
-                    if path.exists():
-                        try:
-                            path.unlink()
-                        except Exception:
-                            pass
+                    fm.delete(FILETYPE.WORKING, path)
 
                 return ControllerOutputSchema(
                     state=SYSTEM.END,
@@ -154,12 +136,13 @@ class ControllerProviderBase(FSMProviderBase):
             output = provider.run(input=provider_input, context=self.fork_context())
 
             flat_output = output.model_dump(exclude={"output"}) if hasattr(output, "model_dump") else dict(output)
-            promoted_path = Path("working_files") / f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+
             if "file_path" in output.output:
-                final_path = Path(output.output["file_path"]).resolve()
-                shutil.copy(final_path, promoted_path)
-                self._generated_files.append(promoted_path)
-                state["file_path"] = str(promoted_path)
+                source_path = output.output["file_path"]
+                promoted_name = f"temp_ctrl_{datetime.now().strftime('%H%M%S%f')[:10]}.py"
+                fm.copy(FILETYPE.WORKING, source_path, FILETYPE.WORKING, dst_filename=promoted_name)
+                self._generated_files.append(promoted_name)
+                state["file_path"] = promoted_name
 
             if hasattr(output, "decision") and output.decision is not None:
                 state["decision"] = output.decision
@@ -184,7 +167,6 @@ class ControllerProviderBase(FSMProviderBase):
                 "_last_state": current,
                 "state_output": flat_output,
             }
-
 
     @abstractmethod
     def _transition(self, state: dict, output: dict | None) -> dict:

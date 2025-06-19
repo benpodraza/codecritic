@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from datetime import datetime, timezone
-from typing import Optional
 
 from app.enums.fsm_enums import TRANSITION_REASON_TYPE, DECISION_TYPE
-from app.enums.logging_enums import LOG_TYPE, PROVIDER_TYPE, RunContext
+from app.enums.logging_enums import LOG_TYPE, RunContext
 from app.db.schemas import StateTransitionLogSchema
 from app.providers.base_provider import BaseProvider
 
@@ -60,8 +59,6 @@ class FSMProviderBase(BaseProvider):
             transition_metadata["file_path"] = result.get("file_path")
 
         next_state["transition_metadata"] = transition_metadata
-
-        is_terminal = next_state.get("state_type") == "end" or next_state.get("state") == "end"
 
         decision = getattr(result, "decision", DECISION_TYPE.UNKNOWN)
         # Log the state transition with relevant details

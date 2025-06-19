@@ -1,18 +1,16 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import AgentProviderConfig
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-SEED_FILES_DIR = Path(__file__).resolve().parent / "files/agent_providers"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 AGENT_PROVIDERS = [
     {
         "id": 1,
-        "filename": "basic_agent_provider.py",
+        "filename": "agent_providers/basic_agent_provider.py",
         "name": "basic_agent_provider",
         "description": "Returns a hardcoded result.",
         "agent_type": "basic",
@@ -24,7 +22,7 @@ AGENT_PROVIDERS = [
     },
     {
         "id": 2,
-        "filename": "linting_generator_agent_provider.py",
+        "filename": "agent_providers/linting_generator_agent_provider.py",
         "name": "linting_generator_agent_provider",
         "description": "Runs GPT-4o to generate linting corrections.",
         "agent_type": "generator",
@@ -47,7 +45,7 @@ AGENT_PROVIDERS = [
     },
     {
         "id": 3,
-        "filename": "linting_discriminator_agent_provider.py",
+        "filename": "agent_providers/linting_discriminator_agent_provider.py",
         "name": "linting_discriminator_agent_provider",
         "description": "Evaluates generator output for acceptance.",
         "agent_type": "discriminator",
@@ -61,7 +59,7 @@ AGENT_PROVIDERS = [
     },
     {
         "id": 4,
-        "filename": "code_stability_agent_provider.py",
+        "filename": "agent_providers/code_stability_agent_provider.py",
         "name": "code_stability_agent_provider",
         "description": "Rejects output if code is not parseable, importable, compilable, or type-valid.",
         "agent_type": "stability",
@@ -76,18 +74,11 @@ AGENT_PROVIDERS = [
 ]
 
 def seed_agent_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     for entry in AGENT_PROVIDERS:
         guid = str(uuid4())
         dest_filename = f"{guid}.py"
-        source_file = SEED_FILES_DIR / entry["filename"]
-        dest_file = EXTENSIONS_DIR / dest_filename
-
-        if not source_file.exists():
-            raise FileNotFoundError(f"Agent provider script not found: {source_file}")
-
-        shutil.copy(source_file, dest_file)
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         config = AgentProviderConfig(
             id=entry["id"],
@@ -104,4 +95,4 @@ def seed_agent_providers(db_session: Session):
         db_session.add(config)
 
     db_session.commit()
-    print("Seeded agent provider configurations successfully.")
+    print("✅ Seeded agent provider configurations successfully.")

@@ -5,6 +5,8 @@ from app.factories.context_provider_factory import ContextProviderFactory
 from app.enums.logging_enums import RunContext
 from pathlib import Path
 
+from app.utilities.file_management.file_utils import FILETYPE, get_file_manager
+
 
 class PromptProviderFactory(BaseProviderFactory):
     config_model = PromptProviderConfig
@@ -45,7 +47,8 @@ class PromptProviderFactory(BaseProviderFactory):
                 if row:
                     artifact_path = row[0]
                     if artifact_path:
-                        return (Path("extensions") / artifact_path).read_text(encoding="utf-8").strip()
+                        fm = get_file_manager()
+                        return fm.load(FILETYPE.EXTENSION, artifact_path)
             finally:
                 conn.close()
             return None

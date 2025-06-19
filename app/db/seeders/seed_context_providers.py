@@ -1,18 +1,16 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import ContextProviderConfig
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-SEED_FILES_DIR = Path(__file__).resolve().parent / "files/context_providers"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 CONTEXT_PROVIDERS = [
     {
         "id": 1,
-        "filename": "basic_context_provider.py",
+        "filename": "context_providers/basic_context_provider.py",
         "name": "basic_context_provider",
         "description": "Returns static context for testing.",
         "tags": ["default"],
@@ -23,7 +21,7 @@ CONTEXT_PROVIDERS = [
     },
     {
         "id": 2,
-        "filename": "linting_context_provider.py",
+        "filename": "context_providers/linting_context_provider.py",
         "name": "linting_context_provider",
         "description": "Generates context for the linting system.",
         "tags": ["linting", "score-aware"],
@@ -38,18 +36,11 @@ CONTEXT_PROVIDERS = [
 ]
 
 def seed_context_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     for entry in CONTEXT_PROVIDERS:
         guid = str(uuid4())
         dest_filename = f"{guid}.py"
-        source_file = SEED_FILES_DIR / entry["filename"]
-        dest_file = EXTENSIONS_DIR / dest_filename
-
-        if not source_file.exists():
-            raise FileNotFoundError(f"Context provider script not found: {source_file}")
-
-        shutil.copy(source_file, dest_file)
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         config = ContextProviderConfig(
             id=entry["id"],
@@ -65,4 +56,4 @@ def seed_context_providers(db_session: Session):
         db_session.add(config)
 
     db_session.commit()
-    print("Seeded context provider configurations successfully.")
+    print("✅ Seeded context provider configurations successfully.")

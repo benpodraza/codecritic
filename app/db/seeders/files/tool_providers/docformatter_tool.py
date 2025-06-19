@@ -5,20 +5,24 @@ from copy import deepcopy
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
 from app.enums.logging_enums import RunContext
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class DocFormatterToolProvider(ToolProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target = input.get("target")
+        target_name = input.get("target")
         check = input.get("check", False)
 
-        # ✅ Propagate context
+        resolved_type = fm.resolve_existing_filetype(target_name)
+        target_path = fm._resolve(resolved_type, target_name)
+
         if context:
             context = deepcopy(context)
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [self._run_id]
 
-        cmd = [sys.executable, "-m", "docformatter", target, "--in-place"]
+        cmd = [sys.executable, "-m", "docformatter", str(target_path), "--in-place"]
         if check:
             cmd.append("--check")
 

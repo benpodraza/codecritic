@@ -64,17 +64,20 @@ class LoggingProvider:
     ) -> None:
         if getattr(self, "_initialized", False):
             if connection is not None:
-                self.conn = connection
+                self._conn = connection
             return
 
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(exist_ok=True, parents=True)
+        from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+        self.fm = get_file_manager()
+        self.db_path = self.fm._resolve(FILETYPE.DATABASE, db_path)
         self._conn = connection or get_connection()
 
-        self.output_path = Path(output_path) if output_path else None
-        if self.output_path:
-            self.output_path.parent.mkdir(parents=True, exist_ok=True)
+        self.output_path = None
+        if output_path:
+            self.fm.makedirs(FILETYPE.LOG)
+            # Just store filename – write will resolve again to current file manager
+            self.output_path = Path(output_path).name
 
         self._initialized = True
 
@@ -121,13 +124,14 @@ class LoggingProvider:
         cols = ",".join(keys)
         placeholders = ",".join(["?"] * len(keys))
         values = [tuple(i[k] for k in keys) for i in items]
+
         cur = self.conn.cursor()
         cur.executemany(f"INSERT INTO {table} ({cols}) VALUES ({placeholders})", values)
         self.conn.commit()
+
         if self.output_path:
-            with self.output_path.open("a", encoding="utf-8") as fh:
-                for item in items:
-                    fh.write(json.dumps(item) + "\n")
+            for item in items:
+                self.fm.save_append(FILETYPE.LOG, self.output_path, json.dumps(item) + "\n")
 
     def write(self, log_type: LOG_TYPE, entries: list[Any] | Any) -> int | None:
         if not isinstance(entries, list):

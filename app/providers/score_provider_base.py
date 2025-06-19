@@ -1,7 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
-from copy import deepcopy
-from typing import TYPE_CHECKING, Type, Optional
+from typing import TYPE_CHECKING, Type
 
 from app.enums.logging_enums import RunContext
 from app.providers.base_provider import BaseProvider
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class ScoreProviderBase(BaseProvider):
-    ConfigSchema: Type[ScoreComponentsBase] = ScoreComponentsBase  # ⬅️ override in subclasses
+    ConfigSchema: Type[ScoreComponentsBase] = ScoreComponentsBase 
 
     def __init__(
         self,
@@ -37,7 +36,6 @@ class ScoreProviderBase(BaseProvider):
         return self.ConfigSchema.model_validate(raw_config)
 
     def _run_provider(self, input: dict) -> ScoreOutputSchema:
-        caller = self._context.called_by_type.name if self._context and self._context.called_by_type else "UNKNOWN"
         return self._run(input=input, context=self.fork_context())
 
     def set_context_provider(self, provider: ContextProviderBase) -> None:

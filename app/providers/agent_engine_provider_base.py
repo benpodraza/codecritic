@@ -1,9 +1,8 @@
 from __future__ import annotations
 from abc import abstractmethod
-from pathlib import Path
+
 from app.db.schemas import AgentEngineOutput
 from app.enums.logging_enums import RunContext
-from app.enums.agent_enums import AGENT
 from app.providers.base_provider import BaseProvider
 
 
@@ -24,9 +23,9 @@ class AgentEngineProviderBase(BaseProvider):
         self.score_provider = score_provider
         self.tool_providers = tool_providers or []
 
-    def _run_provider(self, input: dict) -> AgentEngineOutput:
+    def _run_provider(self, input: dict, **kwargs) -> AgentEngineOutput:
 
-        output = self._run(input=input, context=self.fork_context())
+        output = self._run(input=input, context=self.fork_context(), **kwargs)
 
         if not isinstance(output, AgentEngineOutput):
             raise ValueError("Expected AgentEngineOutput from _run")
@@ -39,5 +38,5 @@ class AgentEngineProviderBase(BaseProvider):
 
 
     @abstractmethod
-    def _run(self, input: dict, context: RunContext | None = None) -> AgentEngineOutput:
+    def _run(self, input: dict, context: RunContext | None = None, **kwargs) -> AgentEngineOutput:
         raise NotImplementedError

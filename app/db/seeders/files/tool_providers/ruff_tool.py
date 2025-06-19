@@ -7,19 +7,23 @@ from typing import Any, Dict, List, Optional
 from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class RuffToolProviderV2(ToolProviderBase):
     """
-    Executes `ruff check --output-format json` and normalises results:
-    return_code 1 ⇒ pass, 0 ⇒ violation or runtime error.
+    Executes `ruff check --output-format json` and normalizes results:
+    return_code 1 ⇒ pass, 0 ⇒ violation or runtime error.
     """
 
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target: str = input.get("target")
-        cmd = ["ruff", "check", "--output-format", "json", target]
+        target_name: str = input.get("target")
+        resolved_type = fm.resolve_existing_filetype(target_name)
+        target_path = fm._resolve(resolved_type, target_name)
 
-        # ✅ Isolate context to avoid corrupting upstream execution_chain
+        cmd = ["ruff", "check", "--output-format", "json", str(target_path)]
+
         if context:
             context = deepcopy(context)
             context.parent_id = self._run_id
@@ -36,7 +40,6 @@ class RuffToolProviderV2(ToolProviderBase):
         stdout = (proc.stdout or "").strip()
         stderr = (proc.stderr or "").strip()
 
-        # ───────────────────────────────────── parse Ruff JSON output
         try:
             parsed = json.loads(stdout or "[]")
             violations: List[str] = [
@@ -49,7 +52,6 @@ class RuffToolProviderV2(ToolProviderBase):
 
         violation_count = len(violations)
 
-        # ───────────────────────────────────── outcome map
         if raw_code == 0:
             return self._success(
                 summary="✅ Ruff passed — no violations",

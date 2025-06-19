@@ -1,19 +1,16 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import PromptProviderConfig
 from app.enums.logging_enums import PROVIDER_TYPE
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-CURRENT_DIR = Path(__file__).resolve().parent
-SEED_FILES_DIR = CURRENT_DIR / "files/prompt_providers"
-PROJECT_ROOT = SEED_FILES_DIR.parent.parent.parent.parent.parent
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 PROVIDERS = [
     {
         "id": 1,
-        "filename": "basic_prompt_provider.py",
+        "filename": "prompt_providers/basic_prompt_provider.py",
         "name": "basic_prompt_provider",
         "description": "Returns a simple prompt response.",
         "tags": ["default"],
@@ -24,7 +21,7 @@ PROVIDERS = [
     },
     {
         "id": 2,
-        "filename": "linting_prompt_provider.py",
+        "filename": "prompt_providers/linting_prompt_provider.py",
         "name": "linting_prompt_provider",
         "description": "Combines linting system and agent prompts.",
         "tags": ["linting", "codequality"],
@@ -40,18 +37,11 @@ PROVIDERS = [
 ]
 
 def seed_prompt_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
     for entry in PROVIDERS:
         guid = str(uuid4())
         dest_filename = f"{guid}.py"
-        source_file = SEED_FILES_DIR / entry["filename"]
-        dest_file = EXTENSIONS_DIR / dest_filename
-
-        if not source_file.exists():
-            raise FileNotFoundError(f"Prompt provider script not found: {source_file}")
-
-        shutil.copy(source_file, dest_file)
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         config = PromptProviderConfig(
             id=entry["id"],
@@ -67,4 +57,4 @@ def seed_prompt_providers(db_session: Session):
         db_session.add(config)
 
     db_session.commit()
-    print("Seeded prompt provider configurations successfully.")
+    print("✅ Seeded prompt provider configurations successfully.")

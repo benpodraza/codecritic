@@ -6,14 +6,16 @@ from copy import deepcopy
 from app.enums.logging_enums import RunContext
 from app.providers.tool_provider_base import ToolProviderBase
 from app.db.schemas import ToolOutputSchema
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
+fm = get_file_manager()
 
 class MypyToolProviderV2(ToolProviderBase):
     """
-    Runs `mypy` in *strict* mode and normalises exit‑codes:
-    0 ⇒ pass ⇒ return_code 1
-    1 ⇒ type errors ⇒ return_code 0
-    >1 ⇒ internal / runtime error ⇒ return_code 0 + RUNTIME_ERROR violation
+    Runs `mypy` in *strict* mode and normalizes exit codes:
+    0 ⇒ pass ⇒ return_code 1
+    1 ⇒ type errors ⇒ return_code 0
+    >1 ⇒ internal/runtime error ⇒ return_code 0 + RUNTIME_ERROR violation
     """
 
     STRICT_ARGS: list[str] = [
@@ -30,15 +32,16 @@ class MypyToolProviderV2(ToolProviderBase):
     ]
 
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target: str = input.get("target")
+        target_name: str = input.get("target")
+        resolved_type = fm.resolve_existing_filetype(target_name)
+        target_path = fm._resolve(resolved_type, target_name)
 
-        # ✅ Propagate RunContext
         if context:
             context = deepcopy(context)
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [self._run_id]
 
-        cmd = [sys.executable, "-m", "mypy", target, *self.STRICT_ARGS]
+        cmd = [sys.executable, "-m", "mypy", str(target_path), *self.STRICT_ARGS]
 
         try:
             proc = subprocess.run(
@@ -53,7 +56,7 @@ class MypyToolProviderV2(ToolProviderBase):
 
         if raw_code == 0:
             return self._success(
-                summary="✅ Mypy passed — no type errors",
+                summary="✅ Mypy passed — no type errors",
                 metrics={"error_count": 0, "raw_return_code": raw_code},
                 stdout=stdout or None,
             )
@@ -61,7 +64,7 @@ class MypyToolProviderV2(ToolProviderBase):
         if raw_code == 1:
             violations = [line for line in stdout.splitlines() if line.strip()]
             return self._failure(
-                summary=f"❌ Mypy failed with {len(violations)} error(s)",
+                summary=f"❌ Mypy failed with {len(violations)} error(s)",
                 violations=violations,
                 metrics={
                     "error_count": len(violations),
@@ -72,7 +75,7 @@ class MypyToolProviderV2(ToolProviderBase):
 
         return self._runtime_error(stderr or stdout, raw_code)
 
-    # ────────────────────────────────────────────────────────────── helpers
+    # ──────────────────────────────────────────────── helpers
     def _success(
         self,
         summary: str,
@@ -111,5 +114,5 @@ class MypyToolProviderV2(ToolProviderBase):
             stderr=message,
             violations=["RUNTIME_ERROR"],
             metrics={"raw_return_code": raw_code, "exception": 1},
-            summary=f"❌ Mypy execution failed: {message}",
+            summary=f"❌ Mypy execution failed: {message}",
         )

@@ -1,19 +1,17 @@
 from uuid import uuid4
-from pathlib import Path
-import shutil
 from sqlalchemy.orm import Session
+
 from app.db.models import ControllerProviderConfig
 from app.enums.logging_enums import PROVIDER_TYPE
-from app.enums.system_enums import SYSTEM 
+from app.enums.system_enums import SYSTEM
+from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
-SEED_FILES_DIR = Path(__file__).parent / "files/controller_providers"
-PROJECT_ROOT   = SEED_FILES_DIR.parents[4]
-EXTENSIONS_DIR = PROJECT_ROOT / "extensions"
+fm = get_file_manager()
 
 CONTROLLER_PROVIDERS = [
     {
         "id": 1,
-        "filename": "preprocessing_controller_provider.py",
+        "filename": "controller_providers/preprocessing_controller_provider.py",
         "name": "preprocessing_controller",
         "description": "Runs only the preprocessing step (e.g. linting).",
         "tags": ["preprocessing", "controller"],
@@ -32,14 +30,11 @@ CONTROLLER_PROVIDERS = [
 ]
 
 def seed_controller_providers(db_session: Session):
-    EXTENSIONS_DIR.mkdir(parents=True, exist_ok=True)
     for entry in CONTROLLER_PROVIDERS:
         guid = str(uuid4())
-        src = SEED_FILES_DIR / entry["filename"]
-        dest = EXTENSIONS_DIR / f"{guid}.py"
-        if not src.exists():
-            raise FileNotFoundError(f"Missing script: {src}")
-        shutil.copy(src, dest)
+        dest_filename = f"{guid}.py"
+        content = fm.load(FILETYPE.SEED_SOURCE, entry["filename"])
+        fm.save(FILETYPE.EXTENSION, dest_filename, content)
 
         rec = ControllerProviderConfig(
             id=entry["id"],
@@ -47,10 +42,11 @@ def seed_controller_providers(db_session: Session):
             name=entry["name"],
             description=entry["description"],
             config=entry["config"],
-            artifact_path=dest.name,
+            artifact_path=dest_filename,
             tags=entry["tags"],
             provider_type=PROVIDER_TYPE.CONTROLLER,
         )
         db_session.add(rec)
+
     db_session.commit()
     print("✅ Seeded controller providers")

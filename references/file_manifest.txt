@@ -135,6 +135,7 @@ codecritic
          - extract_code_block.py
          - file_management
             - __init__.py
+            - file_utils.py
          - metadata
             - __init__.py
             - footer

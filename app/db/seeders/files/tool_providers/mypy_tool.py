@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from copy import deepcopy
 
@@ -32,17 +33,27 @@ class MypyToolProviderV2(ToolProviderBase):
     ]
 
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target_name: str = input.get("target")
+        # 1) Resolve and verify via FileManager
+        target_name   = input.get("target")
         resolved_type = fm.resolve_existing_filetype(target_name)
-        target_path = fm._resolve(resolved_type, target_name)
+        if not fm.exists(resolved_type, target_name):
+            raise FileNotFoundError(f"{target_name} not found")
 
+        # 2) Load content from storage
+        content = fm.load(resolved_type, target_name)
+
+        # 3) Stage it in a temp file
+        suffix    = Path(target_name).suffix or ".py"
+        temp_path = fm.write_temp(content, suffix=suffix)
+
+        # 4) Update context lineage
         if context:
-            context = deepcopy(context)
-            context.parent_id = self._run_id
+            context       = deepcopy(context)
+            context.parent_id       = self._run_id
             context.execution_chain = context.execution_chain[:] + [self._run_id]
 
-        cmd = [sys.executable, "-m", "mypy", str(target_path), *self.STRICT_ARGS]
-
+        # 5) Build and run mypy command
+        cmd = [sys.executable, "-m", "mypy", str(temp_path), *self.STRICT_ARGS]
         try:
             proc = subprocess.run(
                 cmd, capture_output=True, text=True, encoding="utf-8", errors="ignore"
@@ -51,9 +62,10 @@ class MypyToolProviderV2(ToolProviderBase):
             return self._runtime_error(str(exc))
 
         raw_code = proc.returncode
-        stdout = (proc.stdout or "").strip()
-        stderr = (proc.stderr or "").strip()
+        stdout   = (proc.stdout or "").strip()
+        stderr   = (proc.stderr or "").strip()
 
+        # 6) Normalize exit codes
         if raw_code == 0:
             return self._success(
                 summary="✅ Mypy passed — no type errors",
@@ -66,16 +78,13 @@ class MypyToolProviderV2(ToolProviderBase):
             return self._failure(
                 summary=f"❌ Mypy failed with {len(violations)} error(s)",
                 violations=violations,
-                metrics={
-                    "error_count": len(violations),
-                    "raw_return_code": raw_code,
-                },
+                metrics={"error_count": len(violations), "raw_return_code": raw_code},
                 stdout=stdout or None,
             )
 
         return self._runtime_error(stderr or stdout, raw_code)
 
-    # ──────────────────────────────────────────────── helpers
+    # ──────────────────────────────────── helpers ────────────────────────────────────
     def _success(
         self,
         summary: str,

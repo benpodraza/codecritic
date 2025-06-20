@@ -70,7 +70,7 @@ class LoggingProvider:
         from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
         self.fm = get_file_manager()
-        self.db_path = self.fm._resolve(FILETYPE.DATABASE, db_path)
+        self.db_path = self.fm.resolve(FILETYPE.DATABASE, db_path)
         self._conn = connection or get_connection()
 
         self.output_path = None

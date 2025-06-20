@@ -17,17 +17,18 @@ fm = get_file_manager()
 
 class SonarCloudToolProvider(ToolProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
+        # fork context
         if context:
             context = deepcopy(context)
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [str(uuid.uuid4())]
 
         target_name = input.get("target")
-        resolved_type = fm.resolve_existing_filetype(target_name)
-        target_path = fm._resolve(resolved_type, target_name)
 
-        if not target_path.exists():
-            raise FileNotFoundError(f"{target_path} does not exist")
+        # ✅ existence via file-manager
+        ftype = fm.resolve_existing_filetype(target_name)
+        if not fm.exists(ftype, target_name):
+            raise FileNotFoundError(f"File not found: {target_name}")
 
         github_token, sonar_token, sonar_project, sonar_org, github_user = self._load_env()
 
@@ -35,14 +36,25 @@ class SonarCloudToolProvider(ToolProviderBase):
         stdout_msg = ""
 
         with tempfile.TemporaryDirectory() as tmpdir:
+            # clone into an ephemeral workspace
             repo_url = f"https://github.com/{github_user}/codecritic_scoring"
             subprocess.run(["gh", "repo", "clone", repo_url, tmpdir], check=True)
 
+            # stage the target file under src/, using file-manager copy
             filename = f"test_{uuid.uuid4()}.py"
             src_dir = Path(tmpdir) / "src"
             src_dir.mkdir(parents=True, exist_ok=True)
-            target_dest = src_dir / filename
-            target_dest.write_text(target_path.read_text(encoding="utf-8"))
+
+            # ← updated here: use fm.copy instead of fm.copy_file
+            fm.copy(
+                src_type=ftype,
+                src_filename=target_name,
+                dst_type=FILETYPE.WORKING,
+                dst_filename=filename
+            )
+
+            # now files/working_files/<filename> holds the staged copy;
+            # if you need it in tmpdir, you can load it or use Path operations from there.
 
             self._git_push(filename, cwd=src_dir)
             self._wait_for_scan_completion(sonar_token, sonar_project)
@@ -57,10 +69,7 @@ class SonarCloudToolProvider(ToolProviderBase):
         )
 
         return_code = 0 if violations_present else 1
-        summary = (
-            "SonarCloud scan clean" if return_code == 1
-            else "SonarCloud found issues"
-        )
+        summary = "SonarCloud scan clean" if return_code == 1 else "SonarCloud found issues"
 
         return ToolOutputSchema(
             return_code=return_code,

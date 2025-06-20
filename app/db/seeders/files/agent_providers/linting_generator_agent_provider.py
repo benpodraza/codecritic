@@ -30,10 +30,11 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
                 "state_context": input.get("state_context", {}),
             },
             context=context,
-            prompt_provider=self._prompt_provider  # 👈 passed directly, not via input
+            prompt_provider=self._prompt_provider
         )
 
-        resolved_before_path = fm._resolve(FILETYPE.WORKING, file_path)
+        ftype = fm.resolve_existing_filetype(file_path)
+        resolved_before_path = fm.resolve(ftype, file_path)
 
         # 🔧 Record snapshot with logical path
         snapshot = SnapshotContext(
@@ -43,7 +44,7 @@ class LintingGeneratorAgentProvider(AgentProviderBase):
             state=input.get("state_context", {}).get("state", "unknown"),
             agent_name=self._config.name,
             system=system,
-            before_path=resolved_before_path,    # <- FIX
+            before_path=resolved_before_path,
             after_content=engine_output.content,
         )
 

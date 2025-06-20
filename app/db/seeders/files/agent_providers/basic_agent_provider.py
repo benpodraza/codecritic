@@ -1,8 +1,10 @@
 from pathlib import Path
-from app.enums.logging_enums import RunContext  # ✅ Add for context typing
+from app.enums.logging_enums import RunContext
 from app.providers.agent_provider_base import AgentProviderBase
 from app.db.schemas import AgentOutputSchema
+from app.utilities.file_management.file_utils import get_file_manager
 
+fm = get_file_manager()
 
 class BasicAgentProvider(AgentProviderBase):
     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
@@ -11,9 +13,12 @@ class BasicAgentProvider(AgentProviderBase):
 
         if raw_file_path:
             try:
-                relative_file_path = str(Path(raw_file_path).resolve().relative_to(Path.cwd()))
-            except ValueError:
-                relative_file_path = str(Path(raw_file_path).resolve())
+                ftype = fm.resolve_existing_filetype(raw_file_path)
+                abs_path = fm.resolve(ftype, raw_file_path)
+                relative_file_path = str(abs_path.relative_to(Path.cwd()))
+            except Exception:
+                # fallback: use raw_file_path as-is if not resolvable
+                relative_file_path = raw_file_path
 
         response = (
             "[AGENT_DECISION]accept[/AGENT_DECISION]\n"

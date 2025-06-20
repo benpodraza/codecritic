@@ -16,7 +16,7 @@ from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
 DB_FILENAME = "codecritic.sqlite3"
 fm = get_file_manager()
-DB_PATH = fm._resolve(FILETYPE.DATABASE, DB_FILENAME)
+DB_PATH = fm.resolve(FILETYPE.DATABASE, DB_FILENAME)
 
 def main():
     engine = create_engine(f"sqlite:///{DB_PATH}")

@@ -55,10 +55,11 @@ if __name__ == "__main__":
     main()
 
 # --- Agent Notes (linting / linting_generator_agent_provider) ---
-# - Added type hints to all functions to comply with `mypy` requirements, improving code clarity and type safety.
-# - Formatted the code using `black` to ensure PEP8 compliance and resolve formatting issues.
-# - Separated import statements into individual lines for better readability and adherence to PEP8 guidelines.
-# - Added exception handling in `read_data_from_json` to log the specific error message, providing more context in error logs.
-# - Ensured all functions have a return type annotation, including `-> None` for functions that do not return a value.
-# - These changes improve code readability, maintainability, and error handling without altering the original logic or functionality.
+# - Added type hints to all functions to comply with `mypy` requirements.
+# - Split the import statement into multiple lines for better readability and to comply with PEP8.
+# - Added exception handling in `read_data_from_json` to log the specific error message.
+# - Used `Optional` from `typing` to indicate that `read_data_from_json` can return `None`.
+# - Ensured consistent return types for functions, such as returning `0.0` instead of `0` in `calculate_area`.
+# - Made sure all functions have a return type annotation, including `-> None` for functions that do not return a value.
+# - These changes improve code readability, maintainability, and type safety without altering the original logic.
 # -----------------------------------------------

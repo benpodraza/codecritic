@@ -1,6 +1,5 @@
 from __future__ import annotations
 import json
-import uuid
 
 from sqlalchemy.orm import Session
 
@@ -8,7 +7,7 @@ from app.enums.logging_enums import RunContext
 from app.providers.context_provider_base import ContextProviderBase
 from app.utilities.metadata.logging.conversation_log import get_conversation_log
 from app.db.schemas import ContextOutputSchema
-from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
+from app.utilities.file_management.file_utils import get_file_manager
 
 fm = get_file_manager()
 
@@ -18,13 +17,13 @@ class LintingContextProvider(ContextProviderBase):
         file_path = input["file_path"]
 
         try:
-            resolved_name, resolved_type = self._resolve_file_path(file_path)
-            source_code = fm.load(resolved_type, resolved_name)
+            resolved_type = fm.resolve_existing_filetype(file_path)
+            source_code = fm.load(resolved_type, file_path)
         except FileNotFoundError:
             raise FileNotFoundError(f"❌ File not found: {file_path}")
 
         score_result = self.score_provider.run(
-            input={"file_path": resolved_name},
+            input={"file_path": file_path},
             context=context
         )
 
@@ -36,7 +35,7 @@ class LintingContextProvider(ContextProviderBase):
             )
 
         context_data = {
-            "file_path": resolved_name,
+            "file_path": file_path,
             "source_code": source_code,
             "score": score_result.model_dump(),
             "conversation_log": convo_log
@@ -44,20 +43,5 @@ class LintingContextProvider(ContextProviderBase):
 
         return ContextOutputSchema(
             context=context_data,
-            summary=f"Context for {resolved_name}, {score_result.value} score, {len(convo_log)} log entries"
+            summary=f"Context for {file_path}, {score_result.value} score, {len(convo_log)} log entries"
         )
-
-    def _resolve_file_path(self, maybe_code: str) -> tuple[str, FILETYPE]:
-        if "\n" not in maybe_code:
-            try:
-                for ft in [FILETYPE.WORKING, FILETYPE.SNAPSHOT, FILETYPE.INPUT]:
-                    candidate = fm._resolve(ft, maybe_code)
-                    if candidate.exists():
-                        return maybe_code, ft
-            except Exception:
-                pass
-
-        name = f"{uuid.uuid4().hex}.py"
-        fm.save(FILETYPE.SNAPSHOT, name, maybe_code)
-        return name, FILETYPE.SNAPSHOT
-

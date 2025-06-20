@@ -31,22 +31,24 @@ class LintingScoreProvider(ScoreProviderBase):
             if not file_path or not isinstance(file_path, str):
                 raise ValueError("❌ 'file_path' is required and must be a non-empty string.")
 
-            input_file, resolved_type = self._make_path_from_raw(file_path)
-            full_code = fm.load(resolved_type, input_file)
+            ftype = fm.resolve_existing_filetype(file_path)
+            full_code = fm.load(ftype, file_path)
             clean_code, _ = split_content_and_notes(full_code)
 
             stripped_filename = self._write_working_copy(clean_code)
 
             available = {tp._config.name.lower(): tp for tp in self.tool_providers}
-            if not stripped_filename:
-                raise ValueError("❌ Internal error: stripped_filename was not generated")
 
-            ruff_score, ruff_violations, tool_failures = self._run_ruff(available, stripped_filename, context)
+            ruff_score, ruff_violations, tool_failures = self._run_ruff(
+                available, stripped_filename, context
+            )
             black_score, black_violations = self._run_tool(
-                "black", available, stripped_filename, tool_failures, context, collect_violations=True
+                "black", available, stripped_filename, tool_failures, context,
+                collect_violations=True
             )
             mypy_score, mypy_violations = self._run_tool(
-                "mypy", available, stripped_filename, tool_failures, context, collect_violations=True
+                "mypy", available, stripped_filename, tool_failures, context,
+                collect_violations=True
             )
 
             weights = self._parse_weights(input.get("weights"))
@@ -93,24 +95,11 @@ class LintingScoreProvider(ScoreProviderBase):
                 fm.delete(FILETYPE.WORKING, stripped_filename)
 
 
-    def _make_path_from_raw(self, maybe_code: str) -> tuple[str, FILETYPE]:
-        if "\n" not in maybe_code:
-            try:
-                for ft in [FILETYPE.WORKING, FILETYPE.SNAPSHOT, FILETYPE.INPUT]:
-                    candidate = fm._resolve(ft, maybe_code)
-                    if candidate.exists():
-                        return maybe_code, ft
-            except Exception:
-                pass
-
-        name = f"{uuid.uuid4().hex}.py"
-        fm.save(FILETYPE.SNAPSHOT, name, maybe_code)
-        return name, FILETYPE.SNAPSHOT
-
     def _write_working_copy(self, clean_code: str) -> str:
         name = f"{uuid.uuid4().hex}_stripped.py"
         fm.save(FILETYPE.WORKING, name, clean_code.rstrip() + "\n")
         return name
+
 
     def _run_ruff(
         self,
@@ -118,15 +107,15 @@ class LintingScoreProvider(ScoreProviderBase):
         target_filename: str,
         context: RunContext | None,
     ) -> Tuple[float, List[str], Dict[str, str]]:
-        tool_failures: Dict[str, str] = {}
         score, violations = self._run_tool_with_context(
-            tool=available["ruff"],
+            tool=available.get("ruff"),
             input={"target": target_filename, "check": True},
             context=context,
             collect_violations=True,
-        )
-        score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
-        return score, violations, tool_failures
+        ) if "ruff" in available else (0.0, [])
+        ruff_score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
+        return ruff_score, violations, {}
+
 
     def _run_tool(
         self,
@@ -135,16 +124,17 @@ class LintingScoreProvider(ScoreProviderBase):
         target_filename: str,
         failures: Dict[str, str],
         context: RunContext | None,
-        collect_violations: bool = False,
+        collect_violations: bool = False
     ) -> Tuple[float, List[str]]:
-        if name not in available:
+        tool = available.get(name)
+        if not tool:
             failures[name] = "not_available"
             return 0.0, []
 
         try:
             score, violations = self._run_tool_with_context(
-                tool=available[name],
-                input={"target": target_filename, "check": True},   # same fix
+                tool=tool,
+                input={"target": target_filename, "check": True},
                 context=context,
                 collect_violations=collect_violations,
             )
@@ -157,6 +147,7 @@ class LintingScoreProvider(ScoreProviderBase):
             return (0.0, []) if not collect_violations else (0.0, violations)
 
         return (score, violations) if collect_violations else (score, [])
+
 
     def _run_tool_with_context(
         self,
@@ -178,6 +169,7 @@ class LintingScoreProvider(ScoreProviderBase):
         score = 1.0 - min(1.0, 0.1 * count)
         return (score, violations) if collect_violations else (score, [])
 
+
     def _parse_weights(self, custom: Dict[str, float] | None) -> Dict[str, float]:
         weights = {**self._DEFAULT_WEIGHTS}
         if custom:
@@ -186,6 +178,7 @@ class LintingScoreProvider(ScoreProviderBase):
             )
         total = sum(weights.values()) or 1.0
         return {k: v / total for k, v in weights.items()}
+
 
     def _build_summary(
         self,
@@ -198,7 +191,7 @@ class LintingScoreProvider(ScoreProviderBase):
         lines: List[str] = []
 
         if ruff_violations:
-            top_codes = {}
+            top_codes: Dict[str, int] = {}
             for code in ruff_violations:
                 top_codes[code] = top_codes.get(code, 0) + 1
             top_sorted = sorted(top_codes.items(), key=lambda kv: kv[1], reverse=True)

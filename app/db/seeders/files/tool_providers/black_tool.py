@@ -2,6 +2,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.providers.tool_provider_base import ToolProviderBase
@@ -21,24 +22,33 @@ class BlackToolProviderV2(ToolProviderBase):
         target_name: str = input.get("target")
         check: bool = bool(input.get("check", False))
 
-        # 🔁 Resolve the actual path (via file manager)
+        # Resolve and verify via FileManager
         resolved_type = fm.resolve_existing_filetype(target_name)
-        target_path = fm._resolve(resolved_type, target_name)
+        if not fm.exists(resolved_type, target_name):
+            raise FileNotFoundError(f"{target_name} not found")
 
-        # 📌 Optionally update context lineage
+        # Load content from storage
+        content = fm.load(resolved_type, target_name)
+
+        # Stage it in a temp file
+        suffix    = Path(target_name).suffix or ".py"
+        temp_path = fm.write_temp(content, suffix=suffix)
+
+        # Update context lineage
         if context:
             context.parent_id = self._run_id
             context.execution_chain = context.execution_chain[:] + [self._run_id]
 
+        # Build and run Black command against the temp file
         cmd = [
             sys.executable,
             "-m",
             "black",
             "--diff" if check else "--quiet",
             "--check" if check else "",
-            str(target_path),
+            str(temp_path),
         ]
-        cmd = [c for c in cmd if c]  # Strip empty elements
+        cmd = [c for c in cmd if c]
 
         try:
             proc = subprocess.run(
@@ -48,9 +58,10 @@ class BlackToolProviderV2(ToolProviderBase):
             return self._runtime_error(str(exc))
 
         raw_code = proc.returncode
-        stdout = (proc.stdout or "").strip()
-        stderr = (proc.stderr or "").strip()
+        stdout   = (proc.stdout or "").strip()
+        stderr   = (proc.stderr or "").strip()
 
+        # Handle --check mode
         if check:
             if raw_code == 0:
                 return self._success(
@@ -82,6 +93,7 @@ class BlackToolProviderV2(ToolProviderBase):
 
             return self._runtime_error(stderr or stdout, raw_code)
 
+        # Handle full‐format mode
         if raw_code == 0:
             return self._success(
                 summary="✅ Black formatted the file successfully",

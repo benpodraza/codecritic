@@ -1,6 +1,8 @@
 import subprocess
+import sys
 import json
 import uuid
+from pathlib import Path
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -18,16 +20,35 @@ class RuffToolProviderV2(ToolProviderBase):
     """
 
     def _run(self, input: dict, context: RunContext | None = None) -> ToolOutputSchema:
-        target_name: str = input.get("target")
+        # 1) Resolve and verify via FileManager
+        target_name   = input.get("target")
         resolved_type = fm.resolve_existing_filetype(target_name)
-        target_path = fm._resolve(resolved_type, target_name)
+        if not fm.exists(resolved_type, target_name):
+            raise FileNotFoundError(f"{target_name} not found")
 
-        cmd = ["ruff", "check", "--output-format", "json", str(target_path)]
+        # 2) Load content from storage
+        content = fm.load(resolved_type, target_name)
 
+        # 3) Stage it in a temp file
+        suffix    = Path(target_name).suffix or ".py"
+        temp_path = fm.write_temp(content, suffix=suffix)
+
+        # 4) Update context lineage
         if context:
-            context = deepcopy(context)
-            context.parent_id = self._run_id
+            context       = deepcopy(context)
+            context.parent_id       = self._run_id
             context.execution_chain = context.execution_chain[:] + [str(uuid.uuid4())]
+
+        # 5) Run Ruff against the staged file
+        cmd = [
+            sys.executable,
+            "-m",
+            "ruff",
+            "check",
+            "--output-format",
+            "json",
+            str(temp_path),
+        ]
 
         try:
             proc = subprocess.run(
@@ -37,9 +58,10 @@ class RuffToolProviderV2(ToolProviderBase):
             return self._runtime_error(str(exc))
 
         raw_code = proc.returncode
-        stdout = (proc.stdout or "").strip()
-        stderr = (proc.stderr or "").strip()
+        stdout   = (proc.stdout or "").strip()
+        stderr   = (proc.stderr or "").strip()
 
+        # 6) Parse JSON output for violations
         try:
             parsed = json.loads(stdout or "[]")
             violations: List[str] = [

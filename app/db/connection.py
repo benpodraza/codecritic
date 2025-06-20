@@ -6,7 +6,7 @@ from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
 DB_FILENAME = "codecritic.sqlite3"
 fm = get_file_manager()
-DB_PATH = fm._resolve(FILETYPE.DATABASE, DB_FILENAME)
+DB_PATH = fm.resolve(FILETYPE.DATABASE, DB_FILENAME)
 _CONN: sqlite3.Connection | None = None
 
 def get_connection() -> sqlite3.Connection:

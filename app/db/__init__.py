@@ -5,7 +5,7 @@ from app.db.models import Base
 def init_db(reset: bool = False):
     close_connection()
 
-    DB_PATH = get_file_manager()._resolve(FILETYPE.DATABASE, DB_FILENAME)
+    DB_PATH = get_file_manager().resolve(FILETYPE.DATABASE, DB_FILENAME)
 
     engine = create_engine(f"sqlite:///{DB_PATH}")
     engine.dispose()

@@ -19,6 +19,7 @@ from app.utilities.file_management.file_utils import get_file_manager, FILETYPE
 
 fm = get_file_manager()
 
+
 @contextlib.contextmanager
 def suppress_output():
     original_stdout = sys.stdout
@@ -43,8 +44,8 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
             raise ValueError("❌ 'file_path' is required and must be a non-empty string.")
 
         try:
-            input_file, resolved_type = self._resolve_file_path(file_path)
-            raw_code = fm.load(resolved_type, input_file)
+            ftype = fm.resolve_existing_filetype(file_path)
+            raw_code = fm.load(ftype, file_path)
             bool_components["utf8_valid"] = True
         except Exception:
             bool_components["utf8_valid"] = False
@@ -66,18 +67,16 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
                     return self._final_score(bool_components)
 
                 try:
-                    py_compile.compile(
-                        str(fm._resolve(FILETYPE.WORKING, working_filename)),
-                        doraise=True
-                    )
+                    target_path = fm.resolve(FILETYPE.WORKING, working_filename)
+                    py_compile.compile(str(target_path), doraise=True)
                     bool_components["py_compile_ok"] = True
                 except Exception:
                     bool_components["py_compile_ok"] = False
                     return self._final_score(bool_components)
 
                 try:
-                    abs_path = str(fm._resolve(FILETYPE.WORKING, working_filename))
-                    spec = importlib.util.spec_from_file_location("mod", abs_path)
+                    target_path = fm.resolve(FILETYPE.WORKING, working_filename)
+                    spec = importlib.util.spec_from_file_location("mod", str(target_path))
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)  # type: ignore
                     bool_components["can_import"] = True
@@ -90,20 +89,6 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
 
         return self._final_score(bool_components)
 
-    def _resolve_file_path(self, maybe_code: str) -> tuple[str, FILETYPE]:
-        if "\n" not in maybe_code:
-            try:
-                for ft in [FILETYPE.WORKING, FILETYPE.SNAPSHOT, FILETYPE.INPUT]:
-                    candidate = fm._resolve(ft, maybe_code)
-                    if candidate.exists():
-                        return maybe_code, ft
-            except Exception:
-                pass
-
-        name = f"{uuid.uuid4().hex}.py"
-        fm.save(FILETYPE.SNAPSHOT, name, maybe_code)
-        return name, FILETYPE.SNAPSHOT
-
     def _final_score(self, bool_components: Dict[str, bool]) -> ScoreOutputSchema:
         components = CodeStabilityScoreComponents(
             type="code_stability",
@@ -112,19 +97,18 @@ class CodeStabilityScoreProvider(ScoreProviderBase):
             py_compile_ok=float(bool_components.get("py_compile_ok", False)),
             can_import=float(bool_components.get("can_import", False)),
         )
-        critical_keys = [
+        critical_vals = [
             components.utf8_valid,
             components.syntax_ok,
             components.py_compile_ok,
             components.can_import
         ]
-        passed = all(v >= 1.0 for v in critical_keys)
-        value = 1.0 if passed else 0.0
+        passed = all(v >= 1.0 for v in critical_vals)
         summary = "✅ Executable" if passed else "❌ Not executable"
 
         return ScoreOutputSchema(
             name=SCORING_METRIC_TYPE.CODE_STABILITY_SCORE,
-            value=value,
+            value=1.0 if passed else 0.0,
             components=components,
             summary=summary
         )

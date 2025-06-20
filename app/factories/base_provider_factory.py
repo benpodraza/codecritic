@@ -29,7 +29,7 @@ class BaseProviderFactory:
             if not fm.exists(FILETYPE.EXTENSION, config.artifact_path):
                 raise FileNotFoundError(f"Extension not found: {config.artifact_path}")
 
-            ext_path = fm._resolve(FILETYPE.EXTENSION, config.artifact_path)
+            ext_path = fm.resolve(FILETYPE.EXTENSION, config.artifact_path)
 
         spec = spec_from_file_location(ext_path.stem, ext_path)
         if spec is None or spec.loader is None:

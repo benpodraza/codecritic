@@ -1,7 +1,6 @@
 import json
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.db.models import SnapshotMetrics
@@ -21,7 +20,7 @@ class SnapshotArchive:
         before_candidate = str(snapshot.before_path)
         try:
             resolved_type = self.fm.resolve_existing_filetype(before_candidate)
-            path = self.fm._resolve(resolved_type, before_candidate)
+            path = self.fm.resolve(resolved_type, before_candidate)
         except FileNotFoundError:
             raise FileNotFoundError(f"Cannot snapshot non‑existent file: {snapshot.before_path}")
 
@@ -104,8 +103,8 @@ class SnapshotArchive:
         if not self.fm.exists(FILETYPE.SNAPSHOT, before_name) or not self.fm.exists(FILETYPE.SNAPSHOT, after_name):
             return None
 
-        before_path = self.fm._resolve(FILETYPE.SNAPSHOT, before_name)
-        after_path = self.fm._resolve(FILETYPE.SNAPSHOT, after_name)
+        before_path = self.fm.resolve(FILETYPE.SNAPSHOT, before_name)
+        after_path = self.fm.resolve(FILETYPE.SNAPSHOT, after_name)
 
         return {
             "before": self.fm.load(FILETYPE.SNAPSHOT, before_name),

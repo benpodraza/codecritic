@@ -1,0 +1,56 @@
+// File Lineage Tree
+digraph {
+	1 [label="tests\complex_lint_task.py
+CONTROLLER.PREPROCESSING"]
+	2 [label="complex_lint_task.__prog_1131144954.py
+SYSTEM.LINTING"]
+	3 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.CODE_STABILITY"]
+	4 [label="complex_lint_task..__sys_1131145118.py
+AGENT.STABILITY"]
+	5 [label="complex_lint_task..__sys_1131145118.py
+AGENT.END"]
+	6 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.GENERATE"]
+	7 [label="temp_state_1131163366.py
+AGENT.GENERATOR"]
+	8 [label="temp_state_1131163366.py
+AGENT.END"]
+	9 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.CODE_STABILITY"]
+	10 [label="temp_state_1131258064.py
+AGENT.STABILITY"]
+	11 [label="temp_state_1131258064.py
+AGENT.END"]
+	12 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.DISCRIMINATE"]
+	13 [label="temp_state_1131275372.py
+AGENT.DISCRIMINATOR"]
+	14 [label="temp_state_1131275372.py
+AGENT.END"]
+	15 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.END"]
+	16 [label="complex_lint_task.__ctrl_1131145046.py
+STATE.END"]
+	17 [label="complex_lint_task.__prog_1131144954.py
+SYSTEM.END"]
+	18 [label="tests\complex_lint_task.py
+CONTROLLER.END"]
+	1 -> 2 [label="CONTROLLER | UNKNOWN"]
+	2 -> 3 [label="SYSTEM | UNKNOWN"]
+	3 -> 4 [label="STATE | UNKNOWN"]
+	4 -> 5 [label="STATE | ACCEPTED"]
+	5 -> 6 [label="SYSTEM | ACCEPTED"]
+	6 -> 7 [label="STATE | UNKNOWN"]
+	7 -> 8 [label="STATE | ACCEPTED"]
+	8 -> 9 [label="SYSTEM | UNKNOWN"]
+	9 -> 10 [label="STATE | UNKNOWN"]
+	10 -> 11 [label="STATE | ACCEPTED"]
+	11 -> 12 [label="SYSTEM | ACCEPTED"]
+	12 -> 13 [label="STATE | UNKNOWN"]
+	13 -> 14 [label="STATE | ACCEPTED"]
+	14 -> 15 [label="SYSTEM | ACCEPTED"]
+	15 -> 16 [label="SYSTEM | ACCEPTED"]
+	16 -> 17 [label="CONTROLLER | ACCEPTED"]
+	17 -> 18 [label="PROGRAM | ACCEPTED"]
+}

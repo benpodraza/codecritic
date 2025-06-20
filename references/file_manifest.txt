@@ -12,254 +12,223 @@ codecritic
    - README.md
    - app
       - __init__.py
-      - abstract_classes
+      - db
          - __init__.py
-         - agent_base.py
-         - context_provider_base.py
-         - experiment.py
-         - prompt_generator_base.py
-         - scoring_model_base.py
-         - scoring_provider_base.py
-         - state_manager_base.py
-         - system_manager_base.py
-         - tool_provider_base.py
-      - bootstrap.py
+         - base.py
+         - connection.py
+         - models.py
+         - schemas.py
+         - seed.py
+         - seeders
+            - __init__.py
+            - files
+               - __init__.py
+               - agent_engine_providers
+                  - __init__.py
+                  - basic_agent_engine_provider.py
+                  - claude_3_sonnet_agent_engine_provider.py
+                  - gemini_1_5_pro_agent_engine_provider.py
+                  - openai_gpt4o_agent_engine_provider.py
+               - agent_providers
+                  - __init__.py
+                  - basic_agent_provider.py
+                  - code_stability_agent_provider.py
+                  - linting_discriminator_agent_provider.py
+                  - linting_generator_agent_provider.py
+               - context_providers
+                  - __init__.py
+                  - basic_context_provider.py
+                  - linting_context_provider.py
+               - controller_providers
+                  - __init__.py
+                  - preprocessing_controller_provider.py
+               - program_providers
+                  - __init__.py
+                  - codecritic_program_provider.py
+               - prompt_providers
+                  - __init__.py
+                  - basic_prompt_provider.py
+                  - linting_prompt_provider.py
+               - prompts
+                  - __init__.py
+                  - basic_agent_prompt.txt
+                  - default_system_prompt.txt
+                  - linting_generator_agent_prompt.txt
+                  - linting_system_prompt.txt
+               - score_providers
+                  - __init__.py
+                  - code_stability_score_provider.py
+                  - linting_score_provider.py
+               - state_providers
+                  - __init__.py
+                  - basic_state_provider.py
+                  - code_stability_state_provider.py
+                  - linting_discriminator_state_provider.py
+                  - linting_generator_state_provider.py
+               - system_providers
+                  - __init__.py
+                  - linting_system_provider.py
+               - tool_providers
+                  - __init__.py
+                  - black_tool.py
+                  - docformatter_tool.py
+                  - mypy_tool.py
+                  - radon_tool.py
+                  - ruff_tool.py
+                  - sonarcloud_tool.py
+                  - symbol_graph.py
+            - seed_agent_engine_providers.py
+            - seed_agent_providers.py
+            - seed_context_providers.py
+            - seed_controller_providers.py
+            - seed_program_provider.py
+            - seed_prompt_providers.py
+            - seed_prompts.py
+            - seed_score_providers.py
+            - seed_session_configs.py
+            - seed_state_providers.py
+            - seed_system_providers.py
+            - seed_tool_providers.py
       - enums
          - __init__.py
+         - agent_engine_enums.py
          - agent_enums.py
+         - controller_enums.py
+         - fsm_enums.py
          - logging_enums.py
          - scoring_enums.py
+         - state_enums.py
          - system_enums.py
-      - extensions
-         - __init__.py
-         - agent_prompts
-            - __init__.py
-         - agents
-            - __init__.py
-            - dummy_agent.py
-            - evaluator_agent.py
-            - generator_agent.py
-            - mediator_agent.py
-            - patch_agent.py
-            - recommendation_agent.py
-         - context_providers
-            - __init__.py
-            - dummy_context_provider.py
-            - symbol_graph_provider.py
-         - experiment_provider.py
-         - prompt_generators
-            - __init__.py
-            - basic_prompt_generator.py
-            - dummy_prompt_generator.py
-         - scoring_models
-            - __init__.py
-            - adaptive_scoring_provider.py
-            - advanced_scoring_provider.py
-            - basic_scoring_provider.py
-            - code_quality_scorer.py
-            - dummy_scoring_provider.py
-            - recommendation_quality_scorer.py
-         - state_managers
-            - __init__.py
-            - dummy_state_manager.py
-            - state_manager.py
-         - system_managers
-            - __init__.py
-            - dummy_system_manager.py
-            - system_manager.py
-         - system_prompts
-            - __init__.py
-         - tool_providers
-            - __init__.py
-            - black_runner.py
-            - docformatter_runner.py
-            - dummy_tool_provider.py
-            - mypy_runner.py
-            - radon_runner.py
-            - ruff_runner.py
-            - sonarcloud_runner.py
-         - tools
-            - __init__.py
+         - tool_enums.py
       - factories
          - __init__.py
-         - agent.py
-         - context_provider.py
-         - experiment_config_provider.py
-         - logging_provider.py
-         - prompt_manager.py
-         - scoring_provider.py
-         - state_manager.py
-         - system_config_provider.py
-         - system_manager.py
-         - tool_provider.py
-      - registries
+         - agent_engine_provider_factory.py
+         - agent_provider_factory.py
+         - base_provider_factory.py
+         - context_provider_factory.py
+         - controller_provider_factory.py
+         - program_provider_factory.py
+         - prompt_provider_factory.py
+         - score_provider_factory.py
+         - state_provider_factory.py
+         - system_provider_factory.py
+         - tool_provider_factory.py
+      - providers
          - __init__.py
-         - agent_engines
-            - __init__.py
-         - agent_prompts
-            - __init__.py
-         - agents
-            - __init__.py
-         - context_providers
-            - __init__.py
-         - prompt_generators
-            - __init__.py
-         - scoring_models
-            - __init__.py
-         - state_managers
-            - __init__.py
-         - system_managers
-            - __init__.py
-         - system_prompts
-            - __init__.py
-         - tool_providers
-            - __init__.py
-         - tools
-            - __init__.py
-      - schemas
-         - __init__.py
-         - agent_config_schema.py
-         - agent_engine_schema.py
-         - agent_prompt_schema.py
-         - context_provider_schema.py
-         - experiment_config_schema.py
-         - file_path_schema.py
-         - prompt_generator_schema.py
-         - scoring_provider_schema.py
-         - series_schema.py
-         - state_manager_schema.py
-         - system_config_schema.py
-         - system_prompt_schema.py
-         - tooling_provider_schema.py
+         - agent_engine_provider_base.py
+         - agent_provider_base.py
+         - base_provider.py
+         - context_provider_base.py
+         - controller_provider_base.py
+         - fsm_provider_base.py
+         - program_provider_base.py
+         - prompt_provider_base.py
+         - score_provider_base.py
+         - state_provider_base.py
+         - system_provider_base.py
+         - tool_provider_base.py
       - utilities
          - __init__.py
-         - db.py
-         - feedback.py
+         - diff_utils.py
+         - extension_loader.py
+         - extract_base_filename.py
+         - extract_code_block.py
          - file_management
             - __init__.py
+            - file_utils.py
          - metadata
             - __init__.py
             - footer
                - __init__.py
+               - code_annnotation_utils.py
             - logging
                - __init__.py
-               - log_schemas.py
+               - conversation_log.py
+               - logging_provider.py
             - snapshots
                - __init__.py
-         - metrics.py
+               - analyze_code_metrics.py
+               - snapshot_archive.py
+               - snapshot_reader.py
+               - snapshot_writer.py
+         - provider_mixin_injector.py
          - pydantic_compat.py
+         - run_context.py
          - schema
             - __init__.py
             - create_schema.py
-         - snapshots
-            - __init__.py
-            - snapshot_writer.py
-         - tools
-            - __init__.py
-            - black_runner.py
-            - doc_formatter.py
-            - mypy_runner.py
-            - radon_runner.py
-            - ruff_runner.py
-            - sonarcloud_runner.py
-      - visualization
-         - __init__.py
-         - dashboard.py
-   - coverage_output.txt
-   - demo_eval.py
-   - demo_patch.py
+         - select_best_file_by_score.py
+   - data
+      - backup
+         - provider_logs.csv
    - docs
       - CodeCritic - Specification - 5-17-2025.md
    - env
-   - experiments
-      - artifacts
-         - snapshots
-            - context
-               - 0
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.after
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.before
-                  - sample_module.py.symbol_graph.json.20250518T232615723384Z.meta
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.after
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.before
-                  - sample_module.py.symbol_graph.json.20250518T233154666351Z.meta
-            - exp
-               - 0
-                  - demo.py.20250518T161412312521Z.after
-                  - demo.py.20250518T161412312521Z.before
-                  - demo.py.20250518T161412312521Z.meta
-      - config
-         - seed
-            - agent_config.json
-            - agent_engine.json
-            - agent_prompt.json
-            - context_provider.json
-            - experiment_config.json
-            - prompt_generator.json
-            - scoring_provider.json
-            - series.json
-            - state_manager.json
-            - system_config.json
-            - system_prompt.json
-            - tooling_provider.json
-      - demo_logs.jsonl
+   - file_lineage_tree.gv
+   - file_lineage_tree.gv.png
    - htmlcov
+   - lib
    - mypy.ini
+   - provider_logs.db
    - pytest
    - pytest.ini
    - references
       - file_manifest.txt
       - flattened_app.txt
+      - flattened_db.txt
       - flattened_docs.txt
       - flattened_experiments.txt
       - flattened_tests.txt
    - requirements.txt
-   - sample_module.py
    - setup.sh
+   - temp.csv
+   - temp2.csv
    - test-runner.ps1
    - tests
       - __init__.py
+      - backup
+         - provider_logs.csv
+      - complex_lint_task.py
+      - impossible_lint_task.py
       - notebooks
          - .mypy_cache
          - __init__.py
-         - development_phase
-            - advanced_scoring_demo.ipynb
-            - context_recommendation_agent_demo.ipynb
-            - evaluation_session_runner.ipynb
-            - evaluator_agent_demo.ipynb
-            - feedback_loop_demo.ipynb
-            - mediator_agent_demo.ipynb
-            - patch_agent_demo.ipynb
-            - phase1_tests.ipynb
-            - phase2_validation.ipynb
-            - phase3_validation.ipynb
-            - phase4_validation.ipynb
-            - phase5_validation.ipynb
-            - phase6_validation.ipynb
-            - phase8_validation.ipynb
-            - phase9_validation.ipynb
-            - recommendation_agent_demo.ipynb
-            - schema_demo.ipynb
-            - symbol_graph_provider_demo.ipynb
-         - experiments
-            - artifacts
-               - snapshots
-            - codecritic.sqlite3
-         - functional_testing_phase
-         - linting_system_build_up.ipynb
-         - prompt_generation_and_configuration.ipynb
-         - structured_logging_demo.ipynb
-      - test_agents.py
-      - test_bootstrap.py
-      - test_dashboard.py
-      - test_factories.py
-      - test_feedback.py
-      - test_integration.py
-      - test_mediator_agent.py
-      - test_patch_agent.py
-      - test_recommendation_agent.py
-      - test_structured_logging.py
-      - test_symbol_graph_provider.py
-      - test_system_state_management.py
-      - test_tool_providers.py
-   - tmp_demo.py
+         - eda
+            - data_generator.ipynb
+            - multi_run
+               - eda_agent_engine_providers.ipynb
+               - eda_agent_providers.ipynb
+               - eda_context_providers.ipynb
+               - eda_controller_providers.ipynb
+               - eda_program_providers.ipynb
+               - eda_prompt_providers.ipynb
+               - eda_score_providers.ipynb
+               - eda_state_providers.ipynb
+               - eda_system_providers.ipynb
+               - eda_tool_providers.ipynb
+            - single_run
+               - eda_agent_conversation_log.ipynb
+               - eda_error_log.ipynb
+               - eda_provider_log.ipynb
+               - eda_state_transition_log.ipynb
+         - functional_tests
+         - insights
+         - system_development
+            - bad_code.py
+            - linting_system.ipynb
+      - simple_lint_task.py
+      - test_files
+         - bad_indentation.py
+         - complex_function.py
+         - long_line.py
+         - mixed_tabs_spaces.py
+         - no_doc_type.py
+         - off_by_one.py
+         - shadow_builtin.py
+         - unused_import.py
+         - valid_simple.py
+         - wrong_type_hint.py
    - utilities.ipynb
+   - working_files
+      - complex_lint_task.py
+   - your_database_path.db

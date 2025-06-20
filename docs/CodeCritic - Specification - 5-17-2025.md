@@ -200,7 +200,7 @@ description TEXT,
 
 system_type TEXT,
 
-tooling_provider_id INTEGER
+tool_provider_id INTEGER
 
 );
 
@@ -230,7 +230,7 @@ artifact_path TEXT
 
 );
 
-CREATE TABLE tooling_provider (
+CREATE TABLE tool_provider (
 
 id INTEGER PRIMARY KEY,
 
@@ -562,7 +562,7 @@ This structured reporting ensures clear visibility of experiment results and fac
 
 * `agent_engine`
 * `agent_prompt`, `system_prompt`
-* `context_provider`, `tooling_provider`, `file_path`
+* `context_provider`, `tool_provider`, `file_path`
 * `agent_config`, `prompt_generator`, `scoring_provider`
 * `state_manager`, `system_config`, `experiment_config`, `series`
 
@@ -595,7 +595,7 @@ This version of the CodeCritic specification reflects the complete and tested im
 - Seed files in `experiments/config/seed/*.json` are automatically loaded and type-checked.
 - Schema files have been confirmed present and validated for:
   - `agent_engine`, `agent_prompt`, `system_prompt`
-  - `context_provider`, `tooling_provider`, `file_path`
+  - `context_provider`, `tool_provider`, `file_path`
   - `agent_config`, `prompt_generator`, `scoring_provider`
   - `state_manager`, `system_config`, `experiment_config`, `series`
 

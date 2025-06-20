@@ -1,1 +1,0 @@
-# Placeholder for sonarcloud runner

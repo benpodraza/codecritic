@@ -1158,35 +1158,40 @@
 # db\seeders\files\agent_providers\basic_agent_provider.py
 
 # 1 from pathlib import Path
-# 2 from app.enums.logging_enums import RunContext  #  ✅ Add for context typing
+# 2 from app.enums.logging_enums import RunContext
 # 3 from app.providers.agent_provider_base import AgentProviderBase
 # 4 from app.db.schemas import AgentOutputSchema
-# 5 
+# 5 from app.utilities.file_management.file_utils import get_file_manager
 # 6 
-# 7 class BasicAgentProvider(AgentProviderBase):
-# 8     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
-# 9         raw_file_path = input.get("before") or input.get("file_name")
-# 10         relative_file_path = None
-# 11 
-# 12         if raw_file_path:
-# 13             try:
-# 14                 relative_file_path = str(Path(raw_file_path).resolve().relative_to(Path.cwd()))
-# 15             except ValueError:
-# 16                 relative_file_path = str(Path(raw_file_path).resolve())
-# 17 
-# 18         response = (
-# 19             "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
-# 20             "[CONVERSATION_LOG_ENTRY]Basic agent executed successfully.[/CONVERSATION_LOG_ENTRY]\n"
-# 21             f"[CODE]{input.get('code', '#  no code provided')}[/CODE]"
-# 22         )
-# 23 
-# 24         return AgentOutputSchema(
-# 25             response=response,
-# 26             log="Basic agent executed successfully.",
-# 27             decision="accept",
-# 28             snapshot_id=None,
-# 29             file_path=relative_file_path,
-# 30         )
+# 7 fm = get_file_manager()
+# 8 
+# 9 class BasicAgentProvider(AgentProviderBase):
+# 10     def _run(self, input: dict, context: RunContext | None = None) -> AgentOutputSchema:
+# 11         raw_file_path = input.get("before") or input.get("file_name")
+# 12         relative_file_path = None
+# 13 
+# 14         if raw_file_path:
+# 15             try:
+# 16                 ftype = fm.resolve_existing_filetype(raw_file_path)
+# 17                 abs_path = fm.resolve(ftype, raw_file_path)
+# 18                 relative_file_path = str(abs_path.relative_to(Path.cwd()))
+# 19             except Exception:
+# 20                 #  fallback: use raw_file_path as-is if not resolvable
+# 21                 relative_file_path = raw_file_path
+# 22 
+# 23         response = (
+# 24             "[AGENT_DECISION]accept[/AGENT_DECISION]\n"
+# 25             "[CONVERSATION_LOG_ENTRY]Basic agent executed successfully.[/CONVERSATION_LOG_ENTRY]\n"
+# 26             f"[CODE]{input.get('code', '#  no code provided')}[/CODE]"
+# 27         )
+# 28 
+# 29         return AgentOutputSchema(
+# 30             response=response,
+# 31             log="Basic agent executed successfully.",
+# 32             decision="accept",
+# 33             snapshot_id=None,
+# 34             file_path=relative_file_path,
+# 35         )
 
 
 # db\seeders\files\agent_providers\code_stability_agent_provider.py
@@ -1411,33 +1416,34 @@
 # 30                 "state_context": input.get("state_context", {}),
 # 31             },
 # 32             context=context,
-# 33             prompt_provider=self._prompt_provider  #  👈 passed directly, not via input
+# 33             prompt_provider=self._prompt_provider
 # 34         )
 # 35 
-# 36         resolved_before_path = fm.resolve(FILETYPE.WORKING, file_path)
-# 37 
-# 38         #  🔧 Record snapshot with logical path
-# 39         snapshot = SnapshotContext(
-# 40             context=context,
-# 41             decision=engine_output.decision,
-# 42             log=engine_output.log,
-# 43             state=input.get("state_context", {}).get("state", "unknown"),
-# 44             agent_name=self._config.name,
-# 45             system=system,
-# 46             before_path=resolved_before_path,    #  <- FIX
-# 47             after_content=engine_output.content,
-# 48         )
-# 49 
-# 50         snapshot_id = SnapshotArchive(self._engine).record(snapshot=snapshot)
-# 51 
-# 52         return AgentOutputSchema(
-# 53             response=engine_output.response,
-# 54             log=engine_output.log,
-# 55             decision=DECISION_TYPE(engine_output.decision),
-# 56             snapshot_id=snapshot_id,
-# 57             file_path=file_path,
-# 58             score=getattr(engine_output, "score", None)
-# 59         )
+# 36         ftype = fm.resolve_existing_filetype(file_path)
+# 37         resolved_before_path = fm.resolve(ftype, file_path)
+# 38 
+# 39         #  🔧 Record snapshot with logical path
+# 40         snapshot = SnapshotContext(
+# 41             context=context,
+# 42             decision=engine_output.decision,
+# 43             log=engine_output.log,
+# 44             state=input.get("state_context", {}).get("state", "unknown"),
+# 45             agent_name=self._config.name,
+# 46             system=system,
+# 47             before_path=resolved_before_path,
+# 48             after_content=engine_output.content,
+# 49         )
+# 50 
+# 51         snapshot_id = SnapshotArchive(self._engine).record(snapshot=snapshot)
+# 52 
+# 53         return AgentOutputSchema(
+# 54             response=engine_output.response,
+# 55             log=engine_output.log,
+# 56             decision=DECISION_TYPE(engine_output.decision),
+# 57             snapshot_id=snapshot_id,
+# 58             file_path=file_path,
+# 59             score=getattr(engine_output, "score", None)
+# 60         )
 
 
 # db\seeders\files\context_providers\__init__.py
@@ -1886,199 +1892,185 @@
 # 31             if not file_path or not isinstance(file_path, str):
 # 32                 raise ValueError("❌ 'file_path' is required and must be a non-empty string.")
 # 33 
-# 34             #  ✅ Use fm.exists instead of Path.exists
-# 35             input_file, resolved_type = self._make_path_from_raw(file_path)
-# 36             full_code = fm.load(resolved_type, input_file)
-# 37             clean_code, _ = split_content_and_notes(full_code)
-# 38 
-# 39             stripped_filename = self._write_working_copy(clean_code)
-# 40 
-# 41             available = {tp._config.name.lower(): tp for tp in self.tool_providers}
-# 42 
-# 43             ruff_score, ruff_violations, tool_failures = self._run_ruff(
-# 44                 available, stripped_filename, context
-# 45             )
-# 46             black_score, black_violations = self._run_tool(
-# 47                 "black", available, stripped_filename, tool_failures, context,
-# 48                 collect_violations=True
-# 49             )
-# 50             mypy_score, mypy_violations = self._run_tool(
-# 51                 "mypy", available, stripped_filename, tool_failures, context,
-# 52                 collect_violations=True
-# 53             )
-# 54 
-# 55             weights = self._parse_weights(input.get("weights"))
-# 56             weighted_score = round(
-# 57                 ruff_score * weights["ruff"]
-# 58                 + black_score * weights["black"]
-# 59                 + mypy_score * weights["mypy"],
-# 60                 3,
-# 61             )
-# 62 
-# 63             threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
-# 64             meets_threshold = (threshold is None) or (weighted_score >= threshold)
-# 65 
-# 66             components = LintingScoreComponents(
-# 67                 type="linting",
-# 68                 ruff_score=ruff_score,
-# 69                 ruff_violations=ruff_violations,
-# 70                 black_score=black_score,
-# 71                 black_violations=black_violations,
-# 72                 mypy_score=mypy_score,
-# 73                 mypy_violations=mypy_violations,
-# 74                 tool_failure_count=len(tool_failures),
-# 75                 weight_ruff=weights["ruff"],
-# 76                 weight_black=weights["black"],
-# 77                 weight_mypy=weights["mypy"],
-# 78             )
-# 79 
-# 80             summary = self._build_summary(
-# 81                 ruff_violations=ruff_violations,
-# 82                 tool_failures=tool_failures,
-# 83                 meets_threshold=meets_threshold,
-# 84                 threshold=threshold,
-# 85             )
-# 86 
-# 87             return ScoreOutputSchema(
-# 88                 name=SCORING_METRIC_TYPE.LINTING_SCORE,
-# 89                 value=weighted_score,
-# 90                 components=components,
-# 91                 summary=summary,
-# 92             )
-# 93 
-# 94         finally:
-# 95             if stripped_filename:
-# 96                 fm.delete(FILETYPE.WORKING, stripped_filename)
+# 34             ftype = fm.resolve_existing_filetype(file_path)
+# 35             full_code = fm.load(ftype, file_path)
+# 36             clean_code, _ = split_content_and_notes(full_code)
+# 37 
+# 38             stripped_filename = self._write_working_copy(clean_code)
+# 39 
+# 40             available = {tp._config.name.lower(): tp for tp in self.tool_providers}
+# 41 
+# 42             ruff_score, ruff_violations, tool_failures = self._run_ruff(
+# 43                 available, stripped_filename, context
+# 44             )
+# 45             black_score, black_violations = self._run_tool(
+# 46                 "black", available, stripped_filename, tool_failures, context,
+# 47                 collect_violations=True
+# 48             )
+# 49             mypy_score, mypy_violations = self._run_tool(
+# 50                 "mypy", available, stripped_filename, tool_failures, context,
+# 51                 collect_violations=True
+# 52             )
+# 53 
+# 54             weights = self._parse_weights(input.get("weights"))
+# 55             weighted_score = round(
+# 56                 ruff_score * weights["ruff"]
+# 57                 + black_score * weights["black"]
+# 58                 + mypy_score * weights["mypy"],
+# 59                 3,
+# 60             )
+# 61 
+# 62             threshold = input.get("threshold", self._DEFAULT_THRESHOLD)
+# 63             meets_threshold = (threshold is None) or (weighted_score >= threshold)
+# 64 
+# 65             components = LintingScoreComponents(
+# 66                 type="linting",
+# 67                 ruff_score=ruff_score,
+# 68                 ruff_violations=ruff_violations,
+# 69                 black_score=black_score,
+# 70                 black_violations=black_violations,
+# 71                 mypy_score=mypy_score,
+# 72                 mypy_violations=mypy_violations,
+# 73                 tool_failure_count=len(tool_failures),
+# 74                 weight_ruff=weights["ruff"],
+# 75                 weight_black=weights["black"],
+# 76                 weight_mypy=weights["mypy"],
+# 77             )
+# 78 
+# 79             summary = self._build_summary(
+# 80                 ruff_violations=ruff_violations,
+# 81                 tool_failures=tool_failures,
+# 82                 meets_threshold=meets_threshold,
+# 83                 threshold=threshold,
+# 84             )
+# 85 
+# 86             return ScoreOutputSchema(
+# 87                 name=SCORING_METRIC_TYPE.LINTING_SCORE,
+# 88                 value=weighted_score,
+# 89                 components=components,
+# 90                 summary=summary,
+# 91             )
+# 92 
+# 93         finally:
+# 94             if stripped_filename:
+# 95                 fm.delete(FILETYPE.WORKING, stripped_filename)
+# 96 
 # 97 
-# 98 
-# 99     def _make_path_from_raw(self, maybe_code: str) -> tuple[str, FILETYPE]:
-# 100         #  If input is a filename, check via fm.exists
-# 101         if "\n" not in maybe_code:
-# 102             for ft in (FILETYPE.WORKING, FILETYPE.SNAPSHOT, FILETYPE.INPUT):
-# 103                 if fm.exists(ft, maybe_code):
-# 104                     return maybe_code, ft
-# 105 
-# 106         #  Otherwise treat as raw code: save via fm.save
-# 107         name = f"{uuid.uuid4().hex}.py"
-# 108         fm.save(FILETYPE.SNAPSHOT, name, maybe_code)
-# 109         return name, FILETYPE.SNAPSHOT
-# 110 
-# 111 
-# 112     def _write_working_copy(self, clean_code: str) -> str:
-# 113         name = f"{uuid.uuid4().hex}_stripped.py"
-# 114         fm.save(FILETYPE.WORKING, name, clean_code.rstrip() + "\n")
-# 115         return name
-# 116 
-# 117 
-# 118     def _run_ruff(
-# 119         self,
-# 120         available: Dict[str, Any],
-# 121         target_filename: str,
-# 122         context: RunContext | None,
-# 123     ) -> Tuple[float, List[str], Dict[str, str]]:
-# 124         score, violations = self._run_tool_with_context(
-# 125             tool=available.get("ruff"),
-# 126             input={"target": target_filename, "check": True},
-# 127             context=context,
-# 128             collect_violations=True,
-# 129         ) if "ruff" in available else (0.0, [])
-# 130         ruff_score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
-# 131         return ruff_score, violations, {}
-# 132 
+# 98     def _write_working_copy(self, clean_code: str) -> str:
+# 99         name = f"{uuid.uuid4().hex}_stripped.py"
+# 100         fm.save(FILETYPE.WORKING, name, clean_code.rstrip() + "\n")
+# 101         return name
+# 102 
+# 103 
+# 104     def _run_ruff(
+# 105         self,
+# 106         available: Dict[str, Any],
+# 107         target_filename: str,
+# 108         context: RunContext | None,
+# 109     ) -> Tuple[float, List[str], Dict[str, str]]:
+# 110         score, violations = self._run_tool_with_context(
+# 111             tool=available.get("ruff"),
+# 112             input={"target": target_filename, "check": True},
+# 113             context=context,
+# 114             collect_violations=True,
+# 115         ) if "ruff" in available else (0.0, [])
+# 116         ruff_score = 1.0 - min(1.0, len(violations) / self._MAX_RUFF_VIOLATIONS_CONSIDERED)
+# 117         return ruff_score, violations, {}
+# 118 
+# 119 
+# 120     def _run_tool(
+# 121         self,
+# 122         name: str,
+# 123         available: Dict[str, Any],
+# 124         target_filename: str,
+# 125         failures: Dict[str, str],
+# 126         context: RunContext | None,
+# 127         collect_violations: bool = False
+# 128     ) -> Tuple[float, List[str]]:
+# 129         tool = available.get(name)
+# 130         if not tool:
+# 131             failures[name] = "not_available"
+# 132             return 0.0, []
 # 133 
-# 134     def _run_tool(
-# 135         self,
-# 136         name: str,
-# 137         available: Dict[str, Any],
-# 138         target_filename: str,
-# 139         failures: Dict[str, str],
-# 140         context: RunContext | None,
-# 141         collect_violations: bool = False
-# 142     ) -> Tuple[float, List[str]]:
-# 143         tool = available.get(name)
-# 144         if not tool:
-# 145             failures[name] = "not_available"
-# 146             return 0.0, []
-# 147 
-# 148         try:
-# 149             score, violations = self._run_tool_with_context(
-# 150                 tool=tool,
-# 151                 input={"target": target_filename, "check": True},
-# 152                 context=context,
-# 153                 collect_violations=collect_violations,
-# 154             )
-# 155         except Exception as exc:
-# 156             failures[name] = f"crashed: {exc}"
-# 157             return 0.0, []
-# 158 
-# 159         if score == 0.0 and not violations:
-# 160             failures[name] = "failed or no output"
-# 161             return (0.0, []) if not collect_violations else (0.0, violations)
-# 162 
-# 163         return (score, violations) if collect_violations else (score, [])
+# 134         try:
+# 135             score, violations = self._run_tool_with_context(
+# 136                 tool=tool,
+# 137                 input={"target": target_filename, "check": True},
+# 138                 context=context,
+# 139                 collect_violations=collect_violations,
+# 140             )
+# 141         except Exception as exc:
+# 142             failures[name] = f"crashed: {exc}"
+# 143             return 0.0, []
+# 144 
+# 145         if score == 0.0 and not violations:
+# 146             failures[name] = "failed or no output"
+# 147             return (0.0, []) if not collect_violations else (0.0, violations)
+# 148 
+# 149         return (score, violations) if collect_violations else (score, [])
+# 150 
+# 151 
+# 152     def _run_tool_with_context(
+# 153         self,
+# 154         tool,
+# 155         input: dict,
+# 156         context: RunContext | None = None,
+# 157         collect_violations: bool = False
+# 158     ) -> Tuple[float, List[str]]:
+# 159         ctx = self.fork_context()
+# 160         result = tool.run(input=input, context=ctx)
+# 161 
+# 162         violations = getattr(result, "violations", []) or []
+# 163         rc = getattr(result, "return_code", 0)
 # 164 
-# 165 
-# 166     def _run_tool_with_context(
-# 167         self,
-# 168         tool,
-# 169         input: dict,
-# 170         context: RunContext | None = None,
-# 171         collect_violations: bool = False
-# 172     ) -> Tuple[float, List[str]]:
-# 173         ctx = self.fork_context()
-# 174         result = tool.run(input=input, context=ctx)
-# 175 
-# 176         violations = getattr(result, "violations", []) or []
-# 177         rc = getattr(result, "return_code", 0)
-# 178 
-# 179         if rc not in {0, 1} and not violations:
-# 180             return 0.0, violations
+# 165         if rc not in {0, 1} and not violations:
+# 166             return 0.0, violations
+# 167 
+# 168         count = len(violations)
+# 169         score = 1.0 - min(1.0, 0.1 * count)
+# 170         return (score, violations) if collect_violations else (score, [])
+# 171 
+# 172 
+# 173     def _parse_weights(self, custom: Dict[str, float] | None) -> Dict[str, float]:
+# 174         weights = {**self._DEFAULT_WEIGHTS}
+# 175         if custom:
+# 176             weights.update(
+# 177                 {k.lower(): float(v) for k, v in custom.items() if k.lower() in weights}
+# 178             )
+# 179         total = sum(weights.values()) or 1.0
+# 180         return {k: v / total for k, v in weights.items()}
 # 181 
-# 182         count = len(violations)
-# 183         score = 1.0 - min(1.0, 0.1 * count)
-# 184         return (score, violations) if collect_violations else (score, [])
-# 185 
-# 186 
-# 187     def _parse_weights(self, custom: Dict[str, float] | None) -> Dict[str, float]:
-# 188         weights = {**self._DEFAULT_WEIGHTS}
-# 189         if custom:
-# 190             weights.update(
-# 191                 {k.lower(): float(v) for k, v in custom.items() if k.lower() in weights}
-# 192             )
-# 193         total = sum(weights.values()) or 1.0
-# 194         return {k: v / total for k, v in weights.items()}
-# 195 
-# 196 
-# 197     def _build_summary(
-# 198         self,
-# 199         *,
-# 200         ruff_violations: List[str],
-# 201         tool_failures: Dict[str, str],
-# 202         meets_threshold: bool,
-# 203         threshold: float | None,
-# 204     ) -> str:
-# 205         lines: List[str] = []
-# 206 
-# 207         if ruff_violations:
-# 208             top_codes: Dict[str, int] = {}
-# 209             for code in ruff_violations:
-# 210                 top_codes[code] = top_codes.get(code, 0) + 1
-# 211             top_sorted = sorted(top_codes.items(), key=lambda kv: kv[1], reverse=True)
-# 212             lines.append(
-# 213                 "Top Ruff violations: "
-# 214                 + ", ".join(f"{c}×{n}" for c, n in top_sorted[:3])
-# 215             )
-# 216         else:
-# 217             lines.append("No Ruff violations detected")
-# 218 
-# 219         if tool_failures:
-# 220             lines.append("⚠️  Tool failures: " + ", ".join(tool_failures))
-# 221 
-# 222         if threshold is not None:
-# 223             state = "✅ meets" if meets_threshold else "❌ below"
-# 224             lines.append(f"{state} threshold {threshold:.2f}")
-# 225 
-# 226         return "\n".join(lines)
+# 182 
+# 183     def _build_summary(
+# 184         self,
+# 185         *,
+# 186         ruff_violations: List[str],
+# 187         tool_failures: Dict[str, str],
+# 188         meets_threshold: bool,
+# 189         threshold: float | None,
+# 190     ) -> str:
+# 191         lines: List[str] = []
+# 192 
+# 193         if ruff_violations:
+# 194             top_codes: Dict[str, int] = {}
+# 195             for code in ruff_violations:
+# 196                 top_codes[code] = top_codes.get(code, 0) + 1
+# 197             top_sorted = sorted(top_codes.items(), key=lambda kv: kv[1], reverse=True)
+# 198             lines.append(
+# 199                 "Top Ruff violations: "
+# 200                 + ", ".join(f"{c}×{n}" for c, n in top_sorted[:3])
+# 201             )
+# 202         else:
+# 203             lines.append("No Ruff violations detected")
+# 204 
+# 205         if tool_failures:
+# 206             lines.append("⚠️  Tool failures: " + ", ".join(tool_failures))
+# 207 
+# 208         if threshold is not None:
+# 209             state = "✅ meets" if meets_threshold else "❌ below"
+# 210             lines.append(f"{state} threshold {threshold:.2f}")
+# 211 
+# 212         return "\n".join(lines)
 
 
 # db\seeders\files\state_providers\__init__.py

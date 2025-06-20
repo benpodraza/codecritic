@@ -132,6 +132,23 @@ class FileManagerBase(ABC):
     ) -> Path:
         ...
 
+    @abstractmethod
+    def make_temp_dir(
+        self, 
+        suffix: str = ""
+    ) -> Path:
+        """Create and return a temporary directory under FILETYPE.TEMP."""
+        ...
+
+    @abstractmethod
+    def makedirs(
+        self, 
+        path: str | Path, 
+        exist_ok: bool = True
+    ) -> None:
+        """Recursively create a directory if it doesn't exist."""
+        ...
+
 # ─────────────────────────────────────────────
 # 💾 Local File System Implementation
 # ─────────────────────────────────────────────
@@ -269,6 +286,15 @@ class LocalFileManager(FileManagerBase):
         tmp.flush()
         tmp.close()
         return Path(tmp.name)
+
+    def make_temp_dir(self, suffix: str = "") -> Path:
+        base = FILE_PATHS[FILETYPE.TEMP]
+        base.mkdir(parents=True, exist_ok=True)
+        path = Path(tempfile.mkdtemp(dir=base, suffix=suffix))
+        return path
+
+    def makedirs(self, path: str | Path, exist_ok: bool = True) -> None:
+        Path(path).mkdir(parents=True, exist_ok=exist_ok)
 
 # ─────────────────────────────────────────────
 # 🌍 Global Manager Registry

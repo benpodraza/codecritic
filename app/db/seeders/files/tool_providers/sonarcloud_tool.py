@@ -35,34 +35,29 @@ class SonarCloudToolProvider(ToolProviderBase):
         metrics = {}
         stdout_msg = ""
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # clone into an ephemeral workspace
-            repo_url = f"https://github.com/{github_user}/codecritic_scoring"
-            subprocess.run(["gh", "repo", "clone", repo_url, tmpdir], check=True)
+        tmpdir = fm.make_temp_dir()
+        src_dir = tmpdir / "src"
+        fm.makedirs(src_dir)
+        filename = f"test_{uuid.uuid4()}.py"
 
-            # stage the target file under src/, using file-manager copy
-            filename = f"test_{uuid.uuid4()}.py"
-            src_dir = Path(tmpdir) / "src"
-            src_dir.mkdir(parents=True, exist_ok=True)
+        # ← updated here: use fm.copy instead of fm.copy_file
+        fm.copy(
+            src_type=ftype,
+            src_filename=target_name,
+            dst_type=FILETYPE.WORKING,
+            dst_filename=filename
+        )
 
-            # ← updated here: use fm.copy instead of fm.copy_file
-            fm.copy(
-                src_type=ftype,
-                src_filename=target_name,
-                dst_type=FILETYPE.WORKING,
-                dst_filename=filename
-            )
+        # now files/working_files/<filename> holds the staged copy;
+        # if you need it in tmpdir, you can load it or use Path operations from there.
 
-            # now files/working_files/<filename> holds the staged copy;
-            # if you need it in tmpdir, you can load it or use Path operations from there.
+        self._git_push(filename, cwd=src_dir)
+        self._wait_for_scan_completion(sonar_token, sonar_project)
+        metrics = self._poll_sonarcloud_metrics(sonar_token, sonar_project)
+        stdout_msg = f"Scan complete for {filename}"
 
-            self._git_push(filename, cwd=src_dir)
-            self._wait_for_scan_completion(sonar_token, sonar_project)
-            metrics = self._poll_sonarcloud_metrics(sonar_token, sonar_project)
-            stdout_msg = f"Scan complete for {filename}"
-
-            if metrics:
-                self._git_cleanup(filename, cwd=src_dir)
+        if metrics:
+            self._git_cleanup(filename, cwd=src_dir)
 
         violations_present = any(
             metrics.get(key, 0) > 0 for key in ("bugs", "vulnerabilities", "code_smells")
